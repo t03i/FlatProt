@@ -1,3 +1,6 @@
+# Copyright 2024 Rostlab.
+# SPDX-License-Identifier: Apache-2.0
+
 FROM debian:12-slim
 
 # Install necessary dependencies

@@ -1,3 +1,6 @@
+# Copyright 2024 Rostlab.
+# SPDX-License-Identifier: Apache-2.0
+
 import csv
 import os
 from tqdm import tqdm

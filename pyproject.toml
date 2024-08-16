@@ -4,6 +4,7 @@ version = "0.5.7"
 description = "Python package for creating simplified 2D protein visualisations. Specialised on showing differences and similaritys between proteins from the same protein family."
 authors = ["constantincarl <ge37goy@mytum.de>"]
 readme = "README.md"
+license = "Apache-2.0"
 
 include = ["prot2d/SF_database/*","prot2d/flexUSER_database/*"]
 

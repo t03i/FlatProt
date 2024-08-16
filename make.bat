@@ -1,3 +1,6 @@
+rem Copyright 2024 Rostlab.
+rem SPDX-License-Identifier: Apache-2.0
+
 @ECHO OFF
 
 pushd %~dp0
