@@ -1,12 +1,12 @@
 [tool.poetry]
-name = "prot2d"
-version = "0.5.7"
+name = "FlatProt"
+version = "0.1"
 description = "Python package for creating simplified 2D protein visualisations. Specialised on showing differences and similaritys between proteins from the same protein family."
 authors = ["constantincarl <ge37goy@mytum.de>"]
 readme = "README.md"
 license = "Apache-2.0"
 
-include = ["prot2d/SF_database/*","prot2d/flexUSER_database/*"]
+include = ["FlatProt/SF_database/*","FlatProt/flexUSER_database/*"]
 
 [tool.poetry.dependencies]
 python = ">=3.10,<3.13"
@@ -34,10 +34,10 @@ requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.poetry.scripts]
-prot2d = "prot2d.cli:app"
+FlatProt = "FlatProt.cli:app"
 
 [tool.poetry.urls]
-Repository = "https://github.com/ConstantinCarl/prot2d"
+Repository = "https://github.com/ConstantinCarl/FlatProt"
 Documentation = "https://constantincarl.github.io/prot2d/"
 Zenodo = "https://doi.org/10.5281/zenodo.10674045"
 Example-Collab = "https://colab.research.google.com/drive/17u0twE81kYYspNFsdXUHrCyP33hj0dO6?usp=sharing"
