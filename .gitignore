@@ -1,4 +1,6 @@
 temp/
 tests/
+results/
+__pycache__/
 
 

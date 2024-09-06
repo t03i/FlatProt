@@ -10,7 +10,6 @@ import os
 from Bio.PDB import PDBParser
 
 
-# SCOP_summary = '/Users/constantincarl/Uni/BachelorThesis/prot2D/database/SCOP_SF_summary.txt'
 class Structure_Database:
     # the obj is created using at least foldseek_executable path and tmp_Dir from the user.
     # db information and data is saved in the package structure itself (default relative paths)
@@ -20,7 +19,7 @@ class Structure_Database:
         self.foldseek_executable = foldseek_executable
         self.tmp_dir = tmp_dir
         self.db_directory = (
-            "prot2d.flexUSER_database" if user_db else "prot2d.SF_database"
+            "FlatProt.flexUSER_database" if user_db else "FlatProt.SF_database"
         )
         self.db_info_tsv = self.load_package_file(
             self.db_directory, "db_info.tsv"
