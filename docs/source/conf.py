@@ -1,7 +1,6 @@
 import os
 import sys
-sys.path.insert(0, os.path.abspath('/Users/constantincarl/Uni/BachelorThesis/prot2D/prot2D'))
-sys.path.insert(0, os.path.abspath('../../'))
+
 
 # Configuration file for the Sphinx documentation builder.
 #
@@ -11,10 +10,10 @@ sys.path.insert(0, os.path.abspath('../../'))
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
-project = 'prot2D'
+project = 'FlatProt'
 copyright = '2024, Constantin Carl'
 author = 'Constantin Carl'
-release = '20.01.2024'
+release = '06.09.2024'
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
