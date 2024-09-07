@@ -388,8 +388,8 @@ def visualize_ordered_elements(
             x2, y2 = element.end_res.get_closest_point()
             svg_plane.add(
                 svgwrite.shapes.Line(
-                    start=(x1, y1),
-                    end=(x2, y2),
+                    start=(str(x1), str(y1)),
+                    end=(str(x2), str(y2)),
                     stroke=cystein_col,
                     stroke_width=3,
                     fill="none",

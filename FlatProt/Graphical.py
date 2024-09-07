@@ -398,4 +398,4 @@ def closest_point_on_line(point, line):
     t = max(0, min(1, dot_product))
     closest_x = x1 + t * dx
     closest_y = y1 + t * dy
-    return closest_x, closest_y
+    return float(closest_x), float(closest_y)
