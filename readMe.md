@@ -69,7 +69,7 @@ The runtime of the Collab is way longer than local usage. Therefore we dont advi
 
 Prot2d's documentation can found here:
 
--   [prot2d documentation!](https://constantincarl.github.io/prot2d/)
+-   [prot2d documentation!](https://constantincarl.github.io/FlatProt/)
 
 **important notes:**
 
