@@ -274,7 +274,7 @@ def create_2DSVG_from_pdb(
     """
     Main method of the package for creating 2D visualisations of a protein in form of a SVG file. The user can decide between different visualisation options.
 
-    ** Args:\n\n
+    Args:\n\n
 
     - pdb_file (str): Path to pdb file the visualisation file is generated on. (Required)\n
     - result_dir (str): Path to dir, where the output file is saved (file name is automatically set based on input file name). (Required)\n
