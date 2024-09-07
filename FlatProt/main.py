@@ -18,14 +18,14 @@ from .utils import (
 )
 
 
-def check_pdb_path(pdb_file):
+def check_pdb_path(pdb_file, silent):
     """
     This method checks a path for a existing pdb-file with including a header (necessary for DSSP usage)
 
     Args:
 
     - pdb_file (str): Path to file that should be checked
-
+    - silent (bool): executes the program silently aslong as no error occurs.
     Returns:
 
     - the protein id from the file name if file is in correct form. Otherwise None
@@ -39,7 +39,7 @@ def check_pdb_path(pdb_file):
         with open(pdb_file, "r") as input_file:
             pdb_content = input_file.read()
         if pdb_content.startswith("HEADER"):
-            print("pdb-file with HEADER found!")
+            print("pdb-file with HEADER found!") if not silent else None
             return file_id
         else:
             print("pdb-file withput HEADER found")
@@ -60,6 +60,7 @@ def visualize(
     simple_coil_avg,
     show_lddt_col,
     show_lddt_text,
+    silent
 ):
     if len(protein.secondary_structures) == 0:
         return
@@ -72,7 +73,7 @@ def visualize(
         only_path = True
 
     elif vis_type == "simple-coil":
-        protein.get_protein_ordered_vis_objects(simple_coil_avg, mark_endings)
+        protein.get_protein_ordered_vis_objects(simple_coil_avg, mark_endings,silent)
         # vis non-coil ss noraml but connect by simplifying coil structure
         visualize_ordered_elements(
             dwg,
@@ -85,7 +86,7 @@ def visualize(
         )
 
     elif vis_type == "normal":
-        protein.get_protein_ordered_vis_objects(1, mark_endings)
+        protein.get_protein_ordered_vis_objects(1, mark_endings,silent)
         visualize_ordered_elements(
             dwg,
             protein.ordered_vis_elements,
@@ -97,7 +98,7 @@ def visualize(
         )
 
     elif vis_type == "special":
-        protein.get_protein_ordered_vis_objects(1, mark_endings)
+        protein.get_protein_ordered_vis_objects(1, mark_endings,silent)
         # create_testing_vis(dwg,ss_objects=protein.secondary_structures)
         visualize_ordered_elements(
             dwg,
@@ -266,6 +267,7 @@ def create_2DSVG_from_pdb(
     simple_coil_avg: int = 10,
     chain_info: bool = True,
     no_shifting=False,
+    silent = False
 ):
     """
     Main method of the package for creating 2D visualisations of a protein in form of a SVG file. The user can decide between different visualisation options.
@@ -298,7 +300,7 @@ def create_2DSVG_from_pdb(
     - find_best_rot_step (int): Is the size of steps per 3D rotation angle (total=3) taken to find the rotatoin showing the most of the input protein. Increasing leads to faster runtime but worse visualisations. Default is 30.\n
     - simple_coil_avg (int): Coil structures will be summarised together. e.g. 10 means that every 10 coil-residues will be averaged and treated as one point. Bigger values lead to higher simplification. Is only used when "simple-coil" or "only-path" is used. Default is 10\n
     - chain_info (bool): If true and multi-chain protein structure is given: adds chain annotations (from pdb) in the visualizations. Default is True.\n
-
+    - silet (bool): If True, the program is executed without any outputs to sout. Default is False.\n
     Returns: The path to the created SVG-file. \n
 
     - Creates a SVG file containing the 2D visualisation of the input protein in the given result_dir.
@@ -317,7 +319,7 @@ def create_2DSVG_from_pdb(
         raise ValueError(
             f'"{visualisation_type}" is not a valid visualisation type. Please use one of the following: {valid_vis_types}'
         )
-    file_id = check_pdb_path(pdb_file)
+    file_id = check_pdb_path(pdb_file,silent)
     if file_id == None:
         raise ValueError(
             f'"{pdb_file}" is not a valid pdb input. Please check the path and the file.'
@@ -330,10 +332,11 @@ def create_2DSVG_from_pdb(
     structure_database_obj = Structure_Database(foldseek_executable, tmp_dir, user_db)
 
     chain_pdb_dict = split_pdb_chains(pdb_file, tmp_dir)
-    print(
-        f"{len(chain_pdb_dict)} chains were found in the input pdb and will be visualized seperatly"
-    )
-    print(chain_pdb_dict)
+    if not silent:
+        print(
+            f"{len(chain_pdb_dict)} chains were found in the input pdb and will be visualized seperatly"
+        ) 
+        print(chain_pdb_dict)
     chain_prots = []
     all_chain_domain_prots = []
     for chain_id, chain_pdb in chain_pdb_dict.items():
@@ -341,15 +344,15 @@ def create_2DSVG_from_pdb(
         if domain_splitted:
             # TODO adapt domain splitting per chain...(chainsaw reformatting changes...)
             domain_files = get_domain_pdbs(
-                chain_pdb, chain_id, domain_annotation_file, tmp_dir
+                chain_pdb, chain_id, domain_annotation_file, tmp_dir, silent
             )
         else:
             domain_files = []
             domain_files.append(chain_pdb)
-
-        print(
-            f"{len(domain_files)} domain(s) were found for chain {chain_id} and will be visualized seperatly:"
-        )
+        
+            print(
+                f"{len(domain_files)} domain(s) were found for chain {chain_id} and will be visualized seperatly:"
+            ) if not silent else None
         if len(domain_files) == 0:
             continue
         ############## 2) Get rotation of protein (family-vis / best rotation) ##############
@@ -357,7 +360,8 @@ def create_2DSVG_from_pdb(
         matched_sfs = []
         probs = []
         for dom_file in domain_files:
-            print(f'\n### "{dom_file}" ###\n')
+            
+            print(f'\n### "{dom_file}" ###\n') if not silent else None
             if family_vis:
                 sf, prob, sf_aligned_pdb_file, aligned_region, lddtfull = (
                     structure_database_obj.initial_and_fixed_Sf_rot_region(
@@ -365,6 +369,7 @@ def create_2DSVG_from_pdb(
                         drop_family_prob,
                         fixed_sf=fixed_id,
                         flex_USER_db=user_db,
+                        silent=silent
                     )
                 )
                 if sf_aligned_pdb_file == None:
@@ -373,16 +378,16 @@ def create_2DSVG_from_pdb(
                         "\033[91m"
                         + "No maching id (with higher prob than min prob) found. Normal roation algo will be used!"
                         + "\033[0m"
-                    )
+                    ) if not silent else None
                     add_header_to_pdb(dom_file)
                     dom_prot = Protein()
                     dom_prot.chain = chain_id
                     pdb_element = dom_prot.parse_pdb(dom_file)
-                    dom_prot.get_secondary_structure(pdb_element, dom_file)
+                    dom_prot.get_secondary_structure(pdb_element, dom_file,silent)
                     dom_prot.scale_shift_coords(
                         scale=30, x_shift=0, y_shift=0, make_positive=False
                     )
-                    dom_prot.find_best_view_angle(step_width=find_best_rot_step)
+                    dom_prot.find_best_view_angle(step_width=find_best_rot_step, silent=silent)
                     dom_proteins.append(dom_prot)
                     matched_sfs.append("no_SF")
                     probs.append(-1)
@@ -392,7 +397,7 @@ def create_2DSVG_from_pdb(
                 dom_prot = Protein()
                 dom_prot.chain = chain_id
                 pdb_element = dom_prot.parse_pdb(sf_aligned_pdb_file)
-                dom_prot.get_secondary_structure(pdb_element, sf_aligned_pdb_file)
+                dom_prot.get_secondary_structure(pdb_element, sf_aligned_pdb_file,silent)
                 dom_prot.scale_shift_coords(
                     scale=30, x_shift=0, y_shift=0, make_positive=False
                 )
@@ -435,8 +440,8 @@ def create_2DSVG_from_pdb(
                 dom_prot = Protein()
                 dom_prot.chain = chain_id
                 pdb_element = dom_prot.parse_pdb(dom_file)
-                dom_prot.get_secondary_structure(pdb_element, dom_file)
-                dom_prot.print_ss_objects()
+                dom_prot.get_secondary_structure(pdb_element, dom_file,silent)
+                dom_prot.print_ss_objects() if not silent else None
                 dom_prot.scale_shift_coords(
                     scale=30, x_shift=0, y_shift=0, make_positive=False
                 )
@@ -486,7 +491,7 @@ def create_2DSVG_from_pdb(
     )
     dwg = svgwrite.Drawing(result_file_path, viewBox=viewbox)
 
-    print("\n### Starting visualizing of protein (domains): ###")
+    print("\n### Starting visualizing of protein (domains): ###") if not silent else None
     for chain_doms in all_chain_domain_prots:
         last_dom = None
         for dom_prot in chain_doms:
@@ -503,6 +508,7 @@ def create_2DSVG_from_pdb(
                     simple_coil_avg,
                     show_lddt_col,
                     show_lddt_text,
+                    silent
                 )
                 visualize(
                     dwg,
@@ -515,6 +521,7 @@ def create_2DSVG_from_pdb(
                     simple_coil_avg,
                     show_lddt_col,
                     show_lddt_text,
+                    silent
                 )
                 visualize(
                     dwg,
@@ -527,6 +534,7 @@ def create_2DSVG_from_pdb(
                     simple_coil_avg,
                     show_lddt_col,
                     show_lddt_text,
+                    silent
                 )
                 add_dashed_line_between_proteins(
                     dwg, front_part, aligned_part, end_part
@@ -543,6 +551,7 @@ def create_2DSVG_from_pdb(
                     simple_coil_avg,
                     show_lddt_col,
                     show_lddt_text,
+                    silent
                 )
 
             if domain_splitted:
@@ -558,7 +567,7 @@ def create_2DSVG_from_pdb(
         if chain_info and len(all_chain_domain_prots) > 1:
             chain_doms[0].add_chain_info(dwg)
 
-    print(f'\n### Visualization done! SVG file was created at "{result_file_path}" ###')
+    print(f'\n### Visualization done! SVG file was created at "{result_file_path}" ###') if not silent else None
     dwg.save()
     return result_file_path, matched_sfs, probs
 

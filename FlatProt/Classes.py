@@ -83,11 +83,11 @@ class cross_class_functions:
         )  # Beta_bridge to Strand
         return three_type_ss_string
 
-    def get_ss_blocks(residue_ss, residues):
+    def get_ss_blocks(residue_ss, residues,silent):
         ss_string = cross_class_functions.simplify_DSSP_output(
             "".join(residue_ss.values())
         )
-        print("SS_String:" + ss_string)
+        print("SS_String:" + ss_string) if not silent else None
         # find blcoks of at least 4 consecutive Hs
         helix_blocks = [
             (match.start(), match.end() - 1)
@@ -543,7 +543,7 @@ class Protein:
                 coils += 1
         print(
             f"helix_elements: {helix}\nsheet_elemts: {sheets}\ncoil_elements: {coils}"
-        )
+        ) if not silent else None
 
     def set_obj_residues(self, pdb_element):
         atoms_to_save = ["CA", "SG"]
@@ -581,10 +581,10 @@ class Protein:
         self.residues = list(residues.values())
         return list(residues.values())
 
-    def get_secondary_structure(self, prot_pdb_element, pdb_file):
+    def get_secondary_structure(self, prot_pdb_element, pdb_file,silent):
         residue_ss = cross_class_functions.get_DSSP_SS(prot_pdb_element, pdb_file)
         ss_structure_obj = cross_class_functions.get_ss_blocks(
-            residue_ss, self.residues
+            residue_ss, self.residues,silent
         )
         self.update_residue_object_SS(ss_structure_obj)
         self.secondary_structures = ss_structure_obj
@@ -699,7 +699,7 @@ class Protein:
             return self.check_vis_depth(rot_check, use_coil=True)
         return abs(max_z - min_z)
 
-    def find_best_view_angle(self, step_width=30):
+    def find_best_view_angle(self, step_width=30, silent= False):
         theta_range = (0, 360, step_width)
         theta_sets = list(product(range(*theta_range), repeat=3))
         area_rounding_factor = 10
@@ -715,10 +715,10 @@ class Protein:
         )
         best_z_depth = self.check_vis_depth(rot_check=False)
 
-        print("Start optimal viewpoint calculation: ")
+        print("Start optimal viewpoint calculation: ")if not silent else None
         counter = 0
         rot_protein = copy.deepcopy(self)
-        for theta_set in tqdm(theta_sets, desc="Testing rotations", unit="rot"):
+        for theta_set in tqdm(theta_sets, desc="Testing rotations", unit="rot", disable=silent):
             theta_x_rad, theta_y_rad, theta_z_rad = np.radians(theta_set)
 
             rotation_matrix = cross_class_functions.radians_to_rotation_matrix(
@@ -761,16 +761,17 @@ class Protein:
         self.save_rot_to_real_coords()
         return self.residues
 
-    def get_cystein_bonds(self, max_length=3):
+    def get_cystein_bonds(self, max_length=3, silent=False):
         cysteines = [res for res in self.residues if res.amino_acid == "CYS"]
-        pairs = list(
+        '''pairs = list(
             tqdm(
                 combinations(cysteines, 2), desc="Generating cystein pairs", unit="pair"
             )
         )
+        '''
         cysteine_bonds = [
             poss_bond
-            for poss_bond in tqdm(pairs, desc="Checking cystein bonds", unit="bond")
+            for poss_bond in tqdm(combinations(cysteines, 2), desc="Checking cystein bonds", unit="bond",disable=silent)
             if poss_bond[0].atoms["SG"].get_distance_to_atom(poss_bond[1].atoms["SG"])
             <= max_length
         ]
@@ -1015,7 +1016,7 @@ class Protein:
         )
         return dash_line
 
-    def get_protein_ordered_vis_objects(self, avg_coil, mark_endings):
+    def get_protein_ordered_vis_objects(self, avg_coil, mark_endings,silent):
         if len(self.residues) == 0:
             return
         # returns the z-ordered objects for visualisation in a list (helix,sheet,coil, connecting_elements, cystein_bonds)
@@ -1042,7 +1043,7 @@ class Protein:
                 vis_object_list.append(connect_elemet)
             last_ss = ss
         # add cystein bonds
-        bonds = self.get_cystein_bonds()
+        bonds = self.get_cystein_bonds(silent=silent)
         for bond in bonds:
             cys_bond = Cystein_bond(bond[0], bond[1])
             vis_object_list.append(cys_bond)

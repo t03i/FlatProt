@@ -71,7 +71,7 @@ class Structure_Database:
             return None
 
     def get_matching_SF_U_T_fixed_region(
-        self, input_pdb, min_prob, fixed_id=None, use_flex_USER_db=False
+        self, input_pdb, min_prob, fixed_id=None, use_flex_USER_db=False, silent=False
     ):
         db = self.foldseek_db
         db_info = self.db_info_tsv
@@ -91,7 +91,7 @@ class Structure_Database:
                 "--format-output",
                 "query,target,qstart,qend,tstart,tend,tseq,prob,alntmscore,u,t,lddtfull,qaln,taln",
             ]
-            print("### foldseek start ### ")
+            print("### foldseek start ### ") if not silent else None
             with open(print_file, "w") as output_file:
                 subprocess.run(command, stdout=output_file, stderr=output_file)
 
@@ -113,7 +113,7 @@ class Structure_Database:
             ]
             df = pd.read_csv(result_file, sep="\t", names=column_names)
             if len(df) == 0:
-                print("No matching SF found")
+                print("No matching SF found") if not silent else None
                 return None, None, None, None, None, None, None, None
             if fixed_id != None:
                 try:
@@ -130,21 +130,21 @@ class Structure_Database:
                         ].iloc[0]
                         print(
                             f"Using fixed ID: {fixed_id} (representative: {fixed_representative_name})"
-                        )
+                        )if not silent else None
                     except:
                         raise ValueError(
                             f"The given SF ({fixed_id}) was not found in the FoldSeek result file (to distant to input or not valid)."
                         )
                 except Exception as e:
-                    print("\033[91m" + f"\nFixed-ID Error: {str(e)}")
-                    print("Match with highest prob will be used!\n" + "\033[0m")
+                    print("\033[91m" + f"\nFixed-ID Error: {str(e)}")if not silent else None
+                    print("Match with highest prob will be used!\n" + "\033[0m")if not silent else None
                     matched_row = df.loc[df["prob"].idxmax()]
             else:
                 matched_row = df.loc[df["prob"].idxmax()]
                 if matched_row["prob"] < min_prob:
                     print(
                         f"No matching SF with prob > {min_prob} found (highest prob: {matched_row['prob']})"
-                    )
+                    )if not silent else None
                     return None, None, None, None, None, None, None, None
             best_SF_representative = matched_row["target"].replace(".pdb", "")
             prob = matched_row["prob"]
@@ -157,10 +157,10 @@ class Structure_Database:
             lddtfull = matched_row["lddtfull"].split(",")
 
             qaln = matched_row["qaln"]
-            print(f"query-aln: {qaln}")
+            print(f"query-aln: {qaln}")if not silent else None
             taln = matched_row["taln"]
-            print(f"target-aln: {taln}")
-            print("### foldseek finished ###")
+            print(f"target-aln: {taln}")if not silent else None
+            print("### foldseek finished ###")if not silent else None
 
             new_lddtfull = []
             lddt_index = 0
@@ -181,7 +181,7 @@ class Structure_Database:
 
             specific_row = df.loc[df["representative"] == best_SF_representative]
             if not df["representative"].eq(best_SF_representative).any():
-                print("db error !!!!! (representative in db not in summary file)")
+                print("db error !!!!! (representative in db not in summary file)") 
                 return None, None, None, None, None, None, None, None
             ID = specific_row["ID"].iloc[0]
             fixed_rot_matrix_string = specific_row["rotation_matrix"].iloc[0]
@@ -191,15 +191,15 @@ class Structure_Database:
             positive_translation = parse_translation_vector(positive_translation_string)
             u_matrix = np.array([float(num) for num in u.split(",")]).reshape(3, 3)
             t_vector = np.array([float(num) for num in t.split(",")])
-
-            print(f"\n################# foldseek result  (user_db: {use_flex_USER_db})")
-            print(
-                "--- Rotating by inital SF FoldSeek alignment + fixed family rotation ---"
-            )
-            print(f"input: {filename_without_ext}")
-            print(f"ID: {ID} (prob: {matched_row['prob']})")
-            print(f"representative: {best_SF_representative}")
-            print("#################\n")
+            if not silent:
+                print(f"\n################# foldseek result  (user_db: {use_flex_USER_db})") 
+                print(
+                    "--- Rotating by inital SF FoldSeek alignment + fixed family rotation ---"
+                )
+                print(f"input: {filename_without_ext}")
+                print(f"ID: {ID} (prob: {matched_row['prob']})")
+                print(f"representative: {best_SF_representative}")
+                print("#################\n")
 
             return (
                 ID,
@@ -216,11 +216,11 @@ class Structure_Database:
             return None, None, None, None, None, None, None, None
 
     def initial_and_fixed_Sf_rot_region(
-        self, input_pdb, drop_family_prob, fixed_sf, flex_USER_db
+        self, input_pdb, drop_family_prob, fixed_sf, flex_USER_db,silent
     ):
         sf, prob, u, t, fixed_rot, positive_translation, aligned_region, lddtfull = (
             self.get_matching_SF_U_T_fixed_region(
-                input_pdb, drop_family_prob, fixed_sf, flex_USER_db
+                input_pdb, drop_family_prob, fixed_sf, flex_USER_db,silent
             )
         )
         if sf == None:

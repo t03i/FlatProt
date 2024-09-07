@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "FlatProt"
-version = "0.1.4"
+version = "0.1.5"
 description = "Python package for creating simplified 2D protein visualisations. Specialised on showing differences and similaritys between proteins from the same protein family."
 authors = ["constantincarl <ge37goy@mytum.de>"]
 readme = "README.md"

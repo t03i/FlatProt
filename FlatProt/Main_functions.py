@@ -62,9 +62,9 @@ def build_domainpdb_from_fullpdb(
     return output_file
 
 
-def get_domain_pdbs(pdb_file, chain_id, annotation_file, output_dir):
+def get_domain_pdbs(pdb_file, chain_id, annotation_file, output_dir,silent):
     pdb_id = os.path.splitext(os.path.basename(pdb_file))[0]
-    print(f"pdb id: {pdb_id}")
+    print(f"pdb id: {pdb_id}") if not silent else None
     domain_files = []
     with open(annotation_file, "r") as file:
         reader = csv.DictReader(file, delimiter="\t")
