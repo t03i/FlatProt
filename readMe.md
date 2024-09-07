@@ -1,8 +1,8 @@
-# prot2d
+# FlatProt
 
 <img width="910" alt="image" src="https://github.com/ConstantinCarl/prot2d/assets/156075124/34d415d3-55be-4784-a96d-035e40fc5afe">
 
-Prot2d is a tool for 2D protein visualization aimed at improving the comparability of protein structures through standardized 2D visualizations. Prot2d focuses on creating highly comparable representations for same-family proteins.
+FlatProt is a tool for 2D protein visualization aimed at improving the comparability of protein structures through standardized 2D visualizations. FlatProt focuses on creating highly comparable representations for same-family proteins.
 
 ## Contents
 
@@ -17,20 +17,20 @@ Prot2d is a tool for 2D protein visualization aimed at improving the comparabili
 
 ## Getting Started
 
-prot2d needs python version: python= ">=3.10,<3.13"
+FlatProt needs python version: python= ">=3.10,<3.13"
 
-### Download prot2d via pip or poetry
+### Download FlatProt via pip or poetry
 
 -   pip:
 
 ```shell
-pip install prot2d
+pip install FlatProt
 ```
 
 -   Poetry:
 
 ```shell
-poetry add prot2d
+poetry add FlatProt
 ```
 
 ### Install Foldseek
@@ -39,7 +39,7 @@ Instructions for downloading the Foldseek software can be found in Foldseek's Gi
 
 -   [Foldseek GitHub](https://github.com/steineggerlab/foldseek)
 
---> prot2d needs the path to the foldseek executable passed as argument to the main function to be used by the program.
+--> FlatProt needs the path to the foldseek executable passed as argument to the main function to be used by the program.
 
 ### Install dssp
 
@@ -67,14 +67,14 @@ The runtime of the Collab is way longer than local usage. Therefore we dont advi
 
 ## Documentation
 
-Prot2d's documentation can found here:
+FlatProt's documentation can found here:
 
--   [prot2d documentation!](docs/build/html/index.html)
+-   [FlatProt documentation!](https://constantincarl.github.io/FlatProt/)
 
 **important notes:**
 
 -   input PDB files need a header to work (important for predicted structures)
--   prot2d's methods can also be used via command line commands (cli)
+-   FlatProt's methods can also be used via command line commands (cli)
 
 ## Data
 
