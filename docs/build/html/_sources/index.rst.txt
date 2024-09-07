@@ -1,7 +1,4 @@
-.. prot2D documentation master file, created by
-   sphinx-quickstart on Sat Jan 20 11:43:57 2024.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
+.. FlatProt documentation master file
 
 Welcome to FlatProt's documentation!
 ==================================
@@ -17,7 +14,4 @@ Welcome to FlatProt's documentation!
 
 Indices and tables
 ==================
-
-* :ref:`genindex`
-* :ref:`modindex`
 * :ref:`search`

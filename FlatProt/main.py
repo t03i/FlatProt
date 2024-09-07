@@ -14,7 +14,7 @@ from .utils import (
     check_pdb_files,
     read_in_foldseek_cluster_tsv,
     check_and_delete_directory,
-    clear_dir,
+    clear_dir
 )
 
 
@@ -25,7 +25,7 @@ def check_pdb_path(pdb_file, silent):
     Args:
 
     - pdb_file (str): Path to file that should be checked
-    - silent (bool): executes the program silently aslong as no error occurs.
+    - silent (bool): executes the program silently aslong as no error occurs.\n
     Returns:
 
     - the protein id from the file name if file is in correct form. Otherwise None
@@ -181,10 +181,10 @@ def db_get_ID_info(id: int, user_db: bool = False):
     return db.get_SF_info(id)
 
 
-def db_set_SF_pymol_rot(id: str, pymol_output, user_db: bool = False):
+def db_set_ID_pymol_rot(id: str, pymol_output, user_db: bool = False):
     """
-    Can be used for setting a wanted fixed rotation for a specific Superfamily in the database.
-    Proteins matched to this SF will now be rotated using the new rotation matrix when using family_vis = True.
+    Can be used for setting a wanted fixed rotation for a specific ID(family) in the database.
+    Proteins matched to this family will now be rotated using the new rotation matrix when using family_vis = True.
     The user can first rotate the family representative in pymol and then save the pymol rotation in the database. Every protein will than be rotated that way.
 
     Args:
@@ -209,7 +209,7 @@ def create_USERflex_db(pdb_dir, name_id_mapping_csv, foldseek_executable):
     Args:\n\n
 
     - pdb_dir (str): Path to the directory of proteins in pdb-format that will be converted to the user-database.
-    - name_id_mapping_csv (str): Path to protein-id-mapping CSV file mapping the used protein-pdbs(file names) to an ID. The ids must be Integers.
+    - name_id_mapping_csv (str): Path to protein-id-mapping CSV file mapping the used protein-pdbs(file names) to IDs. The ids must be Integers.
     - foldseek_executable (str): Path to the foldseek executable. Is used to create foldseek-database out of the protein structures.
 
     Creates a user-specified database that can then be used for visualization.
@@ -274,13 +274,12 @@ def create_2DSVG_from_pdb(
     """
     Main method of the package for creating 2D visualisations of a protein in form of a SVG file. The user can decide between different visualisation options.
 
-    Args:\n\n
+    ** Args:\n\n
 
     - pdb_file (str): Path to pdb file the visualisation file is generated on. (Required)\n
     - result_dir (str): Path to dir, where the output file is saved (file name is automatically set based on input file name). (Required)\n
     - tmp_dir (str): Path to dir, where temporary files needed for analyis (e.g. foldseek) and visualisations are saved. (Required)\n
-    - foldseek_executable (str): Path to foldseek executable (will be used for family alignment). Default is "foldseek/bin/foldseek"\n
-
+    - foldseek_executable (str): Path to foldseek executable (will be used for family alignment). Default is "foldseek/bin/foldseek"\n 
     - family_vis (bool): If True, enables family-wise visualization, uses SCOP SF database with calculated representatives. Default is True.\n
     - fam_aligned_splitting (bool): If True, the protein is split into SF-aligned (is rotated based on this segment) and not-aligned parts. THey are connected with a dashed line. Default is True.\n
     - drop_family_prob (float): Allows the program to drop a chosen SF if the FoldSeek probability is smaller than given cut-off. In this case the protein rotation is determined using the implemented "find_best_view_angle" method. Default is 0.5. \n
@@ -288,7 +287,7 @@ def create_2DSVG_from_pdb(
     - show_lddt_text (bool): LDDT scores from FoldSeek alignment to best matching SF is shown per residue. Default is False. \n
     - fixed_id (int): Fixed id that will be used for the protein (/ for every domain in the protein) (to distant proteins cannot be used for aligning)\n
     - id_info (bool): If True, adds assigned ID number and corresponding foldseek probability to the drawing. Default is True.\n
-    - user_db (bool): If True, prot2d uses the user-created database for protein matching. The user-db must be created before with the "create_USERflex_db" function. Default is False for simple usage with SCOP superfamily database\n4
+    - user_db (bool): If True, prot2d uses the user-created database for protein matching. The user-db must be created before with the "create_USERflex_db" function. Default is False for simple usage with SCOP superfamily database.\n
 
     - domain_splitted (bool): If True, protein is split into domains using the provided domain annotation file. Can be used in combination with family_vis which is then applied on each domain seperatly. Default is False.\n
     - domain_annotation_file (str): Path to the domain annotation file. Required if domain_splitted is True.\n
@@ -303,9 +302,11 @@ def create_2DSVG_from_pdb(
     - simple_coil_avg (int): Coil structures will be summarised together. e.g. 10 means that every 10 coil-residues will be averaged and treated as one point. Bigger values lead to higher simplification. Is only used when "simple-coil" or "only-path" is used. Default is 10\n
     - chain_info (bool): If true and multi-chain protein structure is given: adds chain annotations (from pdb) in the visualizations. Default is True.\n
     - silent (bool): If True, the program is executed without any outputs to sout. Default is False.\n
+    
     Returns: The path to the created SVG-file. \n
 
     - Creates a SVG file containing the 2D visualisation of the input protein in the given result_dir.
+
     """
     ############## Validate arguments ##############
     if domain_splitted and not domain_annotation_file:

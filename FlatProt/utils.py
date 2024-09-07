@@ -56,7 +56,7 @@ def count_residues(pdb_file):
             residue_count += len(chain)
 
     return residue_count
-def format_domain_annotation_file_chainsaw_discMerge(chainsaw_annotation_tsv, output_dir):
+def domAnnot_chainsaw_discMerge(chainsaw_annotation_tsv, output_dir):
     """
     Formats the CHAINSAW domain annotation output file into a specified domain-annotation format,
     discontinuous domains are merged into a single domain from the start of the first
@@ -139,7 +139,7 @@ def read_in_foldseek_cluster_tsv(cluster_tsv_file):
             clusters_dict[representative] += 1
     return clusters_dict
 
-def format_domain_annotation_file_chainsaw_discSplit(chainsaw_annotation_tsv, output_dir):
+def domAnnot_chainsaw_discSplit(chainsaw_annotation_tsv, output_dir):
     """
     Can be used for formatting chainsaw (domain annotation software) output file into the here needed domain-annotatino format.
     Discontinous domains are split into seperate domains. All domain annotations are treated as chain_A domain annotations!
