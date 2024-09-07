@@ -88,6 +88,9 @@ This project uses datasets that can be found on Zenodo. Additional example files
 
 <img width="409" alt="image" src="https://github.com/ConstantinCarl/prot2d/assets/156075124/a315fd49-74cc-456e-b0d2-c6b63333b22b">
 
+### 3FTx - Family Overlay
+
+
 ### 1kt1 - domain visualization (family vis)
 
 <img width="1000" alt="image" src="https://github.com/ConstantinCarl/prot2d/assets/156075124/1f8ac748-09d1-464c-9e42-c6fd93bfeddc">
