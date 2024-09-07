@@ -8,6 +8,7 @@ The error causing location in the input pdb is often given in the system output.
 .. autofunction:: main.create_2DSVG_from_pdb 
 .. autofunction:: main.db_get_SF_info
 .. autofunction:: main.db_set_SF_pymol_rot
+.. autofunction:: main.create_USERflex_db
 .. autofunction:: main.get_best_rotation
 .. autofunction:: main.check_pdb_path
 

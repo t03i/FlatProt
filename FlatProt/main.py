@@ -169,8 +169,9 @@ def db_get_ID_info(id: int, user_db: bool = False):
 
     Args:
 
-    - SF_numner(str): SCOP Superfamily identifier for that the information should be returned
-
+    - Database_ID (int): Family identifier as saved in the database, for that the information should be returned
+    - user_db (bool): If the wanted family (-ID) is in the self-created user_db this has to be true. Default is False.
+    
     Returns:
 
     - The representative score, the protein-representative, the fixed rotation, and the fixed rotation type of the family
@@ -188,8 +189,9 @@ def db_set_SF_pymol_rot(id: str, pymol_output, user_db: bool = False):
 
     Args:
 
-    - id (str): SCOP SuperFamily number that`s fixed rotation matrix should be changend.
+    - id (str): Family ID (as saved in the database) that`s fixed rotation matrix should be changend.
     - pymol_output (str): Pymols get_view() output matrix. Contains rotation matrix
+    - user_db (bool): If the family (-ID) originates in the user-created user_db this has to be true to be set accordingly.Default is False.
 
     Returns:
 
@@ -206,8 +208,8 @@ def create_USERflex_db(pdb_dir, name_id_mapping_csv, foldseek_executable):
 
     Args:\n\n
 
-    - pdb_dir (str): Path to the directory of proteins in pdb-format.
-    - name_id_mapping_csv (str): Path to protein-id-mapping CSV file. The ids must be Integers.
+    - pdb_dir (str): Path to the directory of proteins in pdb-format that will be converted to the user-database.
+    - name_id_mapping_csv (str): Path to protein-id-mapping CSV file mapping the used protein-pdbs(file names) to an ID. The ids must be Integers.
     - foldseek_executable (str): Path to the foldseek executable. Is used to create foldseek-database out of the protein structures.
 
     Creates a user-specified database that can then be used for visualization.
@@ -300,7 +302,7 @@ def create_2DSVG_from_pdb(
     - find_best_rot_step (int): Is the size of steps per 3D rotation angle (total=3) taken to find the rotatoin showing the most of the input protein. Increasing leads to faster runtime but worse visualisations. Default is 30.\n
     - simple_coil_avg (int): Coil structures will be summarised together. e.g. 10 means that every 10 coil-residues will be averaged and treated as one point. Bigger values lead to higher simplification. Is only used when "simple-coil" or "only-path" is used. Default is 10\n
     - chain_info (bool): If true and multi-chain protein structure is given: adds chain annotations (from pdb) in the visualizations. Default is True.\n
-    - silet (bool): If True, the program is executed without any outputs to sout. Default is False.\n
+    - silent (bool): If True, the program is executed without any outputs to sout. Default is False.\n
     Returns: The path to the created SVG-file. \n
 
     - Creates a SVG file containing the 2D visualisation of the input protein in the given result_dir.
