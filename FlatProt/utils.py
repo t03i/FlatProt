@@ -220,7 +220,7 @@ def create_own_annotation_files_for_dir(chainsaw_output_dir, output_directory):
     for filename in os.listdir(chainsaw_output_dir):
         if filename.endswith(".tsv"):
             input_filepath = os.path.join(chainsaw_output_dir, filename)
-            format_domain_annotation_file_chainsaw_discSplit(input_filepath, output_directory)
+            domAnnot_chainsaw_discSplit(input_filepath, output_directory)
 
 def add_header_to_pdb_dir(input_directory):
     #Iterate through each file in the input directory
