@@ -543,7 +543,7 @@ class Protein:
                 coils += 1
         print(
             f"helix_elements: {helix}\nsheet_elemts: {sheets}\ncoil_elements: {coils}"
-        ) if not silent else None
+        )
 
     def set_obj_residues(self, pdb_element):
         atoms_to_save = ["CA", "SG"]

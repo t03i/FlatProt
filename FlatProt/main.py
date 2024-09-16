@@ -4,7 +4,7 @@
 import svgwrite
 import re
 import os
-
+from .pymol_orient import do_pymol_orient
 from .Graphical import *
 from .Main_functions import *
 from .Structure_Database import *
@@ -249,6 +249,7 @@ def create_2DSVG_from_pdb(
     result_dir: str,
     tmp_dir: str,
     family_vis: bool = True,
+    pymol_orient:bool = False,
     fam_aligned_splitting: bool = True,
     drop_family_prob: float = 0.5,
     foldseek_executable: str = "/foldseek/bin/foldseek",
@@ -268,8 +269,8 @@ def create_2DSVG_from_pdb(
     find_best_rot_step: int = 30,
     simple_coil_avg: int = 10,
     chain_info: bool = True,
-    no_shifting=False,
-    silent = False
+    no_shifting:bool=False,
+    silent:bool = False
 ):
     """
     Main method of the package for creating 2D visualisations of a protein in form of a SVG file. The user can decide between different visualisation options.
@@ -281,6 +282,7 @@ def create_2DSVG_from_pdb(
     - tmp_dir (str): Path to dir, where temporary files needed for analyis (e.g. foldseek) and visualisations are saved. (Required)\n
     - foldseek_executable (str): Path to foldseek executable (will be used for family alignment). Default is "foldseek/bin/foldseek"\n 
     - family_vis (bool): If True, enables family-wise visualization, uses SCOP SF database with calculated representatives. Default is True.\n
+    - pymol_orient(bool): If True, performs a pymol.orient similar rotation of the input protein. Default is False
     - fam_aligned_splitting (bool): If True, the protein is split into SF-aligned (is rotated based on this segment) and not-aligned parts. THey are connected with a dashed line. Default is True.\n
     - drop_family_prob (float): Allows the program to drop a chosen SF if the FoldSeek probability is smaller than given cut-off. In this case the protein rotation is determined using the implemented "find_best_view_angle" method. Default is 0.5. \n
     - show_lddt_col (bool): LDDT scores from FoldSeek alignment to best matching SF is shown per residue as colorscale (magenta). Default is False. \n
@@ -326,6 +328,10 @@ def create_2DSVG_from_pdb(
     if file_id == None:
         raise ValueError(
             f'"{pdb_file}" is not a valid pdb input. Please check the path and the file.'
+        )
+    if family_vis and pymol_orient:
+        raise ValueError(
+            f'Family_vis and pymol_orient is selected. Please choose one type for visualization.'
         )
     # counteract impossible combinations
     if not family_vis:
@@ -437,6 +443,20 @@ def create_2DSVG_from_pdb(
                         y_shift=0,
                         make_positive=False,
                     )
+            elif pymol_orient:
+                input_filename, extension = os.path.splitext(os.path.basename(dom_file))
+                output_filename = f"{input_filename}_pymol_oriented{extension}"
+                output_file = os.path.join(tmp_dir,output_filename)
+                pymol_oriented_dom_file = do_pymol_orient(dom_file,output_file)
+                add_header_to_pdb(pymol_oriented_dom_file)
+                dom_prot = Protein()
+                dom_prot.chain = chain_id
+                pdb_element = dom_prot.parse_pdb(pymol_oriented_dom_file)
+                dom_prot.get_secondary_structure(pdb_element, pymol_oriented_dom_file,silent)
+                dom_prot.print_ss_objects() if not silent else None
+                dom_prot.scale_shift_coords(
+                    scale=30, x_shift=0, y_shift=0, make_positive=False
+                )
             else:
                 # manually find best rotation and continue with that
                 add_header_to_pdb(dom_file)

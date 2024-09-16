@@ -12,7 +12,6 @@ import csv
 from .Classes import *
 from .Graphical import *
 
-
 def split_pdb_chains(input_pdb_file, output_dir):
     """
     Splits a PDB file into multiple files based on chains using Biopython, saves them to a specified directory,
@@ -477,6 +476,8 @@ def create_testing_vis(ssv, svg_plane, ss_objects):
                     fill="none",
                 )
             )
+
+
 
 
 def get_lddt_color(value):
