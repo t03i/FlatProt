@@ -38,6 +38,6 @@ FlatProt = "FlatProt.cli:app"
 
 [tool.poetry.urls]
 Repository = "https://github.com/ConstantinCarl/FlatProt"
-Documentation = "https://constantincarl.github.io/prot2d/"
+Documentation = "https://constantincarl.github.io/FlatProt/"
 Zenodo = "https://doi.org/10.5281/zenodo.10674045"
 Example-Collab = "https://colab.research.google.com/drive/17u0twE81kYYspNFsdXUHrCyP33hj0dO6?usp=sharing"
