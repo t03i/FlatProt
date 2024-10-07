@@ -56,11 +56,11 @@ def visualize(
     AS_annotation,
     mark_endings,
     simple_helix,
-    cysteins,
     simple_coil_avg,
     show_lddt_col,
     show_lddt_text,
-    silent
+    silent,
+    feature_json
 ):
     if len(protein.secondary_structures) == 0:
         return
@@ -73,39 +73,36 @@ def visualize(
         only_path = True
 
     elif vis_type == "simple-coil":
-        protein.get_protein_ordered_vis_objects(simple_coil_avg, mark_endings,silent)
+        protein.get_protein_ordered_vis_objects(simple_coil_avg, mark_endings,silent, feature_json)
         # vis non-coil ss noraml but connect by simplifying coil structure
         visualize_ordered_elements(
             dwg,
             protein.ordered_vis_elements,
             simple_helix,
             general_opacity,
-            cysteins,
             show_lddt_col,
             show_lddt_text,
         )
 
     elif vis_type == "normal":
-        protein.get_protein_ordered_vis_objects(1, mark_endings,silent)
+        protein.get_protein_ordered_vis_objects(1, mark_endings,silent,feature_json)
         visualize_ordered_elements(
             dwg,
             protein.ordered_vis_elements,
             simple_helix,
             general_opacity=general_opacity,
-            cysteins=cysteins,
             show_lddt_col=show_lddt_col,
             show_lddt_text=show_lddt_text,
         )
 
     elif vis_type == "special":
-        protein.get_protein_ordered_vis_objects(1, mark_endings,silent)
+        protein.get_protein_ordered_vis_objects(1, mark_endings,silent,feature_json)
         # create_testing_vis(dwg,ss_objects=protein.secondary_structures)
         visualize_ordered_elements(
             dwg,
             protein.ordered_vis_elements,
             simple_helix,
             general_opacity=general_opacity,
-            cysteins=cysteins,
             show_lddt_col=show_lddt_col,
             show_lddt_text=show_lddt_text,
             no_coil=True,
@@ -113,7 +110,7 @@ def visualize(
         )
 
     elif vis_type == "fruchtermann":
-        protein.get_protein_ordered_vis_objects(1)
+        protein.get_protein_ordered_vis_objects(1,feature_json)
         # vis of non coil ss segments that are pushe apart using Fruchtermann Reingold layout connected with simple lines
         do_fruchtermann_reingold_layout(protein.secondary_structures, k=0.5, iter=50)
         protein.scale_shift_coords(
@@ -124,7 +121,6 @@ def visualize(
             protein.ordered_vis_elements,
             simple_helix,
             general_opacity=general_opacity,
-            cysteins=cysteins,
             show_lddt_col=show_lddt_col,
             show_lddt_text=show_lddt_text,
         )
@@ -260,7 +256,6 @@ def create_2DSVG_from_pdb(
     domain_annotation_file: str = None,
     domain_hull: bool = True,
     visualisation_type: str = "normal",
-    cysteins: bool = True,
     as_annotation: bool = False,
     mark_endings: bool = True,
     simple_helix: bool = True,
@@ -270,7 +265,8 @@ def create_2DSVG_from_pdb(
     simple_coil_avg: int = 10,
     chain_info: bool = True,
     no_shifting:bool=False,
-    silent:bool = False
+    silent:bool = False,
+    manual_highlights_json:str = None
 ):
     """
     Main method of the package for creating 2D visualisations of a protein in form of a SVG file. The user can decide between different visualisation options.
@@ -296,7 +292,6 @@ def create_2DSVG_from_pdb(
     - domain_hull (bool): If True sourounds domains with smoothed convex hull colored based on the secondary structure composition (R,G,B) <-> (helix,sheet,coil). Default is True\n
 
     - visualisation_type (string): "only-path", "normal", or "simple-coil". Default is "normal".\n
-    - cysteins (bool): If True, includes calculated cystein bonds in the visualisation. Default is True.\n
     - as_annotation (bool): If True, includes AS-annotation. Default is False.\n
     - mark_endings (bool): If True, marks the endings. Default is True.\n
     - simple_helix (bool): If True, helix are represented in a simple way (file size eficient). Default is True.\n
@@ -304,7 +299,8 @@ def create_2DSVG_from_pdb(
     - simple_coil_avg (int): Coil structures will be summarised together. e.g. 10 means that every 10 coil-residues will be averaged and treated as one point. Bigger values lead to higher simplification. Is only used when "simple-coil" or "only-path" is used. Default is 10\n
     - chain_info (bool): If true and multi-chain protein structure is given: adds chain annotations (from pdb) in the visualizations. Default is True.\n
     - silent (bool): If True, the program is executed without any outputs to sout. Default is False.\n
-    
+    - manual_highlights_json (str): If a json file in the correct format (GitHub) is provided manual residue- and residue-bond-highlights are included in the visualization. The defautl is None.
+
     Returns: The path to the created SVG-file. \n
 
     - Creates a SVG file containing the 2D visualisation of the input protein in the given result_dir.
@@ -468,6 +464,7 @@ def create_2DSVG_from_pdb(
                 dom_prot.scale_shift_coords(
                     scale=30, x_shift=0, y_shift=0, make_positive=False
                 )
+                #high_res = dom_prot.get_feature_highlights("/Users/constantincarl/Uni/Paper/feature_json_testing/output.json")
                 dom_prot.find_best_view_angle(step_width=find_best_rot_step)
             dom_proteins.append(dom_prot)
 
@@ -475,6 +472,7 @@ def create_2DSVG_from_pdb(
         chain_residues = [res for dom in dom_proteins for res in dom.residues]
         chain_prot = Protein()
         chain_prot.residues = chain_residues
+        chain_prot.chain = chain_id
         if not no_shifting:
             chain_prot.scale_shift_coords(
                 scale=1, x_shift=0, y_shift=0, make_positive=True
@@ -527,11 +525,11 @@ def create_2DSVG_from_pdb(
                     as_annotation,
                     mark_endings,
                     simple_helix,
-                    cysteins,
                     simple_coil_avg,
                     show_lddt_col,
                     show_lddt_text,
-                    silent
+                    silent,
+                    feature_json=manual_highlights_json
                 )
                 visualize(
                     dwg,
@@ -540,11 +538,11 @@ def create_2DSVG_from_pdb(
                     as_annotation,
                     mark_endings,
                     simple_helix,
-                    cysteins,
                     simple_coil_avg,
                     show_lddt_col,
                     show_lddt_text,
-                    silent
+                    silent,
+                    feature_json=manual_highlights_json
                 )
                 visualize(
                     dwg,
@@ -553,11 +551,11 @@ def create_2DSVG_from_pdb(
                     as_annotation,
                     mark_endings,
                     simple_helix,
-                    cysteins,
                     simple_coil_avg,
                     show_lddt_col,
                     show_lddt_text,
-                    silent
+                    silent,
+                    feature_json=manual_highlights_json
                 )
                 add_dashed_line_between_proteins(
                     dwg, front_part, aligned_part, end_part
@@ -570,11 +568,11 @@ def create_2DSVG_from_pdb(
                     as_annotation,
                     mark_endings,
                     simple_helix,
-                    cysteins,
                     simple_coil_avg,
                     show_lddt_col,
                     show_lddt_text,
-                    silent
+                    silent,
+                    feature_json=manual_highlights_json
                 )
 
             if domain_splitted:
@@ -594,6 +592,29 @@ def create_2DSVG_from_pdb(
     dwg.save()
     return result_file_path, matched_sfs, probs
 
+def calculate_cystein_bonds(pdb_file,output_json, max_distance=3, cystein_color = "orange"):
+    dom_prot = Protein()
+    pdb_element = dom_prot.parse_pdb(pdb_file=pdb_file)
+    dom_prot.get_secondary_structure(pdb_element, pdb_file,silent=True)
+    cystein_bonds = dom_prot.get_cystein_bonds(max_distance)
+
+    # write to json format:
+    output_data = {
+    "residues": [],  # Empty list for residues (per your request)
+    "pairs": []      # List for bond pairs
+    }
+    for bond in cystein_bonds:
+        pair = {
+            "name": f"cys-bond ({bond[0].chain_pos},{bond[1].chain_pos})",
+            "chain": f"{bond[0].chain}",
+            "indeces": [bond[0].chain_pos, bond[1].chain_pos],  # Extract chain_pos from the bond tuple
+            "color": cystein_color
+        }
+        output_data["pairs"].append(pair)
+
+    # Save as a JSON file
+    with open(output_json, 'w') as outfile:
+        json.dump(output_data, outfile, indent=4)
 
 def create_family_overlay(
     pdb_dir: str,
@@ -668,7 +689,6 @@ def create_family_overlay(
                 fam_aligned_splitting=False,
                 domain_splitted=False,
                 visualisation_type="simple-coil",
-                cysteins=False,
                 as_annotation=False,
                 mark_endings=False,
                 simple_helix=True,

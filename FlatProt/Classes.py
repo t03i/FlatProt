@@ -1,6 +1,6 @@
 # Copyright 2024 Rostlab.
 # SPDX-License-Identifier: Apache-2.0
-
+import json
 import svgwrite
 from Bio.PDB import DSSP
 from Bio import PDB
@@ -188,7 +188,7 @@ class cross_class_functions:
 
 
 class Residue:
-    def __init__(self, amino_acid, chain_pos):
+    def __init__(self, amino_acid, chain_pos,chain):
         self.amino_acid = amino_acid
         self.x = None
         self.y = None
@@ -202,6 +202,9 @@ class Residue:
         self.included_in = None
         self.atoms = {}
         self.lddt = None
+        self.highlight = None
+        self.highlight_name = None
+        self.chain = chain
 
     def add_new_model(self, x, y, z):
         self.x_modelwise.append(x)
@@ -530,6 +533,40 @@ class Protein:
             # residue.x = -residue.x
         return prot_pdb_element
 
+    def get_feature_highlights (self, feature_json):
+        #transform residues list to dict for faster lookup:
+        residue_dict = {res.chain_pos: res for res in self.residues}
+        with open(feature_json, 'r') as file:
+            data = json.load(file)
+        # pairs:
+        highlight_pairs = {(item["chain"], tuple(item["indeces"])): {"color": item["color"], "name": item["name"]}
+        for item in data["pairs"] if item["chain"]== self.chain}
+        bond_list = []
+        for (chain, pair_tuple), pair_data in highlight_pairs.items():
+            try:
+                res1 = residue_dict[ pair_tuple[0]]
+                res2 = residue_dict[pair_tuple[1]]
+            except KeyError as e:
+                raise KeyError(f"{e} in {feature_json} is not found as residue index in chain {chain}")
+
+            bond = Bond(res1, res2, pair_data["color"])
+            bond.highlight_name = pair_data["name"]
+            bond_list.append(bond)
+
+        # single residues:
+        highlight_residues = {(item["chain"], item["index"]): {"color": item["color"], "name": item.get("name", "")}
+        for item in data["residues"] if item["chain"]== self.chain}
+
+        for (chain, res_index), residue_data in highlight_residues.items():
+            try:
+                residue = residue_dict[res_index]
+                residue.highlight = residue_data["color"]
+                residue.highlight_name = residue_data["name"]  # Assuming Residue class can accept a name
+            except KeyError as e:
+                raise KeyError(f"{e} in {feature_json} is not found as residue index in chain {chain}")
+        return bond_list
+        
+    
     def print_ss_objects(self):
         helix = 0
         sheets = 0
@@ -549,12 +586,15 @@ class Protein:
         atoms_to_save = ["CA", "SG"]
         residues = {}
         for model in pdb_element:
-            res_counter = 1
+            #res_counter = 1
             all_res_number = 0
             for chain in model:
+                chain_id = chain.id
                 for residue in chain:
+                    residue_index = residue.id[1]
                     all_res_number += 1
-                    res_id = residue.get_resname() + "_" + str(res_counter)
+                    res_id = residue.get_resname() + "_" + str(residue_index)
+                    
                     for atom in residue:
                         atom_coord = atom.get_coord()
                         atom_name = atom.get_name()
@@ -565,7 +605,7 @@ class Protein:
                                 current_res = residues[res_id]
                             else:
                                 current_res = Residue(
-                                    residue.get_resname(), res_counter
+                                    residue.get_resname(), residue_index,chain_id
                                 )
                                 residues[res_id] = current_res
                             if atom_name in current_res.atoms.keys():
@@ -574,7 +614,7 @@ class Protein:
                             else:
                                 curr_atom = Atom(atom_name, x, y, z)
                                 current_res.atoms[atom_name] = curr_atom
-                    res_counter += 1
+                    #res_counter += 1
             # print(all_res_number)
         for residue in residues.values():
             residue.set_atoms_average_choords()
@@ -763,12 +803,6 @@ class Protein:
 
     def get_cystein_bonds(self, max_length=3, silent=False):
         cysteines = [res for res in self.residues if res.amino_acid == "CYS"]
-        '''pairs = list(
-            tqdm(
-                combinations(cysteines, 2), desc="Generating cystein pairs", unit="pair"
-            )
-        )
-        '''
         cysteine_bonds = [
             poss_bond
             for poss_bond in tqdm(combinations(cysteines, 2), desc="Checking cystein bonds", unit="bond",disable=silent)
@@ -1016,7 +1050,7 @@ class Protein:
         )
         return dash_line
 
-    def get_protein_ordered_vis_objects(self, avg_coil, mark_endings,silent):
+    def get_protein_ordered_vis_objects(self, avg_coil, mark_endings,silent,feature_json):
         if len(self.residues) == 0:
             return
         # returns the z-ordered objects for visualisation in a list (helix,sheet,coil, connecting_elements, cystein_bonds)
@@ -1042,14 +1076,14 @@ class Protein:
                 connect_elemet = Connecting_element(connect1, connect2)
                 vis_object_list.append(connect_elemet)
             last_ss = ss
-        # add cystein bonds
-        bonds = self.get_cystein_bonds(silent=silent)
-        for bond in bonds:
-            cys_bond = Cystein_bond(bond[0], bond[1])
-            vis_object_list.append(cys_bond)
+        
+        if feature_json != None:
+            # add feature highlights
+            bonds_list = self.get_feature_highlights(feature_json)
+            vis_object_list.extend(bonds_list)
 
-        # add lddt_res
-        created_lddt_list = []
+        # add Residue coloring (highlight and lddt (highlieght has priority))
+        colored_list = []
         for res in self.residues:
             if res.included_in != None:
                 # is summarise
@@ -1057,21 +1091,23 @@ class Protein:
                 if (
                     sum_point.x,
                     sum_point.y,
-                ) not in created_lddt_list:  # no double lddt point drawing
-                    lddt_obj = Lddt_coloring_res(
-                        sum_point.x, sum_point.y, sum_point.z, sum_point.lddt
-                    )
-                    created_lddt_list.append((sum_point.x, sum_point.y))
-                    vis_object_list.append(lddt_obj)
-            elif res.lddt != None:
+                ) not in colored_list:  # no double lddt point drawing
+                    
+                    coloring_obj = Residue_Coloring(
+                        sum_point.x, sum_point.y, sum_point.z, sum_point.lddt, manual_highlight=res.highlight)
+                    coloring_obj.manual_name = res.highlight_name
+                    colored_list.append((sum_point.x, sum_point.y))
+                    vis_object_list.append(coloring_obj)
+            elif res.lddt != None or res.highlight != None:
                 # get closest point on line for helix/sheet
                 line_x, line_y = (
                     closest_point_on_line((res.x, res.y), res.ss_obj.get_line())
                     if res.ss != "coil"
                     else (res.x, res.y)
                 )
-                lddt_obj = Lddt_coloring_res(line_x, line_y, res.ss_obj.z, res.lddt)
-                vis_object_list.append(lddt_obj)
+                coloring_obj = Residue_Coloring(line_x, line_y, res.ss_obj.z, res.lddt,manual_highlight=res.highlight)
+                coloring_obj.manual_name = res.highlight_name
+                vis_object_list.append(coloring_obj)
 
         if mark_endings:
             # add annotation (start,end)
@@ -1091,6 +1127,7 @@ class Protein:
             vis_object_list.append(end_annotation)
 
         # sort list
+
         vis_object_list.sort(key=lambda obj: obj.z, reverse=True)
         self.ordered_vis_elements = vis_object_list
         return vis_object_list
@@ -1123,14 +1160,16 @@ class Protein:
                 res.lddt = float(lddt_map[res.chain_pos])
 
 
-class Cystein_bond:
-    def __init__(self, start_res, end_res):
-        self.type = "cystein_bond"
+class Bond:
+    def __init__(self, start_res, end_res, color):
+        self.type = "bond"
+        self.color = color
         self.start_res = start_res
         self.end_res = end_res
         # use highes point of bond as order value --> always on top of ss
         self.z = min(self.start_res.z, self.end_res.z)
         # self.z = (self.start_res.z+self.end_res.z) /2
+        self.highlight_name = None
 
 
 class Connecting_element:
@@ -1142,11 +1181,13 @@ class Connecting_element:
         # TODO maybe change to SS "z"...always at the same level as connected SS
 
 
-class Lddt_coloring_res:
-    def __init__(self, x, y, z, lddt):
-        self.type = "lddt_coloring_res"
+class Residue_Coloring:
+    def __init__(self, x, y, z, lddt, manual_highlight):
+        self.type = "residue_coloring"
         self.x, self.y, self.z = x, y, z
         self.lddt = lddt
+        self.manual_highlight = manual_highlight
+        self.manual_name = None
 
 
 class Annotation:

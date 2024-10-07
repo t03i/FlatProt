@@ -260,7 +260,6 @@ def visualize_ordered_elements(
     ordered_vis_elements,
     simple_helix,
     general_opacity,
-    cysteins,
     show_lddt_col,
     show_lddt_text,
     no_coil=False,
@@ -270,20 +269,17 @@ def visualize_ordered_elements(
         helix_col = "grey"
         sheet_col = "grey"
         coil_col = "grey"
-        cystein_col = "grey"
     else:
         helix_col = "#F05039"
         sheet_col = "#1F449C"
         coil_col = "black"
-        cystein_col = "orange"
     circle_radius = 3.5
-    cys_annotation = False
+    bond_annotation = False
     for element in ordered_vis_elements:
         if element.type == "sheet":
             x1, y1 = element.start_res.x, element.start_res.y
             x2, y2 = element.end_res.x, element.end_res.y
-            svg_plane.add(
-                create_arrow_line_between_2_points(
+            sheet_obj =create_arrow_line_between_2_points(
                     float(x1),
                     float(y1),
                     float(x2),
@@ -292,36 +288,33 @@ def visualize_ordered_elements(
                     80,
                     general_opacity,
                 )
-            )
-            # add circle for ss change
-            svg_plane.add(
-                svgwrite.shapes.Circle(
+            sheet_obj.set_desc(title=f"Sheet: {element.start_res.chain_pos} - {element.end_res.chain_pos}", desc=None)
+            svg_plane.add(sheet_obj)
+            # add circles for ss change
+            start_circle =svgwrite.shapes.Circle(
                     center=(str(x1), str(y1)),
                     r=circle_radius,
                     fill="black",
                     stroke="black",
                     opacity=general_opacity,
                 )
-            )
-            svg_plane.add(
-                svgwrite.shapes.Circle(
+            start_circle.set_desc(title=f"{element.start_res.amino_acid} - {element.start_res.chain_pos}")
+            svg_plane.add(start_circle)
+            end_circle=svgwrite.shapes.Circle(
                     center=(str(x2), str(y2)),
                     r=circle_radius,
                     fill="black",
                     stroke="black",
                     opacity=general_opacity,
                 )
-            )
+            end_circle.set_desc(title=f"{element.end_res.amino_acid} - {element.end_res.chain_pos}")
+            svg_plane.add(end_circle)
         elif element.type == "helix":
             x1, y1 = element.start_res.x, element.start_res.y
             x2, y2 = element.end_res.x, element.end_res.y
-            # print(f"({x1,y1})({x2,y2})")
-            # svg_plane.add(svgwrite.shapes.Circle(center = (x1,y1),r=20, fill="orange", opacity=1))
-            # svg_plane.add(svgwrite.shapes.Circle(center = (x2,y2),r=20, fill="orange", opacity=1))
-            # svg_plane.add(svgwrite.shapes.Polyline(points=[(x1,y1),(x2,y2)], stroke="orange", stroke_width=5, fill="none", opacity=1))
+            helix_obj = None
             if simple_helix:
-                svg_plane.add(
-                    create_simple_helix_line(
+                helix_obj=create_simple_helix_line(
                         float(x1),
                         float(y1),
                         float(x2),
@@ -332,35 +325,38 @@ def visualize_ordered_elements(
                         100,
                         general_opacity,
                     )
-                )
             else:
-                svg_plane.add(
-                    create_helix_between(
+                helix_obj=create_helix_between(
                         float(x1), float(y1), float(x2), float(y2), helix_col, 80
                     )
-                )
-            # print(f"\n{x1}\n")
-            svg_plane.add(
-                svgwrite.shapes.Circle(
+            helix_obj.set_desc(title=f"Helix: {element.start_res.chain_pos} - {element.end_res.chain_pos}", desc=None)
+            svg_plane.add(helix_obj)
+            # add circles for ss change
+            start_circle =svgwrite.shapes.Circle(
                     center=(str(x1), str(y1)),
                     r=circle_radius,
                     fill="black",
                     stroke="black",
+                    opacity=general_opacity,
                 )
-            )
-            svg_plane.add(
-                svgwrite.shapes.Circle(
+            start_circle.set_desc(title=f"{element.start_res.amino_acid} - {element.start_res.chain_pos}")
+            svg_plane.add(start_circle)
+            end_circle=svgwrite.shapes.Circle(
                     center=(str(x2), str(y2)),
                     r=circle_radius,
                     fill="black",
                     stroke="black",
+                    opacity=general_opacity,
                 )
-            )
+            end_circle.set_desc(title=f"{element.end_res.amino_acid} - {element.end_res.chain_pos}")
+            svg_plane.add(end_circle)
         elif element.type == "coil" and not no_coil:
-            points = [(str(point[0]), str(point[1])) for point in element.coil_path]
+            path_data = [f"{'M' if i == 0 else 'L'} {point[0]} {point[1]}" for i, point in enumerate(element.coil_path)]
+            path_string = " ".join(path_data)
+            
             svg_plane.add(
-                svgwrite.shapes.Polyline(
-                    points=points,
+                svgwrite.path.Path(
+                    d=path_string,
                     stroke=coil_col,
                     stroke_width=5,
                     fill="none",
@@ -382,40 +378,45 @@ def visualize_ordered_elements(
                 )
             )
 
-        elif element.type == "cystein_bond" and cysteins and not no_coil:
+        elif element.type == "bond" and not no_coil:
             x1, y1 = element.start_res.get_closest_point()
             x2, y2 = element.end_res.get_closest_point()
-            svg_plane.add(
-                svgwrite.shapes.Line(
-                    start=(str(x1), str(y1)),
-                    end=(str(x2), str(y2)),
-                    stroke=cystein_col,
-                    stroke_width=3,
-                    fill="none",
-                    opacity=general_opacity,
-                    stroke_dasharray="2,2",
-                )
+            # Create the line for the bond
+            bond_line = svgwrite.shapes.Line(
+                start=(str(x1), str(y1)),
+                end=(str(x2), str(y2)),
+                stroke=element.color,
+                stroke_width=3,
+                fill="none",
+                opacity=general_opacity,
+                stroke_dasharray="2,2"
             )
-            svg_plane.add(
-                svgwrite.shapes.Circle(
+            bond_line.set_desc(title=element.highlight_name, desc=None)
+            svg_plane.add(bond_line)
+
+             # point at start of line
+            start_circle = svgwrite.shapes.Circle(
                     center=(str(x1), str(y1)),
                     r=circle_radius,
-                    fill=cystein_col,
-                    stroke=cystein_col,
+                    fill=element.color,
+                    stroke=element.color,
                     opacity=general_opacity,
                 )
-            )
-            svg_plane.add(
-                svgwrite.shapes.Circle(
+            start_circle.set_desc(title=f"{element.start_res.amino_acid} - {element.start_res.chain_pos}", desc=None)
+            svg_plane.add(start_circle)
+
+             # point at end of line
+            end_circle = svgwrite.shapes.Circle(
                     center=(str(x2), str(y2)),
                     r=circle_radius,
-                    fill=cystein_col,
-                    stroke=cystein_col,
+                    fill=element.color,
+                    stroke=element.color,
                     opacity=general_opacity,
                 )
-            )
-            if cys_annotation:
-                cyst_text = svgwrite.text.Text(
+            end_circle.set_desc(title=f"{element.end_res.amino_acid} - {element.end_res.chain_pos}", desc=None)
+            svg_plane.add(end_circle)
+            if bond_annotation:
+                bond_text = svgwrite.text.Text(
                     element.start_res.amino_acid
                     + " : "
                     + str(element.start_res.chain_pos)
@@ -424,8 +425,8 @@ def visualize_ordered_elements(
                     + " : "
                     + str(element.end_res.chain_pos)
                 )
-                cyst_text.update({"x": str(x1), "y": str(y1)})
-                svg_plane.add(cyst_text)
+                bond_text.update({"x": str(x1), "y": str(y1)})
+                svg_plane.add(bond_text)
         elif element.type == "annotation":
             dot = svgwrite.shapes.Circle(
                 center=(
@@ -442,25 +443,40 @@ def visualize_ordered_elements(
                     "y": str(element.annotated_residue.y + 10),
                 }
             )
+            #dot.set_desc(title=f"{element.annotated_residue.amino_acid} - {element.annotated_residue.chain_pos}")
             svg_plane.add(dot)
             svg_plane.add(text)
 
-        elif element.type == "lddt_coloring_res":
-            if element.lddt == None:
-                continue
-            text = svgwrite.text.Text(round(element.lddt, 3), fill="black")
-            text.update({"x": str(element.x + 10), "y": str(element.y + 10)})
-            lddt_color = get_lddt_color(element.lddt)
+        elif element.type == "residue_coloring":
+            if element.manual_highlight != None:
+                #priority coloring
+                manual_highlight_circle =svgwrite.shapes.Circle(
+                        center=(str(element.x), str(element.y)),
+                        r=10,
+                        fill=element.manual_highlight,
+                        stroke="black",
+                        opacity=0.8,
+                        stroke_width=1, 
+                        stroke_dasharray="3,1"
+                    )
+                manual_highlight_circle.set_desc(title=element.manual_name, desc=None)
+                svg_plane.add(manual_highlight_circle)
+            elif element.lddt != None:
+                text = svgwrite.text.Text(round(element.lddt, 3), fill="black")
+                text.update({"x": str(element.x + 10), "y": str(element.y + 10)})
+                lddt_color = get_lddt_color(element.lddt)
 
-            svg_plane.add(text) if show_lddt_text and lddt_color != None else None
-            svg_plane.add(
-                svgwrite.shapes.Circle(
-                    center=(str(element.x), str(element.y)),
-                    r=15,
-                    fill=lddt_color,
-                    opacity=0.3,
-                )
-            ) if show_lddt_col and lddt_color != None else None
+                svg_plane.add(text) if show_lddt_text and lddt_color != None else None
+                svg_plane.add(
+                    svgwrite.shapes.Circle(
+                        center=(str(element.x), str(element.y)),
+                        r=15,
+                        fill=lddt_color,
+                        opacity=0.3,
+                    )
+                ) if show_lddt_col and lddt_color != None else None
+            else:
+                continue
 
 
 def create_testing_vis(ssv, svg_plane, ss_objects):
@@ -646,69 +662,6 @@ def add_start_end_annotation(svg_plane, ss_objects, start_col, end_col):
     svg_plane.add(end_text)
     svg_plane.add(start_dot)
     svg_plane.add(end_dot)
-
-
-def get_cystein_bonds_old(residues, max_length=3):
-    # not used
-    cysteines = []
-    [cysteines.append(res) if res.amino_acid == "CYS" else None for res in residues]
-
-    pairs = list(combinations(cysteines, 2))
-    cysteine_bonds = []
-    [
-        cysteine_bonds.append(poss_bond)
-        for poss_bond in pairs
-        if poss_bond[0].atoms["SG"].get_distance_to_atom(poss_bond[1].atoms["SG"])
-        <= max_length
-    ]
-    return cysteine_bonds
-
-
-def vis_cystein_bonds(svg_plane, cystein_bonds, opacity, annotation):
-    circle_radius = 6
-    for bond in cystein_bonds:
-        # find closest point on line to residue in bond and draw yellow line
-        x1, y1 = bond[0].get_closest_point()
-        x2, y2 = bond[1].get_closest_point()
-        svg_plane.add(
-            svgwrite.shapes.Polyline(
-                points=[(x1, y1), (x2, y2)],
-                stroke="orange",
-                stroke_width=3,
-                fill="none",
-                opacity=opacity,
-            )
-        )
-        svg_plane.add(
-            svgwrite.shapes.Circle(
-                center=(x1, y1),
-                r=circle_radius,
-                fill="none",
-                stroke="orange",
-                opacity=opacity,
-            )
-        )
-        svg_plane.add(
-            svgwrite.shapes.Circle(
-                center=(x2, y2),
-                r=circle_radius,
-                fill="none",
-                stroke="orange",
-                opacity=opacity,
-            )
-        )
-        if annotation:
-            cyst_text = svgwrite.text.Text(
-                bond[0].amino_acid
-                + " : "
-                + str(bond[0].chain_pos)
-                + " -- "
-                + bond[1].amino_acid
-                + " : "
-                + str(bond[1].chain_pos)
-            )
-            cyst_text.update({"x": x1, "y": y1})
-            svg_plane.add(cyst_text)
 
 
 def calculate_viewbox(objects, padding):

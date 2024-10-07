@@ -8,6 +8,7 @@ from .main import (
     db_set_ID_pymol_rot,
     create_2DSVG_from_pdb,
     create_USERflex_db,
+    calculate_cystein_bonds
 )
 from .utils import (
     count_residues,
