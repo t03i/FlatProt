@@ -99,6 +99,15 @@ This project uses datasets that can be found on Zenodo. Additional example files
 
 <img width="450" alt="image" src="https://github.com/ConstantinCarl/prot2d/assets/156075124/854a89a7-e91c-4ec5-b81d-d33b4f1b96ec">
 
+## Feature Highlights
+
+For highlighting features in a structure two types of highlights are possible. Both residue pairs and single residues can be annotated by residue index, name and wanted highlighting color in the following json format:
+
+<img width="464" alt="image" src="https://github.com/user-attachments/assets/84638ff1-fb64-4dad-9b0e-31b18529578d">
+
+Cystein bonds highlight annotations can be created by using FlatProt's "calculate_cystein_bonds" functionality.
+
+
 ## Domain Annotation File Format:
 
 The domain annotation is needed in the following format to be procceced by prot2d (methods for converting chainsaw annotations are included in the package documentation)
