@@ -593,6 +593,39 @@ def create_2DSVG_from_pdb(
     return result_file_path, matched_sfs, probs
 
 def calculate_cystein_bonds(pdb_file,output_json, max_distance=3, cystein_color = "orange"):
+    """
+Main method for calculating cysteine bonds in a protein structure and saving the output in JSON format.
+
+Args:\n\n
+- pdb_file (str): Path to the PDB file to be analyzed. (Required)\n
+- output_json (str): Path to the JSON file where the cysteine bond data will be saved. (Required)\n
+- max_distance (float): Maximum distance between sulfur atoms in cysteine residues to be considered a bond. Default is 3.0.\n
+- cystein_color (str): Color assigned to the cysteine bond in the output data. Default is "orange".\n
+
+Returns:\n\n
+- None\n
+
+- The method calculates disulfide bonds (cysteine bonds) between sulfur atoms in a protein structure based on a given maximum distance.
+- It writes the bond information to a JSON file, including bond pairs, chain positions, and the specified color.
+
+The output JSON contains:\n\n
+- "residues": An empty list (placeholder for potential residue information).\n
+- "pairs": A list of dictionaries, where each dictionary represents a cysteine bond with bond name, chain information, indices, and color.
+
+Example of JSON structure:
+{
+    "residues": [],
+    "pairs": [
+        {
+            "name": "cys-bond (30,60)",
+            "chain": "A",
+            "indeces": [30, 60],
+            "color": "orange"
+        },
+        ...
+    ]
+}
+"""
     dom_prot = Protein()
     pdb_element = dom_prot.parse_pdb(pdb_file=pdb_file)
     dom_prot.get_secondary_structure(pdb_element, pdb_file,silent=True)
