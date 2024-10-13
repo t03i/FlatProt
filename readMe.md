@@ -106,7 +106,9 @@ For highlighting features in a structure two types of highlights are possible. B
 <img width="464" alt="image" src="https://github.com/user-attachments/assets/84638ff1-fb64-4dad-9b0e-31b18529578d">
 
 Cystein bonds highlight annotations can be created by using FlatProt's "calculate_cystein_bonds" functionality.
+An example json can be downloaded here:
 
+...
 
 ## Domain Annotation File Format:
 
