@@ -1,24 +1,22 @@
 # Copyright 2024 Rostlab.
 # SPDX-License-Identifier: Apache-2.0
 
-from .base import StructureComponent
+import numpy as np
+
+from .base import StructureComponent, SubStructureComponent
 
 
 class Protein(StructureComponent):
     pass
 
 
-class Domain(StructureComponent):
+class Helix(SubStructureComponent):
     pass
 
 
-class Helix(StructureComponent):
+class Sheet(SubStructureComponent):
     pass
 
 
-class Sheet(StructureComponent):
-    pass
-
-
-class Loop(StructureComponent):
+class Loop(SubStructureComponent):
     pass
