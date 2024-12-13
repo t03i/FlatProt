@@ -1,293 +1,283 @@
 # Copyright 2024 Rostlab.
 # SPDX-License-Identifier: Apache-2.0
 
-import os
 from pathlib import Path
+from typing import Optional
+from collections import namedtuple
 
-from Bio.PDB.Structure import Structure
-from Bio.PDB.Chain import Chain
-from Bio.PDB.DSSP import DSSP
-from Bio.PDB.PDBParser import PDBParser
-from Bio.PDB.MMCIFParser import MMCIFParser
-from Bio.PDB.PDBIO import PDBIO
-from Bio.PDB.Model import Model
-from Bio.PDB.Residue import Residue as BioResidue
-from Bio.PDB.Atom import Atom
 import numpy as np
 from Bio.Data.IUPACData import protein_letters_3to1
+from Bio.PDB import (
+    MMCIFParser,
+    PDBParser,
+    Structure as BioStructure,
+    DSSP,
+    Chain as BioChain,
+    Model,
+    Atom,
+    Residue as BioResidue,
+    MMCIFIO,
+)
 
-from flatprot.structure.components import Protein, Helix, Sheet, Loop
 from flatprot.structure.residue import Residue
-from flatprot.structure.base import SubStructureComponent
+from flatprot.structure.components import Structure
+from flatprot.structure.secondary import SecondaryStructureType
+
 from .structure import StructureParser
 
-
-def find_ss_regions(
-    ss_list: list[str],
-) -> tuple[list[tuple[int, int]], list[tuple[int, int]], list[tuple[int, int]]]:
-    """Find continuous regions of secondary structure elements."""
-    helices = []
-    sheets = []
-    loops = []
-
-    current_type = None
-    start_idx = 0
-
-    for i, (ss, res_idx) in enumerate(ss_list):
-        if ss in ("H", "G", "I"):  # Helix types
-            ss_type = "helix"
-        elif ss in ("E", "B"):  # Sheet types
-            ss_type = "sheet"
-        else:
-            ss_type = "loop"
-
-        if current_type != ss_type:
-            if current_type:
-                end_idx = i - 1
-                if current_type == "helix":
-                    helices.append((start_idx, end_idx))
-                elif current_type == "sheet":
-                    sheets.append((start_idx, end_idx))
-                else:
-                    loops.append((start_idx, end_idx))
-            current_type = ss_type
-            start_idx = res_idx
-
-    # Handle last element
-    end_idx = len(ss_list) - 1
-    if current_type == "helix":
-        helices.append((start_idx, end_idx))
-    elif current_type == "sheet":
-        sheets.append((start_idx, end_idx))
-    else:
-        loops.append((start_idx, end_idx))
-
-    return helices, sheets, loops
+ChainData = namedtuple("ChainData", ["residue_indices", "residue_names", "coordinates"])
 
 
 class BiopythonStructureParser(StructureParser):
-    def _parse_chain_data(
-        self, chain: Chain
-    ) -> tuple[list[int], list[str], np.ndarray]:
+    def parse_structure(
+        self, structure_file: Path, secondary_structure_file: Optional[Path] = None
+    ) -> Structure:
+        """Main entry point for structure parsing"""
+
+        # 1. Parse structure
+        bioStructure = self._parse_structure_file(structure_file)
+
+        # 2. Process each chain
+        chains = []
+        for chain in bioStructure.get_chains():
+            # Extract basic chain data
+            chain_data = self._parse_chain_data(chain)
+
+            # Get secondary structure (following priority)
+            ss_regions = self._get_secondary_structure(
+                chain, structure_file, secondary_structure_file
+            )
+
+            for region in ss_regions:
+                chain.add_secondary_structure(region[0], region[1], region[2])
+
+            # Convert to protein model
+            chains.append(self._create_chain(chain_data))
+
+        return Structure(chains)
+
+    def _parse_structure_file(self, structure_file: Path) -> Structure:
+        """Parse structure from file based on extension"""
+        ext = structure_file.suffix.lower()
+        if ext == ".pdb":
+            parser = PDBParser(QUIET=True)
+        elif ext in (".cif", ".mmcif", ".bcif"):
+            parser = MMCIFParser(QUIET=True)
+        else:
+            raise ValueError(f"Unsupported file format: {ext}")
+
+        return parser.get_structure("protein", structure_file)
+
+    def _parse_chain_data(self, chain: Chain) -> ChainData:
         """Extract basic chain data: residue numbers, names, and coordinates."""
         residue_indices = []
         residue_names = []
         coordinates = []
 
-        for residue in chain:
+        for i, residue in enumerate(chain):
             if "CA" in residue:
                 residue_indices.append(residue.id[1])
                 residue_names.append(residue.resname)
                 coordinates.append(residue["CA"].get_coord())
 
-        return (residue_indices, residue_names, np.array(coordinates, dtype=np.float32))
+        return ChainData(
+            residue_indices,
+            residue_names,
+            np.array(coordinates, dtype=np.float32),
+        )
 
-    def _get_secondary_structure(
-        self, structure: Structure, chain_id: str, structure_file: Path
-    ) -> list[str]:
-        """Get secondary structure assignment from mmCIF annotation or DSSP file."""
-        if structure_file.suffix.lower() in (".cif", ".mmcif", ".bcif"):
-            ss_list = self._get_ss_from_mmcif(structure, chain_id)
-            if ss_list is not None:
-                return ss_list
-
-        # Try DSSP file
-        ss_list = self._get_ss_from_dssp(structure, chain_id, structure_file)
-        if ss_list is not None:
-            return ss_list
-
-        # Default: return all coil
-        return ["-"] * len(list(structure[0][chain_id]))
-
-    def _get_ss_from_mmcif_file(
-        self, structure: Structure, chain_id: str
-    ) -> list[str] | None:
-        """Extract secondary structure information from mmCIF file."""
-        try:
-            mmcif_dict = structure.header["_struct_conf"]
-            if not mmcif_dict:
-                return None
-
-            ss_list = ["-"] * len(list(structure[0][chain_id]))
-
-            for conf in mmcif_dict:
-                if conf["pdbx_beg_auth_asym_id"] == chain_id:
-                    start = int(conf["beg_auth_seq_id"])
-                    end = int(conf["end_auth_seq_id"])
-                    ss_type = "H" if conf["conf_type_id"].startswith("HELX") else "E"
-
-                    self._update_ss_list(
-                        structure, chain_id, ss_list, start, end, ss_type
-                    )
-
-            return ss_list
-        except (KeyError, AttributeError):
-            return None
-
-    def _get_ss_from_dssp_file(
-        self, structure: Structure, chain_id: str, structure_file: Path
-    ) -> list[str] | None:
-        """Extract secondary structure information from DSSP file."""
-        dssp_file = structure_file.with_suffix(".dssp")
-        if not dssp_file.exists():
-            return None
-
-        try:
-            dssp_dict = dssp_dict_from_pdb_file(str(structure_file), str(dssp_file))
-            ss_list = []
-
-            for residue in structure[0][chain_id]:
-                key = (chain_id, residue.id)
-                ss = dssp_dict.get(key, [None, "-"])[1]
-                ss_list.append(ss)
-
-            return ss_list
-        except Exception:
-            return None
-
-    def _update_ss_list(
-        self,
-        structure: Structure,
-        chain_id: str,
-        ss_list: list[str],
-        start: int,
-        end: int,
-        ss_type: str,
-    ) -> None:
-        """Update the secondary structure list for a specific range."""
-        for i in range(start, end + 1):
-            idx = next(
-                (
-                    idx
-                    for idx, res in enumerate(structure[0][chain_id])
-                    if res.id[1] == i
-                ),
-                None,
-            )
-            if idx is not None:
-                ss_list[idx] = ss_type
-
-    def _chain_to_protein(
-        self, chain: Chain, structure: Structure, structure_file: Path
-    ) -> Protein:
-        """Convert a Bio.PDB Chain to our Protein model."""
-        # Parse basic chain data
-        indices, names, coords = self._parse_chain_data(chain)
-
-        # Convert to numpy arrays
-        index = np.array(indices, dtype=np.int32)
-        coordinates = np.array(coords, dtype=np.float32)
-
-        # Create residue objects - convert 3-letter codes to Residue enum
-        residues: list[Residue] = []
-        for resname in names:
-            # Convert 3-letter code to 1-letter code and create Residue enum
-            # Default to XAA (X) if residue is unknown
+    def _create_chain(self, chain_data: ChainData) -> Chain:
+        """Convert chain data to Protein model"""
+        residues = []
+        for resname in chain_data.residue_names:
             try:
                 one_letter = protein_letters_3to1[resname]
                 residues.append(Residue(one_letter))
             except KeyError:
                 residues.append(Residue.XAA)
 
-        # Get secondary structure
-        ss_list = self._get_secondary_structure(structure, chain.id, structure_file)
-
-        # Find secondary structure regions
-        helices, sheets, loops = find_ss_regions(ss_list, indices)
-
-        def _create_ss_component(
-            ss_region, component_class: type[SubStructureComponent], parent: Protein
-        ):
-            return component_class(
-                parent=parent,
-                start_idx=ss_region.start,
-                end_idx=ss_region.end,
-            )
-
-        # Create protein with all components
-        protein = Protein(
+        chain = Chain(
+            chain_id=chain_data.chain_id,
             residues=residues,
-            index=index,
-            coordinates=coordinates,
+            index=np.array(chain_data.residue_indices, dtype=np.int32),
+            coordinates=chain_data.coordinates,
         )
-
-        # Create secondary structure components
-        ss_components = []
-        ss_components.extend(_create_ss_component(h, Helix) for h in helices)
-        ss_components.extend(_create_ss_component(s, Sheet) for s in sheets)
-        ss_components.extend(_create_ss_component(l, Loop) for l in loops)
-
-        return protein
-
-    def _structure_to_proteins(
-        self, structure: Structure, structure_file: Path
-    ) -> dict[str, Protein]:
-        """Convert a Bio.PDB Structure to a dictionary of Protein models."""
-        proteins = {}
-        for model in structure:
-            for chain in model:
-                proteins[chain.id] = self._chain_to_protein(
-                    chain, structure, structure_file
-                )
-        return proteins
-
-    def parse_structure(self, structure_file: Path) -> dict[str, Protein]:
-        """Parse structure from various file formats (PDB, mmCIF, BCIF).
-
-        Args:
-            structure_file: Path to structure file (.pdb, .cif, .bcif)
-
-        Returns:
-            Dictionary mapping chain IDs to Protein objects
-        """
-        # Determine file format from extension
-        _, ext = os.path.splitext(structure_file)
-        ext = ext.lower()
-
-        if ext == ".pdb":
-            parser = PDBParser(QUIET=True)
-        elif ext in (".cif", ".mmcif", ".bcif"):
-            parser = MMCIFParser(QUIET=True)
-        else:
-            raise ValueError(
-                f"Unsupported file format: {ext}. Supported formats: .pdb, .cif, .mmcif, .bcif"
-            )
-
-        structure = parser.get_structure("protein", structure_file)
-        return self._structure_to_proteins(structure, structure_file)
-
-    def _protein_to_chain(self, protein: Protein, chain_id: str) -> Chain:
-        """Convert a Protein model to a Bio.PDB Chain."""
-        chain = Chain(chain_id)
-
-        for idx, (residue_idx, residue, coord) in enumerate(
-            zip(protein.index, protein.residues, protein.coordinates)
-        ):
-            # Create Bio.PDB Residue
-            bio_residue = BioResidue(
-                (" ", residue_idx, " "),  # id
-                residue.name,  # resname
-                "",  # segid
-            )
-
-            # Create CA atom
-            ca_atom = Atom(
-                name="CA",
-                coord=coord,
-                bfactor=0.0,
-                occupancy=1.0,
-                altloc=" ",
-                fullname=" CA ",
-                serial_number=idx + 1,
-                element="C",
-            )
-
-            bio_residue.add(ca_atom)
-            chain.add(bio_residue)
 
         return chain
 
-    def save_structure(self, structure: dict[str, Protein], output_file: Path) -> None:
+    def _get_secondary_structure(
+        self, chain: Chain, structure_file: Path, ss_file: Optional[Path]
+    ) -> list[tuple[SecondaryStructureType, int, int]]:
+        """Get secondary structure following priority order"""
+
+        # 1. Try secondary structure file if provided
+        if ss_file:
+            ss_list = self._get_ss_from_dssp_file(ss_file, chain)
+
+        # 2. Try mmCIF annotation
+        if structure_file.suffix.lower() in (".cif", ".mmcif", ".bcif"):
+            ss_list = self._get_ss_from_mmcif(chain)
+
+        if ss_list:
+            return ss_list
+
+        raise ValueError("No secondary structure found")
+
+    def _get_ss_from_mmcif_file(
+        self, structure: Structure, chain_id: str
+    ) -> list[tuple[SecondaryStructureType, int, int]]:
+        """Extract secondary structure information from mmCIF file.
+
+        Args:
+            structure: Bio.PDB Structure object
+            chain_id: Chain identifier to extract SS for
+
+        Returns:
+            List of secondary structure assignments ('H' for helix, 'S' for sheet, '-' for coil)
+
+        Raises:
+            ValueError: If no secondary structure information can be parsed
+        """
+        try:
+            # Initialize all positions as coil
+            ss_regions = []
+
+            # Parse struct_conf table
+            struct_conf = structure.header.get("_struct_conf", [])
+            if not struct_conf:
+                raise ValueError("No secondary structure found in mmCIF file")
+
+            for conf in struct_conf:
+                # Check if this entry belongs to our chain
+                if conf["beg_label_asym_id"] != chain_id:
+                    continue
+
+                # Get start and end positions
+                start = int(conf["beg_label_seq_id"])
+                end = int(conf["end_label_seq_id"])
+
+                # Determine SS type
+                conf_type = conf["conf_type_id"]
+                if conf_type.startswith("HELX"):
+                    ss_type = SecondaryStructureType.HELIX
+                elif conf_type.startswith("STRN"):
+                    ss_type = SecondaryStructureType.SHEET
+                else:  # TURN or other types remain as coil
+                    ss_type = SecondaryStructureType.COIL
+
+                ss_regions.append((ss_type, start, end))
+
+            return ss_regions
+
+        except (KeyError, AttributeError) as e:
+            raise ValueError(
+                f"Failed to parse secondary structure from mmCIF: {str(e)}"
+            )
+
+    def _get_ss_from_dssp_file(
+        self, structure: Structure, secondary_structure_file: Path, chain_id: str
+    ) -> list[tuple[SecondaryStructureType, int, int]]:
+        """Extract secondary structure information from DSSP file.
+
+        Args:
+            structure: Bio.PDB Structure object
+            secondary_structure_file: Path to DSSP file
+            chain_id: Chain identifier to extract SS for
+
+        Returns:
+            List of tuples containing (SS_type, start_position, end_position)
+
+        Raises:
+            ValueError: If DSSP file cannot be parsed
+        """
+        try:
+            dssp_dict = DSSP.make_dssp_dict(str(secondary_structure_file))
+            ss_regions = []
+            current_ss = None
+            start_pos = None
+
+            for residue in structure[0][chain_id]:
+                key = (chain_id, residue.id)
+                ss = dssp_dict.get(key, [None, "-"])[1]
+
+                # Convert DSSP code to SecondaryStructureType
+                if ss in ("H", "G", "I"):  # Various helix types
+                    ss_type = SecondaryStructureType.HELIX
+                elif ss in ("B", "E"):  # Various sheet types
+                    ss_type = SecondaryStructureType.SHEET
+                else:
+                    ss_type = SecondaryStructureType.COIL
+
+                # Start new region if SS type changes
+                if ss_type != current_ss:
+                    # Save previous region if exists
+                    if current_ss is not None and start_pos is not None:
+                        ss_regions.append((current_ss, start_pos, residue.id[1] - 1))
+                    # Start new region
+                    current_ss = ss_type
+                    start_pos = residue.id[1]
+
+            # Add final region
+            if current_ss is not None and start_pos is not None:
+                ss_regions.append((current_ss, start_pos, residue.id[1]))
+
+            return ss_regions
+
+        except Exception as e:
+            raise ValueError(f"Failed to parse DSSP file: {str(e)}")
+
+    def _structure_to_chains(self, structure: Structure) -> list[BioChain]:
+        """Convert a Protein model to a Bio.PDB Chain."""
+        chains = []
+        for chain_id, chain in structure.items():
+            bioChain = BioChain(chain_id)
+
+            for idx, (residue_idx, residue, coord) in enumerate(
+                zip(chain.index, chain.residues, chain.coordinates)
+            ):
+                # Create Bio.PDB Residue
+                bioResidue = BioResidue(
+                    (" ", residue_idx, " "),  # id
+                    residue.name,  # resname
+                    "",  # segid
+                )
+
+                # Create CA atom
+                ca_atom = Atom(
+                    name="CA",
+                    coord=coord,
+                    bfactor=0.0,
+                    occupancy=1.0,
+                    altloc=" ",
+                    fullname=" CA ",
+                    serial_number=idx + 1,
+                    element="C",
+                )
+
+                bioResidue.add(ca_atom)
+                bioChain.add(bioResidue)
+
+            chains.append(bioChain)
+
+        return chains
+
+    def _save_structure_with_chains(
+        self, chains: list[BioChain], output_file: Path, protein_name: str = "protein"
+    ) -> None:
+        bioStructure = BioStructure(protein_name)
+        model = Model(0)
+        bioStructure.add(model)
+
+        for chain in chains:
+            model.add(chain)
+
+        io = MMCIFIO()
+        io.set_structure(bioStructure)
+        io.save(str(output_file))
+
+    def save_structure(
+        self, structure: Structure, output_file: Path, separate_chains=False
+    ) -> None:
         """Save structure to PDB file.
 
         Args:
@@ -295,16 +285,19 @@ class BiopythonStructureParser(StructureParser):
             output_file: Path where to save the PDB file
         """
         # Create new Bio.PDB Structure
-        bio_structure = Structure("protein")
-        model = Model(0)
-        bio_structure.add(model)
+        chains = [
+            self._protein_to_chain(protein, chain_id)
+            for chain_id, protein in structure.items()
+        ]
 
-        # Convert each protein to a chain
-        for chain_id, protein in structure.items():
-            chain = self._protein_to_chain(protein, chain_id)
-            model.add(chain)
-
-        # Write structure to file
-        io = PDBIO()
-        io.set_structure(bio_structure)
-        io.save(str(output_file))
+        if not separate_chains:
+            self._save_structure_with_chains(
+                chains, output_file=output_file.with_suffix(".cif")
+            )
+        else:
+            for chain in chains:
+                self._save_structure_with_chains(
+                    [chain],
+                    output_file=output_file.with_suffix(f".{chain.id}.cif"),
+                    protein_name=chain.id,
+                )

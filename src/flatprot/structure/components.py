@@ -1,22 +1,94 @@
 # Copyright 2024 Rostlab.
 # SPDX-License-Identifier: Apache-2.0
+from typing import Iterator
 
 import numpy as np
 
-from .base import StructureComponent, SubStructureComponent
+from .residue import Residue
+from .secondary import (
+    SecondaryStructure,
+    SecondaryStructureType,
+    createSecondaryStructure,
+)
 
 
-class Protein(StructureComponent):
-    pass
+class StructureComponent:
+    """
+    Base class for a structure component.
+    """
+
+    def __init__(
+        self,
+        residues: list[Residue],
+        index: np.ndarray,
+        coordinates: np.ndarray,
+    ):
+        self.__residues = residues
+        self.__index = index
+        self.__coordinates = coordinates
+
+    @property
+    def coordinates(self) -> np.ndarray:
+        return self.__coordinates
+
+    @property
+    def residues(self) -> list[Residue]:
+        return self.__residues
+
+    @property
+    def index(self) -> np.ndarray:
+        return self.__index
+
+    def get_coordinates_for_index(self, index: int) -> np.array:
+        pos = np.where(self.index == index)[0]
+        return self.coordinates[pos, :]
 
 
-class Helix(SubStructureComponent):
-    pass
+class Chain:
+    def __init__(
+        self,
+        chain_id: str,
+        residues: list[Residue],
+        index: np.ndarray,
+        coordinates: np.ndarray,
+    ):
+        self.id = chain_id
+        self.structure_component = StructureComponent(residues, index, coordinates)
+        self.__secondary_structure: list[SecondaryStructure] = []
+
+    def add_secondary_structure(
+        self, type: SecondaryStructureType, atom_start: int, atom_end: int
+    ) -> None:
+        start_idx = self.structure_component.get_coordinates_for_index(atom_start)
+        end_idx = self.structure_component.get_coordinates_for_index(atom_end)
+        self.__secondary_structure.append(
+            createSecondaryStructure(type, start_idx, end_idx)
+        )
+
+    @property
+    def secondary_structure(self) -> list[SecondaryStructure]:
+        return sorted(self.__secondary_structure, key=lambda x: x.start)
+
+    def __str__(self) -> str:
+        return f"Chain {self.id}"
+
+    @property
+    def num_residues(self) -> int:
+        return len(self.structure_component.index)
 
 
-class Sheet(SubStructureComponent):
-    pass
+class Structure:
+    def __init__(self, chains: list[Chain]):
+        self.__chains = {chain.id: chain for chain in chains}
 
+    def __getitem__(self, chain_id: str) -> Chain:
+        return self.__chains[chain_id]
 
-class Loop(SubStructureComponent):
-    pass
+    def __iter__(self) -> Iterator[Chain]:
+        return iter(self.__chains.values())
+
+    def items(self) -> Iterator[tuple[str, Chain]]:
+        return self.__chains.items()
+
+    def __len__(self) -> int:
+        return len(self.__chains)
