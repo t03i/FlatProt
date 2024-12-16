@@ -40,7 +40,7 @@ class StructureComponent:
         return self.__index
 
     def get_coordinates_for_index(self, index: int) -> np.array:
-        pos = np.where(self.index == index)[0]
+        pos = (self.index == index).nonzero()[0]
         return self.coordinates[pos, :]
 
 
@@ -59,8 +59,8 @@ class Chain:
     def add_secondary_structure(
         self, type: SecondaryStructureType, atom_start: int, atom_end: int
     ) -> None:
-        start_idx = self.structure_component.get_coordinates_for_index(atom_start)
-        end_idx = self.structure_component.get_coordinates_for_index(atom_end)
+        start_idx = np.where(self.structure_component.index == atom_start)[0][0]
+        end_idx = np.where(self.structure_component.index == atom_end)[0][0]
         self.__secondary_structure.append(
             createSecondaryStructure(type, start_idx, end_idx)
         )
@@ -83,6 +83,9 @@ class Structure:
 
     def __getitem__(self, chain_id: str) -> Chain:
         return self.__chains[chain_id]
+
+    def __contains__(self, chain_id: str) -> bool:
+        return chain_id in self.__chains
 
     def __iter__(self) -> Iterator[Chain]:
         return iter(self.__chains.values())

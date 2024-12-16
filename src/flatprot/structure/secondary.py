@@ -19,6 +19,9 @@ class SecondaryStructure:
     def __str__(self):
         return f"{self.type.name} {self.start} {self.end}"
 
+    def __repr__(self):
+        return f"{self.type.name} {self.start} {self.end}"
+
 
 class Helix(SecondaryStructure):
     def __init__(self, start: int, end: int):

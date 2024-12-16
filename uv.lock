@@ -384,6 +384,7 @@ dependencies = [
     { name = "anytree" },
     { name = "biopython" },
     { name = "colour" },
+    { name = "gemmi" },
     { name = "matplotlib" },
     { name = "networkx" },
     { name = "pandas" },
@@ -409,6 +410,7 @@ requires-dist = [
     { name = "anytree", specifier = ">=2.12.1" },
     { name = "biopython", specifier = ">=1.84" },
     { name = "colour", specifier = ">=0.1.5" },
+    { name = "gemmi", specifier = ">=0.7.0" },
     { name = "matplotlib", specifier = ">=3.9.3" },
     { name = "networkx", specifier = ">=3.4.2" },
     { name = "pandas", specifier = ">=2.2.3" },
@@ -452,6 +454,19 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/30/3e/a80a8c077fd798951169626cde3e239adeba7dab75deb3555716415bd9b0/fqdn-1.5.1.tar.gz", hash = "sha256:105ed3677e767fb5ca086a0c1f4bb66ebc3c100be518f0e0d755d9eae164d89f", size = 6015 }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/cf/58/8acf1b3e91c58313ce5cb67df61001fc9dcd21be4fadb76c1a2d540e09ed/fqdn-1.5.1-py3-none-any.whl", hash = "sha256:3a179af3761e4df6eb2e026ff9e1a3033d3587bf980a0b1b2e1e5d08d7358014", size = 9121 },
+]
+
+[[package]]
+name = "gemmi"
+version = "0.7.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/bf/b2/0df8b6b7997e157ee09e03c3d700080ef0521757419d674c088515da2aac/gemmi-0.7.0.tar.gz", hash = "sha256:758604664b20d0ea59e81ff757fd40572f69918e65ac2e6c690709fbd9ebc0c5", size = 1334683 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/02/9b/9846749bd0335d111f6ce1bc9c9380dd362ecf2990dc48dceb2d030fc716/gemmi-0.7.0-cp312-cp312-macosx_10_14_x86_64.whl", hash = "sha256:de55132d9d1c235f44e5ac220816b37b00db4e68bd1fb9641171cc90c5584a4a", size = 2613463 },
+    { url = "https://files.pythonhosted.org/packages/77/0e/602eaa369cd0dc45874c4bdb76fec30d3546c3730a37b5869032de0ec073/gemmi-0.7.0-cp312-cp312-macosx_11_0_arm64.whl", hash = "sha256:26967752d52060a822c0ae9e4bd17839f65712f8dafd68fd0953976b7366e143", size = 2237077 },
+    { url = "https://files.pythonhosted.org/packages/4f/89/bb830ae30a128779c4d2e1d082e07557ff46d96bda8f8af513f1e696ee45/gemmi-0.7.0-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:ae8163b58a2523b3d3415993ce5180f67b3b6bbf2a355d9122e4826b24215448", size = 2484628 },
+    { url = "https://files.pythonhosted.org/packages/54/64/a576b28c97fe409748503e61b3f7b37f2db4072419878a14c4cc5022d437/gemmi-0.7.0-cp312-cp312-musllinux_1_2_x86_64.whl", hash = "sha256:51d67b793fe755788cfea6e24427f250950d7a8d3c3e28c53255efeaa238cb1d", size = 2963138 },
+    { url = "https://files.pythonhosted.org/packages/4a/29/158b44ce05842ce5bdecb72a646e84378b94609410873e06221b3d6228ec/gemmi-0.7.0-cp312-cp312-win_amd64.whl", hash = "sha256:1b0a28f8fc03b5777e53f4368ddf53d99d35f96ac2476d95c14f96e468903de2", size = 1867456 },
 ]
 
 [[package]]

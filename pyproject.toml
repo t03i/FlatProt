@@ -15,6 +15,7 @@ dependencies = [
     "anytree>=2.12.1",
     "biopython>=1.84",
     "colour>=0.1.5",
+    "gemmi>=0.7.0",
     "matplotlib>=3.9.3",
     "networkx>=3.4.2",
     "pandas>=2.2.3",

@@ -5,38 +5,82 @@ import pytest
 import numpy as np
 from pathlib import Path
 
-from flatprot.io.structure_bio_adapter import BiopythonStructureParser
-from flatprot.structure.components import Protein
+from flatprot.io.structure_gemmi_adapter import GemmiStructureParser
+from flatprot.structure.components import Chain, Structure
+from flatprot.structure.secondary import SecondaryStructureType
 
 
 class TestStructureParser:
-    def test_parse_structure(self, tmp_path):
-        parser = BiopythonStructureParser()
+    def test_parse_annotated_structure(self, tmp_path):
+        parser = GemmiStructureParser()
 
         # Use the actual PDB file
-        test_file = Path("tests/data/None-Nana_c1_1-Naja_naja.pdb")
+        test_file = Path("tests/data/test.cif")
 
         # Test parsing
         result = parser.parse_structure(test_file)
 
         # Assertions
-        assert isinstance(result, dict)
-        assert "A" in result  # Chain ID from the PDB
-        assert isinstance(result["A"], Protein)
+        assert isinstance(result, Structure)
+        assert "A" in result
+        assert isinstance(result["A"], Chain)
 
-        protein = result["A"]
+        protein = result["A"].structure_component
         # The PDB file has 72 residues in chain A
         assert len(protein.residues) == 72
-
         # Test some specific residues from the file
-        assert protein.residues[0].name == "ALA"  # First residue
+        assert protein.residues[0].name == "LEU"  # First residue
         assert protein.residues[5].name == "CYS"  # CYS at position 6
         assert protein.residues[71].name == "ARG"  # Last residue
 
         # Test coordinate access for a specific atom
         # Testing coordinates for CYS 6 SG atom (line 52 in PDB)
-        expected_coords = np.array([[6.691, 2.671, 3.234]])
+        expected_coords = np.array([[-6.903, -7.615, 4.269]])
         np.testing.assert_array_almost_equal(
             protein.get_coordinates_for_index(49),  # Atom index 49 from PDB
             expected_coords,
         )
+
+        # New tests for secondary structure elements
+        ss_elements = result["A"].secondary_structure
+        # Test beta sheets
+        # Sheet A: residues 2-5 and 14-17
+        assert any(
+            ss.type == SecondaryStructureType.SHEET and ss.start == 1 and ss.end == 4
+            for ss in ss_elements
+        )
+        assert any(
+            ss.type == SecondaryStructureType.SHEET and ss.start == 13 and ss.end == 16
+            for ss in ss_elements
+        )
+
+        # Sheet B: residues 6-6, 24-30, 38-44, and 60-65
+        assert any(
+            ss.type == SecondaryStructureType.SHEET and ss.start == 5 and ss.end == 5
+            for ss in ss_elements
+        )
+
+        # Test helices
+        # Alpha helix: residues 46-54
+        assert any(
+            ss.type == SecondaryStructureType.HELIX and ss.start == 45 and ss.end == 53
+            for ss in ss_elements
+        )
+
+        # Left-handed helix: residues 18-19
+        assert any(
+            ss.type == SecondaryStructureType.HELIX and ss.start == 17 and ss.end == 18
+            for ss in ss_elements
+        )
+
+        # Count total secondary structure elements
+        sheet_count = sum(
+            1 for ss in ss_elements if ss.type == SecondaryStructureType.SHEET
+        )
+        helix_count = sum(
+            1 for ss in ss_elements if ss.type == SecondaryStructureType.HELIX
+        )
+
+        # Based on the CIF file structure
+        assert sheet_count == 6  # Total number of strands in sheets A and B
+        assert helix_count == 2  # One alpha helix and one left-handed helix
