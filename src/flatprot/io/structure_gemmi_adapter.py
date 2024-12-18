@@ -11,6 +11,7 @@ import gemmi
 from flatprot.structure.residue import Residue
 from flatprot.structure.components import Structure, Chain
 from flatprot.structure.secondary import SecondaryStructureType
+from .dssp import parse_dssp
 
 from .structure import StructureParser
 
@@ -30,7 +31,7 @@ class GemmiStructureParser(StructureParser):
             chain_data = self._parse_chain_data(chain)
             # Get secondary structure
             ss_regions = self._get_secondary_structure(
-                structure, structure_file, secondary_structure_file
+                structure, secondary_structure_file
             )
 
             chain_obj = Chain(chain.name, **chain_data)
@@ -73,13 +74,22 @@ class GemmiStructureParser(StructureParser):
         }
 
     def _get_secondary_structure(
-        self, structure: gemmi.Structure, structure_file: Path, ss_file: Optional[Path]
+        self,
+        structure: gemmi.Structure,
+        secondary_structure_file: Optional[Path] = None,
+    ) -> list[tuple[SecondaryStructureType, int, int]]:
+        if secondary_structure_file is not None:
+            return parse_dssp(secondary_structure_file)
+        else:
+            return self._get_secondary_structure_cif(structure)
+
+    def _get_secondary_structure_cif(
+        self, structure: gemmi.Structure
     ) -> list[tuple[SecondaryStructureType, int, int]]:
         """Get secondary structure from gemmi structure"""
         ss_regions = []
 
         # Extract helices and sheets from gemmi structure
-        print(dir(structure))
         for helix in structure.helices:
             start = helix.start.res_id.seqid.num
             end = helix.end.res_id.seqid.num
