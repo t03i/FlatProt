@@ -5,8 +5,7 @@ from dataclasses import dataclass
 import numpy as np
 from typing import Optional
 
-from .projector import Projector, ProjectionScope
-from ..structure.components import Structure
+from .projector import Projector, ProjectionParameters
 from .utils import ProjectionMatrix
 import flatprot.projection.utils as utils
 
@@ -47,44 +46,44 @@ class InertiaParameters:
         )
 
 
+@dataclass
+class InertiaProjectionParameters(ProjectionParameters):
+    """Parameters for inertia-based projection calculation."""
+
+    residues: list[str]
+
+
 class InertiaProjector(Projector):
     """Projects using inertia-based calculation with residue weights."""
 
-    def __init__(
-        self,
-        parameters: Optional[InertiaParameters] = None,
-        scope: ProjectionScope = ProjectionScope.STRUCTURE,
-    ):
-        super().__init__(scope=scope)
+    def __init__(self, parameters: Optional[InertiaParameters] = None):
+        super().__init__()
         self.parameters = parameters or InertiaParameters.default()
 
     def _calculate_projection(
         self,
-        structure: Structure,
         coordinates: np.ndarray,
-        chain_id: Optional[str] = None,
+        parameters: Optional[InertiaProjectionParameters] = None,
     ) -> ProjectionMatrix:
         """Calculate projection matrix for given coordinates."""
-        # Get residues based on scope
-        if chain_id is None:
-            residues = []
-            for chain in structure.values():
-                residues.extend(chain.residues)
-        else:
-            residues = structure[chain_id].residues
-
-        # Calculate weights
         if not self.parameters.use_weights:
             weights = np.ones(len(coordinates))
         else:
+            # Map residue types to weights using parameters.residue_weights
             weights = np.array(
-                [self.parameters.residue_weights.get(res.name, 0.0) for res in residues]
+                [
+                    self.parameters.residue_weights.get(res, 1.0)
+                    for res in parameters.residues
+                ]
             )
 
         return utils.calculate_inertia_projection(coordinates, weights)
 
     def _apply_cached_projection(
-        self, chain, cached_projection: ProjectionMatrix
+        self,
+        coordinates: np.ndarray,
+        cached_projection: ProjectionMatrix,
+        parameters: Optional[InertiaProjectionParameters] = None,
     ) -> np.ndarray:
-        """Apply cached projection to chain coordinates."""
-        return utils.apply_projection(chain.coordinates, cached_projection)
+        """Apply cached projection to coordinates."""
+        return utils.apply_projection(coordinates, cached_projection)
