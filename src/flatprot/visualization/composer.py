@@ -6,10 +6,10 @@ import numpy as np
 
 from flatprot.structure import Structure, SecondaryStructureType
 from flatprot.projection import Projector
-from flatprot.visualization.elements import VisualizationElement
+from flatprot.visualization.elements import VisualizationElement, VisualizationStyle
 from .utils import CanvasSettings
+from .elements import StyleManager, Group, Helix, Sheet, Coil
 from flatprot.visualization.scene import Scene
-from flatprot.visualization.elements.group import Group
 
 
 def transform_to_canvas_space(
@@ -59,15 +59,22 @@ def transform_to_canvas_space(
 def secondary_structure_to_visualization_element(
     secondary_structure: SecondaryStructureType,
     coordinates: np.ndarray,
+    style: Optional[VisualizationStyle] = None,
 ) -> VisualizationElement:
     """Convert a secondary structure to a visualization element."""
-    pass
+    if secondary_structure == SecondaryStructureType.HELIX:
+        return Helix(coordinates, style=style)
+    elif secondary_structure == SecondaryStructureType.SHEET:
+        return Sheet(coordinates, style=style)
+    elif secondary_structure == SecondaryStructureType.COIL:
+        return Coil(coordinates, style=style)
 
 
 def structure_to_scene(
     structure: Structure,
     projector: Projector,
     canvas_settings: Optional[CanvasSettings] = None,
+    style_manager: Optional[StyleManager] = None,
 ) -> Scene:
     """Convert a structure to a renderable scene.
 
@@ -79,7 +86,7 @@ def structure_to_scene(
     Returns:
         A Scene object ready for rendering
     """
-    scene = Scene(canvas_settings=canvas_settings)
+    scene = Scene(canvas_settings=canvas_settings, style_manager=style_manager)
 
     # Process each chain
     for chain in structure:
@@ -100,9 +107,10 @@ def structure_to_scene(
         for element in chain.secondary_structure:
             end_idx = start_idx + len(element.coordinates)
             element_coords = canvas_coords[start_idx:end_idx]
+            style = scene.style_manager.get_style(element.type)
 
             vis_element = secondary_structure_to_visualization_element(
-                element_type=element.type, coordinates=element_coords
+                element_type=element.type, coordinates=element_coords, style=style
             )
             if vis_element:
                 chain_group.add_element(vis_element)

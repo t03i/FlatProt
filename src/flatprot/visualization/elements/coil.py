@@ -4,6 +4,7 @@
 from dataclasses import dataclass
 from typing import Optional
 
+from pydantic import Field
 import numpy as np
 import drawsvg as draw
 
@@ -14,15 +15,15 @@ from flatprot.visualization.elements import (
 )
 
 
-@dataclass
-class CoilStyle:
-    """Settings for coil visualization"""
+class CoilStyle(VisualizationStyle):
+    """Settings specific to coil visualization"""
 
-    line_thickness_factor: float = (
-        0.5  # Thickness of the line relative to style line width
+    line_thickness_factor: float = Field(
+        default=0.5, gt=0, description="Thickness relative to line width"
     )
-    smoothing_window: int = 3  # Number of points to average for smoothing
-    spline_points: int = 20  # Number of points to use for spline interpolation
+    spline_points: int = Field(
+        default=20, ge=2, description="Number of points for spline interpolation"
+    )
 
 
 @dataclass
@@ -32,15 +33,13 @@ class Coil(VisualizationElement, SmoothingMixin):
     def __init__(
         self,
         coordinates: np.ndarray,
-        style: Optional[VisualizationStyle] = None,
-        coil_style: Optional[CoilStyle] = None,
+        style: Optional[CoilStyle] = None,
     ):
         super().__init__(coordinates, style)
-        self.coil_style = coil_style or CoilStyle()
 
     def _interpolate_points(self, coords: np.ndarray) -> np.ndarray:
         """Create a smooth interpolation between points"""
-        num_points = self.coil_style.spline_points
+        num_points = self.style.spline_points
 
         # If we have very few points, just return the original coordinates
         if len(coords) < 3:
@@ -71,7 +70,7 @@ class Coil(VisualizationElement, SmoothingMixin):
         # Create path
         path = draw.Path(
             stroke=self.style.color,
-            stroke_width=self.style.line_width * self.coil_style.line_thickness_factor,
+            stroke_width=self.style.line_width * self.style.line_thickness_factor,
             fill="none",
         )
 

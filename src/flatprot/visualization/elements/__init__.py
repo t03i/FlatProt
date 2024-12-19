@@ -6,3 +6,4 @@ from .coil import Coil
 from .helix import Helix
 from .sheet import Sheet
 from .group import Group
+from .style import StyleManager

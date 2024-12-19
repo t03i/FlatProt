@@ -4,8 +4,7 @@
 from drawsvg import Drawing
 from typing import Optional
 
-from flatprot.visualization.elements import VisualizationElement
-from flatprot.visualization.elements.group import Group
+from .elements import VisualizationElement, Group, StyleManager
 from .utils import CanvasSettings
 
 
@@ -15,8 +14,10 @@ class Scene:
     def __init__(
         self,
         canvas_settings: Optional[CanvasSettings] = None,
+        style_manager: Optional[StyleManager] = None,
     ):
         self.canvas_settings = canvas_settings or CanvasSettings()
+        self.style_manager = style_manager or StyleManager.create_default()
         self.root = Group([])  # Root group containing all elements
 
     def add_element(self, element: VisualizationElement) -> None:

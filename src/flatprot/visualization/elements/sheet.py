@@ -6,7 +6,8 @@ from typing import Optional
 
 import numpy as np
 import drawsvg as draw
-
+from pydantic import Field
+import pydantic
 from flatprot.visualization.elements import (
     VisualizationElement,
     VisualizationStyle,
@@ -14,16 +15,20 @@ from flatprot.visualization.elements import (
 )
 
 
-@dataclass
-class SheetStyle:
-    """Settings for sheet visualization"""
+class SheetStyle(VisualizationStyle):
+    """Settings specific to sheet visualization"""
 
-    ribbon_thickness_factor: float = (
-        0.8  # Thickness of the sheet relative to line width
+    ribbon_thickness_factor: float = Field(
+        default=0.8, gt=0, description="Thickness of sheet relative to line width"
     )
-    arrow_width_factor: float = 1.2  # Width of arrow head relative to ribbon thickness
-    arrow_length_factor: float = (
-        2.0  # Length of arrow head relative to ribbon thickness
+    arrow_width_factor: float = Field(
+        default=1.2, gt=0, description="Width of arrow head relative to ribbon"
+    )
+    arrow_length_factor: float = Field(
+        default=2.0, gt=0, description="Length of arrow head relative to width"
+    )
+    stroke_color: pydantic.ColorType = Field(
+        default="#000000", description="Color of the stroke"
     )
 
 
@@ -34,11 +39,9 @@ class Sheet(VisualizationElement, SmoothingMixin):
     def __init__(
         self,
         coordinates: np.ndarray,
-        style: Optional[VisualizationStyle] = None,
-        sheet_style: Optional[SheetStyle] = None,
+        style: Optional[SheetStyle] = None,
     ):
         super().__init__(coordinates, style)
-        self.sheet_style = sheet_style or SheetStyle()
 
     def render(self) -> draw.DrawingElement:
         """Renders a rectangular sheet with arrow using atom coordinates.
@@ -65,9 +68,9 @@ class Sheet(VisualizationElement, SmoothingMixin):
         perp = np.array([-direction[1], direction[0]])
 
         # Calculate dimensions
-        thickness = self.style.line_width * self.sheet_style.ribbon_thickness_factor
-        arrow_width = thickness * self.sheet_style.arrow_width_factor
-        arrow_length = thickness * self.sheet_style.arrow_length_factor
+        thickness = self.style.line_width * self.style.ribbon_thickness_factor
+        arrow_width = thickness * self.style.arrow_width_factor
+        arrow_length = thickness * self.style.arrow_length_factor
 
         # Calculate arrow base point (slightly before end_point)
         arrow_base = end_point - direction * arrow_length
@@ -83,7 +86,9 @@ class Sheet(VisualizationElement, SmoothingMixin):
         arrow_lower = arrow_base - perp * arrow_width
 
         # Create path
-        path = draw.Path(stroke=self.style.color, stroke_width=1, fill=self.style.color)
+        path = draw.Path(
+            stroke=self.style.stroke_color, stroke_width=1, fill=self.style.color
+        )
 
         # Draw rectangular part and arrow
         path.M(upper_start[0], upper_start[1])  # Start at upper left

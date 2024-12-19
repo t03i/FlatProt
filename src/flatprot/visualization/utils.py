@@ -1,17 +1,21 @@
 # Copyright 2024 Tobias Olenyi.
 # SPDX-License-Identifier: Apache-2.0
 
-from dataclasses import dataclass
+from pydantic import BaseModel, Field
+import pydantic
 
 
-@dataclass
-class CanvasSettings:
+class CanvasSettings(BaseModel):
     """Settings for the canvas"""
 
-    width: int = 1024
-    height: int = 1024
-    background_color: str = "#FFFFFF"
-    padding: float = 0.05  # Padding as fraction of canvas size
+    width: int = Field(default=1024, description="Canvas width in pixels")
+    height: int = Field(default=1024, description="Canvas height in pixels")
+    background_color: pydantic.ColorType = Field(
+        default="#FFFFFF", description="Background color in hex format"
+    )
+    padding: float = Field(
+        default=0.05, description="Padding as fraction of canvas size"
+    )
 
     @property
     def dimensions(self) -> tuple[int, int]:

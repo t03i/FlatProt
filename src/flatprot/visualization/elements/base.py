@@ -2,23 +2,36 @@
 # SPDX-License-Identifier: Apache-2.0
 
 from abc import ABC, abstractmethod
-from dataclasses import dataclass
 from typing import Optional
 
 import numpy as np
 import drawsvg as draw
+from pydantic import BaseModel, Field, ConfigDict
+import pydantic
 
 
-@dataclass
-class VisualizationStyle:
+class VisualizationStyle(BaseModel):
     """Base class for styling visualization elements"""
 
-    color: str
-    opacity: float = 1.0
-    line_width: float = 1.0
-    simplification: float = 0
-    size: float = 1.0
-    smoothing_window: int = 3
+    color: pydantic.ColorType = Field(
+        default="#000000", description="Element color in hex format"
+    )
+    opacity: float = Field(
+        default=1.0, ge=0.0, le=1.0, description="Opacity value between 0 and 1"
+    )
+    line_width: float = Field(default=1.0, gt=0, description="Width of lines")
+    simplification: float = Field(
+        default=0.0, ge=0.0, description="Simplification factor"
+    )
+    size: float = Field(default=1.0, gt=0, description="Size multiplier")
+    smoothing_window: int = Field(
+        default=3, ge=1, description="Window size for smoothing"
+    )
+
+    model_config = ConfigDict(
+        title="Base Visualization Style",
+        frozen=True,  # Makes instances immutable
+    )
 
 
 class VisualizationElement(ABC):

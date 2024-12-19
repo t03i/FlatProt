@@ -6,6 +6,9 @@ from typing import Optional
 
 import numpy as np
 import drawsvg as draw
+from pydantic import Field
+import pydantic
+
 from flatprot.visualization.elements import (
     VisualizationElement,
     VisualizationStyle,
@@ -13,17 +16,23 @@ from flatprot.visualization.elements import (
 )
 
 
-@dataclass
-class HelixStyle:
-    """Settings for helix visualization"""
+class HelixStyle(VisualizationStyle):
+    """Settings specific to helix visualization"""
 
-    wave_height_factor: float = (
-        0.75  # Multiplier for wave height relative to line width
+    wave_height_factor: float = Field(
+        default=0.75, gt=0, description="Height of helix waves relative to line width"
     )
-    wave_frequency: float = 2.0  # Controls number of waves per segment
-    min_waves: int = 2  # Minimum number of waves to render
-    ribbon_thickness_factor: float = (
-        0.5  # Multiplier for ribbon thickness relative to line width
+    wave_frequency: float = Field(
+        default=2.0, gt=0, description="Number of waves per segment"
+    )
+    min_waves: int = Field(
+        default=2, ge=1, description="Minimum number of waves to render"
+    )
+    ribbon_thickness_factor: float = Field(
+        default=0.5, gt=0, description="Thickness of ribbon relative to line width"
+    )
+    stroke_color: pydantic.ColorType = Field(
+        default="#000000", description="Color of the stroke"
     )
 
 
@@ -34,11 +43,9 @@ class Helix(VisualizationElement, SmoothingMixin):
     def __init__(
         self,
         coordinates: np.ndarray,
-        style: Optional[VisualizationStyle] = None,
-        helix_style: Optional[HelixStyle] = None,
+        style: Optional[HelixStyle] = None,
     ):
         super().__init__(coordinates, style)
-        self.helix_style = helix_style or HelixStyle()
 
     def render(self) -> draw.DrawingElement:
         """Renders a ribbon-style helix using all atom coordinates.
@@ -54,15 +61,13 @@ class Helix(VisualizationElement, SmoothingMixin):
 
         # Calculate number of waves based on length
         num_waves = max(
-            self.helix_style.min_waves,
-            int(
-                total_length / (self.style.line_width * self.helix_style.wave_frequency)
-            ),
+            self.style.min_waves,
+            int(total_length / (self.style.line_width * self.style.wave_frequency)),
         )
 
         # Parameters
-        wave_height = self.style.line_width * self.helix_style.wave_height_factor
-        thickness = self.style.line_width * self.helix_style.ribbon_thickness_factor
+        wave_height = self.style.line_width * self.style.wave_height_factor
+        thickness = self.style.line_width * self.style.ribbon_thickness_factor
 
         # Generate points along the helix path
         num_points = num_waves * 2 + 1
@@ -98,7 +103,9 @@ class Helix(VisualizationElement, SmoothingMixin):
         lower_points = wave_points - perp_vectors * thickness
 
         # Create path
-        path = draw.Path(stroke=self.style.color, stroke_width=1, fill=self.style.color)
+        path = draw.Path(
+            stroke=self.style.stroke_color, stroke_width=1, fill=self.style.color
+        )
 
         # Add upper edge
         path.M(upper_points[0][0], upper_points[0][1])
