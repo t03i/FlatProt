@@ -8,13 +8,14 @@ from typing import Optional
 from .projector import Projector, ProjectionParameters
 from .utils import ProjectionMatrix
 import flatprot.projection.utils as utils
+from flatprot.structure.residue import Residue
 
 
 @dataclass
 class InertiaParameters:
     """Parameters for inertia-based projection calculation."""
 
-    residue_weights: dict[str, float]  # Maps residue type to weight
+    residue_weights: dict[Residue, float]  # Maps residue type to weight
     use_weights: bool = True
 
     @classmethod
@@ -22,26 +23,26 @@ class InertiaParameters:
         """Creates default parameters using standard amino acid weights."""
         return cls(
             residue_weights={
-                "ALA": 89.1,
-                "ARG": 174.2,
-                "ASN": 132.1,
-                "ASP": 133.1,
-                "CYS": 121.2,
-                "GLN": 146.2,
-                "GLU": 147.1,
-                "GLY": 75.1,
-                "HIS": 155.2,
-                "ILE": 131.2,
-                "LEU": 131.2,
-                "LYS": 146.2,
-                "MET": 149.2,
-                "PHE": 165.2,
-                "PRO": 115.1,
-                "SER": 105.1,
-                "THR": 119.1,
-                "TRP": 204.2,
-                "TYR": 181.2,
-                "VAL": 117.1,
+                Residue.ALA: 89.1,
+                Residue.ARG: 174.2,
+                Residue.ASN: 132.1,
+                Residue.ASP: 133.1,
+                Residue.CYS: 121.2,
+                Residue.GLN: 146.2,
+                Residue.GLU: 147.1,
+                Residue.GLY: 75.1,
+                Residue.HIS: 155.2,
+                Residue.ILE: 131.2,
+                Residue.LEU: 131.2,
+                Residue.LYS: 146.2,
+                Residue.MET: 149.2,
+                Residue.PHE: 165.2,
+                Residue.PRO: 115.1,
+                Residue.SER: 105.1,
+                Residue.THR: 119.1,
+                Residue.TRP: 204.2,
+                Residue.TYR: 181.2,
+                Residue.VAL: 117.1,
             }
         )
 
@@ -50,7 +51,7 @@ class InertiaParameters:
 class InertiaProjectionParameters(ProjectionParameters):
     """Parameters for inertia-based projection calculation."""
 
-    residues: list[str]
+    residues: list[Residue]
 
 
 class InertiaProjector(Projector):
