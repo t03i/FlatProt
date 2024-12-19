@@ -88,11 +88,11 @@ def structure_to_scene(
     """
     scene = Scene(canvas_settings=canvas_settings, style_manager=style_manager)
 
+    # List to store all elements with their z-coordinates
+    elements_with_z = []
+
     # Process each chain
     for chain in structure:
-        # Create a group for this chain
-        chain_group = Group([])
-
         # Get coordinates for all elements in the chain
         coords = np.vstack(
             [element.coordinates for element in chain.secondary_structure]
@@ -100,23 +100,34 @@ def structure_to_scene(
 
         # Project coordinates
         projected_coords = projector.project(coords)
-        canvas_coords = transform_to_canvas_space(projected_coords, canvas_settings)
+        canvas_coords = transform_to_canvas_space(
+            projected_coords[:, :2], canvas_settings
+        )
 
         # Create visualization elements
         start_idx = 0
         for element in chain.secondary_structure:
             end_idx = start_idx + len(element.coordinates)
             element_coords = canvas_coords[start_idx:end_idx]
+            z_coords = projected_coords[
+                start_idx:end_idx, 2
+            ]  # Get z-coordinates for this element
             style = scene.style_manager.get_style(element.type)
 
             vis_element = secondary_structure_to_visualization_element(
-                element_type=element.type, coordinates=element_coords, style=style
+                element.type, element_coords, style=style
             )
             if vis_element:
-                chain_group.add_element(vis_element)
+                # Store element with its average z-coordinate
+                elements_with_z.append((vis_element, np.mean(z_coords)))
 
             start_idx = end_idx
 
-        scene.add_element(chain_group)
+    # Sort elements by z-coordinate (lower z-values first)
+    sorted_elements = [elem for elem, z in sorted(elements_with_z, key=lambda x: x[1])]
+
+    # Add sorted elements to the scene
+    for element in sorted_elements:
+        scene.add_element(element)
 
     return scene
