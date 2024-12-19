@@ -26,7 +26,7 @@ class TestStructureParser:
         assert "A" in result
         assert isinstance(result["A"], Chain)
 
-        protein = result["A"].structure_component
+        protein = result["A"]
         # The PDB file has 72 residues in chain A
         assert len(protein.residues) == 72
         # Test some specific residues from the file
@@ -101,7 +101,7 @@ class TestStructureParser:
         assert "A" in result
         assert isinstance(result["A"], Chain)
 
-        protein = result["A"].structure_component
+        protein = result["A"]
         # Verify residue count (adjust number based on your test file)
         assert len(protein.residues) == 72  # Adjust if different
 

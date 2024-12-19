@@ -2,11 +2,10 @@
 # SPDX-License-Identifier: Apache-2.0
 
 from abc import ABC, abstractmethod
-from dataclasses import dataclass
 from enum import Enum
 import numpy as np
 from pathlib import Path
-from typing import Dict, Optional
+from typing import Optional
 
 from ..structure.components import Structure
 
@@ -21,27 +20,25 @@ class Projector(ABC):
 
     def __init__(self, scope: ProjectionScope = ProjectionScope.STRUCTURE):
         self.scope = scope
-        self._cached_projections: Dict[str, np.ndarray] = {}
+        self._cached_projections: dict[str, np.ndarray] = {}
         self._structure_projection: Optional[np.ndarray] = None
 
-    def project(self, structure: Structure) -> Dict[str, np.ndarray]:
+    def project(self, structure: Structure) -> dict[str, np.ndarray]:
         """Template method defining the projection workflow.
 
         Returns:
-            Dictionary mapping chain IDs to their 2D coordinates
+            dictionary mapping chain IDs to their 2D coordinates
         """
         if self.scope == ProjectionScope.STRUCTURE:
             return self._project_whole_structure(structure)
         else:
             return self._project_individual_chains(structure)
 
-    def _project_whole_structure(self, structure: Structure) -> Dict[str, np.ndarray]:
+    def _project_whole_structure(self, structure: Structure) -> dict[str, np.ndarray]:
         """Projects entire structure using single transformation."""
         if self._structure_projection is None:
             # Get all coordinates
-            all_coords = np.vstack(
-                [self._get_chain_coordinates(chain) for chain in structure.values()]
-            )
+            all_coords = np.vstack([chain.coordinates for chain in structure.values()])
             self._structure_projection = self._calculate_projection(
                 structure, all_coords
             )
@@ -52,12 +49,12 @@ class Projector(ABC):
             for chain_id, chain in structure.items()
         }
 
-    def _project_individual_chains(self, structure: Structure) -> Dict[str, np.ndarray]:
+    def _project_individual_chains(self, structure: Structure) -> dict[str, np.ndarray]:
         """Projects each chain independently."""
         projections = {}
         for chain_id, chain in structure.items():
             if chain_id not in self._cached_projections:
-                coords = self._get_chain_coordinates(chain)
+                coords = chain.coordinates
                 self._cached_projections[chain_id] = self._calculate_projection(
                     structure, coords, chain_id
                 )
@@ -87,31 +84,32 @@ class Projector(ABC):
         pass
 
     @abstractmethod
-    def _get_chain_coordinates(self, chain) -> np.ndarray:
-        """Extract coordinates from chain."""
-        pass
-
-    @abstractmethod
     def _apply_cached_projection(
         self, chain, cached_projection: np.ndarray
     ) -> np.ndarray:
         """Apply cached projection to chain coordinates."""
         pass
 
-    @abstractmethod
     def save(self, path: Path) -> None:
         """Saves projection parameters.
 
         Args:
             path: Where to save the projection
         """
-        pass
+        save_dict = {
+            "structure_projection": self._structure_projection,
+            "cached_projections": self._cached_projections,
+            "scope": self.scope.value,
+        }
+        np.savez(path, **save_dict)
 
-    @abstractmethod
     def load(self, path: Path) -> None:
         """Loads projection parameters.
 
         Args:
             path: From where to load the projection
         """
-        pass
+        loaded = np.load(path, allow_pickle=True)
+        self._structure_projection = loaded["structure_projection"]
+        self._cached_projections = loaded["cached_projections"].item()
+        self.scope = ProjectionScope(loaded["scope"].item())

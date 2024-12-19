@@ -44,7 +44,7 @@ class StructureComponent:
         return self.coordinates[pos, :]
 
 
-class Chain:
+class Chain(StructureComponent):
     def __init__(
         self,
         chain_id: str,
@@ -52,15 +52,15 @@ class Chain:
         index: np.ndarray,
         coordinates: np.ndarray,
     ):
+        super().__init__(residues, index, coordinates)
         self.id = chain_id
-        self.structure_component = StructureComponent(residues, index, coordinates)
         self.__secondary_structure: list[SecondaryStructure] = []
 
     def add_secondary_structure(
         self, type: SecondaryStructureType, atom_start: int, atom_end: int
     ) -> None:
-        start_idx = np.where(self.structure_component.index == atom_start)[0][0]
-        end_idx = np.where(self.structure_component.index == atom_end)[0][0]
+        start_idx = np.where(self.index == atom_start)[0][0]
+        end_idx = np.where(self.index == atom_end)[0][0]
         self.__secondary_structure.append(
             createSecondaryStructure(type, start_idx, end_idx)
         )
@@ -74,7 +74,7 @@ class Chain:
 
     @property
     def num_residues(self) -> int:
-        return len(self.structure_component.index)
+        return len(self.index)
 
 
 class Structure:
@@ -92,6 +92,9 @@ class Structure:
 
     def items(self) -> Iterator[tuple[str, Chain]]:
         return self.__chains.items()
+
+    def values(self) -> Iterator[Chain]:
+        return self.__chains.values()
 
     def __len__(self) -> int:
         return len(self.__chains)

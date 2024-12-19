@@ -3,7 +3,7 @@
 
 from dataclasses import dataclass
 import numpy as np
-from typing import dict, Optional
+from typing import Optional
 
 from .projector import Projector, ProjectionScope
 from ..structure.components import Structure
