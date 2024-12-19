@@ -67,7 +67,33 @@ class Chain(StructureComponent):
 
     @property
     def secondary_structure(self) -> list[SecondaryStructure]:
-        return sorted(self.__secondary_structure, key=lambda x: x.start)
+        # Sort existing secondary structure elements
+        sorted_ss = sorted(self.__secondary_structure, key=lambda x: x.start)
+
+        # Fill gaps with coils
+        complete_ss = []
+        current_pos = 0
+
+        for ss in sorted_ss:
+            # If there's a gap before this secondary structure, add a coil
+            if ss.start > current_pos:
+                complete_ss.append(
+                    createSecondaryStructure(
+                        SecondaryStructureType.COIL, current_pos, ss.start - 1
+                    )
+                )
+            complete_ss.append(ss)
+            current_pos = ss.end + 1
+
+        # If there's space after the last secondary structure, fill with coil
+        if current_pos < len(self.index):
+            complete_ss.append(
+                createSecondaryStructure(
+                    SecondaryStructureType.COIL, current_pos, len(self.index) - 1
+                )
+            )
+
+        return complete_ss
 
     def __str__(self) -> str:
         return f"Chain {self.id}"
