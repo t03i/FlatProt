@@ -87,7 +87,4 @@ class InertiaProjector(Projector):
         self, chain, cached_projection: ProjectionMatrix
     ) -> np.ndarray:
         """Apply cached projection to chain coordinates."""
-        coordinates = chain.coordinates
-        centered = coordinates - cached_projection.translation
-        rotated = np.dot(centered, cached_projection.rotation)
-        return rotated[:, :2]  # Take only x,y coordinates
+        return utils.apply_projection(chain.coordinates, cached_projection)
