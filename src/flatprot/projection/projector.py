@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Optional
 
 from ..structure.components import Structure
+from .utils import ProjectionMatrix
 
 
 class ProjectionScope(Enum):
@@ -20,8 +21,7 @@ class Projector(ABC):
 
     def __init__(self, scope: ProjectionScope = ProjectionScope.STRUCTURE):
         self.scope = scope
-        self._cached_projections: dict[str, np.ndarray] = {}
-        self._structure_projection: Optional[np.ndarray] = None
+        self._cached_projections: dict[Optional[str], ProjectionMatrix] = {}
 
     def project(self, structure: Structure) -> dict[str, np.ndarray]:
         """Template method defining the projection workflow.
@@ -36,16 +36,18 @@ class Projector(ABC):
 
     def _project_whole_structure(self, structure: Structure) -> dict[str, np.ndarray]:
         """Projects entire structure using single transformation."""
-        if self._structure_projection is None:
+        if None not in self._cached_projections:
             # Get all coordinates
             all_coords = np.vstack([chain.coordinates for chain in structure.values()])
-            self._structure_projection = self._calculate_projection(
+            self._cached_projections[None] = self._calculate_projection(
                 structure, all_coords
             )
 
         # Apply same transformation to each chain
         return {
-            chain_id: self._apply_cached_projection(chain, self._structure_projection)
+            chain_id: self._apply_cached_projection(
+                chain, self._cached_projections[None]
+            )
             for chain_id, chain in structure.items()
         }
 
@@ -95,10 +97,21 @@ class Projector(ABC):
 
         Args:
             path: Where to save the projection
+
+        Raises:
+            ValueError: If the file extension is not '.npz'
         """
+        if path.suffix != ".npz":
+            raise ValueError(
+                f"Projection must be saved as .npz file, got '{path.suffix}'"
+            )
+
+        # Convert ProjectionMatrix objects to their underlying numpy arrays
         save_dict = {
-            "structure_projection": self._structure_projection,
-            "cached_projections": self._cached_projections,
+            "cached_projections": {
+                str(k) if k is not None else "None": v.to_array()
+                for k, v in self._cached_projections.items()
+            },
             "scope": self.scope.value,
         }
         np.savez(path, **save_dict)
@@ -108,8 +121,21 @@ class Projector(ABC):
 
         Args:
             path: From where to load the projection
+
+        Raises:
+            ValueError: If the file extension is not '.npz'
         """
+        if path.suffix != ".npz":
+            raise ValueError(
+                f"Projection must be loaded from .npz file, got '{path.suffix}'"
+            )
+
         loaded = np.load(path, allow_pickle=True)
-        self._structure_projection = loaded["structure_projection"]
-        self._cached_projections = loaded["cached_projections"].item()
+
+        # Convert back from numpy arrays to ProjectionMatrix objects
+        cached_dict = loaded["cached_projections"].item()
+        self._cached_projections = {
+            None if k == "None" else k: ProjectionMatrix.from_array(v)
+            for k, v in cached_dict.items()
+        }
         self.scope = ProjectionScope(loaded["scope"].item())

@@ -13,6 +13,28 @@ class ProjectionMatrix:
     rotation: np.ndarray
     translation: np.ndarray
 
+    def to_array(self) -> np.ndarray:
+        """Convert ProjectionMatrix to a single numpy array for storage.
+
+        Returns:
+            Array of shape (4, 3) where first 3 rows are rotation matrix
+            and last row is translation vector
+        """
+        return np.vstack([self.rotation, self.translation])
+
+    @classmethod
+    def from_array(cls, arr: np.ndarray) -> "ProjectionMatrix":
+        """Create ProjectionMatrix from stored array format.
+
+        Args:
+            arr: Array of shape (4, 3) where first 3 rows are rotation matrix
+                and last row is translation vector
+
+        Returns:
+            ProjectionMatrix instance
+        """
+        return cls(rotation=arr[0:3], translation=arr[3])
+
 
 def calculate_inertia_projection(
     coordinates: np.ndarray, weights: np.ndarray
@@ -54,4 +76,4 @@ def apply_projection(
     """Apply projection matrix to coordinates."""
     centered = coordinates - projection.translation
     rotated = np.dot(centered, projection.rotation)
-    return rotated[:, :2]  # Take only x,y coordinates
+    return rotated[:, :]  # return x,y,z coordinates
