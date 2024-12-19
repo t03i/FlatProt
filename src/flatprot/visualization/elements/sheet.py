@@ -5,7 +5,7 @@ from dataclasses import dataclass
 from typing import Optional
 
 import numpy as np
-from drawsvg import draw
+import drawsvg as draw
 
 from flatprot.visualization.elements import (
     VisualizationElement,
@@ -40,7 +40,7 @@ class Sheet(VisualizationElement, SmoothingMixin):
         super().__init__(coordinates, style)
         self.sheet_style = sheet_style or SheetStyle()
 
-    def render(self) -> draw.Element:
+    def render(self) -> draw.DrawingElement:
         """Renders a rectangular sheet with arrow using atom coordinates.
 
         Returns:

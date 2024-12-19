@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from typing import Optional
 
 import numpy as np
-from drawsvg import draw
+import drawsvg as draw
 
 
 @dataclass
@@ -31,7 +31,7 @@ class VisualizationElement(ABC):
         self.coordinates = coordinates
 
     @abstractmethod
-    def render(self) -> draw.Element:
+    def render(self) -> draw.DrawingElement:
         """Returns the SVG element"""
         pass
 

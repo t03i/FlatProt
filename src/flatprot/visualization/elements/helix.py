@@ -5,8 +5,7 @@ from dataclasses import dataclass
 from typing import Optional
 
 import numpy as np
-from drawsvg import draw
-
+import drawsvg as draw
 from flatprot.visualization.elements import (
     VisualizationElement,
     VisualizationStyle,
@@ -41,7 +40,7 @@ class Helix(VisualizationElement, SmoothingMixin):
         super().__init__(coordinates, style)
         self.helix_style = helix_style or HelixStyle()
 
-    def render(self) -> draw.Element:
+    def render(self) -> draw.DrawingElement:
         """Renders a ribbon-style helix using all atom coordinates.
 
         Returns:

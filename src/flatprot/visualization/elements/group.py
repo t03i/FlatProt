@@ -1,7 +1,7 @@
 # Copyright 2024 Tobias Olenyi.
 # SPDX-License-Identifier: Apache-2.0
 
-from drawsvg import draw
+import drawsvg as draw
 
 from flatprot.visualization.elements import VisualizationElement
 

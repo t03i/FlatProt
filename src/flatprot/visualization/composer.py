@@ -47,8 +47,8 @@ def transform_to_canvas_space(
     scaled_coords = centered_coords * scale
 
     # Calculate translation to center in canvas
-    translation_x = self._canvas_settings.width / 2
-    translation_y = self._canvas_settings.height / 2
+    translation_x = canvas_settings.width / 2
+    translation_y = canvas_settings.height / 2
 
     # Apply translation
     canvas_coords = scaled_coords + np.array([translation_x, translation_y])

@@ -5,7 +5,7 @@ from dataclasses import dataclass
 from typing import Optional
 
 import numpy as np
-from drawsvg import draw
+import drawsvg as draw
 
 from flatprot.visualization.elements import (
     VisualizationElement,
@@ -56,7 +56,7 @@ class Coil(VisualizationElement, SmoothingMixin):
 
         return np.column_stack((x_interpolated, y_interpolated))
 
-    def render(self) -> draw.Element:
+    def render(self) -> draw.DrawingElement:
         """Renders a smooth coil using atom coordinates.
 
         Returns:
