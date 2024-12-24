@@ -7,15 +7,13 @@ from typing import Optional
 import numpy as np
 import drawsvg as draw
 from pydantic import BaseModel, Field, ConfigDict
-import pydantic
+from pydantic_extra_types.color import Color
 
 
 class VisualizationStyle(BaseModel):
     """Base class for styling visualization elements"""
 
-    color: pydantic.ColorType = Field(
-        default="#000000", description="Element color in hex format"
-    )
+    color: Color = Field(default=Color("#000000"), description="Element color")
     opacity: float = Field(
         default=1.0, ge=0.0, le=1.0, description="Opacity value between 0 and 1"
     )

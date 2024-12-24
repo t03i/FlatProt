@@ -19,6 +19,7 @@ dependencies = [
     "matplotlib>=3.9.3",
     "networkx>=3.4.2",
     "polars>=1.17.1",
+    "pydantic-extra-types>=2.10.1",
     "pydantic>=2.10.3",
     "pydantic-settings>=2.6.1",
     "scipy>=1.14.1",

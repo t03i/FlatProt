@@ -380,6 +380,7 @@ dependencies = [
     { name = "networkx" },
     { name = "polars" },
     { name = "pydantic" },
+    { name = "pydantic-extra-types" },
     { name = "pydantic-settings" },
     { name = "scipy" },
     { name = "tqdm" },
@@ -405,6 +406,7 @@ requires-dist = [
     { name = "networkx", specifier = ">=3.4.2" },
     { name = "polars", specifier = ">=1.17.1" },
     { name = "pydantic", specifier = ">=2.10.3" },
+    { name = "pydantic-extra-types", specifier = ">=2.10.1" },
     { name = "pydantic-settings", specifier = ">=2.6.1" },
     { name = "scipy", specifier = ">=1.14.1" },
     { name = "tqdm", specifier = ">=4.67.1" },
@@ -1292,6 +1294,19 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/52/e5/4f0fbd5c5995cc70d3afed1b5c754055bb67908f55b5cb8000f7112749bf/pydantic_core-2.27.1-cp312-none-win32.whl", hash = "sha256:672ebbe820bb37988c4d136eca2652ee114992d5d41c7e4858cdd90ea94ffe5c", size = 1833633 },
     { url = "https://files.pythonhosted.org/packages/ee/f2/c61486eee27cae5ac781305658779b4a6b45f9cc9d02c90cb21b940e82cc/pydantic_core-2.27.1-cp312-none-win_amd64.whl", hash = "sha256:66ff044fd0bb1768688aecbe28b6190f6e799349221fb0de0e6f4048eca14c16", size = 1986973 },
     { url = "https://files.pythonhosted.org/packages/df/a6/e3f12ff25f250b02f7c51be89a294689d175ac76e1096c32bf278f29ca1e/pydantic_core-2.27.1-cp312-none-win_arm64.whl", hash = "sha256:9a3b0793b1bbfd4146304e23d90045f2a9b5fd5823aa682665fbdaf2a6c28f3e", size = 1883215 },
+]
+
+[[package]]
+name = "pydantic-extra-types"
+version = "2.10.1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "pydantic" },
+    { name = "typing-extensions" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/c3/12/844a4796dbbc814ef0a706f403cb0f3029bf324c2bca2bf0681f4f7d8618/pydantic_extra_types-2.10.1.tar.gz", hash = "sha256:e4f937af34a754b8f1fa228a2fac867091a51f56ed0e8a61d5b3a6719b13c923", size = 85694 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/a8/f1/92f7b4711d3d0d08981c2677ec9cdde6cb114205a69814bf803e0be5ae9b/pydantic_extra_types-2.10.1-py3-none-any.whl", hash = "sha256:db2c86c04a837bbac0d2d79bbd6f5d46c4c9253db11ca3fdd36a2b282575f1e2", size = 35155 },
 ]
 
 [[package]]

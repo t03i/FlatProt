@@ -7,7 +7,8 @@ from typing import Optional
 import numpy as np
 import drawsvg as draw
 from pydantic import Field
-import pydantic
+from pydantic_extra_types.color import Color
+
 from flatprot.visualization.elements import (
     VisualizationElement,
     VisualizationStyle,
@@ -27,8 +28,8 @@ class SheetStyle(VisualizationStyle):
     arrow_length_factor: float = Field(
         default=2.0, gt=0, description="Length of arrow head relative to width"
     )
-    stroke_color: pydantic.ColorType = Field(
-        default="#000000", description="Color of the stroke"
+    stroke_color: Color = Field(
+        default=Color("#000000"), description="Color of the stroke"
     )
 
 

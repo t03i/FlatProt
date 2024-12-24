@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 from pydantic import BaseModel, Field
-import pydantic
+from pydantic_extra_types.color import Color
 
 
 class CanvasSettings(BaseModel):
@@ -10,8 +10,8 @@ class CanvasSettings(BaseModel):
 
     width: int = Field(default=1024, description="Canvas width in pixels")
     height: int = Field(default=1024, description="Canvas height in pixels")
-    background_color: pydantic.ColorType = Field(
-        default="#FFFFFF", description="Background color in hex format"
+    background_color: Color = Field(
+        default=Color("#FFFFFF"), description="Background color in hex format"
     )
     padding: float = Field(
         default=0.05, description="Padding as fraction of canvas size"

@@ -127,8 +127,6 @@ def get_secondary_structure_segments(
         ]
     )
 
-    changes.write_csv("changes.csv")
-
     # Get indices where segments start and end
     starts = changes.filter(
         (changes["is_ss"]) & (changes["is_change"].shift(1))
