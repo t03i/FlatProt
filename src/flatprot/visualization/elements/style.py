@@ -7,9 +7,11 @@ from typing import Union, Optional, Dict, Type, ClassVar
 import yaml
 import json
 
-from ..elements import HelixStyle, SheetStyle, CoilStyle
-from ..elements.base import BaseStyle
-from ...structure import SecondaryStructureType
+from flatprot.visualization.elements.helix import HelixStyle
+from flatprot.visualization.elements.sheet import SheetStyle
+from flatprot.visualization.elements.coil import CoilStyle
+from flatprot.visualization.elements.base import VisualizationStyle as BaseStyle
+from flatprot.structure import SecondaryStructureType
 
 
 @dataclass
