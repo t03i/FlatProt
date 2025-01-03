@@ -48,11 +48,10 @@ class VisualizationElement(ABC):
 
 
 class SmoothingMixin:
-    def _smooth_coordinates(self, coords: np.ndarray, window: int) -> np.ndarray:
+    def _smooth_coordinates(self, coords: np.ndarray, window: int = 1) -> np.ndarray:
         """Apply moving average smoothing to coordinates"""
         if window <= 1:
             return coords
-
         # Pad the ends to maintain array size
         pad_width = window // 2
         padded = np.pad(coords, ((pad_width, pad_width), (0, 0)), mode="edge")

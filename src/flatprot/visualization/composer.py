@@ -16,7 +16,7 @@ from .elements import (
     VisualizationStyle,
     StyleManager,
     GroupVisualization,
-    Helix,
+    HelixVisualization,
     SheetVisualization,
     CoilVisualization,
 )
@@ -73,7 +73,7 @@ def secondary_structure_to_visualization_element(
 ) -> VisualizationElement:
     """Convert a secondary structure to a visualization element."""
     if secondary_structure == SecondaryStructureType.HELIX:
-        return Helix(coordinates, style=style)
+        return HelixVisualization(coordinates, style=style)
     elif secondary_structure == SecondaryStructureType.SHEET:
         return SheetVisualization(coordinates, style=style)
     elif secondary_structure == SecondaryStructureType.COIL:
@@ -104,12 +104,13 @@ def structure_to_scene(
     canvas_coords = transform_to_canvas_space(projected_coords[:, :2], canvas_settings)
 
     # Process each chain
-    start_idx = 0
+    offset = 0
     for chain in structure:
         elements_with_z = []  # Reset for each chain
 
         for element in chain.secondary_structure:
-            end_idx = start_idx + len(element.coordinates)
+            start_idx = offset + element.start
+            end_idx = offset + element.end + 1
             element_coords = canvas_coords[start_idx:end_idx]
             z_coords = projected_coords[start_idx:end_idx, 2]
             style = scene.style_manager.get_style(element.type)
@@ -120,15 +121,13 @@ def structure_to_scene(
             if vis_element:
                 elements_with_z.append((vis_element, np.mean(z_coords)))
 
-            start_idx = end_idx
-
         # Sort elements within this chain by z-coordinate
         sorted_elements = [
             elem for elem, z in sorted(elements_with_z, key=lambda x: x[1])
         ]
 
         # Add sorted elements as a group for this chain
-        group = GroupVisualization(sorted_elements)
+        group = GroupVisualization(chain.id, sorted_elements)
         scene.add_element(group)
-
+        offset += chain.num_residues
     return scene

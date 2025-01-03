@@ -1,7 +1,7 @@
 # Copyright 2024 Tobias Olenyi.
 # SPDX-License-Identifier: Apache-2.0
 
-from drawsvg import Drawing
+from drawsvg import Drawing, Rectangle
 from typing import Optional
 
 from .elements import VisualizationElement, GroupVisualization, StyleManager
@@ -18,7 +18,7 @@ class Scene:
     ):
         self.canvas_settings = canvas_settings or CanvasSettings()
         self.style_manager = style_manager or StyleManager.create_default()
-        self.root = GroupVisualization([])  # Root group containing all elements
+        self.root = GroupVisualization("root", [])  # Root group containing all elements
 
     def add_element(self, element: VisualizationElement) -> None:
         """Add an element to the scene's root group."""
@@ -42,12 +42,14 @@ class Scene:
         # Add background if specified
         if self.canvas_settings.background_color:
             drawing.append(
-                drawing.rect(
+                Rectangle(
                     -self.canvas_settings.width / 2,  # Account for centered origin
                     -self.canvas_settings.height / 2,
                     self.canvas_settings.width,
                     self.canvas_settings.height,
                     fill=self.canvas_settings.background_color,
+                    opacity=self.canvas_settings.background_opacity,
+                    class_="background",
                 )
             )
 

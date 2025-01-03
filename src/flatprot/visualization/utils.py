@@ -13,6 +13,7 @@ class CanvasSettings(BaseModel):
     background_color: Color = Field(
         default=Color("#FFFFFF"), description="Background color in hex format"
     )
+    background_opacity: float = Field(default=0, description="Background opacity (0-1)")
     padding: float = Field(
         default=0.05, description="Padding as fraction of canvas size"
     )

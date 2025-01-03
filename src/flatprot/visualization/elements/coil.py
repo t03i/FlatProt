@@ -72,6 +72,7 @@ class CoilVisualization(VisualizationElement, SmoothingMixin):
             stroke=self.style.color,
             stroke_width=self.style.line_width * self.style.line_thickness_factor,
             fill="none",
+            class_="coil",
         )
 
         # Start path

@@ -87,7 +87,10 @@ class SheetVisualization(VisualizationElement, SmoothingMixin):
 
         # Create path
         path = draw.Path(
-            stroke=self.style.stroke_color, stroke_width=1, fill=self.style.color
+            stroke=self.style.stroke_color,
+            stroke_width=1,
+            fill=self.style.color,
+            class_="sheet",
         )
 
         # Draw rectangular part and arrow

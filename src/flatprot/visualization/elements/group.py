@@ -9,7 +9,8 @@ from flatprot.visualization.elements import VisualizationElement
 class GroupVisualization(VisualizationElement):
     """A group of visualization elements"""
 
-    def __init__(self, elements: list[VisualizationElement]):
+    def __init__(self, name: str, elements: list[VisualizationElement]):
+        self.name = name
         self.elements = elements
 
     def add_element(self, element: VisualizationElement) -> None:
@@ -22,7 +23,7 @@ class GroupVisualization(VisualizationElement):
         self.elements.remove(element)
 
     def render(self) -> draw.Group:
-        group = draw.Group()
+        group = draw.Group(id=self.name)
         for element in self.elements:
-            group.add(element.render())
+            group.append(element.render())
         return group

@@ -91,7 +91,7 @@ class StyleManager:
         return cls.from_dict(cls.THEMES[theme_name])
 
     @classmethod
-    def from_dict(cls, config: Dict) -> "StyleManager":
+    def from_dict(cls, config: dict) -> "StyleManager":
         """Create a StyleManager from a configuration dictionary"""
         manager = cls()
 

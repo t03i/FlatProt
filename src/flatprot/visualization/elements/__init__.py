@@ -4,7 +4,7 @@
 from .base import VisualizationStyle, SmoothingMixin, VisualizationElement
 
 from .coil import CoilVisualization, CoilStyle
-from .helix import Helix, HelixStyle
+from .helix import HelixVisualization, HelixStyle
 from .sheet import SheetVisualization, SheetStyle
 from .group import GroupVisualization
 
@@ -16,7 +16,7 @@ __all__ = [
     "VisualizationElement",
     "CoilVisualization",
     "CoilStyle",
-    "Helix",
+    "HelixVisualization",
     "HelixStyle",
     "SheetVisualization",
     "SheetStyle",
