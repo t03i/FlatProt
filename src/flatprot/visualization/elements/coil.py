@@ -27,7 +27,7 @@ class CoilStyle(VisualizationStyle):
 
 
 @dataclass
-class Coil(VisualizationElement, SmoothingMixin):
+class CoilVisualization(VisualizationElement, SmoothingMixin):
     """A coil element visualization using a smooth curved line"""
 
     def __init__(

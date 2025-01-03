@@ -33,8 +33,7 @@ class SheetStyle(VisualizationStyle):
     )
 
 
-@dataclass
-class Sheet(VisualizationElement, SmoothingMixin):
+class SheetVisualization(VisualizationElement, SmoothingMixin):
     """A beta sheet element visualization using a rectangular ribbon with arrow"""
 
     def __init__(

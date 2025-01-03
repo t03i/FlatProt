@@ -3,10 +3,10 @@
 
 from .base import VisualizationStyle, SmoothingMixin, VisualizationElement
 
-from .coil import Coil, CoilStyle
+from .coil import CoilVisualization, CoilStyle
 from .helix import Helix, HelixStyle
-from .sheet import Sheet, SheetStyle
-from .group import Group
+from .sheet import SheetVisualization, SheetStyle
+from .group import GroupVisualization
 
 from .style import StyleManager
 
@@ -14,12 +14,12 @@ __all__ = [
     "VisualizationStyle",
     "SmoothingMixin",
     "VisualizationElement",
-    "Coil",
+    "CoilVisualization",
     "CoilStyle",
     "Helix",
     "HelixStyle",
-    "Sheet",
+    "SheetVisualization",
     "SheetStyle",
-    "Group",
+    "GroupVisualization",
     "StyleManager",
 ]

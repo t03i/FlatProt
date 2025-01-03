@@ -5,11 +5,21 @@ from typing import Optional
 import numpy as np
 
 from flatprot.structure import Structure, SecondaryStructureType
-from flatprot.projection import Projector
-from flatprot.visualization.elements import VisualizationElement, VisualizationStyle
-from .utils import CanvasSettings
-from .elements import StyleManager, Group, Helix, Sheet, Coil
+from flatprot.projection import (
+    Projector,
+    ProjectionParameters,
+)
 from flatprot.visualization.scene import Scene
+from .utils import CanvasSettings
+from .elements import (
+    VisualizationElement,
+    VisualizationStyle,
+    StyleManager,
+    GroupVisualization,
+    Helix,
+    SheetVisualization,
+    CoilVisualization,
+)
 
 
 def transform_to_canvas_space(
@@ -65,9 +75,9 @@ def secondary_structure_to_visualization_element(
     if secondary_structure == SecondaryStructureType.HELIX:
         return Helix(coordinates, style=style)
     elif secondary_structure == SecondaryStructureType.SHEET:
-        return Sheet(coordinates, style=style)
+        return SheetVisualization(coordinates, style=style)
     elif secondary_structure == SecondaryStructureType.COIL:
-        return Coil(coordinates, style=style)
+        return CoilVisualization(coordinates, style=style)
 
 
 def structure_to_scene(
@@ -75,6 +85,7 @@ def structure_to_scene(
     projector: Projector,
     canvas_settings: Optional[CanvasSettings] = None,
     style_manager: Optional[StyleManager] = None,
+    projection_parameters: Optional[ProjectionParameters] = None,
 ) -> Scene:
     """Convert a structure to a renderable scene.
 
@@ -82,23 +93,14 @@ def structure_to_scene(
         structure: The structure to visualize
         projector: The projector to use for coordinate transformation
         canvas_settings: Optional canvas settings
-
+        projection_parameters: Optional projection parameters
     Returns:
         A Scene object ready for rendering
     """
     scene = Scene(canvas_settings=canvas_settings, style_manager=style_manager)
 
-    # Get coordinates for all elements across all chains
-    all_coords = np.vstack(
-        [
-            element.coordinates
-            for chain in structure
-            for element in chain.secondary_structure
-        ]
-    )
-
     # Project all coordinates at once
-    projected_coords = projector.project(all_coords)
+    projected_coords = projector.project(structure.coordinates, projection_parameters)
     canvas_coords = transform_to_canvas_space(projected_coords[:, :2], canvas_settings)
 
     # Process each chain
@@ -126,7 +128,7 @@ def structure_to_scene(
         ]
 
         # Add sorted elements as a group for this chain
-        group = Group(sorted_elements)
+        group = GroupVisualization(sorted_elements)
         scene.add_element(group)
 
     return scene

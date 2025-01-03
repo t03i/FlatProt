@@ -6,7 +6,7 @@ import drawsvg as draw
 from flatprot.visualization.elements import VisualizationElement
 
 
-class Group(VisualizationElement):
+class GroupVisualization(VisualizationElement):
     """A group of visualization elements"""
 
     def __init__(self, elements: list[VisualizationElement]):

@@ -36,8 +36,7 @@ class HelixStyle(VisualizationStyle):
     )
 
 
-@dataclass
-class Helix(VisualizationElement, SmoothingMixin):
+class HelixVisualization(VisualizationElement, SmoothingMixin):
     """A helical element visualization using a ribbon style"""
 
     def __init__(

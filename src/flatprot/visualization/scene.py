@@ -4,7 +4,7 @@
 from drawsvg import Drawing
 from typing import Optional
 
-from .elements import VisualizationElement, Group, StyleManager
+from .elements import VisualizationElement, GroupVisualization, StyleManager
 from .utils import CanvasSettings
 
 
@@ -18,7 +18,7 @@ class Scene:
     ):
         self.canvas_settings = canvas_settings or CanvasSettings()
         self.style_manager = style_manager or StyleManager.create_default()
-        self.root = Group([])  # Root group containing all elements
+        self.root = GroupVisualization([])  # Root group containing all elements
 
     def add_element(self, element: VisualizationElement) -> None:
         """Add an element to the scene's root group."""

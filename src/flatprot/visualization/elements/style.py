@@ -2,10 +2,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 from dataclasses import dataclass, field
-from pathlib import Path
-from typing import Union, Optional, Dict, Type, ClassVar
-import yaml
-import json
+from typing import Optional, ClassVar
 
 from flatprot.visualization.elements.helix import HelixStyle
 from flatprot.visualization.elements.sheet import SheetStyle
@@ -26,7 +23,7 @@ class StyleManager:
     }
 
     # Predefined themes/presets
-    THEMES: ClassVar[Dict[str, Dict]] = {
+    THEMES: ClassVar[dict[str, dict]] = {
         "default": {
             "global_style": {
                 "color": "#000000",
@@ -71,7 +68,7 @@ class StyleManager:
         },
     }
 
-    element_styles: Dict[SecondaryStructureType, BaseStyle] = field(
+    element_styles: dict[SecondaryStructureType, BaseStyle] = field(
         default_factory=lambda: {
             stype: style_class()
             for stype, style_class in StyleManager._element_map.items()

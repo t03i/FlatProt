@@ -30,8 +30,8 @@ class StructureElementsProjectionParameters(ProjectionParameters):
     structure_elements: list[SecondaryStructure]
 
 
-class InertiaProjector(Projector):
-    """Projects using inertia-based calculation with residue weights."""
+class StructureElementsProjector(Projector):
+    """Projects using structure elements."""
 
     def __init__(self, parameters: Optional[StructureElementsParameters] = None):
         super().__init__()

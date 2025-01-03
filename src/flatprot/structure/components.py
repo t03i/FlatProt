@@ -102,6 +102,37 @@ class Chain(StructureComponent):
     def num_residues(self) -> int:
         return len(self.index)
 
+    def iter_secondary_structure_with_coordinates(self):
+        """Iterate over all secondary structure elements with their coordinates.
+
+        Yields:
+            tuple: (secondary_structure_element, coordinates)
+        """
+        for element in self.secondary_structure:
+            coords = self.coordinates[element.start : element.end + 1]
+            yield element, coords
+
+    def iter_secondary_structure_with_residues(self):
+        """Iterate over all secondary structure elements with their residues.
+
+        Yields:
+            tuple: (secondary_structure_element, residues)
+        """
+        for element in self.secondary_structure:
+            residues = self.residues[element.start : element.end + 1]
+            yield element, residues
+
+    def iter_secondary_structure_with_data(self):
+        """Iterate over all secondary structure elements with their coordinates and residues.
+
+        Yields:
+            tuple: (secondary_structure_element, coordinates, residues)
+        """
+        for element in self.secondary_structure:
+            coords = self.coordinates[element.start : element.end + 1]
+            residues = self.residues[element.start : element.end + 1]
+            yield element, coords, residues
+
 
 class Structure:
     def __init__(self, chains: list[Chain]):
@@ -124,3 +155,28 @@ class Structure:
 
     def __len__(self) -> int:
         return len(self.__chains)
+
+    @property
+    def residues(self) -> list[Residue]:
+        """Get all residues from all chains concatenated in a single list."""
+        all_residues = []
+        for chain in self.__chains.values():
+            all_residues.extend(chain.residues)
+        return all_residues
+
+    @property
+    def coordinates(self) -> np.ndarray:
+        """Get coordinates from all chains concatenated in a single array."""
+        return np.concatenate([chain.coordinates for chain in self.__chains.values()])
+
+    def iter_secondary_structure_with_data(self):
+        """Iterate over all secondary structure elements with their coordinates.
+
+        Yields:
+            tuple: (secondary_structure_element, coordinates)
+        """
+        offset = 0
+        for chain in self:
+            for element, coords, residues in chain.iter_secondary_structure_with_data():
+                yield element, coords, residues
+                offset += len(coords)
