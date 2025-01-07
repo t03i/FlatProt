@@ -90,14 +90,12 @@ class HelixVisualization(VisualizationElement, SmoothingMixin):
 
     def render(self) -> draw.DrawingElement:
         """Renders a zigzag helix representation."""
-        coords = self._smooth_coordinates(self.coordinates)
+        coords = self.coordinates
 
         if len(coords) <= self.style.min_helix_length:
             return draw.Line(
-                -+coords[0][0],
-                coords[0][1],
-                coords[-1][0],
-                coords[-1][1],
+                *coords[0],
+                *coords[-1],
                 stroke=self.style.stroke_color,
                 stroke_width=self.style.line_width * self.style.stroke_width_factor,
                 class_="helix",
