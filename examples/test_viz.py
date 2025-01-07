@@ -11,7 +11,7 @@ from flatprot.visualization.elements.style import StyleManager
 
 
 def create_protein_visualization(
-    pdb_file: Path, output_file: Path, theme: str = "publication"
+    pdb_file: Path, output_file: Path, theme: str = "default"
 ) -> None:
     """Create an SVG visualization of a protein structure.
 
