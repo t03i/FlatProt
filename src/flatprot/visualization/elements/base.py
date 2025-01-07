@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 from abc import ABC, abstractmethod
-from typing import Optional
+from typing import Optional, Literal
 
 import numpy as np
 import drawsvg as draw
@@ -13,17 +13,18 @@ from pydantic_extra_types.color import Color
 class VisualizationStyle(BaseModel):
     """Base class for styling visualization elements"""
 
-    color: Color = Field(default=Color("#000000"), description="Element color")
+    fill_color: Color | Literal["none"] = Field(
+        default="None", description="Element fill color"
+    )
+    stroke_color: Color | Literal["none"] = Field(
+        default=Color("#000000"), description="Element stroke color"
+    )
     opacity: float = Field(
         default=1.0, ge=0.0, le=1.0, description="Opacity value between 0 and 1"
     )
-    line_width: float = Field(default=1.0, gt=0, description="Width of lines")
-    simplification: float = Field(
-        default=0.0, ge=0.0, description="Simplification factor"
-    )
-    size: float = Field(default=1.0, gt=0, description="Size multiplier")
+    line_width: float = Field(default=5.0, gt=0, description="Width of lines")
     smoothing_window: int = Field(
-        default=3, ge=1, description="Window size for smoothing"
+        default=5, ge=1, description="Window size for smoothing"
     )
 
     model_config = ConfigDict(
@@ -49,16 +50,28 @@ class VisualizationElement(ABC):
 
 class SmoothingMixin:
     def _smooth_coordinates(self, coords: np.ndarray, window: int = 1) -> np.ndarray:
-        """Apply moving average smoothing to coordinates"""
-        if window <= 1:
+        """Apply segment-based averaging to coordinates while preserving endpoints"""
+        if window <= 1 or len(coords) <= 2:
             return coords
-        # Pad the ends to maintain array size
-        pad_width = window // 2
-        padded = np.pad(coords, ((pad_width, pad_width), (0, 0)), mode="edge")
 
-        # Calculate moving average
+        # Preserve start and end points
         smoothed = np.zeros_like(coords)
-        for i in range(len(coords)):
-            smoothed[i] = np.mean(padded[i : i + window], axis=0)
+        smoothed[0] = coords[0]
+        smoothed[-1] = coords[-1]
+
+        # Average points in segments
+        for i in range(0, len(coords) - 2, window):
+            segment = coords[i : min(i + window, len(coords) - 1)]
+            avg_point = np.mean(segment, axis=0)
+            smoothed[i + window // 2] = avg_point
+
+        # Interpolate any missing points
+        mask = np.all(smoothed == 0, axis=1)
+        if np.any(mask):
+            indices = np.arange(len(coords))
+            for dim in range(coords.shape[1]):
+                smoothed[mask, dim] = np.interp(
+                    indices[mask], indices[~mask], smoothed[~mask, dim]
+                )
 
         return smoothed

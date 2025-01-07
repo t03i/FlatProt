@@ -1,5 +1,6 @@
 # Copyright 2024 Tobias Olenyi.
 # SPDX-License-Identifier: Apache-2.0
+from typing import Optional
 
 import numpy as np
 import drawsvg as draw
@@ -17,15 +18,28 @@ class SheetStyle(VisualizationStyle):
     """Settings specific to sheet visualization"""
 
     base_width_factor: float = Field(
-        default=20, gt=0, description="Width of base relative to line width"
+        default=25, gt=0, description="Width of base relative to line width"
     )
     stroke_color: Color = Field(
         default=Color("#000000"), description="Color of the stroke"
+    )
+    stroke_width_factor: float = Field(
+        default=0.5, gt=0, description="Width of the stroke relative to line width"
+    )
+    min_sheet_length: int = Field(
+        default=3, gt=0, description="Minimum length of the sheet for rendering"
     )
 
 
 class SheetVisualization(VisualizationElement, SmoothingMixin):
     """A beta sheet element visualization using a simple triangular arrow"""
+
+    def __init__(
+        self,
+        coordinates: np.ndarray,
+        style: Optional[SheetStyle] = None,
+    ):
+        super().__init__(coordinates, style)
 
     def render(self) -> draw.DrawingElement:
         """Renders a simple triangular arrow using atom coordinates.
@@ -43,8 +57,17 @@ class SheetVisualization(VisualizationElement, SmoothingMixin):
         # Calculate direction vector
         direction = end_point - start_point
         length = np.linalg.norm(direction)
-        if np.isclose(length, 0):
-            return draw.Path(class_="sheet")  # Return empty path if length is zero
+
+        if np.isclose(length, 0) or len(coords) <= self.style.min_sheet_length:
+            return draw.Line(
+                coords[0][0],
+                coords[0][1],
+                coords[-1][0],
+                coords[-1][1],
+                stroke=self.style.stroke_color,
+                stroke_width=self.style.line_width * self.style.stroke_width_factor,
+                class_="sheet",
+            )
 
         # Normalize direction vector
         direction = direction / length
@@ -62,8 +85,8 @@ class SheetVisualization(VisualizationElement, SmoothingMixin):
         # Create path
         path = draw.Path(
             stroke=self.style.stroke_color,
-            stroke_width=self.style.line_width,
-            fill=self.style.color,
+            stroke_width=self.style.line_width * self.style.stroke_width_factor,
+            fill=self.style.fill_color,
             class_="sheet",
         )
 

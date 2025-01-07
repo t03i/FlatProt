@@ -26,44 +26,36 @@ class StyleManager:
     THEMES: ClassVar[dict[str, dict]] = {
         "default": {
             "global_style": {
-                "color": "#000000",
+                "stroke_color": "#333333",
                 "opacity": 1.0,
-                "line_width": 1.0,
-            },
-        },
-        "publication": {
-            "global_style": {
-                "color": "#333333",
-                "opacity": 1.0,
-                "line_width": 2.0,
+                "line_width": 3.0,
             },
             "helix": {
-                "color": "#FF4444",
+                "fill_color": "#FF4444",
                 "wave_height_factor": 0.8,
                 "ribbon_thickness_factor": 0.6,
             },
             "sheet": {
-                "color": "#4444FF",
+                "fill_color": "#4444FF",
                 "ribbon_thickness_factor": 1.0,
                 "arrow_width_factor": 1.5,
             },
             "coil": {
-                "color": "#444444",
-                "line_thickness_factor": 0.4,
+                "stroke_width_factor": 1.0,
             },
         },
         "colorful": {
             "helix": {
-                "color": "#FF0000",
+                "fill_color": "#FF0000",
                 "wave_height_factor": 1.0,
             },
             "sheet": {
-                "color": "#00FF00",
+                "fill_  color": "#00FF00",
                 "arrow_width_factor": 1.8,
             },
             "coil": {
-                "color": "#0000FF",
-                "line_thickness_factor": 0.5,
+                "stroke_color": "#0000FF",
+                "stroke_width_factor": 0.5,
             },
         },
     }

@@ -1,6 +1,7 @@
 # Copyright 2024 Tobias Olenyi.
 # SPDX-License-Identifier: Apache-2.0
 
+from typing import Optional
 import numpy as np
 import drawsvg as draw
 from pydantic import Field
@@ -20,7 +21,7 @@ class HelixStyle(VisualizationStyle):
         default=15.0, gt=0, description="Thickness of helix relative to line width"
     )
     cross_width_factor: float = Field(
-        default=10.0,
+        default=25.0,
         gt=0,
         description="Width of helix wavelength relative to line width",
     )
@@ -29,18 +30,25 @@ class HelixStyle(VisualizationStyle):
         gt=0,
         description="Amplitude of helix relative to line width",
     )
-    min_ending_line: float = Field(
-        default=5.0, gt=0, description="Minimum length of ending line segments"
+    min_helix_length: int = Field(
+        default=4, gt=0, description="Minimum length of the helix for rendering"
     )
-    stroke_color: Color = Field(
-        default=Color("#000000"), description="Color of the stroke"
+    stroke_width_factor: float = Field(
+        default=0.5, gt=0, description="Width of the stroke relative to line width"
     )
 
 
 class HelixVisualization(VisualizationElement, SmoothingMixin):
     """A helical element visualization using a zigzag style"""
 
-    def _get_line_points(self, start, end, thickness, wavelength, amplitude):
+    def __init__(
+        self,
+        coordinates: np.ndarray,
+        style: Optional[HelixStyle] = None,
+    ):
+        super().__init__(coordinates, style)
+
+    def _get_zigzag_points(self, start, end, thickness, wavelength, amplitude):
         """Calculate points for a sharp zigzag helix pattern."""
         # Convert inputs to numpy arrays
         start = np.array(start)
@@ -84,26 +92,33 @@ class HelixVisualization(VisualizationElement, SmoothingMixin):
         """Renders a zigzag helix representation."""
         coords = self._smooth_coordinates(self.coordinates)
 
-        if len(coords) < 2:
-            return draw.Path(class_="helix")
+        if len(coords) <= self.style.min_helix_length:
+            return draw.Line(
+                -+coords[0][0],
+                coords[0][1],
+                coords[-1][0],
+                coords[-1][1],
+                stroke=self.style.stroke_color,
+                stroke_width=self.style.line_width * self.style.stroke_width_factor,
+                class_="helix",
+            )
 
         thickness = self.style.line_width * self.style.thickness_factor
         wavelength = self.style.line_width * self.style.cross_width_factor
         amplitude = self.style.line_width * self.style.amplitude_factor
 
-        points = self._get_line_points(
-            coords[0], coords[1], thickness, wavelength, amplitude
+        points = self._get_zigzag_points(
+            coords[0], coords[-1], thickness, wavelength, amplitude
         )
 
         # Create a single connected path
         path = draw.Path(
             stroke=self.style.stroke_color,
-            stroke_width=self.style.line_width,
-            fill=self.style.color,
+            stroke_width=self.style.line_width * self.style.stroke_width_factor,
+            fill=self.style.fill_color,
             class_="helix",
         )
 
-        print(f"points: {points}")
         # Start path at first point
         path.M(*points[0])
 
