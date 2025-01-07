@@ -48,7 +48,7 @@ class SheetVisualization(VisualizationElement, SmoothingMixin):
             draw.Element: A path element representing the sheet
         """
         # Smooth the coordinates to reduce noise
-        coords = self._smooth_coordinates(self.coordinates)
+        coords = self.coordinates
 
         # Get start and end points
         start_point = coords[0]

@@ -23,8 +23,8 @@ class VisualizationStyle(BaseModel):
         default=1.0, ge=0.0, le=1.0, description="Opacity value between 0 and 1"
     )
     line_width: float = Field(default=5.0, gt=0, description="Width of lines")
-    smoothing_window: int = Field(
-        default=5, ge=1, description="Window size for smoothing"
+    smoothing_factor: float = Field(
+        default=0.2, ge=0.0, le=1.0, description="Percentage of points to keep"
     )
 
     model_config = ConfigDict(
@@ -49,29 +49,27 @@ class VisualizationElement(ABC):
 
 
 class SmoothingMixin:
-    def _smooth_coordinates(self, coords: np.ndarray, window: int = 1) -> np.ndarray:
-        """Apply segment-based averaging to coordinates while preserving endpoints"""
-        if window <= 1 or len(coords) <= 2:
+    def _smooth_coordinates(
+        self, coords: np.ndarray, reduction_factor: float = 0.2
+    ) -> np.ndarray:
+        """Reduce point complexity using uniform selection.
+
+        Args:
+            coords: Input coordinates of shape (N, 2)
+            reduction_factor: Fraction of points to keep (0.0-1.0)
+
+        Returns:
+            Simplified coordinates array
+        """
+        n_points = len(coords)
+        if n_points <= 3 or reduction_factor >= 1.0:
             return coords
 
-        # Preserve start and end points
-        smoothed = np.zeros_like(coords)
-        smoothed[0] = coords[0]
-        smoothed[-1] = coords[-1]
+        # Always keep first and last points
+        target_points = max(3, int(n_points * reduction_factor))
+        if target_points >= n_points:
+            return coords
 
-        # Average points in segments
-        for i in range(0, len(coords) - 2, window):
-            segment = coords[i : min(i + window, len(coords) - 1)]
-            avg_point = np.mean(segment, axis=0)
-            smoothed[i + window // 2] = avg_point
-
-        # Interpolate any missing points
-        mask = np.all(smoothed == 0, axis=1)
-        if np.any(mask):
-            indices = np.arange(len(coords))
-            for dim in range(coords.shape[1]):
-                smoothed[mask, dim] = np.interp(
-                    indices[mask], indices[~mask], smoothed[~mask, dim]
-                )
-
-        return smoothed
+        # Use linear indexing for uniform point selection
+        indices = np.linspace(0, n_points - 1, target_points, dtype=int)
+        return coords[indices]

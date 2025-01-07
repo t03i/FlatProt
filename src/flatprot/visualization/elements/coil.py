@@ -39,9 +39,7 @@ class CoilVisualization(VisualizationElement, SmoothingMixin):
             draw.Element: A path element representing the coil
         """
         # Smooth the coordinates to reduce noise
-        coords = self._smooth_coordinates(
-            self.coordinates, window=self.style.smoothing_window
-        )
+        coords = self._smooth_coordinates(self.coordinates, self.style.smoothing_factor)
 
         # Create path
         path = draw.Path(
