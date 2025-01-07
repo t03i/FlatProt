@@ -26,14 +26,6 @@ def transform_to_canvas_space(
     coords: np.ndarray, canvas_settings: CanvasSettings
 ) -> np.ndarray:
     """Transform projected coordinates to canvas space."""
-    """Transform projected coordinates to canvas space.
-
-        Args:
-            coords: Array of shape (N, 2) containing projected coordinates
-
-        Returns:
-            Array of shape (N, 2) containing canvas coordinates
-        """
     # Get padding in pixels
     pad_x, pad_y = canvas_settings.padding_pixels
 
@@ -45,25 +37,15 @@ def transform_to_canvas_space(
     min_coords = np.min(coords, axis=0)
     max_coords = np.max(coords, axis=0)
 
-    # Calculate scale factors for both dimensions
+    # Calculate and apply scale factors for each dimension independently
     scale_x = available_width / (max_coords[0] - min_coords[0])
     scale_y = available_height / (max_coords[1] - min_coords[1])
 
-    # Use the smaller scale to maintain aspect ratio
-    scale = min(scale_x, scale_y)
-
-    # Center the scaled coordinates
+    # Center the coordinates and scale each dimension
     centered_coords = coords - np.mean([min_coords, max_coords], axis=0)
-    scaled_coords = centered_coords * scale
+    scaled_coords = centered_coords * np.array([scale_x, scale_y])
 
-    # Calculate translation to center in canvas
-    translation_x = canvas_settings.width / 2
-    translation_y = canvas_settings.height / 2
-
-    # Apply translation
-    canvas_coords = scaled_coords + np.array([translation_x, translation_y])
-
-    return canvas_coords
+    return scaled_coords
 
 
 def secondary_structure_to_visualization_element(
@@ -108,9 +90,13 @@ def structure_to_scene(
     for chain in structure:
         elements_with_z = []  # Reset for each chain
 
-        for element in chain.secondary_structure:
+        for i, element in enumerate(chain.secondary_structure):
             start_idx = offset + element.start
             end_idx = offset + element.end + 1
+
+            if i < len(chain.secondary_structure) - 1:
+                end_idx += 1
+
             element_coords = canvas_coords[start_idx:end_idx]
             z_coords = projected_coords[start_idx:end_idx, 2]
             style = scene.style_manager.get_style(element.type)
