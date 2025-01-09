@@ -4,7 +4,10 @@
 from pathlib import Path
 
 from flatprot.io.structure_gemmi_adapter import GemmiStructureParser
-from flatprot.projection.inertia import InertiaProjector, InertiaProjectionParameters
+from flatprot.transformation.inertia import (
+    InertiaTransformer,
+    InertiaTransformParameters,
+)
 from flatprot.visualization.composer import structure_to_scene
 from flatprot.visualization.utils import CanvasSettings
 from flatprot.visualization.elements.style import StyleManager
@@ -25,26 +28,24 @@ def create_protein_visualization(
     structure = parser.parse_structure(pdb_file)
 
     # 2. Set up projection
-    projector = InertiaProjector()
+    transformer = InertiaTransformer()
 
     # 3. Configure visualization
     canvas_settings = CanvasSettings(
         width=1200, height=1200, background_color="#FFFFFF", padding=0.1
     )
 
-    projection_parameters = InertiaProjectionParameters(
-        residues=list(structure.residues)
-    )
+    transform_parameters = InertiaTransformParameters(residues=list(structure.residues))
 
     style_manager = StyleManager.from_theme(theme)
 
     # 4. Create and render scene
     scene = structure_to_scene(
         structure=structure,
-        projector=projector,
+        transformer=transformer,
         canvas_settings=canvas_settings,
         style_manager=style_manager,
-        projection_parameters=projection_parameters,
+        transform_parameters=transform_parameters,
     )
 
     # 5. Save to file
@@ -55,5 +56,5 @@ if __name__ == "__main__":
     # Example usage
     create_protein_visualization(
         pdb_file=Path("data/3Ftx/None-Nana_c1_1-Naja_naja.cif"),
-        output_file=Path("data/3Ftx/None-Nana_c1_1-Naja_naja.svg"),
+        output_file=Path("data/3Ftx/None-Nana_c1_1-Naja_naja_inertia.svg"),
     )

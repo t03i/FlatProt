@@ -64,7 +64,7 @@ def structure_to_scene(
     transformer: Transformer,
     canvas_settings: Optional[CanvasSettings] = None,
     style_manager: Optional[StyleManager] = None,
-    transformation_parameters: Optional[TransformParameters] = None,
+    transform_parameters: Optional[TransformParameters] = None,
 ) -> Scene:
     """Convert a structure to a renderable scene.
 
@@ -81,7 +81,7 @@ def structure_to_scene(
 
     # Project all coordinates at once
     projected_coords = transformer.transform(
-        structure.coordinates, transformation_parameters
+        structure.coordinates, transform_parameters
     )
     canvas_coords = transform_to_canvas_space(projected_coords[:, :2], canvas_settings)
 
