@@ -10,7 +10,7 @@ from typing import Optional
 
 from flatprot.structure.secondary import SecondaryStructure, SecondaryStructureType
 from .projector import Projector, ProjectionParameters
-from .utils import ProjectionMatrix
+from .utils import TransformationMatrix
 
 import flatprot.projection.utils as utils
 
@@ -41,7 +41,7 @@ class StructureElementsProjector(Projector):
         self,
         coordinates: np.ndarray,
         parameters: Optional[StructureElementsProjectionParameters] = None,
-    ) -> ProjectionMatrix:
+    ) -> TransformationMatrix:
         """Calculate projection matrix for given coordinates."""
         if parameters is None or not parameters.structure_elements:
             # Use default weight for all coordinates if no structure elements provided
@@ -61,7 +61,7 @@ class StructureElementsProjector(Projector):
     def _apply_cached_projection(
         self,
         coordinates: np.ndarray,
-        cached_projection: ProjectionMatrix,
+        cached_projection: TransformationMatrix,
         parameters: Optional[StructureElementsProjectionParameters] = None,
     ) -> np.ndarray:
         """Apply cached projection to coordinates."""

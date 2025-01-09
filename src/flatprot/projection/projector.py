@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import Optional
 from dataclasses import dataclass
 
-from .utils import ProjectionMatrix
+from .utils import TransformationMatrix
 
 
 @dataclass
@@ -21,7 +21,7 @@ class Projector(ABC):
     """Base class for all projectors using template method pattern."""
 
     def __init__(self):
-        self._cached_projection: Optional[ProjectionMatrix] = None
+        self._cached_projection: Optional[TransformationMatrix] = None
 
     def project(
         self, coordinates: np.ndarray, parameters: Optional[ProjectionParameters] = None
@@ -48,7 +48,7 @@ class Projector(ABC):
     @abstractmethod
     def _calculate_projection(
         self, coordinates: np.ndarray, parameters: Optional[ProjectionParameters] = None
-    ) -> ProjectionMatrix:
+    ) -> TransformationMatrix:
         """Calculate projection matrix for given coordinates.
 
         Args:
@@ -63,7 +63,7 @@ class Projector(ABC):
     def _apply_cached_projection(
         self,
         coordinates: np.ndarray,
-        cached_projection: ProjectionMatrix,
+        cached_projection: TransformationMatrix,
         parameters: Optional[ProjectionParameters] = None,
     ) -> np.ndarray:
         """Apply cached projection to coordinates, returning 2D coordinates."""
@@ -84,4 +84,4 @@ class Projector(ABC):
                 f"Projection must be loaded from .npz file, got '{path.suffix}'"
             )
         loaded = np.load(path)
-        self._cached_projection = ProjectionMatrix.from_array(loaded["projection"])
+        self._cached_projection = TransformationMatrix.from_array(loaded["projection"])

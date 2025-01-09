@@ -6,7 +6,7 @@ import numpy as np
 from typing import Optional
 
 from .projector import Projector, ProjectionParameters
-from .utils import ProjectionMatrix
+from .utils import TransformationMatrix
 import flatprot.projection.utils as utils
 from flatprot.structure.residue import Residue
 
@@ -65,7 +65,7 @@ class InertiaProjector(Projector):
         self,
         coordinates: np.ndarray,
         parameters: Optional[InertiaProjectionParameters] = None,
-    ) -> ProjectionMatrix:
+    ) -> TransformationMatrix:
         """Calculate projection matrix for given coordinates."""
         if not self.parameters.use_weights:
             weights = np.ones(len(coordinates))
@@ -83,7 +83,7 @@ class InertiaProjector(Projector):
     def _apply_cached_projection(
         self,
         coordinates: np.ndarray,
-        cached_projection: ProjectionMatrix,
+        cached_projection: TransformationMatrix,
         parameters: Optional[InertiaProjectionParameters] = None,
     ) -> np.ndarray:
         """Apply cached projection to coordinates."""

@@ -8,7 +8,7 @@ from .structure_elements import (
     StructureElementsParameters,
     StructureElementsProjectionParameters,
 )
-from .utils import ProjectionMatrix
+from .utils import TransformationMatrix
 
 __all__ = [
     "Projector",
@@ -19,5 +19,5 @@ __all__ = [
     "StructureElementsProjector",
     "StructureElementsParameters",
     "StructureElementsProjectionParameters",
-    "ProjectionMatrix",
+    "TransformationMatrix",
 ]

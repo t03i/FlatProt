@@ -7,8 +7,8 @@ import numpy as np
 
 
 @dataclass
-class ProjectionMatrix:
-    """Represents a projection transformation."""
+class TransformationMatrix:
+    """Represents a transformation matrix."""
 
     rotation: np.ndarray
     translation: np.ndarray
@@ -20,20 +20,22 @@ class ProjectionMatrix:
         if self.translation.shape != (3,):
             raise ValueError("Translation vector must have shape (3,)")
 
-    def combined_rotation(self, other: "ProjectionMatrix") -> "ProjectionMatrix":
-        """Combine two projection matrices by first applying self, then other.
+    def combined_rotation(
+        self, other: "TransformationMatrix"
+    ) -> "TransformationMatrix":
+        """Combine two transformation matrices by first applying self, then other.
 
         The combined transformation T = T2 ∘ T1 is:
         rotation = R2 @ R1
         translation = R2 @ t1 + t2
         """
-        return ProjectionMatrix(
+        return TransformationMatrix(
             rotation=other.rotation @ self.rotation,
             translation=other.rotation @ self.translation + other.translation,
         )
 
     def to_array(self) -> np.ndarray:
-        """Convert ProjectionMatrix to a single numpy array for storage.
+        """Convert TransformationMatrix to a single numpy array for storage.
 
         Returns:
             Array of shape (4, 3) where first 3 rows are rotation matrix
@@ -42,21 +44,21 @@ class ProjectionMatrix:
         return np.vstack([self.rotation, self.translation])
 
     @classmethod
-    def from_array(cls, arr: np.ndarray) -> "ProjectionMatrix":
-        """Create ProjectionMatrix from stored array format.
+    def from_array(cls, arr: np.ndarray) -> "TransformationMatrix":
+        """Create TransformationMatrix from stored array format.
 
         Args:
             arr: Array of shape (4, 3) where first 3 rows are rotation matrix
                 and last row is translation vector
 
         Returns:
-            ProjectionMatrix instance
+            TransformationMatrix instance
         """
         return cls(rotation=arr[0:3, :], translation=arr[3, :])
 
     @classmethod
-    def from_string(cls, s: str) -> "ProjectionMatrix":
-        """Create ProjectionMatrix from string representation."""
+    def from_string(cls, s: str) -> "TransformationMatrix":
+        """Create TransformationMatrix from string representation."""
         arr = np.fromstring(s)
         arr = arr.reshape(4, 3)
         return cls.from_array(arr)
@@ -64,7 +66,7 @@ class ProjectionMatrix:
 
 def calculate_inertia_projection(
     coordinates: np.ndarray, weights: np.ndarray
-) -> ProjectionMatrix:
+) -> TransformationMatrix:
     """Calculate projection matrix using weighted inertia tensor.
 
     Args:
@@ -93,11 +95,11 @@ def calculate_inertia_projection(
     if np.linalg.det(rotation) < 0:
         rotation[:, 0] *= -1
 
-    return ProjectionMatrix(rotation=rotation, translation=com)
+    return TransformationMatrix(rotation=rotation, translation=com)
 
 
 def apply_projection(
-    coordinates: np.ndarray, projection: ProjectionMatrix
+    coordinates: np.ndarray, projection: TransformationMatrix
 ) -> np.ndarray:
     """Apply projection matrix to coordinates.
 
