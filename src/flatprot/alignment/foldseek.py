@@ -9,7 +9,7 @@ import tempfile
 import numpy as np
 import polars as pl
 
-from flatprot.projection import RotationMatrix
+from flatprot.transformation import TransformationMatrix
 from .utils import AlignmentResult
 
 
@@ -79,7 +79,7 @@ class FoldseekAligner:
         if isinstance(tmp_dir, tempfile.TemporaryDirectory):
             tmp_dir.cleanup()
 
-        rotation_matrix = RotationMatrix(
+        rotation_matrix = TransformationMatrix(
             rotation=_parse_foldseek_vector(match["u"]).reshape(3, 3),
             translation=_parse_foldseek_vector(match["t"]),
         )

@@ -7,7 +7,7 @@ from typing import NamedTuple
 import numpy as np
 
 from flatprot.alignment.db import AlignmentDatabase
-from flatprot.projection import RotationMatrix
+from flatprot.transformation import TransformationMatrix
 
 
 class AlignmentResult(NamedTuple):
@@ -17,12 +17,12 @@ class AlignmentResult(NamedTuple):
     probability: float
     aligned_region: np.ndarray
     alignment_scores: np.ndarray
-    rotation_matrix: RotationMatrix
+    rotation_matrix: TransformationMatrix
 
 
 def alignment_to_db_rotation(
     alignment: AlignmentResult, db: AlignmentDatabase
-) -> RotationMatrix:
+) -> TransformationMatrix:
     """Converts an alignment result to a combined rotation matrix.
 
     Args:

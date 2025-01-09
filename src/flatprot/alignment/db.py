@@ -6,14 +6,14 @@ from typing import Dict, Optional
 import h5py
 from dataclasses import dataclass
 
-from flatprot.projection import RotationMatrix
+from flatprot.transformation import TransformationMatrix
 
 
 @dataclass
 class AlignmentDBEntry:
     """Stores alignment data with its rotation matrix."""
 
-    rotation_matrix: RotationMatrix
+    rotation_matrix: TransformationMatrix
     entry_id: str
     structure_name: str
 
@@ -86,7 +86,7 @@ class AlignmentDatabase:
 
         entry_group = self._file[entry_id]
         return AlignmentDBEntry(
-            rotation_matrix=RotationMatrix.from_array(entry_group["rotation"][:]),
+            rotation_matrix=TransformationMatrix.from_array(entry_group["rotation"][:]),
             entry_id=entry_id,
             structure_name=entry_group.attrs["structure_name"],
         )

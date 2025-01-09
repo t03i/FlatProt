@@ -64,10 +64,10 @@ class TransformationMatrix:
         return cls.from_array(arr)
 
 
-def calculate_inertia_projection(
+def calculate_inertia_transformation(
     coordinates: np.ndarray, weights: np.ndarray
 ) -> TransformationMatrix:
-    """Calculate projection matrix using weighted inertia tensor.
+    """Calculate transformation matrix using weighted inertia tensor.
 
     Args:
         coordinates: Nx3 array of atomic coordinates
@@ -98,20 +98,21 @@ def calculate_inertia_projection(
     return TransformationMatrix(rotation=rotation, translation=com)
 
 
-def apply_projection(
-    coordinates: np.ndarray, projection: TransformationMatrix
+def apply_transformation(
+    coordinates: np.ndarray, transformation: TransformationMatrix
 ) -> np.ndarray:
-    """Apply projection matrix to coordinates.
+    """Apply transformation matrix to coordinates.
 
     Args:
         coordinates: Array of shape (N, 3) containing 3D coordinates
-        projection: ProjectionMatrix containing rotation and translation
+        transformation: TransformationMatrix containing rotation and translation
 
     Returns:
         Array of shape (N, 3) containing transformed coordinates
     """
     # First center by subtracting translation
-    centered = coordinates - projection.translation
+
+    rotated = coordinates @ transformation.rotation.T
     # Then apply rotation
-    rotated = centered @ projection.rotation.T
-    return rotated
+    transformed = rotated + transformation.translation
+    return transformed

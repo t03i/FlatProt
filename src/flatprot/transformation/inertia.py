@@ -5,21 +5,24 @@ from dataclasses import dataclass
 import numpy as np
 from typing import Optional
 
-from .projector import Projector, ProjectionParameters
-from .utils import TransformationMatrix
-import flatprot.projection.utils as utils
+from .transform import Transformer, TransformParameters
+from .utils import (
+    TransformationMatrix,
+    calculate_inertia_transformation,
+    apply_transformation,
+)
 from flatprot.structure.residue import Residue
 
 
 @dataclass
-class InertiaParameters:
+class InertiaTransformerParameters:
     """Parameters for inertia-based projection calculation."""
 
     residue_weights: dict[Residue, float]  # Maps residue type to weight
     use_weights: bool = True
 
     @classmethod
-    def default(cls) -> "InertiaParameters":
+    def default(cls) -> "InertiaTransformerParameters":
         """Creates default parameters using standard amino acid weights."""
         return cls(
             residue_weights={
@@ -48,25 +51,25 @@ class InertiaParameters:
 
 
 @dataclass
-class InertiaProjectionParameters(ProjectionParameters):
-    """Parameters for inertia-based projection calculation."""
+class InertiaTransformParameters(TransformParameters):
+    """Parameters for inertia-based transformation calculation."""
 
     residues: list[Residue]
 
 
-class InertiaProjector(Projector):
-    """Projects using inertia-based calculation with residue weights."""
+class InertiaTransformer(Transformer):
+    """Transforms using inertia-based calculation with residue weights."""
 
-    def __init__(self, parameters: Optional[InertiaParameters] = None):
+    def __init__(self, parameters: Optional[InertiaTransformerParameters] = None):
         super().__init__()
-        self.parameters = parameters or InertiaParameters.default()
+        self.parameters = parameters or InertiaTransformerParameters.default()
 
-    def _calculate_projection(
+    def _calculate_transformation(
         self,
         coordinates: np.ndarray,
-        parameters: Optional[InertiaProjectionParameters] = None,
+        parameters: Optional[InertiaTransformParameters] = None,
     ) -> TransformationMatrix:
-        """Calculate projection matrix for given coordinates."""
+        """Calculate transformation matrix for given coordinates."""
         if not self.parameters.use_weights:
             weights = np.ones(len(coordinates))
         else:
@@ -78,13 +81,13 @@ class InertiaProjector(Projector):
                 ]
             )
 
-        return utils.calculate_inertia_projection(coordinates, weights)
+        return calculate_inertia_transformation(coordinates, weights)
 
-    def _apply_cached_projection(
+    def _apply_cached_transformation(
         self,
         coordinates: np.ndarray,
-        cached_projection: TransformationMatrix,
-        parameters: Optional[InertiaProjectionParameters] = None,
+        cached_transformation: TransformationMatrix,
+        parameters: Optional[InertiaTransformParameters] = None,
     ) -> np.ndarray:
-        """Apply cached projection to coordinates."""
-        return utils.apply_projection(coordinates, cached_projection)
+        """Apply cached transformation to coordinates."""
+        return apply_transformation(coordinates, cached_transformation)

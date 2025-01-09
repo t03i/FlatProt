@@ -5,10 +5,7 @@ from typing import Optional
 import numpy as np
 
 from flatprot.structure import Structure, SecondaryStructureType
-from flatprot.projection import (
-    Projector,
-    ProjectionParameters,
-)
+from flatprot.transformation import Transformer, TransformParameters
 from flatprot.visualization.scene import Scene
 from .utils import CanvasSettings
 from .elements import (
@@ -64,25 +61,28 @@ def secondary_structure_to_visualization_element(
 
 def structure_to_scene(
     structure: Structure,
-    projector: Projector,
+    transformer: Transformer,
     canvas_settings: Optional[CanvasSettings] = None,
     style_manager: Optional[StyleManager] = None,
-    projection_parameters: Optional[ProjectionParameters] = None,
+    transformation_parameters: Optional[TransformParameters] = None,
 ) -> Scene:
     """Convert a structure to a renderable scene.
 
     Args:
         structure: The structure to visualize
-        projector: The projector to use for coordinate transformation
+        transformer: The transformer to use for coordinate transformation
         canvas_settings: Optional canvas settings
-        projection_parameters: Optional projection parameters
+        style_manager: Optional style manager
+        transformation_parameters: Optional transformation parameters
     Returns:
         A Scene object ready for rendering
     """
     scene = Scene(canvas_settings=canvas_settings, style_manager=style_manager)
 
     # Project all coordinates at once
-    projected_coords = projector.project(structure.coordinates, projection_parameters)
+    projected_coords = transformer.transform(
+        structure.coordinates, transformation_parameters
+    )
     canvas_coords = transform_to_canvas_space(projected_coords[:, :2], canvas_settings)
 
     # Process each chain

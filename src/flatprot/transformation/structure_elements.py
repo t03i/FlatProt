@@ -9,14 +9,16 @@ import numpy as np
 from typing import Optional
 
 from flatprot.structure.secondary import SecondaryStructure, SecondaryStructureType
-from .projector import Projector, ProjectionParameters
-from .utils import TransformationMatrix
-
-import flatprot.projection.utils as utils
+from .transform import Transformer, TransformParameters
+from .utils import (
+    TransformationMatrix,
+    apply_transformation,
+    calculate_inertia_transformation,
+)
 
 
 @dataclass
-class StructureElementsParameters:
+class StructureElementsTransformerParameters:
     """Parameters for structure elements projection calculation."""
 
     non_structure_weight: float = 0.5
@@ -24,25 +26,27 @@ class StructureElementsParameters:
 
 
 @dataclass
-class StructureElementsProjectionParameters(ProjectionParameters):
-    """Parameters for structure elements projection calculation."""
+class StructureElementsTransformParameters(TransformParameters):
+    """Parameters for structure elements transformation calculation."""
 
     structure_elements: list[SecondaryStructure]
 
 
-class StructureElementsProjector(Projector):
+class StructureElementsTransformer(Transformer):
     """Projects using structure elements."""
 
-    def __init__(self, parameters: Optional[StructureElementsParameters] = None):
+    def __init__(
+        self, parameters: Optional[StructureElementsTransformerParameters] = None
+    ):
         super().__init__()
-        self.parameters = parameters or StructureElementsParameters()
+        self.parameters = parameters or StructureElementsTransformerParameters()
 
-    def _calculate_projection(
+    def _calculate_transformation(
         self,
         coordinates: np.ndarray,
-        parameters: Optional[StructureElementsProjectionParameters] = None,
+        parameters: Optional[StructureElementsTransformParameters] = None,
     ) -> TransformationMatrix:
-        """Calculate projection matrix for given coordinates."""
+        """Calculate transformation matrix for given coordinates."""
         if parameters is None or not parameters.structure_elements:
             # Use default weight for all coordinates if no structure elements provided
             weights = np.ones(len(coordinates)) * self.parameters.non_structure_weight
@@ -56,13 +60,13 @@ class StructureElementsProjector(Projector):
                         self.parameters.structure_weight
                     )
 
-        return utils.calculate_inertia_projection(coordinates, weights)
+        return calculate_inertia_transformation(coordinates, weights)
 
-    def _apply_cached_projection(
+    def _apply_cached_transformation(
         self,
         coordinates: np.ndarray,
-        cached_projection: TransformationMatrix,
-        parameters: Optional[StructureElementsProjectionParameters] = None,
+        cached_transformation: TransformationMatrix,
+        parameters: Optional[StructureElementsTransformParameters] = None,
     ) -> np.ndarray:
-        """Apply cached projection to coordinates."""
-        return utils.apply_projection(coordinates, cached_projection)
+        """Apply cached transformation to coordinates."""
+        return apply_transformation(coordinates, cached_transformation)
