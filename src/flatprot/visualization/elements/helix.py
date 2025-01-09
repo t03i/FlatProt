@@ -5,7 +5,6 @@ from typing import Optional
 import numpy as np
 import drawsvg as draw
 from pydantic import Field
-from pydantic_extra_types.color import Color
 
 from flatprot.visualization.elements import (
     VisualizationElement,
