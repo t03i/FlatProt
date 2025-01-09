@@ -13,11 +13,23 @@ class ProjectionMatrix:
     rotation: np.ndarray
     translation: np.ndarray
 
+    def __post_init__(self):
+        """Validate matrix shapes."""
+        if self.rotation.shape != (3, 3):
+            raise ValueError("Rotation matrix must be 3x3")
+        if self.translation.shape != (3,):
+            raise ValueError("Translation vector must have shape (3,)")
+
     def combined_rotation(self, other: "ProjectionMatrix") -> "ProjectionMatrix":
-        """Combine two projection matrices by first applying self, then other."""
+        """Combine two projection matrices by first applying self, then other.
+
+        The combined transformation T = T2 ∘ T1 is:
+        rotation = R2 @ R1
+        translation = R2 @ t1 + t2
+        """
         return ProjectionMatrix(
-            rotation=self.rotation @ other.rotation,
-            translation=self.rotation @ other.translation + self.translation,
+            rotation=other.rotation @ self.rotation,
+            translation=other.rotation @ self.translation + other.translation,
         )
 
     def to_array(self) -> np.ndarray:
@@ -87,7 +99,17 @@ def calculate_inertia_projection(
 def apply_projection(
     coordinates: np.ndarray, projection: ProjectionMatrix
 ) -> np.ndarray:
-    """Apply projection matrix to coordinates."""
+    """Apply projection matrix to coordinates.
+
+    Args:
+        coordinates: Array of shape (N, 3) containing 3D coordinates
+        projection: ProjectionMatrix containing rotation and translation
+
+    Returns:
+        Array of shape (N, 3) containing transformed coordinates
+    """
+    # First center by subtracting translation
     centered = coordinates - projection.translation
-    rotated = np.dot(centered, projection.rotation)
-    return rotated[:, :]  # return x,y,z coordinates
+    # Then apply rotation
+    rotated = centered @ projection.rotation.T
+    return rotated
