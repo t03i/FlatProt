@@ -13,6 +13,13 @@ class ProjectionMatrix:
     rotation: np.ndarray
     translation: np.ndarray
 
+    def combined_rotation(self, other: "ProjectionMatrix") -> "ProjectionMatrix":
+        """Combine two projection matrices by first applying self, then other."""
+        return ProjectionMatrix(
+            rotation=self.rotation @ other.rotation,
+            translation=self.rotation @ other.translation + self.translation,
+        )
+
     def to_array(self) -> np.ndarray:
         """Convert ProjectionMatrix to a single numpy array for storage.
 
@@ -33,7 +40,14 @@ class ProjectionMatrix:
         Returns:
             ProjectionMatrix instance
         """
-        return cls(rotation=arr[0:3], translation=arr[3])
+        return cls(rotation=arr[0:3, :], translation=arr[3, :])
+
+    @classmethod
+    def from_string(cls, s: str) -> "ProjectionMatrix":
+        """Create ProjectionMatrix from string representation."""
+        arr = np.fromstring(s)
+        arr = arr.reshape(4, 3)
+        return cls.from_array(arr)
 
 
 def calculate_inertia_projection(
