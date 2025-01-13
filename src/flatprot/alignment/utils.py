@@ -35,8 +35,8 @@ def alignment_to_db_rotation(
     """
     # Get database entry rotation
     with db:
-        if alignment.db_id not in db.structure_name_index:
+        if not db.contains_entry_id(alignment.db_id):
             raise ValueError(f"Alignment database entry {alignment.db_id} not found")
-        db_entry = db.get_by_entry_id(alignment.db_id).rotation_matrix
+        db_entry = db.get_by_entry_id(alignment.db_id)
 
     return alignment.rotation_matrix.combined_rotation(db_entry.rotation_matrix)

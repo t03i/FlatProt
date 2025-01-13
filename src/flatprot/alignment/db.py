@@ -2,9 +2,11 @@
 # SPDX-License-Identifier: Apache-2.0
 
 from pathlib import Path
-from typing import Dict, Optional
-import h5py
+from typing import Optional
 from dataclasses import dataclass
+
+import h5py
+import numpy as np
 
 from flatprot.transformation import TransformationMatrix
 
@@ -17,6 +19,17 @@ class AlignmentDBEntry:
     entry_id: str
     structure_name: str
 
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, AlignmentDBEntry):
+            return False
+        return (
+            np.allclose(
+                self.rotation_matrix.to_array(), other.rotation_matrix.to_array()
+            )
+            and self.entry_id == other.entry_id
+            and self.structure_name == other.structure_name
+        )
+
 
 class AlignmentDatabase:
     """Handles alignment database using HDF5 storage with memory-mapped arrays."""
@@ -24,7 +37,7 @@ class AlignmentDatabase:
     def __init__(self, path: Path):
         self.path = path
         self._file: Optional[h5py.File] = None
-        self._structure_name_index: Dict[str, str] = {}  # structure_name -> entry_id
+        self._structure_name_index: dict[str, str] = {}  # structure_name -> entry_id
 
     def __enter__(self):
         self.open()
