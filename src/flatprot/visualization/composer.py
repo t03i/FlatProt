@@ -34,15 +34,22 @@ def transform_to_canvas_space(
     min_coords = np.min(coords, axis=0)
     max_coords = np.max(coords, axis=0)
 
-    # Calculate and apply scale factors for each dimension independently
-    scale_x = available_width / (max_coords[0] - min_coords[0])
-    scale_y = available_height / (max_coords[1] - min_coords[1])
+    coord_width = max_coords[0] - min_coords[0]
+    coord_height = max_coords[1] - min_coords[1]
 
-    # Center the coordinates and scale each dimension
-    centered_coords = coords - np.mean([min_coords, max_coords], axis=0)
-    scaled_coords = centered_coords * np.array([scale_x, scale_y])
+    # Calculate scale factors and use the smaller one to maintain aspect ratio
+    scale_x = available_width / coord_width
+    scale_y = available_height / coord_height
+    scale = min(scale_x, scale_y)  # Use uniform scaling to maintain aspect ratio
 
-    return scaled_coords
+    # Scale coordinates (centered around origin)
+    centered_coords = coords - (min_coords + max_coords) / 2
+    scaled_coords = centered_coords * scale
+
+    # Apply centering transform
+    final_coords = scaled_coords
+
+    return final_coords
 
 
 def secondary_structure_to_visualization_element(
