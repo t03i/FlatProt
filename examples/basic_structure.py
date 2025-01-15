@@ -53,8 +53,10 @@ def create_protein_visualization(
 
 
 if __name__ == "__main__":
+    output_path = Path("out/3Ftx")
+    output_path.mkdir(parents=True, exist_ok=True)
     # Example usage
     create_protein_visualization(
-        pdb_file=Path("data/3Ftx/None-Nana_c1_1-Naja_naja.cif"),
-        output_file=Path("data/3Ftx/None-Nana_c1_1-Naja_naja_inertia.svg"),
+        pdb_file=Path("data/3Ftx/cobra.cif"),
+        output_file=Path("out/3Ftx/cobra_inertia.svg"),
     )
