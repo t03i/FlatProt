@@ -63,9 +63,14 @@ class Chain(StructureComponent):
     ) -> None:
         start_idx = np.where(self.index == atom_start)[0][0]
         end_idx = np.where(self.index == atom_end)[0][0]
-        coords = self.coordinates[start_idx : end_idx + 1]
+        coords = self.coordinates[start_idx : end_idx + 1].view()
+        indices = self.index[start_idx : end_idx + 1].view()
+        residues = self.residues[start_idx : end_idx + 1].view()
+
         self.__secondary_structure.append(
-            createSecondaryStructure(type, start_idx, end_idx, coords)
+            createSecondaryStructure(
+                type, start_idx, end_idx, coords, indices, residues
+            )
         )
 
     @property
@@ -81,12 +86,14 @@ class Chain(StructureComponent):
             # If there's a gap before this secondary structure, add a coil
             if ss.start > current_pos:
                 coil_coords = self.coordinates[current_pos : ss.start]
+                coil_indices = self.index[current_pos : ss.start]
                 complete_ss.append(
                     createSecondaryStructure(
                         SecondaryStructureType.COIL,
                         current_pos,
                         ss.start - 1,
                         coil_coords,
+                        coil_indices,
                     )
                 )
             complete_ss.append(ss)
@@ -95,12 +102,14 @@ class Chain(StructureComponent):
         # If there's space after the last secondary structure, fill with coil
         if current_pos < len(self.index):
             coil_coords = self.coordinates[current_pos:]
+            coil_indices = self.index[current_pos:]
             complete_ss.append(
                 createSecondaryStructure(
                     SecondaryStructureType.COIL,
                     current_pos,
                     len(self.index) - 1,
                     coil_coords,
+                    coil_indices,
                 )
             )
 
