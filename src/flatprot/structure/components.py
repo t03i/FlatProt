@@ -5,10 +5,12 @@ from typing import Iterator
 import numpy as np
 
 from .residue import Residue
+
+
 from .secondary import (
-    SecondaryStructure,
     SecondaryStructureType,
     createSecondaryStructure,
+    SecondaryStructure,
 )
 
 
@@ -61,8 +63,9 @@ class Chain(StructureComponent):
     ) -> None:
         start_idx = np.where(self.index == atom_start)[0][0]
         end_idx = np.where(self.index == atom_end)[0][0]
+        coords = self.coordinates[start_idx : end_idx + 1]
         self.__secondary_structure.append(
-            createSecondaryStructure(type, start_idx, end_idx)
+            createSecondaryStructure(type, start_idx, end_idx, coords)
         )
 
     @property
@@ -77,9 +80,13 @@ class Chain(StructureComponent):
         for ss in sorted_ss:
             # If there's a gap before this secondary structure, add a coil
             if ss.start > current_pos:
+                coil_coords = self.coordinates[current_pos : ss.start]
                 complete_ss.append(
                     createSecondaryStructure(
-                        SecondaryStructureType.COIL, current_pos, ss.start - 1
+                        SecondaryStructureType.COIL,
+                        current_pos,
+                        ss.start - 1,
+                        coil_coords,
                     )
                 )
             complete_ss.append(ss)
@@ -87,9 +94,13 @@ class Chain(StructureComponent):
 
         # If there's space after the last secondary structure, fill with coil
         if current_pos < len(self.index):
+            coil_coords = self.coordinates[current_pos:]
             complete_ss.append(
                 createSecondaryStructure(
-                    SecondaryStructureType.COIL, current_pos, len(self.index) - 1
+                    SecondaryStructureType.COIL,
+                    current_pos,
+                    len(self.index) - 1,
+                    coil_coords,
                 )
             )
 
@@ -103,35 +114,21 @@ class Chain(StructureComponent):
         return len(self.index)
 
     def iter_secondary_structure_with_coordinates(self):
-        """Iterate over all secondary structure elements with their coordinates.
-
-        Yields:
-            tuple: (secondary_structure_element, coordinates)
-        """
+        """Iterate over all secondary structure elements with their coordinates."""
         for element in self.secondary_structure:
-            coords = self.coordinates[element.start : element.end + 1]
-            yield element, coords
+            yield element, element.coordinates
 
     def iter_secondary_structure_with_residues(self):
-        """Iterate over all secondary structure elements with their residues.
-
-        Yields:
-            tuple: (secondary_structure_element, residues)
-        """
+        """Iterate over all secondary structure elements with their residues."""
         for element in self.secondary_structure:
             residues = self.residues[element.start : element.end + 1]
             yield element, residues
 
     def iter_secondary_structure_with_data(self):
-        """Iterate over all secondary structure elements with their coordinates and residues.
-
-        Yields:
-            tuple: (secondary_structure_element, coordinates, residues)
-        """
+        """Iterate over all secondary structure elements with their coordinates and residues."""
         for element in self.secondary_structure:
-            coords = self.coordinates[element.start : element.end + 1]
             residues = self.residues[element.start : element.end + 1]
-            yield element, coords, residues
+            yield element, element.coordinates, residues
 
 
 class Structure:
