@@ -3,17 +3,17 @@
 
 from abc import ABC, abstractmethod
 import numpy as np
-from dataclasses import dataclass, field
 from typing import Optional
 
+from pydantic import BaseModel, Field
+from pydantic_numpy.typing import NpNDArray
 
-@dataclass
-class ProjectionParameters:
+
+class ProjectionParameters(BaseModel):
     """Base parameters for projections."""
 
-    view_direction: np.ndarray = field(default_factory=lambda: np.array([0, 0, 1]))
-    up_vector: np.ndarray = field(default_factory=lambda: np.array([0, 1, 0]))
-    scale: float = 1.0
+    view_direction: NpNDArray = Field(default_factory=lambda: np.array([0, 0, 1]))
+    up_vector: NpNDArray = Field(default_factory=lambda: np.array([0, 1, 0]))
     center: bool = True
 
 

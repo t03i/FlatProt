@@ -15,7 +15,7 @@ class CanvasSettings(BaseModel):
     )
     background_opacity: float = Field(default=0, description="Background opacity (0-1)")
     padding: float = Field(
-        default=0.05, description="Padding as fraction of canvas size"
+        default=0.05, ge=0, le=1, description="Padding as fraction of canvas size"
     )
 
     @property

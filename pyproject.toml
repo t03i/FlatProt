@@ -27,6 +27,7 @@ dependencies = [
     "typer>=0.15.1",
     "wget>=3.2",
     "h5py>=3.12.1",
+    "pydantic-numpy>=8.0.0",
 ]
 
 [project.scripts]

@@ -56,8 +56,8 @@ def structure_to_scene(
     projection_parameters = OrthographicProjectionParameters(
         width=canvas_settings.width,
         height=canvas_settings.height,
-        padding_x=canvas_settings.padding_pixels[0],
-        padding_y=canvas_settings.padding_pixels[1],
+        padding_x=canvas_settings.padding,
+        padding_y=canvas_settings.padding,
         maintain_aspect_ratio=True,
     )
 

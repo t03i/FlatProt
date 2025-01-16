@@ -1,21 +1,21 @@
 # Copyright 2025 Tobias Olenyi.
 # SPDX-License-Identifier: Apache-2.0
-from dataclasses import dataclass
 from typing import Optional
-
+from typing_extensions import Annotated
 import numpy as np
 
 from .base import Projector, ProjectionParameters
 
+from pydantic import Field
 
-@dataclass
+
 class OrthographicProjectionParameters(ProjectionParameters):
     """Parameters for orthographic canvas projection."""
 
     width: int = 1200
     height: int = 1200
-    padding_x: int = 50
-    padding_y: int = 50
+    padding_x: Annotated[float, Field(strict=True, ge=0, le=1)] = 0.05
+    padding_y: Annotated[float, Field(strict=True, ge=0, le=1)] = 0.05
     maintain_aspect_ratio: bool = True
 
 
@@ -29,47 +29,56 @@ class OrthographicProjector(Projector):
     ) -> tuple[np.ndarray, np.ndarray]:
         params = parameters or OrthographicProjectionParameters()
 
-        # 1. Center 3D coordinates if requested
-        if params.center:
-            coordinates = coordinates - np.mean(coordinates, axis=0)
-
-        # 2. Calculate view matrix for orthographic projection
+        # 1. Project to view space
         view = params.view_direction / np.linalg.norm(params.view_direction)
         up = params.up_vector / np.linalg.norm(params.up_vector)
 
         # Ensure orthogonality
         right = np.cross(up, view)
+        if np.allclose(right, 0):
+            right = (
+                np.array([1.0, 0.0, 0.0])
+                if np.allclose(up[0], 0)
+                else np.array([0.0, 1.0, 0.0])
+            )
         right = right / np.linalg.norm(right)
         up = np.cross(view, right)
 
-        # Create projection matrix with maximum variance axes first
+        # Create projection matrix
         proj_matrix = np.vstack([right, up])
 
-        # 3. Project to 2D and calculate depth
-        coords_2d = (proj_matrix @ coordinates.T).T * params.scale
-        depth = coordinates @ view  # Depth along view direction
+        # 2. Project to 2D
+        coords_2d = (proj_matrix @ coordinates.T).T
+        depth = -(coordinates @ view)
 
-        # 4. Calculate available canvas space
-        available_width = params.width - 2 * params.padding_x
-        available_height = params.height - 2 * params.padding_y
+        # 3. Center if requested
+        if params.center:
+            coords_2d = coords_2d - np.mean(coords_2d, axis=0)
 
-        # 5. Get bounds of projected coordinates
-        min_coords = np.min(coords_2d, axis=0)
-        max_coords = np.max(coords_2d, axis=0)
-        coord_width = max_coords[0] - min_coords[0]
-        coord_height = max_coords[1] - min_coords[1]
+        # 4. Calculate scaling to fit within padded canvas
+        available_width = params.width * (1 - 2 * params.padding_x)
+        available_height = params.height * (1 - 2 * params.padding_y)
 
-        # 6. Calculate scale factors
-        scale_x = available_width / coord_width if coord_width > 0 else 1.0
-        scale_y = available_height / coord_height if coord_height > 0 else 1.0
+        coord_width = np.max(coords_2d[:, 0]) - np.min(coords_2d[:, 0])
+        coord_height = np.max(coords_2d[:, 1]) - np.min(coords_2d[:, 1])
 
+        EPSILON = 1e-10
+        scale_x = available_width / max(coord_width, EPSILON)
+        scale_y = available_height / max(coord_height, EPSILON)
+
+        # Apply uniform scaling if maintaining aspect ratio
         if params.maintain_aspect_ratio:
-            scale_factor = min(scale_x, scale_y)
+            scale = min(scale_x, scale_y)
+            coords_2d = coords_2d * scale
         else:
-            scale_factor = np.array([scale_x, scale_y])
+            coords_2d = coords_2d * np.array([scale_x, scale_y])
 
-        # 7. Center and scale to canvas space
-        centered_coords = coords_2d - (min_coords + max_coords) / 2
-        canvas_coords = centered_coords * scale_factor
+        if not params.center:
+            # Calculate the offset to position coordinates within padded area
+            min_coords = np.min(coords_2d, axis=0)
+            offset = np.array(
+                [params.padding_x * params.width, params.padding_y * params.height]
+            )
+            coords_2d = coords_2d - min_coords + offset
 
-        return canvas_coords, depth
+        return coords_2d, depth

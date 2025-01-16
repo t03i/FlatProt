@@ -32,7 +32,7 @@ def create_protein_visualization(
 
     # 3. Configure visualization
     canvas_settings = CanvasSettings(
-        width=1200, height=1200, background_color="#FFFFFF", padding=0.1
+        width=1200, height=1200, background_color="#FFFFFF", padding=0.05
     )
 
     transform_parameters = InertiaTransformParameters(residues=list(structure.residues))
