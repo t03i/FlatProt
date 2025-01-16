@@ -69,7 +69,12 @@ class Chain(StructureComponent):
 
         self.__secondary_structure.append(
             createSecondaryStructure(
-                type, start_idx, end_idx, coords, indices, residues
+                ss_type=type,
+                start=start_idx,
+                end=end_idx,
+                coordinates=coords,
+                residue_indices=indices,
+                residues=residues,
             )
         )
 
@@ -94,6 +99,7 @@ class Chain(StructureComponent):
                         ss.start - 1,
                         coil_coords,
                         coil_indices,
+                        self.residues[current_pos : ss.start],
                     )
                 )
             complete_ss.append(ss)
@@ -110,6 +116,7 @@ class Chain(StructureComponent):
                     len(self.index) - 1,
                     coil_coords,
                     coil_indices,
+                    self.residues[current_pos:],
                 )
             )
 

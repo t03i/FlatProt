@@ -6,6 +6,7 @@ import numpy as np
 
 from flatprot.structure import Structure, SecondaryStructureType
 from flatprot.transformation import Transformer, TransformParameters
+from flatprot.projection import OrthographicProjector, OrthographicProjectionParameters
 from flatprot.visualization.scene import Scene
 from .utils import CanvasSettings
 from .elements import (
@@ -84,13 +85,21 @@ def structure_to_scene(
     Returns:
         A Scene object ready for rendering
     """
+    projector = OrthographicProjector()
+    projection_parameters = OrthographicProjectionParameters(
+        width=canvas_settings.width,
+        height=canvas_settings.height,
+        padding_x=canvas_settings.padding_pixels[0],
+        padding_y=canvas_settings.padding_pixels[1],
+    )
+
     scene = Scene(canvas_settings=canvas_settings, style_manager=style_manager)
 
     # Project all coordinates at once
-    projected_coords = transformer.transform(
+    transformed_coords = transformer.transform(
         structure.coordinates, transform_parameters
     )
-    canvas_coords = transform_to_canvas_space(projected_coords[:, :2], canvas_settings)
+    canvas_coords, depth = projector.project(transformed_coords, projection_parameters)
 
     # Process each chain
     offset = 0
@@ -105,22 +114,23 @@ def structure_to_scene(
                 end_idx += 1
 
             element_coords = canvas_coords[start_idx:end_idx]
-            z_coords = projected_coords[start_idx:end_idx, 2]
             style = scene.style_manager.get_style(element.type)
 
             vis_element = secondary_structure_to_visualization_element(
                 element.type, element_coords, style=style
             )
             if vis_element:
-                elements_with_z.append((vis_element, np.mean(z_coords)))
+                # Use mean depth along view direction for z-ordering
+                elements_with_z.append((vis_element, np.mean(depth[start_idx:end_idx])))
 
-        # Sort elements within this chain by z-coordinate
+        # Sort elements by depth (farther objects first)
         sorted_elements = [
-            elem for elem, z in sorted(elements_with_z, key=lambda x: x[1])
+            elem
+            for elem, z in sorted(elements_with_z, key=lambda x: x[1], reverse=True)
         ]
 
-        # Add sorted elements as a group for this chain
         group = GroupVisualization(chain.id, sorted_elements)
         scene.add_element(group)
         offset += chain.num_residues
+
     return scene
