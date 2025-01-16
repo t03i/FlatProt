@@ -4,6 +4,8 @@ from enum import Enum
 
 import numpy as np
 
+from flatprot.structure.components import Residue
+
 
 class SecondaryStructureType(Enum):
     HELIX = "H"
@@ -19,7 +21,7 @@ class SecondaryStructure:
         end: int,
         coordinates: np.ndarray,
         residue_indices: np.ndarray,
-        residues: np.ndarray,
+        residues: list[Residue],
     ):
         self.type = type
         self.start = start
@@ -32,7 +34,6 @@ class SecondaryStructure:
         # Make both views immutable
         self.__residue_indices.flags.writeable = False
         self.__coordinates.flags.writeable = False
-        self.__residues.flags.writeable = False
 
     def __str__(self):
         return f"{self.type.name} {self.start} {self.end}"
@@ -123,10 +124,11 @@ def createSecondaryStructure(
     end: int,
     coordinates: np.ndarray,
     residue_indices: np.ndarray,
+    residues: list[Residue],
 ) -> SecondaryStructure:
     if ss_type == SecondaryStructureType.HELIX:
-        return Helix(start, end, coordinates, residue_indices)
+        return Helix(start, end, coordinates, residue_indices, residues)
     elif ss_type == SecondaryStructureType.SHEET:
-        return Sheet(start, end, coordinates, residue_indices)
+        return Sheet(start, end, coordinates, residue_indices, residues)
     else:
-        return Coil(start, end, coordinates, residue_indices)
+        return Coil(start, end, coordinates, residue_indices, residues)

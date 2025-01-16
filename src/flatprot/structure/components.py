@@ -65,7 +65,7 @@ class Chain(StructureComponent):
         end_idx = np.where(self.index == atom_end)[0][0]
         coords = self.coordinates[start_idx : end_idx + 1].view()
         indices = self.index[start_idx : end_idx + 1].view()
-        residues = self.residues[start_idx : end_idx + 1].view()
+        residues = self.residues[start_idx : end_idx + 1]
 
         self.__secondary_structure.append(
             createSecondaryStructure(
