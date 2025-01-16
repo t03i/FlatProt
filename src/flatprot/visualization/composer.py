@@ -20,39 +20,6 @@ from .elements import (
 )
 
 
-def transform_to_canvas_space(
-    coords: np.ndarray, canvas_settings: CanvasSettings
-) -> np.ndarray:
-    """Transform projected coordinates to canvas space."""
-    # Get padding in pixels
-    pad_x, pad_y = canvas_settings.padding_pixels
-
-    # Calculate available space
-    available_width = canvas_settings.width - 2 * pad_x
-    available_height = canvas_settings.height - 2 * pad_y
-
-    # Get bounds of projected coordinates
-    min_coords = np.min(coords, axis=0)
-    max_coords = np.max(coords, axis=0)
-
-    coord_width = max_coords[0] - min_coords[0]
-    coord_height = max_coords[1] - min_coords[1]
-
-    # Calculate scale factors and use the smaller one to maintain aspect ratio
-    scale_x = available_width / coord_width
-    scale_y = available_height / coord_height
-    scale = min(scale_x, scale_y)  # Use uniform scaling to maintain aspect ratio
-
-    # Scale coordinates (centered around origin)
-    centered_coords = coords - (min_coords + max_coords) / 2
-    scaled_coords = centered_coords * scale
-
-    # Apply centering transform
-    final_coords = scaled_coords
-
-    return final_coords
-
-
 def secondary_structure_to_visualization_element(
     secondary_structure: SecondaryStructureType,
     coordinates: np.ndarray,
@@ -91,6 +58,7 @@ def structure_to_scene(
         height=canvas_settings.height,
         padding_x=canvas_settings.padding_pixels[0],
         padding_y=canvas_settings.padding_pixels[1],
+        maintain_aspect_ratio=True,
     )
 
     scene = Scene(canvas_settings=canvas_settings, style_manager=style_manager)

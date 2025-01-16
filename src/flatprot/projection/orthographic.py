@@ -1,5 +1,6 @@
 # Copyright 2025 Tobias Olenyi.
 # SPDX-License-Identifier: Apache-2.0
+from dataclasses import dataclass
 from typing import Optional
 
 import numpy as np
@@ -7,11 +8,12 @@ import numpy as np
 from .base import Projector, ProjectionParameters
 
 
+@dataclass
 class OrthographicProjectionParameters(ProjectionParameters):
-    """Parameters for orthographic canvasprojection."""
+    """Parameters for orthographic canvas projection."""
 
-    width: int = 800
-    height: int = 600
+    width: int = 1200
+    height: int = 1200
     padding_x: int = 50
     padding_y: int = 50
     maintain_aspect_ratio: bool = True
@@ -28,17 +30,22 @@ class OrthographicProjector(Projector):
         params = parameters or OrthographicProjectionParameters()
 
         # 1. Center 3D coordinates if requested
-        if params.center_3d:
+        if params.center:
             coordinates = coordinates - np.mean(coordinates, axis=0)
 
         # 2. Calculate view matrix for orthographic projection
         view = params.view_direction / np.linalg.norm(params.view_direction)
-        right = np.cross(params.up_vector, view)
+        up = params.up_vector / np.linalg.norm(params.up_vector)
+
+        # Ensure orthogonality
+        right = np.cross(up, view)
         right = right / np.linalg.norm(right)
         up = np.cross(view, right)
 
-        # 3. Project to 2D and calculate depth
+        # Create projection matrix with maximum variance axes first
         proj_matrix = np.vstack([right, up])
+
+        # 3. Project to 2D and calculate depth
         coords_2d = (proj_matrix @ coordinates.T).T * params.scale
         depth = coordinates @ view  # Depth along view direction
 
