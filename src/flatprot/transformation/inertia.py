@@ -5,7 +5,7 @@ from dataclasses import dataclass
 import numpy as np
 from typing import Optional
 
-from .transform import Transformer, TransformParameters
+from .base import Transformer, TransformParameters
 from .utils import (
     TransformationMatrix,
     calculate_inertia_transformation,

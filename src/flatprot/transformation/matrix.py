@@ -5,7 +5,7 @@ from dataclasses import dataclass
 from typing import Optional
 import numpy as np
 
-from .transform import Transformer, TransformParameters
+from .base import Transformer, TransformParameters
 from .utils import TransformationMatrix, apply_transformation
 
 

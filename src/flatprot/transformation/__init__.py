@@ -1,7 +1,7 @@
 # Copyright 2024 Tobias Olenyi.
 # SPDX-License-Identifier: Apache-2.0
 
-from .transform import Transformer, TransformParameters
+from .base import Transformer, TransformParameters
 from .inertia import (
     InertiaTransformer,
     InertiaTransformerParameters,

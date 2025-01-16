@@ -9,7 +9,7 @@ import numpy as np
 from typing import Optional
 
 from flatprot.structure.secondary import SecondaryStructure, SecondaryStructureType
-from .transform import Transformer, TransformParameters
+from .base import Transformer, TransformParameters
 from .utils import (
     TransformationMatrix,
     apply_transformation,
