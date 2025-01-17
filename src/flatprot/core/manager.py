@@ -4,8 +4,6 @@ from enum import Enum
 
 import numpy as np
 
-from .structure.structure import Structure
-
 
 class CoordinateType(Enum):
     COORDINATES = "coordinates"

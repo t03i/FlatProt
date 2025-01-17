@@ -3,3 +3,13 @@
 
 from .components import Chain, Residue, Structure
 from .secondary import SecondaryStructure, SecondaryStructureType
+from .manager import CoordinateManager
+
+all = [
+    Chain,
+    Residue,
+    Structure,
+    SecondaryStructure,
+    SecondaryStructureType,
+    CoordinateManager,
+]
