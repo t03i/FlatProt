@@ -8,7 +8,7 @@ from flatprot.transformation.inertia import (
     InertiaTransformer,
     InertiaTransformParameters,
 )
-from flatprot.visualization.composer import structure_to_scene
+from flatprot.composer import structure_to_canvas
 from flatprot.visualization.utils import CanvasSettings
 from flatprot.visualization.elements.style import StyleManager
 
@@ -40,7 +40,7 @@ def create_protein_visualization(
     style_manager = StyleManager.from_theme(theme)
 
     # 4. Create and render scene
-    scene = structure_to_scene(
+    scene = structure_to_canvas(
         structure=structure,
         transformer=transformer,
         canvas_settings=canvas_settings,

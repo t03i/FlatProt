@@ -12,8 +12,8 @@ from flatprot.transformation.structure_elements import (
     StructureElementsTransformerParameters,
 )
 from flatprot.transformation.matrix import MatrixTransformer, MatrixTransformParameters
-from flatprot.structure.components import Structure, Chain, Residue
-from flatprot.structure.secondary import SecondaryStructureType
+from flatprot.core.components import Structure, Chain, Residue
+from flatprot.core.secondary import SecondaryStructureType
 from flatprot.transformation.utils import TransformationMatrix
 
 

@@ -6,8 +6,8 @@ import numpy as np
 from pathlib import Path
 
 from flatprot.io.structure_gemmi_adapter import GemmiStructureParser
-from flatprot.structure.components import Chain, Structure
-from flatprot.structure.secondary import SecondaryStructureType
+from flatprot.core.components import Chain, Structure
+from flatprot.core.secondary import SecondaryStructureType
 from flatprot.io.dssp import parse_dssp
 
 
