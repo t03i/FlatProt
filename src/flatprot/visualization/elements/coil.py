@@ -27,19 +27,18 @@ class CoilVisualization(VisualizationElement, SmoothingMixin):
 
     def __init__(
         self,
-        coordinates: np.ndarray,
         style: Optional[CoilStyle] = None,
     ):
-        super().__init__(coordinates, style)
+        super().__init__(style)
 
-    def render(self) -> draw.DrawingElement:
+    def render(self, coordinates: np.ndarray) -> draw.DrawingElement:
         """Renders a coil using straight lines between atom coordinates.
 
         Returns:
             draw.Element: A path element representing the coil
         """
         # Smooth the coordinates to reduce noise
-        coords = self._smooth_coordinates(self.coordinates, self.style.smoothing_factor)
+        coords = self._smooth_coordinates(coordinates, self.style.smoothing_factor)
 
         # Create path
         path = draw.Path(

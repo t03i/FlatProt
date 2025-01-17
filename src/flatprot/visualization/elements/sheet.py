@@ -36,19 +36,18 @@ class SheetVisualization(VisualizationElement, SmoothingMixin):
 
     def __init__(
         self,
-        coordinates: np.ndarray,
         style: Optional[SheetStyle] = None,
     ):
-        super().__init__(coordinates, style)
+        super().__init__(style)
 
-    def render(self) -> draw.DrawingElement:
+    def render(self, coordinates: np.ndarray) -> draw.DrawingElement:
         """Renders a simple triangular arrow using atom coordinates.
 
         Returns:
             draw.Element: A path element representing the sheet
         """
         # Smooth the coordinates to reduce noise
-        coords = self.coordinates
+        coords = coordinates
 
         # Get start and end points
         start_point = coords[0]

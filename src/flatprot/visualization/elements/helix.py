@@ -42,10 +42,9 @@ class HelixVisualization(VisualizationElement, SmoothingMixin):
 
     def __init__(
         self,
-        coordinates: np.ndarray,
         style: Optional[HelixStyle] = None,
     ):
-        super().__init__(coordinates, style)
+        super().__init__(style)
 
     def _get_zigzag_points(self, start, end, thickness, wavelength, amplitude):
         """Calculate points for a sharp zigzag helix pattern."""
@@ -87,9 +86,9 @@ class HelixVisualization(VisualizationElement, SmoothingMixin):
         # Combine points to form complete ribbon outline
         return np.concatenate((top_points, bottom_points[::-1]))
 
-    def render(self) -> draw.DrawingElement:
+    def render(self, coordinates: np.ndarray) -> draw.DrawingElement:
         """Renders a zigzag helix representation."""
-        coords = self.coordinates
+        coords = coordinates
 
         if len(coords) <= self.style.min_helix_length:
             return draw.Line(

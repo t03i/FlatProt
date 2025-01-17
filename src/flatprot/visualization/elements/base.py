@@ -1,7 +1,7 @@
 # Copyright 2024 Tobias Olenyi.
 # SPDX-License-Identifier: Apache-2.0
 
-from abc import ABC, abstractmethod
+from abc import protocol, abstractmethod
 from typing import Optional, Literal
 
 import numpy as np
@@ -33,19 +33,19 @@ class VisualizationStyle(BaseModel):
     )
 
 
-class VisualizationElement(ABC):
+class VisualizationElement(protocol):
     """Base class for all visualization elements"""
 
-    def __init__(
-        self, coordinates: np.ndarray, style: Optional[VisualizationStyle] = None
-    ):
+    def __init__(self, style: Optional[VisualizationStyle] = None):
         self.style = style or VisualizationStyle(color="#000000")
-        self.coordinates = coordinates
 
     @abstractmethod
-    def render(self) -> draw.DrawingElement:
+    def render(self, coordinates: np.ndarray) -> draw.DrawingElement:
         """Returns the SVG element"""
         pass
+
+    def get_visual_style(self) -> VisualizationStyle:
+        return self.style
 
 
 class SmoothingMixin:
