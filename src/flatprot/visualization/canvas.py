@@ -3,11 +3,12 @@
 
 from typing import Optional, Union
 from dataclasses import dataclass
+
 from drawsvg import Drawing, Rectangle, Group
 from pydantic import BaseModel, Field
 from pydantic_extra_types.color import Color
 
-from flatprot.core import CoordinateManager, SecondaryStructure
+from flatprot.core import CoordinateManager, CoordinateType
 from .elements import VisualizationElement, StyleManager
 
 
@@ -40,16 +41,14 @@ class CanvasElement:
     render_element: VisualizationElement
     start_idx: int
     end_idx: int
+    coord_type: CoordinateType = CoordinateType.CANVAS  # Default to canvas coordinates
 
-    @classmethod
-    def from_secondary_structure(
-        cls, secondary_structure: SecondaryStructure
-    ) -> "CanvasElement":
-        return cls(
-            secondary_structure,
-            secondary_structure.start_idx,
-            secondary_structure.end_idx,
+    def render(self, coord_manager: CoordinateManager) -> Drawing:
+        """Render this element using coordinates from the coordinate manager."""
+        element_coords = coord_manager.get(
+            self.start_idx, self.end_idx, self.coord_type
         )
+        return self.render_element.render(element_coords)
 
 
 class CanvasGroup:
@@ -57,16 +56,17 @@ class CanvasGroup:
 
     def __init__(self, **kwargs):
         self.transforms = kwargs
+        self.elements: list[Union[CanvasElement, "CanvasGroup"]] = []
 
-    def add_element(self, element: Union[VisualizationElement, "CanvasGroup"]) -> None:
+    def add_element(self, element: Union[CanvasElement, "CanvasGroup"]) -> None:
         """Add an element or group to this group."""
         self.elements.append(element)
 
-    def render(self) -> Group:
-        """Render this group and all its children."""
+    def render(self, coord_manager: CoordinateManager) -> Group:
+        """Render this group using the coordinate manager."""
         group = Group(**self.transforms)
         for element in self.elements:
-            group.add(element.render())
+            group.add(element.render(coord_manager))
         return group
 
 
@@ -84,30 +84,30 @@ class Canvas:
         self.style_manager = style_manager or StyleManager.create_default()
         self.root = CanvasGroup(id="root")
 
-    def add_element(self, element: VisualizationElement | CanvasGroup) -> None:
-        """Add an element to the scene's root group."""
-        self.root.add_element(element)
+    def add_element(
+        self,
+        element: VisualizationElement,
+        start_idx: int,
+        end_idx: int,
+        coord_type: CoordinateType = CoordinateType.CANVAS,
+    ) -> None:
+        """Add an element to the scene's root group with its coordinate range."""
+        canvas_element = CanvasElement(element, start_idx, end_idx, coord_type)
+        self.root.add_element(canvas_element)
 
     def render(self, output_path: Optional[str] = None) -> Drawing:
-        """Render the scene to SVG.
-
-        Args:
-            output_path: If provided, saves the SVG to this path
-
-        Returns:
-            The rendered Drawing object
-        """
+        """Render the scene to SVG."""
         drawing = Drawing(
             self.canvas_settings.width,
             self.canvas_settings.height,
-            origin="center",  # This makes (0,0) the center of the canvas
+            origin="center",
         )
 
         # Add background if specified
         if self.canvas_settings.background_color:
             drawing.append(
                 Rectangle(
-                    -self.canvas_settings.width / 2,  # Account for centered origin
+                    -self.canvas_settings.width / 2,
                     -self.canvas_settings.height / 2,
                     self.canvas_settings.width,
                     self.canvas_settings.height,
@@ -118,7 +118,7 @@ class Canvas:
             )
 
         # Render and add the root group
-        drawing.append(self.root.render())
+        drawing.append(self.root.render(self.coordinate_manager))
 
         if output_path:
             drawing.save_svg(output_path)
