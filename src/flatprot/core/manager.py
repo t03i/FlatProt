@@ -1,7 +1,7 @@
 # Copyright 2025 Tobias Olenyi.
 # SPDX-License-Identifier: Apache-2.0
 from enum import Enum
-
+from collections import defaultdict
 import numpy as np
 
 
@@ -16,11 +16,9 @@ class CoordinateManager:
     """Manages different types of coordinates (original, transformed, projected)."""
 
     def __init__(self):
-        self.coordinates: dict[CoordinateType, dict[tuple[int, int], np.ndarray]] = {
-            CoordinateType.COORDINATES: {},
-            CoordinateType.TRANSFORMED: {},
-            CoordinateType.PROJECTED: {},
-        }
+        self.coordinates: dict[CoordinateType, dict[tuple[int, int], np.ndarray]] = (
+            defaultdict(dict)
+        )
 
     def add(
         self,

@@ -7,35 +7,34 @@ import numpy as np
 from flatprot.core import Structure, SecondaryStructureType
 from flatprot.transformation import Transformer, TransformParameters
 from flatprot.projection import OrthographicProjector, OrthographicProjectionParameters
-from flatprot.visualization.canvas import Canvas, CanvasSettings
+from flatprot.visualization.canvas import (
+    Canvas,
+    CanvasSettings,
+    CanvasGroup,
+    CanvasElement,
+)
 from flatprot.visualization.elements import (
     VisualizationElement,
     VisualizationStyle,
     StyleManager,
-    GroupVisualization,
     HelixVisualization,
     SheetVisualization,
     CoilVisualization,
 )
-from flatprot.core.manager import (
-    CoordinateManager,
-    VisualizationManager,
-    CoordinateType,
-)
+from flatprot.core import CoordinateManager, CoordinateType
 
 
 def secondary_structure_to_visualization_element(
     secondary_structure: SecondaryStructureType,
-    coordinates: np.ndarray,
     style: Optional[VisualizationStyle] = None,
 ) -> VisualizationElement:
     """Convert a secondary structure to a visualization element."""
     if secondary_structure == SecondaryStructureType.HELIX:
-        return HelixVisualization(coordinates, style=style)
+        return HelixVisualization(style=style)
     elif secondary_structure == SecondaryStructureType.SHEET:
-        return SheetVisualization(coordinates, style=style)
+        return SheetVisualization(style=style)
     elif secondary_structure == SecondaryStructureType.COIL:
-        return CoilVisualization(coordinates, style=style)
+        return CoilVisualization(style=style)
 
 
 def coordinate_manager_from_structure(
@@ -96,7 +95,11 @@ def structure_to_canvas(
         structure, transformer, transform_parameters, projector, projection_parameters
     )
 
-    scene = Canvas(canvas_settings=canvas_settings, style_manager=style_manager)
+    canvas = Canvas(
+        coordinate_manager=coordinate_manager,
+        canvas_settings=canvas_settings,
+        style_manager=style_manager,
+    )
 
     # Process each chain
     offset = 0
@@ -110,23 +113,24 @@ def structure_to_canvas(
             if i < len(chain.secondary_structure) - 1:
                 end_idx += 1
 
-            element_coords = coordinate_manager.get(
-                start_idx,
-                end_idx,
-                CoordinateType.CANVAS,
-            )
-            depth = coordinate_manager.get(
-                0, len(structure.coordinates), CoordinateType.DEPTH
-            )
+            depth = coordinate_manager.get(start_idx, end_idx, CoordinateType.DEPTH)
 
-            style = scene.style_manager.get_style(element.type)
+            style = canvas.style_manager.get_style(element.type)
 
-            vis_element = secondary_structure_to_visualization_element(
-                element.type, element_coords, style=style
+            viz_element = secondary_structure_to_visualization_element(
+                element.type, style=style
             )
-            if vis_element:
+            if viz_element:
                 # Use mean depth along view direction for z-ordering
-                elements_with_z.append((vis_element, np.mean(depth[start_idx:end_idx])))
+
+                elements_with_z.append(
+                    (
+                        CanvasElement(
+                            viz_element, start_idx, end_idx, CoordinateType.CANVAS
+                        ),
+                        np.mean(depth),
+                    )
+                )
 
         # Sort elements by depth (farther objects first)
         sorted_elements = [
@@ -134,8 +138,8 @@ def structure_to_canvas(
             for elem, z in sorted(elements_with_z, key=lambda x: x[1], reverse=True)
         ]
 
-        group = GroupVisualization(chain.id, sorted_elements)
-        scene.add_element(group)
+        group = CanvasGroup(sorted_elements, id=chain.id)
+        canvas.add_element(group)
         offset += chain.num_residues
 
-    return scene
+    return canvas

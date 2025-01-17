@@ -45,28 +45,47 @@ class CanvasElement:
 
     def render(self, coord_manager: CoordinateManager) -> Drawing:
         """Render this element using coordinates from the coordinate manager."""
+
         element_coords = coord_manager.get(
             self.start_idx, self.end_idx, self.coord_type
         )
+        print(self.render_element, element_coords)
         return self.render_element.render(element_coords)
 
 
 class CanvasGroup:
     """A group of visualization elements that can be nested."""
 
-    def __init__(self, **kwargs):
+    def __init__(
+        self, elements: list[Union[CanvasElement, "CanvasGroup"]] = None, **kwargs
+    ):
         self.transforms = kwargs
-        self.elements: list[Union[CanvasElement, "CanvasGroup"]] = []
+        self._validate_elements(elements or [])
+        self.elements = elements or []
+
+    def _validate_elements(
+        self, elements: list[Union[CanvasElement, "CanvasGroup"]]
+    ) -> None:
+        """Validate that all elements are either CanvasElement or CanvasGroup instances."""
+        for element in elements:
+            if not isinstance(element, (CanvasElement, CanvasGroup)):
+                raise TypeError(
+                    f"Element must be CanvasElement or CanvasGroup, got {type(element)}"
+                )
 
     def add_element(self, element: Union[CanvasElement, "CanvasGroup"]) -> None:
         """Add an element or group to this group."""
+        if not isinstance(element, (CanvasElement, CanvasGroup)):
+            raise TypeError(
+                f"Element must be CanvasElement or CanvasGroup, got {type(element)}"
+            )
         self.elements.append(element)
 
     def render(self, coord_manager: CoordinateManager) -> Group:
         """Render this group using the coordinate manager."""
         group = Group(**self.transforms)
         for element in self.elements:
-            group.add(element.render(coord_manager))
+            group.append(element.render(coord_manager))
         return group
 
 
@@ -86,14 +105,10 @@ class Canvas:
 
     def add_element(
         self,
-        element: VisualizationElement,
-        start_idx: int,
-        end_idx: int,
-        coord_type: CoordinateType = CoordinateType.CANVAS,
+        element: VisualizationElement | CanvasGroup,
     ) -> None:
         """Add an element to the scene's root group with its coordinate range."""
-        canvas_element = CanvasElement(element, start_idx, end_idx, coord_type)
-        self.root.add_element(canvas_element)
+        self.root.add_element(element=element)
 
     def render(self, output_path: Optional[str] = None) -> Drawing:
         """Render the scene to SVG."""

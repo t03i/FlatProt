@@ -3,7 +3,7 @@
 
 from .components import Chain, Residue, Structure
 from .secondary import SecondaryStructure, SecondaryStructureType, Helix, Sheet, Coil
-from .manager import CoordinateManager
+from .manager import CoordinateManager, CoordinateType
 
 all = [
     Chain,
@@ -15,4 +15,5 @@ all = [
     Sheet,
     Coil,
     CoordinateManager,
+    CoordinateType,
 ]

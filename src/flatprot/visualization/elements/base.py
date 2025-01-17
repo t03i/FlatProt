@@ -1,8 +1,8 @@
 # Copyright 2024 Tobias Olenyi.
 # SPDX-License-Identifier: Apache-2.0
 
-from abc import protocol, abstractmethod
-from typing import Optional, Literal
+from abc import abstractmethod
+from typing import Optional, Literal, Protocol
 
 import numpy as np
 import drawsvg as draw
@@ -33,7 +33,7 @@ class VisualizationStyle(BaseModel):
     )
 
 
-class VisualizationElement(protocol):
+class VisualizationElement(Protocol):
     """Base class for all visualization elements"""
 
     def __init__(self, style: Optional[VisualizationStyle] = None):

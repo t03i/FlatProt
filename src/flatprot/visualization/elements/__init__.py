@@ -21,12 +21,12 @@ def secondary_structure_to_visualization_element(
 ) -> type[VisualizationElement]:
     """Convert a secondary structure to a visualization element."""
 
-    match type(secondary_structure):
-        case Helix:
+    match secondary_structure:
+        case isinstance(secondary_structure, Helix):
             return HelixVisualization
-        case Sheet:
+        case isinstance(secondary_structure, Sheet):
             return SheetVisualization
-        case Coil:
+        case isinstance(secondary_structure, Coil):
             return CoilVisualization
         case _:
             raise ValueError(
