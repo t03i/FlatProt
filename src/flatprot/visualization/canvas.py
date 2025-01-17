@@ -49,7 +49,6 @@ class CanvasElement:
         element_coords = coord_manager.get(
             self.start_idx, self.end_idx, self.coord_type
         )
-        print(self.render_element, element_coords)
         return self.render_element.render(element_coords)
 
 
