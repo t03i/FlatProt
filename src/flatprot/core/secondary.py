@@ -4,7 +4,7 @@ from enum import Enum
 
 import numpy as np
 
-from flatprot.structure.components import Residue
+from flatprot.core.components import Residue
 
 
 class SecondaryStructureType(Enum):

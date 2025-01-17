@@ -7,9 +7,8 @@ import numpy as np
 from flatprot.core import Structure, SecondaryStructureType
 from flatprot.transformation import Transformer, TransformParameters
 from flatprot.projection import OrthographicProjector, OrthographicProjectionParameters
-from flatprot.visualization.canvas import Scene
-from .utils import CanvasSettings
-from .visualization.elements import (
+from flatprot.visualization.canvas import Canvas, CanvasSettings
+from flatprot.visualization.elements import (
     VisualizationElement,
     VisualizationStyle,
     StyleManager,
@@ -17,6 +16,11 @@ from .visualization.elements import (
     HelixVisualization,
     SheetVisualization,
     CoilVisualization,
+)
+from flatprot.core.manager import (
+    CoordinateManager,
+    VisualizationManager,
+    CoordinateType,
 )
 
 
@@ -34,13 +38,39 @@ def secondary_structure_to_visualization_element(
         return CoilVisualization(coordinates, style=style)
 
 
+def coordinate_manager_from_structure(
+    structure: Structure,
+    transformer: Transformer,
+    transform_parameters: TransformParameters,
+    projector: OrthographicProjector,
+    projection_parameters: OrthographicProjectionParameters,
+) -> CoordinateManager:
+    coordinate_manager = CoordinateManager()
+    transformed_coords = transformer.transform(
+        structure.coordinates, transform_parameters
+    )
+    canvas_coords, depth = projector.project(transformed_coords, projection_parameters)
+
+    coordinate_manager.add(
+        0, len(structure.coordinates), structure.coordinates, CoordinateType.COORDINATES
+    )
+    coordinate_manager.add(
+        0, len(structure.coordinates), transformed_coords, CoordinateType.TRANSFORMED
+    )
+    coordinate_manager.add(
+        0, len(structure.coordinates), canvas_coords, CoordinateType.CANVAS
+    )
+    coordinate_manager.add(0, len(structure.coordinates), depth, CoordinateType.DEPTH)
+    return coordinate_manager
+
+
 def structure_to_canvas(
     structure: Structure,
     transformer: Transformer,
     canvas_settings: Optional[CanvasSettings] = None,
     style_manager: Optional[StyleManager] = None,
     transform_parameters: Optional[TransformParameters] = None,
-) -> Scene:
+) -> Canvas:
     """Convert a structure to a renderable canvas.
 
     Args:
@@ -52,6 +82,7 @@ def structure_to_canvas(
     Returns:
         A Scene object ready for rendering
     """
+
     projector = OrthographicProjector()
     projection_parameters = OrthographicProjectionParameters(
         width=canvas_settings.width,
@@ -61,13 +92,11 @@ def structure_to_canvas(
         maintain_aspect_ratio=True,
     )
 
-    scene = Scene(canvas_settings=canvas_settings, style_manager=style_manager)
-
-    # Project all coordinates at once
-    transformed_coords = transformer.transform(
-        structure.coordinates, transform_parameters
+    coordinate_manager = coordinate_manager_from_structure(
+        structure, transformer, transform_parameters, projector, projection_parameters
     )
-    canvas_coords, depth = projector.project(transformed_coords, projection_parameters)
+
+    scene = Canvas(canvas_settings=canvas_settings, style_manager=style_manager)
 
     # Process each chain
     offset = 0
@@ -81,7 +110,15 @@ def structure_to_canvas(
             if i < len(chain.secondary_structure) - 1:
                 end_idx += 1
 
-            element_coords = canvas_coords[start_idx:end_idx]
+            element_coords = coordinate_manager.get(
+                start_idx,
+                end_idx,
+                CoordinateType.CANVAS,
+            )
+            depth = coordinate_manager.get(
+                0, len(structure.coordinates), CoordinateType.DEPTH
+            )
+
             style = scene.style_manager.get_style(element.type)
 
             vis_element = secondary_structure_to_visualization_element(

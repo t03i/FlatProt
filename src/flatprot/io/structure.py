@@ -5,7 +5,7 @@ from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import Optional
 
-from ..structure.components import Structure
+from ..core.components import Structure
 
 
 class StructureParser(ABC):

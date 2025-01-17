@@ -8,9 +8,9 @@ from collections import namedtuple
 import numpy as np
 import gemmi
 
-from flatprot.structure.residue import Residue
-from flatprot.structure.components import Structure, Chain
-from flatprot.structure.secondary import SecondaryStructureType
+from flatprot.core.residue import Residue
+from flatprot.core.components import Structure, Chain
+from flatprot.core.secondary import SecondaryStructureType
 from .dssp import parse_dssp
 
 from .structure import StructureParser

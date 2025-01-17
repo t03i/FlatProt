@@ -11,7 +11,7 @@ from .utils import (
     calculate_inertia_transformation,
     apply_transformation,
 )
-from flatprot.structure.residue import Residue
+from flatprot.core.residue import Residue
 
 
 @dataclass

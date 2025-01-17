@@ -1,33 +1,50 @@
 # Copyright 2025 Tobias Olenyi.
 # SPDX-License-Identifier: Apache-2.0
+from enum import Enum
+
 import numpy as np
 
-from flatprot.core import Structure
-from flatprot.visualization.element import VisualizationElement
+from .structure.structure import Structure
+
+
+class CoordinateType(Enum):
+    COORDINATES = "coordinates"
+    TRANSFORMED = "transformed"
+    CANVAS = "canvas"
+    DEPTH = "depth"
 
 
 class CoordinateManager:
     """Manages different types of coordinates (original, transformed, projected)."""
 
     def __init__(self):
-        self.coordinates: dict[tuple[int, int], np.ndarray] = {}
-        self.transformed: dict[tuple[int, int], np.ndarray] = {}
-        self.projected: dict[tuple[int, int], np.ndarray] = {}
+        self.coordinates: dict[CoordinateType, dict[tuple[int, int], np.ndarray]] = {
+            CoordinateType.COORDINATES: {},
+            CoordinateType.TRANSFORMED: {},
+            CoordinateType.PROJECTED: {},
+        }
 
     def add(
-        self, start: int, end: int, coords: np.ndarray, coord_type: str = "coordinates"
+        self,
+        start: int,
+        end: int,
+        coords: np.ndarray,
+        coord_type: CoordinateType = CoordinateType.COORDINATES,
     ) -> None:
         """Add coordinates for a range."""
         if end < start:
             raise ValueError("End must be >= start")
-        target_map = getattr(self, coord_type)
+        target_map = self.coordinates[coord_type]
         target_map[start, end] = np.asarray(coords)
 
     def get(
-        self, start: int, end: int | None = None, coord_type: str = "coordinates"
+        self,
+        start: int,
+        end: int | None = None,
+        coord_type: CoordinateType = CoordinateType.COORDINATES,
     ) -> np.ndarray:
         """Get coordinates for an index or range."""
-        target_map = getattr(self, coord_type)
+        target_map = self.coordinates[coord_type]
 
         if end is None:
             for (s, e), coords in target_map.items():
@@ -57,25 +74,3 @@ class CoordinateManager:
                 coords[:, 1].max(),
             ]
         )
-
-
-class VisualizationManager:
-    """Manages visualization elements and their properties."""
-
-    def __init__(self):
-        self.elements: dict[tuple[int, int], VisualizationElement] = {}
-        self.coord_manager = CoordinateManager()
-
-    def add_element(
-        self, start: int, end: int, element: VisualizationElement, coords: np.ndarray
-    ) -> None:
-        """Add a visualization element with its coordinates."""
-        self.elements[start, end] = element
-        self.coord_manager.add(start, end, coords)
-
-    def get_element(self, index: int) -> VisualizationElement:
-        """Get visualization element at index."""
-        for (start, end), element in self.elements.items():
-            if start <= index <= end:
-                return element
-        raise KeyError(f"No visualization element at index {index}")
