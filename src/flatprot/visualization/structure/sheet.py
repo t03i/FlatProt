@@ -7,7 +7,7 @@ import drawsvg as draw
 from pydantic import Field
 from pydantic_extra_types.color import Color
 
-from flatprot.visualization.elements import (
+from flatprot.visualization.structure import (
     VisualizationElement,
     VisualizationStyle,
     SmoothingMixin,

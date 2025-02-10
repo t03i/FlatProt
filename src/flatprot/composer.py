@@ -13,7 +13,7 @@ from flatprot.visualization.canvas import (
     CanvasGroup,
     CanvasElement,
 )
-from flatprot.visualization.elements import (
+from flatprot.visualization.structure import (
     VisualizationElement,
     VisualizationStyle,
     StyleManager,

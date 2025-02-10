@@ -9,7 +9,7 @@ from pydantic import BaseModel, Field
 from pydantic_extra_types.color import Color
 
 from flatprot.core import CoordinateManager, CoordinateType
-from .elements import VisualizationElement, StyleManager
+from .structure import VisualizationElement, StyleManager
 
 
 class CanvasSettings(BaseModel):

@@ -4,10 +4,10 @@
 from dataclasses import dataclass, field
 from typing import Optional, ClassVar
 
-from flatprot.visualization.elements.helix import HelixStyle
-from flatprot.visualization.elements.sheet import SheetStyle
-from flatprot.visualization.elements.coil import CoilStyle
-from flatprot.visualization.elements.base import VisualizationStyle as BaseStyle
+from flatprot.visualization.structure.helix import HelixStyle
+from flatprot.visualization.structure.sheet import SheetStyle
+from flatprot.visualization.structure.coil import CoilStyle
+from flatprot.visualization.structure.base import VisualizationStyle as BaseStyle
 from flatprot.core import SecondaryStructureType
 
 

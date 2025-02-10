@@ -10,7 +10,7 @@ from flatprot.transformation.inertia import (
 )
 from flatprot.composer import structure_to_canvas
 from flatprot.visualization.canvas import CanvasSettings
-from flatprot.visualization.elements.style import StyleManager
+from flatprot.visualization.structure.style import StyleManager
 
 
 def create_protein_visualization(

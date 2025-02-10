@@ -8,7 +8,7 @@ from pydantic_extra_types.color import Color
 import numpy as np
 import drawsvg as draw
 
-from ..elements import VisualStyle
+from ..structure import VisualStyle
 
 
 class AnnotationTarget(Protocol):

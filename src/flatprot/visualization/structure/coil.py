@@ -7,7 +7,7 @@ from pydantic import Field
 import numpy as np
 import drawsvg as draw
 
-from flatprot.visualization.elements import (
+from flatprot.visualization.structure import (
     VisualizationElement,
     VisualizationStyle,
     SmoothingMixin,

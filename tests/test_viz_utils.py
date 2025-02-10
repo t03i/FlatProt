@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 import numpy as np
-from flatprot.visualization.elements.base import SmoothingMixin
+from flatprot.visualization.structure.base import SmoothingMixin
 
 
 class TestSmoother(SmoothingMixin):
