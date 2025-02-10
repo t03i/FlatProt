@@ -2,71 +2,71 @@
 # SPDX-License-Identifier: Apache-2.0
 
 from dataclasses import dataclass, field
-from typing import Optional, ClassVar
+from typing import Optional, ClassVar, Literal
 
-from flatprot.visualization.structure.helix import HelixStyle
-from flatprot.visualization.structure.sheet import SheetStyle
-from flatprot.visualization.structure.coil import CoilStyle
-from flatprot.visualization.structure.base import VisualizationStyle as BaseStyle
-from flatprot.core import SecondaryStructureType
+from pydantic import BaseModel, Field, ConfigDict
+from pydantic_extra_types import Color
+
+from .types import StyleType, STYLE_MAP
+
+
+class ElementStyle(BaseModel):
+    """Base class for styling visualization elements"""
+
+    fill_color: Color | Literal["none"] = Field(
+        default="none", description="Element fill color"
+    )
+    stroke_color: Color | Literal["none"] = Field(
+        default=Color("#000000"), description="Element stroke color"
+    )
+    opacity: float = Field(
+        default=1.0, ge=0.0, le=1.0, description="Opacity value between 0 and 1"
+    )
+    line_width: float = Field(default=5.0, gt=0, description="Width of lines")
+    smoothing_factor: float = Field(
+        default=0.2, ge=0.0, le=1.0, description="Percentage of points to keep"
+    )
+
+    model_config = ConfigDict(
+        title="Base Visualization Style",
+        frozen=True,  # Makes instances immutable
+    )
 
 
 @dataclass
 class StyleManager:
     """Manages styles for protein visualization elements"""
 
-    # Map element types to their style classes
-    _element_map = {
-        SecondaryStructureType.HELIX: HelixStyle,
-        SecondaryStructureType.SHEET: SheetStyle,
-        SecondaryStructureType.COIL: CoilStyle,
-    }
-
     # Predefined themes/presets
-    THEMES: ClassVar[dict[str, dict]] = {
+    DEFAULT_THEME: ClassVar[dict[str, dict]] = {
         "default": {
             "global_style": {
                 "stroke_color": "#333333",
                 "opacity": 1.0,
                 "line_width": 3.0,
             },
-            "helix": {
+            StyleType.HELIX.value: {
                 "fill_color": "#FF4444",
                 "wave_height_factor": 0.8,
                 "ribbon_thickness_factor": 0.6,
             },
-            "sheet": {
+            StyleType.SHEET.value: {
                 "fill_color": "#4444FF",
                 "ribbon_thickness_factor": 1.0,
                 "arrow_width_factor": 1.5,
             },
-            "coil": {
+            StyleType.COIL.value: {
                 "stroke_width_factor": 1.0,
-            },
-        },
-        "colorful": {
-            "helix": {
-                "fill_color": "#FF0000",
-                "wave_height_factor": 1.0,
-            },
-            "sheet": {
-                "fill_  color": "#00FF00",
-                "arrow_width_factor": 1.8,
-            },
-            "coil": {
-                "stroke_color": "#0000FF",
-                "stroke_width_factor": 0.5,
             },
         },
     }
 
-    element_styles: dict[SecondaryStructureType, BaseStyle] = field(
+    element_styles: dict[StyleType, ElementStyle] = field(
         default_factory=lambda: {
-            stype: style_class()
-            for stype, style_class in StyleManager._element_map.items()
+            stype: style_class() for stype, style_class in STYLE_MAP.items()
         }
     )
-    global_style: Optional[BaseStyle] = None
+    global_style: Optional[ElementStyle] = None
 
     @classmethod
     def create_default(cls) -> "StyleManager":
@@ -89,7 +89,7 @@ class StyleManager:
 
         # Apply global style if present
         if "global_style" in config:
-            manager.global_style = BaseStyle.model_validate(config["global_style"])
+            manager.global_style = ElementStyle.model_validate(config["global_style"])
 
         # Apply element-specific styles
         for element_type, style_class in cls._element_map.items():
@@ -100,7 +100,7 @@ class StyleManager:
 
         return manager
 
-    def get_style(self, element_type: SecondaryStructureType) -> BaseStyle:
+    def get_style(self, element_type: StyleType) -> ElementStyle:
         """Get the style for a specific element type, applying global overrides"""
         base_style = self.element_styles[element_type]
         if self.global_style:
@@ -109,9 +109,7 @@ class StyleManager:
             )
         return base_style
 
-    def update_style(
-        self, element_type: SecondaryStructureType, **style_kwargs
-    ) -> None:
+    def update_style(self, element_type: StyleType, **style_kwargs) -> None:
         """Update style for a specific element type"""
         current_style = self.element_styles[element_type]
         self.element_styles[element_type] = current_style.model_copy(
@@ -131,7 +129,6 @@ class StyleManager:
             config["global_style"] = self.global_style.model_dump(exclude_unset=True)
 
         for element_type, style in self.element_styles.items():
-            key = element_type.name.lower()
-            config[key] = style.model_dump(exclude_unset=True)
+            config[element_type.value] = style.model_dump(exclude_unset=True)
 
         self.THEMES[theme_name] = config
