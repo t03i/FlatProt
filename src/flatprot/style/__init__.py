@@ -1,4 +1,6 @@
-from .manager import StyleManager, ElementStyle
+from .manager import StyleManager
+from .base import ElementStyle
+from .types import StyleType
 
 
-__all__ = ["StyleManager", "ElementStyle"]
+__all__ = ["StyleManager", "ElementStyle", "StyleType"]

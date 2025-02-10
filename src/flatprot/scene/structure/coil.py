@@ -6,9 +6,7 @@ import numpy as np
 from .base import StructureSceneElement
 
 
-def _smooth_coordinates(
-    self, coords: np.ndarray, reduction_factor: float = 0.2
-) -> np.ndarray:
+def smooth_coordinates(coords: np.ndarray, reduction_factor: float = 0.2) -> np.ndarray:
     """Reduce point complexity using uniform selection.
 
     Args:
@@ -36,7 +34,7 @@ class CoilElement(StructureSceneElement):
     """A coil element visualization using a smooth curved line"""
 
     def calculate_display_coordinates(self) -> np.ndarray:
-        return _smooth_coordinates(self._coordinates, self.style.smoothing_factor)
+        return smooth_coordinates(self._coordinates, self.style.smoothing_factor)
 
     def display_coordinates_at_position(self, position: int) -> np.ndarray:
         """Get smoothed display coordinates at a specific position.

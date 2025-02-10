@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 from pydantic import Field
-from .manager import ElementStyle
+from .base import ElementStyle
 
 
 class HelixStyle(ElementStyle):

@@ -3,8 +3,6 @@
 
 from enum import Enum
 
-from .structure_style import HelixStyle, SheetStyle, CoilStyle
-
 
 class StyleType(Enum):
     """Type of style"""
@@ -15,10 +13,3 @@ class StyleType(Enum):
     POINT = "point"
     PAIR = "pair"
     GROUP = "group"
-
-
-STYLE_MAP = {
-    StyleType.HELIX: HelixStyle,
-    StyleType.SHEET: SheetStyle,
-    StyleType.COIL: CoilStyle,
-}
