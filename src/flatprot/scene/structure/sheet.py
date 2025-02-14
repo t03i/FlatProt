@@ -9,19 +9,12 @@ from .base import StructureSceneElement
 class SheetElement(StructureSceneElement):
     """A beta sheet element visualization using a simple triangular arrow"""
 
-    def __init__(
-        self,
-        canvas_coordinates: np.ndarray,
-        metadata: dict,
-    ):
-        super().__init__(canvas_coordinates, metadata)
-
     def calculate_display_coordinates(self) -> np.ndarray:
         start_point = self.coordinates[0]
         end_point = self.coordinates[-1]
 
-        direction = end_point - start_point
-        length = np.linalg.norm(direction)
+        direction = (end_point - start_point) / np.linalg.norm(end_point - start_point)
+        length = np.linalg.norm(start_point - end_point)
 
         if (
             np.isclose(length, 0)
@@ -30,10 +23,10 @@ class SheetElement(StructureSceneElement):
             return np.array([start_point, end_point])
 
         perp = np.array([-direction[1], direction[0]])
-        ribbon_width = self.style.line_width * self.style.base_width_factor
+        arrow_width = self.style.line_width * self.style.arrow_width_factor
 
-        left_point = start_point + perp * (ribbon_width / 2)
-        right_point = start_point - perp * (ribbon_width / 2)
+        left_point = start_point + perp * (arrow_width / 2)
+        right_point = start_point - perp * (arrow_width / 2)
 
         return np.array([left_point, right_point, end_point])
 
@@ -52,7 +45,7 @@ class SheetElement(StructureSceneElement):
         start_point = self.display_coordinates[0]
         end_point = self.display_coordinates[-1]
 
-        direction = end_point - start_point
+        direction = (end_point - start_point) / np.linalg.norm(end_point - start_point)
         segment_length = np.linalg.norm(direction) / len(self.__coordinates)
 
         return start_point + direction * position * segment_length

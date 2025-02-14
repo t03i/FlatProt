@@ -4,37 +4,12 @@ from typing import Optional
 
 import numpy as np
 
-from flatprot.core import Structure, SecondaryStructureType
+from flatprot.core import Structure
 from flatprot.transformation import Transformer, TransformParameters
 from flatprot.projection import OrthographicProjector, OrthographicProjectionParameters
-from flatprot.visualization.canvas import (
-    Canvas,
-    CanvasSettings,
-    CanvasGroup,
-    CanvasElement,
-)
-from flatprot.visualization.structure import (
-    VisualizationElement,
-    VisualizationStyle,
-    StyleManager,
-    HelixVisualization,
-    SheetVisualization,
-    CoilVisualization,
-)
+from flatprot.scene import Scene, SceneGroup, secondary_structure_to_scene_element
 from flatprot.core import CoordinateManager, CoordinateType
-
-
-def secondary_structure_to_visualization_element(
-    secondary_structure: SecondaryStructureType,
-    style: Optional[VisualizationStyle] = None,
-) -> VisualizationElement:
-    """Convert a secondary structure to a visualization element."""
-    if secondary_structure == SecondaryStructureType.HELIX:
-        return HelixVisualization(style=style)
-    elif secondary_structure == SecondaryStructureType.SHEET:
-        return SheetVisualization(style=style)
-    elif secondary_structure == SecondaryStructureType.COIL:
-        return CoilVisualization(style=style)
+from flatprot.style import StyleManager, StyleType
 
 
 def coordinate_manager_from_structure(
@@ -63,43 +38,30 @@ def coordinate_manager_from_structure(
     return coordinate_manager
 
 
-def structure_to_canvas(
+def structure_to_scene(
     structure: Structure,
     transformer: Transformer,
-    canvas_settings: Optional[CanvasSettings] = None,
-    style_manager: Optional[StyleManager] = None,
     transform_parameters: Optional[TransformParameters] = None,
-) -> Canvas:
-    """Convert a structure to a renderable canvas.
-
-    Args:
-        structure: The structure to visualize
-        transformer: The transformer to use for coordinate transformation
-        canvas_settings: Optional canvas settings
-        style_manager: Optional style manager
-        transformation_parameters: Optional transformation parameters
-    Returns:
-        A Scene object ready for rendering
-    """
+    style_manager: Optional[StyleManager] = None,
+) -> Scene:
+    """Convert a structure to a composed scene."""
+    style_manager = style_manager or StyleManager.create_default()
+    canvas_settings = style_manager.get_style(StyleType.CANVAS)
 
     projector = OrthographicProjector()
     projection_parameters = OrthographicProjectionParameters(
         width=canvas_settings.width,
         height=canvas_settings.height,
-        padding_x=canvas_settings.padding,
-        padding_y=canvas_settings.padding,
-        maintain_aspect_ratio=True,
+        padding_x=canvas_settings.padding_x,
+        padding_y=canvas_settings.padding_y,
+        maintain_aspect_ratio=canvas_settings.maintain_aspect_ratio,
     )
 
     coordinate_manager = coordinate_manager_from_structure(
         structure, transformer, transform_parameters, projector, projection_parameters
     )
 
-    canvas = Canvas(
-        coordinate_manager=coordinate_manager,
-        canvas_settings=canvas_settings,
-        style_manager=style_manager,
-    )
+    root_scene = Scene()
 
     # Process each chain
     offset = 0
@@ -113,24 +75,26 @@ def structure_to_canvas(
             if i < len(chain.secondary_structure) - 1:
                 end_idx += 1
 
+            canvas_coords = coordinate_manager.get(
+                start_idx, end_idx, CoordinateType.CANVAS
+            )
             depth = coordinate_manager.get(start_idx, end_idx, CoordinateType.DEPTH)
 
-            style = canvas.style_manager.get_style(element.type)
+            metadata = {
+                "chain_id": chain.id,
+                "start": element.start,
+                "end": element.end,
+                "type": element.type.value,
+            }
 
-            viz_element = secondary_structure_to_visualization_element(
-                element.type, style=style
+            viz_element = secondary_structure_to_scene_element(
+                element.type,
+                canvas_coords,
+                metadata,
+                style_manager,
             )
-            if viz_element:
-                # Use mean depth along view direction for z-ordering
 
-                elements_with_z.append(
-                    (
-                        CanvasElement(
-                            viz_element, start_idx, end_idx, CoordinateType.CANVAS
-                        ),
-                        np.mean(depth),
-                    )
-                )
+            elements_with_z.append((viz_element, np.mean(depth)))
 
         # Sort elements by depth (farther objects first)
         sorted_elements = [
@@ -138,8 +102,14 @@ def structure_to_canvas(
             for elem, z in sorted(elements_with_z, key=lambda x: x[1], reverse=True)
         ]
 
-        group = CanvasGroup(sorted_elements, id=chain.id)
-        canvas.add_element(group)
+        # Create a scene for the chain
+        chain_scene = SceneGroup(
+            id=f"chain_{chain.id}",
+        )
+        for element in sorted_elements:
+            chain_scene.add_element(element)
+
+        root_scene.add_element(chain_scene)
         offset += chain.num_residues
 
-    return canvas
+    return root_scene

@@ -13,3 +13,6 @@ class StyleType(Enum):
     POINT = "point"
     PAIR = "pair"
     GROUP = "group"
+    CANVAS = "canvas"
+    ANNOTATION = "annotation"
+    ELEMENT = "element"

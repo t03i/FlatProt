@@ -5,7 +5,7 @@ from abc import abstractmethod
 import numpy as np
 
 from ..scene import SceneElement
-from flatprot.style import StyleManager
+from flatprot.style import StyleManager, StyleType
 
 
 class StructureSceneElement(SceneElement):
@@ -16,13 +16,19 @@ class StructureSceneElement(SceneElement):
         canvas_coordinates: np.ndarray,
         metadata: dict,
         style_manager: StyleManager,
+        style_type: StyleType,
     ):
-        super().__init__(metadata, style_manager)
+        super().__init__(metadata, style_manager, style_type)
         self._coordinates = canvas_coordinates
         self._display_coordinates = self.calculate_display_coordinates()
 
-    def get_display_coordinates(self) -> np.ndarray:
+    @property
+    def display_coordinates(self) -> np.ndarray:
         return self._display_coordinates
+
+    @property
+    def coordinates(self) -> np.ndarray:
+        return self._coordinates
 
     @abstractmethod
     def calculate_display_coordinates(self) -> np.ndarray:

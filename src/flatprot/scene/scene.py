@@ -39,6 +39,32 @@ class SceneElement(ABC):
         pass
 
 
+class SceneGroup(SceneElement):
+    def __init__(
+        self,
+        id: str,
+        metadata: dict = {},
+        transforms: dict = {},
+    ):
+        super().__init__(metadata, None, None)
+        self.id = id
+        self._elements: list[SceneElement] = []
+        self._transforms = transforms
+
+    @property
+    def transforms(self) -> dict:
+        return self._transforms
+
+    def add_element(self, element: SceneElement):
+        self._elements.append(element)
+
+    def __iter__(self):
+        return iter(self._elements)
+
+    def display_coordinates(self) -> np.ndarray:
+        return None
+
+
 class Scene:
     """A class to represent a scene of a protein."""
 
@@ -47,3 +73,9 @@ class Scene:
 
     def add_element(self, element: SceneElement):
         self.__elements.append(element)
+
+    def __iter__(self):
+        return iter(self.__elements)
+
+    def __getitem__(self, index: int) -> SceneElement:
+        return self.__elements[index]

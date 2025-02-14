@@ -53,7 +53,40 @@ class HelixElement(StructureSceneElement):
         return calculate_zigzag_points(
             self.coordinates[0],
             self.coordinates[-1],
-            self.style.line_width * self.style.thickness_factor,
-            self.style.line_width * self.style.cross_width_factor,
-            self.style.line_width * self.style.amplitude_factor,
+            self.style.line_width * self.style.ribbon_thickness_factor,
+            self.style.line_width * self.style.wavelength,
+            self.style.line_width * self.style.amplitude,
         )
+
+    def display_coordinates_at_position(self, position: int) -> np.ndarray:
+        """Maps a position from the original coordinate system to the middle of the zigzag wave.
+
+        For a helix, this finds the corresponding point on the central zigzag line
+        (halfway between the top and bottom ribbon edges).
+
+        Args:
+            position: Integer index in the original coordinate system
+
+        Returns:
+            np.ndarray: Corresponding point on the middle of the zigzag wave
+        """
+        display_coords = self.display_coordinates
+        if len(display_coords) == 0:
+            raise IndexError("No coordinates available")
+
+        if len(self.coordinates) <= 1:
+            return display_coords[0]
+
+        # Calculate how far along the helix we are (0 to 1)
+        progress = position / (len(self.coordinates) - 1)
+
+        # Find the corresponding points on top and bottom waves
+        wave_points = len(display_coords) // 2
+        wave_position = int(progress * (wave_points - 1))
+
+        # Get points from top and bottom waves
+        top_point = display_coords[wave_position]
+        bottom_point = display_coords[-(wave_position + 1)]
+
+        # Return the midpoint between top and bottom
+        return (top_point + bottom_point) / 2
