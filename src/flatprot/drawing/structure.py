@@ -22,6 +22,7 @@ def draw_coil(element: CoilElement) -> DrawingElement:
         stroke_width=element.style.line_width * element.style.stroke_width_factor,
         fill=element.style.fill_color,
         class_="coil",
+        linecap="round",
     )
 
     # Start path at first point
@@ -35,12 +36,14 @@ def draw_coil(element: CoilElement) -> DrawingElement:
 
 
 def draw_non_element(element: StructureSceneElement) -> DrawingElement:
+    element_class = "helix" if isinstance(element, HelixElement) else "sheet"
     return Line(
         *element.coordinates[0],
         *element.coordinates[-1],
         stroke=element.style.fill_color,
         stroke_width=element.style.line_width * element.style.stroke_width_factor,
-        class_="helix",
+        class_=element_class,
+        linecap="round",
     )
 
 
