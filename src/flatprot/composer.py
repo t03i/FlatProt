@@ -4,7 +4,7 @@ from typing import Optional
 
 import numpy as np
 
-from flatprot.core import Structure
+from flatprot.core import Structure, Coil
 from flatprot.transformation import Transformer, TransformParameters
 from flatprot.projection import OrthographicProjector, OrthographicProjectionParameters
 from flatprot.scene import Scene, SceneGroup, secondary_structure_to_scene_element
@@ -69,11 +69,9 @@ def structure_to_scene(
         elements_with_z = []  # Reset for each chain
 
         for i, element in enumerate(chain.secondary_structure):
+            print(element, type(element))
             start_idx = offset + element.start
             end_idx = offset + element.end + 1
-
-            if i < len(chain.secondary_structure) - 1:
-                end_idx += 1
 
             canvas_coords = coordinate_manager.get(
                 start_idx, end_idx, CoordinateType.CANVAS

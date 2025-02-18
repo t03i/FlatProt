@@ -34,7 +34,7 @@ class CoilElement(StructureSceneElement):
     """A coil element visualization using a smooth curved line"""
 
     def calculate_display_coordinates(self) -> np.ndarray:
-        return smooth_coordinates(self._coordinates, self.style.smoothing_factor)
+        return self._coordinates[0, :], self._coordinates[-1, :]
 
     def display_coordinates_at_position(self, position: int) -> np.ndarray:
         """Get smoothed display coordinates at a specific position.
