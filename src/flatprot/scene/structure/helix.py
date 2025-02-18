@@ -29,7 +29,8 @@ def calculate_zigzag_points(start, end, thickness, wavelength, amplitude):
     t = np.linspace(0, length, num_cycles * 2 + 1)
 
     # Alternate between +amplitude and -amplitude
-    wave = amplitude * np.array([1 if i % 2 == 0 else -1 for i in range(len(t))])
+    wave = amplitude * np.array([1 if i % 2 == 0 else -1 for i in range(len(t) - 2)])
+    wave = np.concatenate(([0], wave, [0]))
 
     # Create base points along the path
     base_points = t[:, None] * direction + start
