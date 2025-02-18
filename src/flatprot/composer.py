@@ -69,7 +69,6 @@ def structure_to_scene(
         elements_with_z = []  # Reset for each chain
 
         for i, element in enumerate(chain.secondary_structure):
-            print(element, type(element))
             start_idx = offset + element.start
             end_idx = offset + element.end + 1
 
