@@ -9,6 +9,7 @@ from .structure import (
     StructureSceneElement,
 )
 from .map import secondary_structure_to_scene_element
+from .annotations import PointAnnotation, AnnotationElement
 
 __all__ = [
     "Scene",
@@ -19,4 +20,6 @@ __all__ = [
     "CoilElement",
     "StructureSceneElement",
     "secondary_structure_to_scene_element",
+    "PointAnnotation",
+    "AnnotationElement",
 ]

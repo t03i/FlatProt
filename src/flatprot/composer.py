@@ -4,10 +4,15 @@ from typing import Optional
 
 import numpy as np
 
-from flatprot.core import Structure, Coil
+from flatprot.core import Structure
 from flatprot.transformation import Transformer, TransformParameters
 from flatprot.projection import OrthographicProjector, OrthographicProjectionParameters
-from flatprot.scene import Scene, SceneGroup, secondary_structure_to_scene_element
+from flatprot.scene import (
+    Scene,
+    SceneGroup,
+    secondary_structure_to_scene_element,
+    PointAnnotation,
+)
 from flatprot.core import CoordinateManager, CoordinateType
 from flatprot.style import StyleManager, StyleType
 
@@ -105,6 +110,19 @@ def structure_to_scene(
         )
         for element in sorted_elements:
             chain_scene.add_element(element)
+            if len(element.coordinates) >= 5:
+                print("test")
+                chain_scene.add_element(
+                    PointAnnotation(
+                        positions=[5],
+                        elements=[
+                            element,
+                        ],
+                        metadata={},
+                        style_manager=style_manager,
+                        style_type=StyleType.ANNOTATION,
+                    )
+                )
 
         root_scene.add_element(chain_scene)
         offset += chain.num_residues

@@ -10,15 +10,15 @@ class SheetElement(StructureSceneElement):
     """A beta sheet element visualization using a simple triangular arrow"""
 
     def calculate_display_coordinates(self) -> np.ndarray:
-        start_point = self.coordinates[0]
-        end_point = self.coordinates[-1]
+        start_point = self._coordinates[0]
+        end_point = self._coordinates[-1]
 
         direction = (end_point - start_point) / np.linalg.norm(end_point - start_point)
         length = np.linalg.norm(start_point - end_point)
 
         if (
             np.isclose(length, 0)
-            or len(self.coordinates) <= self.style.min_sheet_length
+            or len(self._coordinates) <= self.style.min_sheet_length
         ):
             return np.array([start_point, end_point])
 
@@ -39,13 +39,13 @@ class SheetElement(StructureSceneElement):
         Returns:
             np.ndarray: Array of coordinates for the triangular arrow at the given position
         """
-        if len(self.display_coordinates) == 2 and position <= 1:
-            return self.display_coordinates[position]
+        if len(self._display_coordinates) == 2 and position <= 1:
+            return self._display_coordinates[position]
 
-        start_point = self.display_coordinates[0]
-        end_point = self.display_coordinates[-1]
+        start_point = self._display_coordinates[0]
+        end_point = self._display_coordinates[-1]
 
         direction = (end_point - start_point) / np.linalg.norm(end_point - start_point)
-        segment_length = np.linalg.norm(direction) / len(self.__coordinates)
+        segment_length = np.linalg.norm(direction) / len(self._coordinates)
 
         return start_point + direction * position * segment_length

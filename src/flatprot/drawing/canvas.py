@@ -13,13 +13,16 @@ from flatprot.scene import (
     HelixElement,
     SheetElement,
     CoilElement,
+    PointAnnotation,
 )
 from .structure import draw_helix, draw_sheet, draw_coil
+from .annotation import draw_point_annotation
 
 DRAW_MAP = {
     HelixElement: draw_helix,
     SheetElement: draw_sheet,
     CoilElement: draw_coil,
+    PointAnnotation: draw_point_annotation,
 }
 
 

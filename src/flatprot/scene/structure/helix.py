@@ -52,8 +52,8 @@ class HelixElement(StructureSceneElement):
 
     def calculate_display_coordinates(self) -> np.ndarray:
         return calculate_zigzag_points(
-            self.coordinates[0],
-            self.coordinates[-1],
+            self._coordinates[0],
+            self._coordinates[-1],
             self.style.line_width * self.style.ribbon_thickness_factor,
             self.style.line_width * self.style.wavelength,
             self.style.line_width * self.style.amplitude,
@@ -71,7 +71,7 @@ class HelixElement(StructureSceneElement):
         Returns:
             np.ndarray: Corresponding point on the middle of the zigzag wave
         """
-        display_coords = self.display_coordinates
+        display_coords = self._display_coordinates
         if len(display_coords) == 0:
             raise IndexError("No coordinates available")
 
@@ -79,7 +79,7 @@ class HelixElement(StructureSceneElement):
             return display_coords[0]
 
         # Calculate how far along the helix we are (0 to 1)
-        progress = position / (len(self.coordinates) - 1)
+        progress = position / (len(self._coordinates) - 1)
 
         # Find the corresponding points on top and bottom waves
         wave_points = len(display_coords) // 2
