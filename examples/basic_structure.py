@@ -11,9 +11,11 @@ from flatprot.transformation.inertia import (
 from flatprot.composer import structure_to_scene
 from flatprot.drawing.canvas import Canvas
 from flatprot.style.manager import StyleManager
+from flatprot.scene import Scene
+from flatprot.scene.annotations import LineAnnotation, PointAnnotation, AreaAnnotation
 
 
-def create_protein_visualization(pdb_file: Path, output_file: Path) -> None:
+def create_scene(pdb_file: Path) -> tuple[Scene, StyleManager]:
     """Create an SVG visualization of a protein structure.
 
     Args:
@@ -40,16 +42,64 @@ def create_protein_visualization(pdb_file: Path, output_file: Path) -> None:
         transform_parameters=transform_parameters,
     )
 
+    return scene, style_manager
+
+
+def draw_scene(scene: Scene, style_manager: StyleManager, output_file: Path) -> None:
     # 5. Save to file
     canvas = Canvas(scene, style_manager)
     canvas.render(str(output_file))
+
+
+def create_annotations(scene: Scene, style_manager: StyleManager) -> None:
+    # Create annotations
+
+    element1 = scene.get_elements_for_residue("A", 5)[0]
+    index1 = scene.get_element_index_from_global_index(5, element1)
+    element2 = scene.get_elements_for_residue("A", 35)[0]
+    index2 = scene.get_element_index_from_global_index(35, element2)
+
+    annotation = LineAnnotation(
+        content="line annotation",
+        indices=[index1, index2],
+        targets=[element1, element2],
+        style_manager=style_manager,
+    )
+    scene.add_element(annotation)
+
+    elements = []
+
+    for i in [
+        50,
+        70,
+        42,
+    ]:
+        element = scene.get_elements_for_residue("A", i)[0]
+        index = scene.get_element_index_from_global_index(i, element)
+        elements.append(element)
+        point_annotation = PointAnnotation(
+            content="point annotation",
+            indices=[index],
+            targets=[element],
+            style_manager=style_manager,
+        )
+        scene.add_element(point_annotation)
+
+    area_annotation = AreaAnnotation(
+        content="area annotation",
+        indices=None,
+        targets=scene.get_elements_for_residue_range("A", 1, 40),
+        style_manager=style_manager,
+    )
+    scene.add_element(area_annotation)
 
 
 if __name__ == "__main__":
     output_path = Path("out/3Ftx")
     output_path.mkdir(parents=True, exist_ok=True)
     # Example usage
-    create_protein_visualization(
+    scene, style_manager = create_scene(
         pdb_file=Path("data/3Ftx/cobra.cif"),
-        output_file=Path("out/3Ftx/cobra_inertia.svg"),
     )
+    create_annotations(scene, style_manager)
+    draw_scene(scene, style_manager, Path("out/3Ftx/cobra_inertia.svg"))
