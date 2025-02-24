@@ -10,7 +10,13 @@ from .structure import (
     StructureSceneElement,
     secondary_structure_to_scene_element,
 )
-from .annotations import Annotation, GroupAnnotation
+from .annotations import (
+    Annotation,
+    GroupAnnotation,
+    PointAnnotation,
+    LineAnnotation,
+    AreaAnnotation,
+)
 
 __all__ = [
     "Scene",
@@ -23,4 +29,7 @@ __all__ = [
     "secondary_structure_to_scene_element",
     "Annotation",
     "GroupAnnotation",
+    "PointAnnotation",
+    "LineAnnotation",
+    "AreaAnnotation",
 ]
