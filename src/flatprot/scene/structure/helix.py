@@ -59,7 +59,7 @@ class HelixElement(StructureSceneElement):
             self.style.line_width * self.style.amplitude,
         )
 
-    def display_coordinates_at_position(self, position: int) -> np.ndarray:
+    def calculate_display_coordinates_at_resiude(self, residue_idx: int) -> np.ndarray:
         """Maps a position from the original coordinate system to the middle of the zigzag wave.
 
         For a helix, this finds the corresponding point on the central zigzag line
@@ -79,7 +79,7 @@ class HelixElement(StructureSceneElement):
             return display_coords[0]
 
         # Calculate how far along the helix we are (0 to 1)
-        progress = position / (len(self._coordinates) - 1)
+        progress = residue_idx / (len(self._coordinates) - 1)
 
         # Find the corresponding points on top and bottom waves
         wave_points = len(display_coords) // 2

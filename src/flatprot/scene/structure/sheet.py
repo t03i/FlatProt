@@ -30,7 +30,7 @@ class SheetElement(StructureSceneElement):
 
         return np.array([left_point, right_point, end_point])
 
-    def display_coordinates_at_position(self, position: int) -> np.ndarray:
+    def calculate_display_coordinates_at_resiude(self, residue_idx: int) -> np.ndarray:
         """Returns the display coordinates for a specific position along the sheet.
 
         Args:
@@ -39,8 +39,8 @@ class SheetElement(StructureSceneElement):
         Returns:
             np.ndarray: Array of coordinates for the triangular arrow at the given position
         """
-        if len(self._display_coordinates) == 2 and position <= 1:
-            return self._display_coordinates[position]
+        if len(self._display_coordinates) == 2 and residue_idx <= 1:
+            return self._display_coordinates[residue_idx]
 
         end_point = self._display_coordinates[-1]
         midpoint = (self._display_coordinates[0] + self._display_coordinates[1]) / 2
@@ -48,4 +48,4 @@ class SheetElement(StructureSceneElement):
         direction = (end_point - midpoint) / np.linalg.norm(end_point - midpoint)
         segment_length = np.linalg.norm(end_point - midpoint) / len(self._coordinates)
 
-        return midpoint + direction * position * segment_length
+        return midpoint + direction * residue_idx * segment_length

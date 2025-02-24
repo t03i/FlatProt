@@ -5,7 +5,7 @@ from typing import Optional
 
 import numpy as np
 
-from ..elements import SceneElement, SceneGroup
+from ..elements import SceneElement
 from flatprot.style import StyleManager, StyleType
 
 
@@ -37,6 +37,6 @@ class StructureSceneElement(SceneElement):
         pass
 
     @abstractmethod
-    def display_coordinates_at_position(self, position: int) -> np.ndarray:
+    def calculate_display_coordinates_at_resiude(self, residue_idx: int) -> np.ndarray:
         """Get the display coordinates of the structure component"""
         pass

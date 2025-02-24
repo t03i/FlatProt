@@ -36,7 +36,7 @@ class CoilElement(StructureSceneElement):
     def calculate_display_coordinates(self) -> np.ndarray:
         return self._coordinates[0, :], self._coordinates[-1, :]
 
-    def display_coordinates_at_position(self, position: int) -> np.ndarray:
+    def calculate_display_coordinates_at_resiude(self, residue_idx: int) -> np.ndarray:
         """Get smoothed display coordinates at a specific position.
 
         Args:
@@ -51,7 +51,7 @@ class CoilElement(StructureSceneElement):
         smooth_len = len(self._display_coordinates)
 
         # Map original position to smoothed array index
-        mapped_idx = (position * (smooth_len - 1)) / (orig_len - 1)
+        mapped_idx = (residue_idx * (smooth_len - 1)) / (orig_len - 1)
 
         # Get indices for interpolation
         idx_low = int(np.floor(mapped_idx))
