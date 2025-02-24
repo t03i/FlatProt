@@ -86,14 +86,14 @@ def structure_to_scene(
                 "chain_id": chain.id,
                 "start": element.start,
                 "end": element.end,
-                "type": element.type.value,
+                "type": element.secondary_structure_type.value,
             }
 
             viz_element = secondary_structure_to_scene_element(
-                element.type,
+                element,
                 canvas_coords,
-                metadata,
                 style_manager,
+                metadata,
             )
 
             elements_with_z.append((viz_element, np.mean(depth)))
@@ -108,23 +108,16 @@ def structure_to_scene(
         chain_scene = SceneGroup(
             id=f"chain_{chain.id}",
         )
-        for element in sorted_elements:
-            chain_scene.add_element(element)
-            if len(element.coordinates) >= 5:
-                print("test")
-                chain_scene.add_element(
-                    PointAnnotation(
-                        positions=[5],
-                        elements=[
-                            element,
-                        ],
-                        metadata={},
-                        style_manager=style_manager,
-                        style_type=StyleType.ANNOTATION,
-                    )
-                )
-
         root_scene.add_element(chain_scene)
+        for element in sorted_elements:
+            root_scene.add_element(
+                element,
+                chain_scene,
+                element.metadata["chain_id"],
+                element.metadata["start"],
+                element.metadata["end"],
+            )
+
         offset += chain.num_residues
 
     return root_scene

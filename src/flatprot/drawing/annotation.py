@@ -17,17 +17,37 @@ def draw_point_annotation(annotation: PointAnnotation) -> DrawingElement:
 
 def draw_line_annotation(annotation: LineAnnotation) -> DrawingElement:
     """Draw a line annotation"""
-    return Line(
-        *annotation.display_coordinates()[0],
-        *annotation.display_coordinates()[1],
-    )
+    return [
+        Circle(
+            *annotation.display_coordinates()[0],
+            r=2,
+            fill="white",
+        ),
+        Line(
+            *annotation.display_coordinates()[0],
+            *annotation.display_coordinates()[1],
+            stroke="purple",
+            stroke_width=3,
+        ),
+        Circle(
+            *annotation.display_coordinates()[1],
+            r=2,
+            fill="white",
+        ),
+    ]
 
 
 def draw_area_annotation(annotation: AreaAnnotation) -> DrawingElement:
     """Draw an area annotation"""
-    return Path(
-        *annotation.display_coordinates(),
-        stroke="black",
-        stroke_width=1,
-        fill="none",
-    )
+    path = Path(stroke="purple", stroke_width=3, fill="black", fill_opacity=0.2)
+    coords = annotation.display_coordinates()
+    path.M(*coords[0])
+
+    # Draw lines to each subsequent point
+    for point in coords[1:]:
+        path.L(*point)
+
+    # Close the path
+    path.Z()
+
+    return path

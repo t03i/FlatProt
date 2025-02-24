@@ -14,7 +14,6 @@ class Annotation(SceneElement):
 
     def __init__(
         self,
-        annotation_type: str,
         content: Any,
         indices: list[int],
         targets: list[SceneElement],
@@ -23,26 +22,18 @@ class Annotation(SceneElement):
         style_type: Optional[StyleType] = None,
     ):
         # Get span from targets
-        start = min(t._start for t in targets if hasattr(t, "_start"))
-        end = max(t._end for t in targets if hasattr(t, "_end"))
-        chain_id = targets[0]._chain_id if hasattr(targets[0], "_chain_id") else ""
 
-        super().__init__(start, end, chain_id, metadata, style_manager, style_type)
-        self.annotation_type = annotation_type
+        super().__init__(
+            metadata=metadata,
+            style_manager=style_manager,
+            style_type=style_type,
+        )
         self.content = content
         self.indices = indices
         self.targets = targets
 
     def display_coordinates(self) -> Optional[np.ndarray]:
-        """Return coordinates based on number of targets."""
-        coords = [
-            t.display_coordinates()
-            for t in self.targets
-            if t.display_coordinates() is not None
-        ]
-        if not coords:
-            return None
-        return np.concatenate(coords, axis=0)
+        return None
 
 
 class GroupAnnotation(SceneGroup):

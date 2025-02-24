@@ -55,7 +55,7 @@ class StructureElementsTransformer(Transformer):
             weights = np.ones(len(coordinates)) * self.parameters.non_structure_weight
             # Set higher weight for structure elements
             for element in parameters.structure_elements:
-                if element.type != SecondaryStructureType.COIL:
+                if element.secondary_structure_type != SecondaryStructureType.COIL:
                     weights[element.start : element.end] = (
                         self.parameters.structure_weight
                     )

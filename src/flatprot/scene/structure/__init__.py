@@ -30,25 +30,27 @@ def secondary_structure_to_scene_element(
     metadata: Optional[dict] = None,
 ) -> StructureSceneElement:
     """Convert a secondary structure to a visualization element."""
-    if element.type == SecondaryStructureType.HELIX:
+    if element.secondary_structure_type == SecondaryStructureType.HELIX:
         return HelixElement(
             coordinates,
             style_manager,
             StyleType.HELIX,
             metadata,
         )
-    elif element.type == SecondaryStructureType.SHEET:
+    elif element.secondary_structure_type == SecondaryStructureType.SHEET:
         return SheetElement(
             coordinates,
             style_manager,
             StyleType.SHEET,
             metadata,
         )
-    elif element.type == SecondaryStructureType.COIL:
+    elif element.secondary_structure_type == SecondaryStructureType.COIL:
         return CoilElement(
             coordinates,
             style_manager,
             StyleType.COIL,
             metadata,
         )
-    raise ValueError(f"Unknown secondary structure type: {element.type}")
+    raise ValueError(
+        f"Unknown secondary structure type: {element.secondary_structure_type}"
+    )

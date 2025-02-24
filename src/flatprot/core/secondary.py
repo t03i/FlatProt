@@ -16,14 +16,14 @@ class SecondaryStructureType(Enum):
 class SecondaryStructure:
     def __init__(
         self,
-        type: SecondaryStructureType,
+        secondary_structure_type: SecondaryStructureType,
         start: int,
         end: int,
         coordinates: np.ndarray,
         residue_indices: np.ndarray,
         residues: list[Residue],
     ):
-        self.type = type
+        self.secondary_structure_type = secondary_structure_type
         self.start = start
         self.end = end
         # Create read-only views for both arrays
@@ -36,10 +36,10 @@ class SecondaryStructure:
         self.__coordinates.flags.writeable = False
 
     def __str__(self):
-        return f"{self.type.name} {self.start} {self.end}"
+        return f"{self.secondary_structure_type.name} {self.start} {self.end}"
 
     def __repr__(self):
-        return f"{self.type.name} {self.start} {self.end}"
+        return f"{self.secondary_structure_type.name} {self.start} {self.end}"
 
     def __len__(self):
         return self.end - self.start

@@ -47,39 +47,53 @@ class TestStructureParser:
         # Test beta sheets
         # Sheet A: residues 2-5 and 14-17
         assert any(
-            ss.type == SecondaryStructureType.SHEET and ss.start == 1 and ss.end == 4
+            ss.secondary_structure_type == SecondaryStructureType.SHEET
+            and ss.start == 1
+            and ss.end == 4
             for ss in ss_elements
         )
         assert any(
-            ss.type == SecondaryStructureType.SHEET and ss.start == 13 and ss.end == 16
+            ss.secondary_structure_type == SecondaryStructureType.SHEET
+            and ss.start == 13
+            and ss.end == 16
             for ss in ss_elements
         )
 
         # Sheet B: residues 6-6, 24-30, 38-44, and 60-65
         assert any(
-            ss.type == SecondaryStructureType.SHEET and ss.start == 5 and ss.end == 5
+            ss.secondary_structure_type == SecondaryStructureType.SHEET
+            and ss.start == 5
+            and ss.end == 5
             for ss in ss_elements
         )
 
         # Test helices
         # Alpha helix: residues 46-54
         assert any(
-            ss.type == SecondaryStructureType.HELIX and ss.start == 45 and ss.end == 53
+            ss.secondary_structure_type == SecondaryStructureType.HELIX
+            and ss.start == 45
+            and ss.end == 53
             for ss in ss_elements
         )
 
         # Left-handed helix: residues 18-19
         assert any(
-            ss.type == SecondaryStructureType.HELIX and ss.start == 17 and ss.end == 18
+            ss.secondary_structure_type == SecondaryStructureType.HELIX
+            and ss.start == 17
+            and ss.end == 18
             for ss in ss_elements
         )
 
         # Count total secondary structure elements
         sheet_count = sum(
-            1 for ss in ss_elements if ss.type == SecondaryStructureType.SHEET
+            1
+            for ss in ss_elements
+            if ss.secondary_structure_type == SecondaryStructureType.SHEET
         )
         helix_count = sum(
-            1 for ss in ss_elements if ss.type == SecondaryStructureType.HELIX
+            1
+            for ss in ss_elements
+            if ss.secondary_structure_type == SecondaryStructureType.HELIX
         )
 
         # Based on the CIF file structure
@@ -122,22 +136,30 @@ class TestStructureParser:
 
         # Test beta sheets (adjust indices based on DSSP file)
         assert any(
-            ss.type == SecondaryStructureType.SHEET and ss.start == 1 and ss.end == 4
+            ss.secondary_structure_type == SecondaryStructureType.SHEET
+            and ss.start == 1
+            and ss.end == 4
             for ss in ss_elements
         )
 
         # Test helices (adjust indices based on DSSP file)
         assert any(
-            ss.type == SecondaryStructureType.HELIX and ss.start == 45 and ss.end == 53
+            ss.secondary_structure_type == SecondaryStructureType.HELIX
+            and ss.start == 45
+            and ss.end == 53
             for ss in ss_elements
         )
 
         # Count secondary structure elements
         sheet_count = sum(
-            1 for ss in ss_elements if ss.type == SecondaryStructureType.SHEET
+            1
+            for ss in ss_elements
+            if ss.secondary_structure_type == SecondaryStructureType.SHEET
         )
         helix_count = sum(
-            1 for ss in ss_elements if ss.type == SecondaryStructureType.HELIX
+            1
+            for ss in ss_elements
+            if ss.secondary_structure_type == SecondaryStructureType.HELIX
         )
 
         # Adjust these numbers based on your DSSP file

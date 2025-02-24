@@ -1,7 +1,7 @@
 # Copyright 2024 Tobias Olenyi.
 # SPDX-License-Identifier: Apache-2.0
 
-from typing import Optional
+from typing import Optional, Iterable
 
 from drawsvg import Drawing, Rectangle, Group
 
@@ -42,10 +42,10 @@ def draw_element(element: SceneElement) -> Drawing:
 
 
 def _draw_scene_common(
-    scene: Scene | SceneGroup, group_id: str, transforms: dict
+    scene: Scene | SceneGroup, group_id: str, transforms: dict | None = None
 ) -> Drawing:
     """Common drawing logic for both scenes and scene groups."""
-    group = Group(id=group_id, **transforms)
+    group = Group(id=group_id, **(transforms or {}))
     for element in scene:
         if isinstance(element, SceneGroup):
             drawing = _draw_scene_common(
@@ -55,16 +55,20 @@ def _draw_scene_common(
             drawing = draw_element(element)
 
         if drawing is not None:
-            group.append(drawing)
+            if isinstance(drawing, Iterable):
+                group.extend(drawing)
+            else:
+                group.append(drawing)
+
     return group
 
 
-def draw_scene_group(scene: SceneGroup) -> Drawing:
+def draw_scene_group(scene: SceneGroup, transforms: dict | None = None) -> Drawing:
     """Draw a scene group to an SVG."""
-    return _draw_scene_common(scene, scene.id, scene.transforms)
+    return _draw_scene_common(scene, scene.id, transforms)
 
 
-def draw_scene(scene: Scene, transforms: dict) -> Drawing:
+def draw_scene(scene: Scene, transforms: dict | None = None) -> Drawing:
     """Draw a scene to an SVG."""
     return _draw_scene_common(scene, "root", transforms)
 
@@ -104,7 +108,7 @@ class Canvas:
             )
 
         # Render and add the root group
-        root_scene = draw_scene(self.scene, {})
+        root_scene = draw_scene(self.scene)
 
         drawing.append(root_scene)
 

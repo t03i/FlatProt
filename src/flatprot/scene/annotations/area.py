@@ -10,12 +10,20 @@ import numpy as np
 class AreaAnnotation(Annotation):
     def display_coordinates(self) -> np.ndarray:
         "fit an area containing all targets as closely as possible"
-        coords = np.concatenate([t.display_coordinates() for t in self.targets])
+        coords = np.concatenate([t.display_coordinates for t in self.targets])
 
         # Find the convex hull using numpy
         centroid = np.mean(coords, axis=0)
         angles = np.arctan2(coords[:, 1] - centroid[1], coords[:, 0] - centroid[0])
         hull_points = coords[np.argsort(angles)]
+
+        # Add padding by expanding points outward from centroid
+        padding = 40.0  # Adjust this value to control padding amount
+        hull_vectors = hull_points - centroid
+        normalized_vectors = (
+            hull_vectors / np.linalg.norm(hull_vectors, axis=1)[:, np.newaxis]
+        )
+        hull_points = hull_points + normalized_vectors * padding
 
         # Close the loop by repeating first few points at the end
         num_repeat = 3
