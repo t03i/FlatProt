@@ -4,7 +4,7 @@ from abc import abstractmethod
 
 import numpy as np
 
-from ..scene import SceneElement
+from ..elements import SceneElement
 from flatprot.style import StyleManager, StyleType
 
 

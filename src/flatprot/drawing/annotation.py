@@ -10,6 +10,6 @@ def draw_point_annotation(annotation: PointAnnotation) -> DrawingElement:
     """Draw a point annotation"""
     return Circle(
         *annotation.display_coordinates()[0],
-        r=20,
-        fill="black",
+        r=2,
+        fill="white",
     )

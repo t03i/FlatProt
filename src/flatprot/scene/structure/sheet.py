@@ -42,10 +42,10 @@ class SheetElement(StructureSceneElement):
         if len(self._display_coordinates) == 2 and position <= 1:
             return self._display_coordinates[position]
 
-        start_point = self._display_coordinates[0]
         end_point = self._display_coordinates[-1]
+        midpoint = (self._display_coordinates[0] + self._display_coordinates[1]) / 2
 
-        direction = (end_point - start_point) / np.linalg.norm(end_point - start_point)
-        segment_length = np.linalg.norm(direction) / len(self._coordinates)
+        direction = (end_point - midpoint) / np.linalg.norm(end_point - midpoint)
+        segment_length = np.linalg.norm(end_point - midpoint) / len(self._coordinates)
 
-        return start_point + direction * position * segment_length
+        return midpoint + direction * position * segment_length
