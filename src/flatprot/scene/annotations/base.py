@@ -16,6 +16,7 @@ class Annotation(SceneElement):
         self,
         annotation_type: str,
         content: Any,
+        indices: list[int],
         targets: list[SceneElement],
         metadata: dict = {},
         style_manager: Optional[StyleManager] = None,
@@ -29,6 +30,7 @@ class Annotation(SceneElement):
         super().__init__(start, end, chain_id, metadata, style_manager, style_type)
         self.annotation_type = annotation_type
         self.content = content
+        self.indices = indices
         self.targets = targets
 
     def display_coordinates(self) -> Optional[np.ndarray]:
