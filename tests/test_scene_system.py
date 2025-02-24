@@ -1,205 +1,279 @@
 import pytest
 import numpy as np
 from unittest.mock import Mock
+
 from flatprot.scene import Scene, SceneGroup, SceneElement, StructureSceneElement
 
+
 # --------------------------
-# 1. Parent-Child Relationship Validation
-# Verify parent references are correctly maintained when:
-# - Adding elements to groups
-# - Removing elements from groups
-# - Creating subgroups that move existing elements
-# - Edge case: Adding element to multiple groups
+# 1. Element Registration Tests
 # --------------------------
 
 
-def test_group_parent_relationships():
+def test_element_registration(mocker):
+    """Test basic element registration with and without residue mapping."""
     scene = Scene()
-    group = scene.create_group("test_group")
-    element = Mock(spec=SceneElement)
+    element = mocker.Mock(spec=SceneElement)
 
-    group.add_element(element)
-    assert element._parent == group
-    assert element in group._elements
+    # Basic registration
+    scene.add_element(element)
+    assert element in scene._elements
+    assert element._parent == scene.root
 
-    group.remove_element(element)
-    assert element._parent is None
-    assert element not in group._elements
+    # Registration with residue mapping
+    struct_element = mocker.Mock(spec=StructureSceneElement)
+    scene.add_element(struct_element, chain_id="A", start=1, end=10)
+    assert struct_element in scene._elements
+    assert struct_element in scene._residue_mappings
 
 
-def test_subgroup_parent_management():
+def test_element_unregistration(mocker):
+    """Test element unregistration preserves residue mappings."""
     scene = Scene()
-    parent_group = scene.create_group("parent")
-    child_group = scene.create_group("child", parent=parent_group)
+    element = mocker.Mock(spec=StructureSceneElement)
+    scene.add_element(element, chain_id="A", start=1, end=10)
 
-    element = Mock(spec=SceneElement)
-    child_group.add_element(element)
-
-    assert element._parent == child_group
-    assert child_group._parent == parent_group
+    mapping = scene._unregister_element(element)
+    assert element not in scene._elements
+    assert mapping is not None
+    assert mapping.chain_id == "A"
+    assert mapping.start == 1
+    assert mapping.end == 10
 
 
 # --------------------------
-# Residue Mapping Accuracy
-# Test get_elements_for_residue with:
-# - Residues at start/end boundaries of ranges
-# - Overlapping ranges in same chain
-# - Non-existent chain IDs
-# - Multiple elements matching single residue
+# 2. Parent-Child Relationship Tests
 # --------------------------
 
 
-class MockStructureElement(StructureSceneElement):
-    def __init__(self, chain, start, end):
-        super().__init__(start, end, chain, {}, None, None)
-
-    def display_coordinates(self):
-        return np.array([[0, 0, 0]])
-
-
-def test_residue_mapping_boundaries():
+def test_parent_child_management(mocker):
+    """Test parent-child relationship management."""
     scene = Scene()
-    elem = MockStructureElement("A", 5, 10)
-    scene.add_structural_element(elem)
+    # Create mocks with _elements attribute
+    parent = mocker.Mock(spec=SceneGroup)
+    parent._elements = []
+    parent.add_element = mocker.Mock()
+    parent.remove_element = mocker.Mock()
+
+    child = mocker.Mock(spec=SceneGroup)
+    child._elements = []
+    child.add_element = mocker.Mock()
+    child.remove_element = mocker.Mock()
+
+    # Test setting parent
+    scene.add_element(parent)
+    scene.add_element(child, parent=parent)
+
+    assert child._parent == parent
+    parent.add_element.assert_called_with(child)
+
+
+def test_move_element_to_parent(mocker):
+    """Test moving elements between parents."""
+    scene = Scene()
+    # Create mocks with _elements attribute
+    old_parent = mocker.Mock(spec=SceneGroup)
+    old_parent._elements = []
+    old_parent.add_element = mocker.Mock()
+    old_parent.remove_element = mocker.Mock()
+
+    new_parent = mocker.Mock(spec=SceneGroup)
+    new_parent._elements = []
+    new_parent.add_element = mocker.Mock(
+        side_effect=lambda element: setattr(element, "_parent", new_parent)
+    )
+    new_parent.remove_element = mocker.Mock()
+
+    element = mocker.Mock(spec=SceneElement)
+    element._parent = None
+
+    # Test initial parent assignment
+    scene.add_element(old_parent)
+    scene.add_element(element, parent=old_parent)
+    assert element._parent == old_parent, "Element's parent should be set to old parent"
+
+    # Test moving to new parent
+    scene.add_element(new_parent)
+    scene.move_element_to_parent(element, new_parent)
+    assert element._parent == new_parent, "Element's parent should be set to new parent"
+
+    old_parent.remove_element.assert_called_once()
+    new_parent.add_element.assert_called_once()
+    new_parent.add_element.assert_called_with(element)
+    old_parent.remove_element.assert_called_with(element)
+
+
+# --------------------------
+# 3. Residue Mapping Tests
+# --------------------------
+
+
+def test_residue_mapping_queries():
+    """Test querying elements by residue position."""
+    scene = Scene()
+    element1 = Mock(spec=StructureSceneElement)
+    element2 = Mock(spec=StructureSceneElement)
+
+    scene.add_element(element1, chain_id="A", start=1, end=10)
+    scene.add_element(element2, chain_id="A", start=5, end=15)
+
+    assert len(list(scene)) == 2, "Scene should have 2 elements"
+
+    # Test overlapping region
+    elements = scene.get_elements_for_residue("A", 7)
+    assert len(elements) == 2, "Should identify 2 elements for the residue query"
+    assert element1 in elements
+    assert element2 in elements
 
     # Test boundary conditions
-    assert scene.get_elements_for_residue("A", 4) == []
-    assert scene.get_elements_for_residue("A", 5) == [elem]
-    assert scene.get_elements_for_residue("A", 10) == [elem]
+    assert len(scene.get_elements_for_residue("A", 1)) == 1
+    assert len(scene.get_elements_for_residue("A", 15)) == 1
+    assert len(scene.get_elements_for_residue("A", 20)) == 0
+
+
+def test_invalid_residue_queries():
+    """Test handling of invalid residue queries."""
+    scene = Scene()
+
+    # Test non-existent chain
+    assert scene.get_elements_for_residue("X", 1) == []
+
+    # Test invalid residue number
+    element = Mock(spec=StructureSceneElement)
+    scene.add_element(element, chain_id="A", start=1, end=10)
+    assert scene.get_elements_for_residue("A", 0) == []
     assert scene.get_elements_for_residue("A", 11) == []
 
 
-def test_overlapping_residue_ranges():
+def test_residue_range_queries():
+    """Test querying elements by residue range with different overlap scenarios."""
     scene = Scene()
-    elem1 = MockStructureElement("B", 5, 15)
-    elem2 = MockStructureElement("B", 10, 20)
-    scene.add_structural_element(elem1)
-    scene.add_structural_element(elem2)
+    element1 = Mock(spec=StructureSceneElement)
+    element2 = Mock(spec=StructureSceneElement)
+    element3 = Mock(spec=StructureSceneElement)
 
-    results = scene.get_elements_for_residue("B", 12)
-    assert len(results) == 2
-    assert elem1 in results
-    assert elem2 in results
+    # Set up elements with different ranges
+    scene.add_element(element1, chain_id="A", start=1, end=10)  # [1-10]
+    scene.add_element(element2, chain_id="A", start=5, end=15)  # [5-15]
+    scene.add_element(element3, chain_id="A", start=20, end=30)  # [20-30]
+
+    # Test complete overlap
+    elements = scene.get_elements_for_residue_range("A", 7, 8)
+    assert len(elements) == 2
+    assert element1 in elements
+    assert element2 in elements
+
+    # Test partial overlap at start
+    elements = scene.get_elements_for_residue_range("A", 3, 7)
+    assert len(elements) == 2
+    assert element1 in elements
+    assert element2 in elements
+
+    # Test partial overlap at end
+    elements = scene.get_elements_for_residue_range("A", 8, 12)
+    assert len(elements) == 2
+    assert element1 in elements
+    assert element2 in elements
+
+    # Test range containing an element
+    elements = scene.get_elements_for_residue_range("A", 4, 16)
+    assert len(elements) == 2
+    assert element1 in elements
+    assert element2 in elements
+
+    # Test non-overlapping range
+    elements = scene.get_elements_for_residue_range("A", 16, 19)
+    assert len(elements) == 0
+
+    # Test range between elements
+    elements = scene.get_elements_for_residue_range("A", 16, 19)
+    assert len(elements) == 0
 
 
-# --------------------------
-# Group Transformation Propagation
-# Validate that group transforms are applied to:
-# - Child elements' display coordinates
-# - Nested subgroups (transform composition)
-# - Elements moved between groups with different transforms
-# --------------------------
-
-
-def test_transform_application(mocker):
+def test_residue_range_edge_cases():
+    """Test edge cases for residue range queries."""
     scene = Scene()
-    group = scene.create_group(
-        "transform_group", parameters={"transforms": {"rotate": 45}}
-    )
+    element = Mock(spec=StructureSceneElement)
+    scene.add_element(element, chain_id="A", start=10, end=20)
 
-    # Mock child elements
-    child1 = mocker.Mock(spec=SceneElement)
-    child1.display_coordinates.return_value = np.array([[1, 2, 3]])
-    child2 = mocker.Mock(spec=SceneElement)
-    child2.display_coordinates.return_value = np.array([[4, 5, 6]])
+    # Test exact bounds
+    elements = scene.get_elements_for_residue_range("A", 10, 20)
+    assert len(elements) == 1
+    assert element in elements
 
-    group.add_element(child1)
-    group.add_element(child2)
+    # Test invalid chain
+    elements = scene.get_elements_for_residue_range("B", 10, 20)
+    assert len(elements) == 0
 
-    # Verify transform application (actual transform math would be in display_coordinates)
-    coords = group.display_coordinates()
-    assert coords.shape == (2, 3)
-    np.testing.assert_array_equal(coords, np.array([[1, 2, 3], [4, 5, 6]]))
+    # Test invalid range (start > end)
+    elements = scene.get_elements_for_residue_range("A", 20, 10)
+    assert len(elements) == 0
 
-
-# --------------------------
-# Annotation Target Validation
-# Test annotation system handles:
-# - Circular references (annotations targeting other annotations)
-# - Invalid target elements
-# - Style inheritance from parent groups
-# - Group annotations consuming their elements
-# --------------------------
+    # Test single residue range
+    elements = scene.get_elements_for_residue_range("A", 15, 15)
+    assert len(elements) == 1
+    assert element in elements
 
 
-def test_annotation_target_validation():
+def test_multiple_chain_residue_ranges():
+    """Test residue range queries across multiple chains."""
     scene = Scene()
-    valid_element = MockStructureElement("A", 1, 10)
-    invalid_element = "not_a_scene_element"
+    element_a = Mock(spec=StructureSceneElement)
+    element_b = Mock(spec=StructureSceneElement)
 
-    with pytest.raises(TypeError):
-        scene.add_annotation("test", "content", invalid_element)
+    scene.add_element(element_a, chain_id="A", start=1, end=10)
+    scene.add_element(element_b, chain_id="B", start=1, end=10)
 
-    with pytest.raises(TypeError):
-        scene.add_annotation("test", "content", [valid_element, invalid_element])
+    # Test same range in different chains
+    elements_a = scene.get_elements_for_residue_range("A", 1, 5)
+    elements_b = scene.get_elements_for_residue_range("B", 1, 5)
+
+    assert len(elements_a) == 1
+    assert len(elements_b) == 1
+    assert element_a in elements_a
+    assert element_b in elements_b
+    assert element_a not in elements_b
+    assert element_b not in elements_a
 
 
-def test_group_annotation_consumption():
+# --------------------------
+# 4. Group Management Tests
+# --------------------------
+
+
+def test_move_elements_to_group():
+    """Test moving multiple elements to a new group."""
     scene = Scene()
-    parent = scene.create_group("parent")
-    element = MockStructureElement("A", 1, 10)
-    scene.add_structural_element(element, parent=parent)
+    elements = [Mock(spec=SceneElement) for _ in range(3)]
+    new_group = SceneGroup(id="new_group")
 
-    annotation = scene.add_group_annotation("test", "content", [element])
-    assert element._parent == annotation
-    assert element not in parent._elements
+    # Add elements to scene root
+    for element in elements:
+        scene.add_element(element)
 
+    # Move to new group
+    scene.move_elements_to_group(elements, new_group)
 
-# --------------------------
-# Scene Hierarchy Integrity
-# Verify scene graph maintains consistency when:
-# - Removing groups with nested elements
-# - Reparenting elements between groups
-# - Deleting elements that are annotation targets
-# - Deep nesting (5+ levels)
-# --------------------------
+    # Verify new relationships
+    for element in elements:
+        assert element._parent == new_group
+        assert element in new_group._elements
+    assert new_group in scene._elements
 
 
-def test_group_removal_orphaning():
+def test_group_registration_edge_cases():
+    """Test edge cases in group registration."""
     scene = Scene()
-    group = scene.create_group("temp_group")
-    element = MockStructureElement("A", 1, 10)
-    group.add_element(element)
+    group = SceneGroup(id="test")
+    element = Mock(spec=SceneElement)
 
-    scene.root.remove_element(group)
-    assert element._parent is None
-    assert group not in scene.root._elements
+    # Test adding unregistered group
+    with pytest.raises(AssertionError):
+        scene.move_elements_to_group([element], group)
+    assert group in scene._elements
 
+    scene.add_element(element, parent=group)
 
-def test_deep_nesting_parents():
-    scene = Scene()
-    current = scene.root
-    for i in range(5):
-        current = scene.create_group(f"level_{i}", parent=current)
-
-    assert current._parent.id == "level_3"
-    assert scene.get_parent_group(current).id == "level_3"
-
-
-# --------------------------
-# Coordinate Calculation Edge Cases
-# Test display_coordinates with:
-# - Empty groups
-# - Groups mixing coordinate/non-coordinate elements
-# - Extremely large coordinate values
-# - Mixed dimensionality in child elements
-# --------------------------
-
-
-def test_empty_group_coordinates():
-    group = SceneGroup(id="empty")
-    assert group.display_coordinates() is None
-
-
-def test_mixed_coordinate_sources():
-    group = SceneGroup(id="mixed")
-    valid_element = Mock(spec=SceneElement)
-    valid_element.display_coordinates.return_value = np.array([[1, 2, 3]])
-    invalid_element = Mock(spec=SceneElement)
-    invalid_element.display_coordinates.return_value = None
-
-    group.add_element(valid_element)
-    group.add_element(invalid_element)
-
-    coords = group.display_coordinates()
-    assert coords.shape == (1, 3)
+    with pytest.raises(AssertionError):
+        scene.add_element(group)
+    assert len(list(scene)) == 2

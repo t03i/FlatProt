@@ -14,19 +14,18 @@ class SceneElement(ABC):
 
     def __init__(
         self,
-        start: int,
-        end: int,
-        chain_id: str,
-        metadata: dict,
         style_manager: StyleManager,
         style_type: StyleType,
+        metadata: Optional[dict] = None,
     ):
-        self._start = start
-        self._end = end
-        self._chain_id = chain_id
-        self._metadata = metadata
         self._style_manager = style_manager
         self._style_type = style_type
+        self._metadata = metadata or {}
+        self._parent: Optional["SceneGroup"] = None
+
+    @property
+    def parent(self) -> Optional["SceneGroup"]:
+        return self._parent
 
     @property
     def metadata(self) -> dict:
@@ -50,12 +49,12 @@ class SceneGroup(SceneElement):
     def __init__(
         self,
         id: str,
-        metadata: dict = {},
-        transforms: dict = {},
+        metadata: Optional[dict] = None,
+        transforms: Optional[dict] = None,
         style_manager: Optional[StyleManager] = None,
         style_type: Optional[StyleType] = None,
     ):
-        super().__init__(metadata, style_manager, style_type)
+        super().__init__(style_manager, style_type, metadata)
         self.id = id
         self._elements: list[SceneElement] = []
         self._transforms = transforms
@@ -67,12 +66,12 @@ class SceneGroup(SceneElement):
         return self._transforms
 
     def add_element(self, element: SceneElement) -> None:
-        if isinstance(element, SceneElement):
-            if hasattr(element, "_parent"):
-                element._parent = self
-            self._elements.append(element)
-        else:
-            raise TypeError("Element must be an instance of SceneElement")
+        assert isinstance(element, SceneElement), (
+            "Element must be an instance of SceneElement"
+        )
+        if hasattr(element, "_parent"):
+            element._parent = self
+        self._elements.append(element)
 
     def remove_element(self, element: SceneElement) -> None:
         """Remove an element from this group.

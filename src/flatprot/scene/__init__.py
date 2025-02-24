@@ -8,8 +8,8 @@ from .structure import (
     SheetElement,
     CoilElement,
     StructureSceneElement,
+    secondary_structure_to_scene_element,
 )
-from .map import secondary_structure_to_scene_element
 from .annotations import Annotation, GroupAnnotation
 
 __all__ = [

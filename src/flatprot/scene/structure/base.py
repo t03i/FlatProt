@@ -1,10 +1,11 @@
 # Copyright 2025 Tobias Olenyi.
 # SPDX-License-Identifier: Apache-2.0
 from abc import abstractmethod
+from typing import Optional
 
 import numpy as np
 
-from ..elements import SceneElement
+from ..elements import SceneElement, SceneGroup
 from flatprot.style import StyleManager, StyleType
 
 
@@ -14,11 +15,11 @@ class StructureSceneElement(SceneElement):
     def __init__(
         self,
         canvas_coordinates: np.ndarray,
-        metadata: dict,
         style_manager: StyleManager,
         style_type: StyleType,
+        metadata: Optional[dict] = None,
     ):
-        super().__init__(metadata, style_manager, style_type)
+        super().__init__(style_manager, style_type, metadata)
         self._coordinates = canvas_coordinates
         self._display_coordinates = self.calculate_display_coordinates()
 
