@@ -3,6 +3,9 @@
 
 from .base import Annotation
 
+import numpy as np
+
+
 class LineAnnotation(Annotation):
     def display_coordinates(self) -> np.ndarray:
         assert len(self.indices) == 2, "LineAnnotation must have exactly two indices"
@@ -20,3 +23,4 @@ class LineAnnotation(Annotation):
                     self.indices[1]
                 ),
             ]
+        )

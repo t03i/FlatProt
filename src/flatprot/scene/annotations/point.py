@@ -3,6 +3,8 @@
 
 from .base import Annotation
 
+import numpy as np
+
 
 class PointAnnotation(Annotation):
     def display_coordinates(self) -> np.ndarray:

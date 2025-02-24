@@ -236,6 +236,29 @@ def test_multiple_chain_residue_ranges():
     assert element_b not in elements_a
 
 
+def test_global_to_local_index_mapping():
+    """Test conversion from global residue indices to element-local indices."""
+    scene = Scene()
+    element = Mock(spec=StructureSceneElement)
+
+    # Register element with residues 10-20
+    scene.add_element(element, chain_id="A", start=10, end=20)
+
+    # Test various index conversions
+    assert scene.get_element_index_from_global_index(10, element) == 0  # First residue
+    assert scene.get_element_index_from_global_index(15, element) == 5  # Middle residue
+    assert scene.get_element_index_from_global_index(20, element) == 10  # Last residue
+
+    # Test invalid element
+    invalid_element = Mock(spec=StructureSceneElement)
+    with pytest.raises(AssertionError):
+        scene.get_element_index_from_global_index(10, invalid_element)
+
+    # Test global index outside element range
+    with pytest.raises(AssertionError):
+        scene.get_element_index_from_global_index(21, element)
+
+
 # --------------------------
 # 4. Group Management Tests
 # --------------------------

@@ -2,11 +2,9 @@
 # SPDX-License-Identifier: Apache-2.0
 
 from dataclasses import dataclass
-from typing import Any, Optional
+from typing import Optional
 
-from flatprot.style import StyleType
 from .structure import StructureSceneElement
-from .annotations import Annotation, GroupAnnotation
 from .elements import SceneGroup, SceneElement
 
 
@@ -117,6 +115,19 @@ class Scene:
             ):
                 matching_elements.append(element)
         return matching_elements
+
+    def get_element_index_from_global_index(
+        self, global_index: int, element: StructureSceneElement
+    ) -> int:
+        """Get the index of an element from a global index"""
+        assert element in self._residue_mappings, (
+            "Element must be registered in the scene"
+        )
+        mapping = self._residue_mappings[element]
+        assert global_index in mapping.residue_range, (
+            "Global index must be in the element's residue range"
+        )
+        return global_index - mapping.start
 
     def get_elements_for_residue_range(
         self, chain_id: str, start: int, end: int

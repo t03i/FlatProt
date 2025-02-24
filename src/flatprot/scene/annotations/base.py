@@ -5,7 +5,7 @@ from typing import Any, Optional
 
 import numpy as np
 
-from .elements import SceneElement, SceneGroup
+from ..elements import SceneElement, SceneGroup
 from flatprot.style import StyleManager, StyleType
 
 
