@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 📖 Documentation
+    url: ../blob/main/README.md
+    about: Please check our documentation before creating an issue
+  - name: 💬 Discussion
+    url: ../discussions
+    about: Start a discussion for general questions or ideas
+  - name: 📜 Code of Conduct
+    url: ../blob/main/CODE_OF_CONDUCT.md
+    about: Please read our Code of Conduct before contributing
