@@ -34,7 +34,7 @@ def create_scene(pdb_file: Path) -> tuple[Scene, StyleManager]:
 
     style_manager = StyleManager.create_default()
 
-    # 4. Create and render scene
+    # 3. Create scene from structure
     scene = structure_to_scene(
         structure=structure,
         transformer=transformer,
@@ -46,7 +46,6 @@ def create_scene(pdb_file: Path) -> tuple[Scene, StyleManager]:
 
 
 def draw_scene(scene: Scene, style_manager: StyleManager, output_file: Path) -> None:
-    # 5. Save to file
     canvas = Canvas(scene, style_manager)
     canvas.render(str(output_file))
 
