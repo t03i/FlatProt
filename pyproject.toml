@@ -21,10 +21,12 @@ dependencies = [
     "tqdm>=4.67.1",
     "h5py>=3.12.1",
     "pydantic-numpy>=8.0.0",
+    "cyclopts>=3.9.0",
+    "toml>=0.10.2",
 ]
 
 [project.scripts]
-flatprot = "flatprot:main"
+flatprot = "flatprot.cli:app"
 
 [build-system]
 requires = ["hatchling"]
