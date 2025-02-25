@@ -1,0 +1,15 @@
+# Copyright 2024 Rostlab.
+# SPDX-License-Identifier: Apache-2.0
+
+site_name: FlatProt
+nav:
+  - Home: index.md
+theme:
+  name: readthedocs
+  highlightjs: true
+  hljs_languages:
+    - yaml
+    - python
+    - json
+site_url: https://pages.github.io/flatprot/
+repo_url: https://github.com/rostlab/flatprot

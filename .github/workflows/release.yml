@@ -1,0 +1,31 @@
+name: Build and Release to Production
+on:
+    push:
+        tags:
+            - "v*.*.*"
+permissions:
+    id-token: write
+    contents: write
+    packages: write
+
+jobs:
+    python-release:
+        uses: ./.github/workflows/python.yml
+        with:
+            tag: ${{ github.ref_name }}
+
+    docs-release:
+        uses: ./.github/workflows/docs.yml
+        with:
+            ref: ${{ github.ref_name }}
+
+    finalize-release:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Create GitHub Release
+              uses: softprops/action-gh-release@v2
+              with:
+                  tag_name: ${{ github.ref_name }}
+                  body_path: CHANGELOG.md
+                  draft: false
+        
