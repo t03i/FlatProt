@@ -1,7 +1,6 @@
 # Copyright 2024 Rostlab.
 # SPDX-License-Identifier: Apache-2.0
 
-import pytest
 import numpy as np
 from pathlib import Path
 

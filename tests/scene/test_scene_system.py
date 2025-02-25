@@ -1,5 +1,4 @@
 import pytest
-import numpy as np
 from unittest.mock import Mock
 
 from flatprot.scene import Scene, SceneGroup, SceneElement, StructureSceneElement
