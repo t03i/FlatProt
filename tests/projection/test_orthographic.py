@@ -141,7 +141,7 @@ def test_padding_with_aspect_ratio():
     coords_2d, _ = projector.project(coords, params)
 
     # Calculate usable canvas area
-    usable_width = 1000 * (1 - 2 * 0.1)  # 80% of width
+    _ = 1000 * (1 - 2 * 0.1)  # 80% of width
     usable_height = 500 * (1 - 2 * 0.1)  # 80% of height
 
     # Calculate actual projection bounds

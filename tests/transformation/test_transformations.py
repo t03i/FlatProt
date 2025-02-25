@@ -128,7 +128,7 @@ def test_inertia_transformer_custom_weights():
     params = InertiaTransformParameters(
         residues=["ALA", "GLY", "ALA"]  # Example residue sequence
     )
-    transformed = transformer.transform(coords, parameters=params)
+    _ = transformer.transform(coords, parameters=params)
 
     assert transformer.parameters.residue_weights["ALA"] == 1.0
     assert transformer.parameters.residue_weights["GLY"] == 0.5
