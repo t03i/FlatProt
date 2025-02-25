@@ -17,9 +17,11 @@ def mock_foldseek_executable(temp_dir):
     executable = temp_dir / "mock_foldseek"
     # Create mock executable that writes dummy results with correct format
     with open(executable, "w") as f:
-        f.write("""#!/bin/bash
+        f.write(
+            """#!/bin/bash
 echo -e "query\\ttarget\\t1\\t100\\t1\\t100\\tSEQ\\t0.9\\t0.8\\t(1.0,0.0,0.0,0.0,1.0,0.0,0.0,0.0,1.0)\\t(0.0,0.0,0.0)\\t(1.0,1.0,1.0)" > $4
-""")
+"""
+        )
     executable.chmod(0o755)
     return str(executable)
 
