@@ -1,0 +1,40 @@
+name: Python Tests
+
+on:
+    pull_request:
+        branches: [main] # Triggers on PRs targeting main branch
+
+jobs:
+    test:
+        runs-on: ubuntu-latest
+        env:
+            UV_TOOL_DIR: /tmp/.uv-tools
+        permissions:
+            id-token: write
+            contents: write
+        strategy:
+            matrix:
+                python-version:
+                    - 3.11
+                    - 3.12
+                    - 3.13
+        steps:
+            - name: Checkout Repository
+              uses: actions/checkout@v4
+
+            - name: Install uv
+              uses: astral-sh/setup-uv@v5
+              with:
+                  enable-cache: true
+                  cache-dependency-glob: "uv.lock"
+
+            - name: Set up Python
+              uses: actions/setup-python@v5
+              with:
+                  python-version: ${{ matrix.python-version }}
+
+            - name: Install the project
+              run: uv sync --all-extras --dev
+
+            - name: Run tests
+              run: uv run pytest tests

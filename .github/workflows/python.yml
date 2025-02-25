@@ -26,7 +26,7 @@ jobs:
                   ref: ${{ inputs.tag }}
 
             - name: Install uv
-              uses: astral-sh/setup-uv@v3
+              uses: astral-sh/setup-uv@v5
               with:
                   enable-cache: true
                   cache-dependency-glob: "uv.lock"
@@ -38,7 +38,7 @@ jobs:
 
             - name: Build Python Package
               run: uv build
-              
+
             - name: Create GitHub Release
               uses: softprops/action-gh-release@v2
               with:
