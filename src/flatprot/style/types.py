@@ -16,3 +16,6 @@ class StyleType(Enum):
     CANVAS = "canvas"
     ANNOTATION = "annotation"
     ELEMENT = "element"
+    AREA_ANNOTATION = "area_annotation"
+    LINE_ANNOTATION = "line_annotation"
+    POINT_ANNOTATION = "point_annotation"

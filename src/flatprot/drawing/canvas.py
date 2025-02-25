@@ -42,11 +42,11 @@ def draw_element(element: SceneElement) -> Drawing:
 
 
 def _draw_scene_common(
-    scene: Scene | SceneGroup, group_id: str, transforms: dict | None = None
+    scene_group: SceneGroup, group_id: str, transforms: dict | None = None
 ) -> Drawing:
     """Common drawing logic for both scenes and scene groups."""
     group = Group(id=group_id, **(transforms or {}))
-    for element in scene:
+    for element in scene_group:
         if isinstance(element, SceneGroup):
             drawing = _draw_scene_common(
                 element, element.id, transforms=element.transforms
@@ -63,14 +63,14 @@ def _draw_scene_common(
     return group
 
 
-def draw_scene_group(scene: SceneGroup, transforms: dict | None = None) -> Drawing:
+def draw_scene_group(group: SceneGroup, transforms: dict | None = None) -> Drawing:
     """Draw a scene group to an SVG."""
-    return _draw_scene_common(scene, scene.id, transforms)
+    return _draw_scene_common(group, group.id, transforms)
 
 
 def draw_scene(scene: Scene, transforms: dict | None = None) -> Drawing:
     """Draw a scene to an SVG."""
-    return _draw_scene_common(scene, "root", transforms)
+    return _draw_scene_common(scene.root, "root", transforms)
 
 
 class Canvas:

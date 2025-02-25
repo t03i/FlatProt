@@ -11,7 +11,7 @@ from flatprot.transformation.inertia import (
 from flatprot.composer import structure_to_scene
 from flatprot.drawing.canvas import Canvas
 from flatprot.style.manager import StyleManager
-from flatprot.scene import Scene
+from flatprot.scene import Scene, SceneGroup
 from flatprot.scene.annotations import LineAnnotation, PointAnnotation, AreaAnnotation
 
 
@@ -54,6 +54,9 @@ def draw_scene(scene: Scene, style_manager: StyleManager, output_file: Path) -> 
 def create_annotations(scene: Scene, style_manager: StyleManager) -> None:
     # Create annotations
 
+    annotation_group = SceneGroup(id="annotation_group")
+    scene.add_element(annotation_group)
+
     element1 = scene.get_elements_for_residue("A", 5)[0]
     index1 = scene.get_element_index_from_global_index(5, element1)
     element2 = scene.get_elements_for_residue("A", 35)[0]
@@ -65,7 +68,7 @@ def create_annotations(scene: Scene, style_manager: StyleManager) -> None:
         targets=[element1, element2],
         style_manager=style_manager,
     )
-    scene.add_element(annotation)
+    scene.add_element(annotation, annotation_group)
 
     elements = []
 
@@ -83,7 +86,7 @@ def create_annotations(scene: Scene, style_manager: StyleManager) -> None:
             targets=[element],
             style_manager=style_manager,
         )
-        scene.add_element(point_annotation)
+        scene.add_element(point_annotation, annotation_group)
 
     area_annotation = AreaAnnotation(
         content="area annotation",
@@ -91,7 +94,7 @@ def create_annotations(scene: Scene, style_manager: StyleManager) -> None:
         targets=scene.get_elements_for_residue_range("A", 1, 40),
         style_manager=style_manager,
     )
-    scene.add_element(area_annotation)
+    scene.add_element(area_annotation, annotation_group)
 
 
 if __name__ == "__main__":

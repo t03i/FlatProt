@@ -10,36 +10,51 @@ def draw_point_annotation(annotation: PointAnnotation) -> DrawingElement:
     """Draw a point annotation"""
     return Circle(
         *annotation.display_coordinates()[0],
-        r=2,
-        fill="white",
+        r=annotation.style.connector_radius,
+        fill=annotation.style.fill_color,
+        fill_opacity=annotation.style.fill_opacity,
+        class_="annotation point",
     )
 
 
 def draw_line_annotation(annotation: LineAnnotation) -> DrawingElement:
     """Draw a line annotation"""
     return [
-        Circle(
-            *annotation.display_coordinates()[0],
-            r=2,
-            fill="white",
-        ),
         Line(
             *annotation.display_coordinates()[0],
             *annotation.display_coordinates()[1],
-            stroke="purple",
-            stroke_width=3,
+            stroke=annotation.style.stroke_color,
+            stroke_width=annotation.style.stroke_width,
+            stroke_opacity=annotation.style.stroke_opacity,
+            class_="annotation line",
+        ),
+        Circle(
+            *annotation.display_coordinates()[0],
+            r=annotation.style.connector_radius,
+            fill=annotation.style.connector_color,
+            fill_opacity=annotation.style.connector_opacity,
+            class_="annotation connector",
         ),
         Circle(
             *annotation.display_coordinates()[1],
-            r=2,
-            fill="white",
+            r=annotation.style.connector_radius,
+            fill=annotation.style.connector_color,
+            fill_opacity=annotation.style.connector_opacity,
+            class_="annotation connector",
         ),
     ]
 
 
 def draw_area_annotation(annotation: AreaAnnotation) -> DrawingElement:
     """Draw an area annotation"""
-    path = Path(stroke="purple", stroke_width=3, fill="black", fill_opacity=0.2)
+    path = Path(
+        stroke=annotation.style.stroke_color,
+        stroke_width=annotation.style.stroke_width,
+        stroke_opacity=annotation.style.stroke_opacity,
+        fill=annotation.style.fill_color,
+        fill_opacity=annotation.style.fill_opacity,
+        class_="annotation area",
+    )
     coords = annotation.display_coordinates()
     path.M(*coords[0])
 

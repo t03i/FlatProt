@@ -7,7 +7,12 @@ from typing import ClassVar
 from .base import Style, CanvasStyle
 from .types import StyleType
 from .structure import HelixStyle, SheetStyle, CoilStyle, ElementStyle
-from .annotation import AnnotationStyle
+from .annotation import (
+    AnnotationStyle,
+    AreaAnnotationStyle,
+    PointAnnotationStyle,
+    LineAnnotationStyle,
+)
 
 STYLE_MAP = {
     StyleType.HELIX: HelixStyle,
@@ -16,6 +21,9 @@ STYLE_MAP = {
     StyleType.CANVAS: CanvasStyle,
     StyleType.ANNOTATION: AnnotationStyle,
     StyleType.ELEMENT: ElementStyle,
+    StyleType.AREA_ANNOTATION: AreaAnnotationStyle,
+    StyleType.POINT_ANNOTATION: PointAnnotationStyle,
+    StyleType.LINE_ANNOTATION: LineAnnotationStyle,
 }
 
 

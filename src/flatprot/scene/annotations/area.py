@@ -6,8 +6,14 @@ from .base import Annotation
 
 import numpy as np
 
+from flatprot.style import StyleType
+
 
 class AreaAnnotation(Annotation):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._style_type = StyleType.AREA_ANNOTATION
+
     def display_coordinates(self) -> np.ndarray:
         "fit an area containing all targets as closely as possible"
         coords = np.concatenate([t.display_coordinates for t in self.targets])
@@ -18,19 +24,15 @@ class AreaAnnotation(Annotation):
         hull_points = coords[np.argsort(angles)]
 
         # Add padding by expanding points outward from centroid
-        padding = 40.0  # Adjust this value to control padding amount
+        padding = self.style.padding
         hull_vectors = hull_points - centroid
         normalized_vectors = (
             hull_vectors / np.linalg.norm(hull_vectors, axis=1)[:, np.newaxis]
         )
         hull_points = hull_points + normalized_vectors * padding
 
-        # Close the loop by repeating first few points at the end
-        num_repeat = 3
-        hull_points = np.vstack([hull_points, hull_points[:num_repeat]])
-
         # Generate more points through linear interpolation
-        num_points = 100
+        num_points = self.style.interpolation_points
         result_points = []
         for i in range(len(hull_points) - 1):
             t = np.linspace(0, 1, num_points // (len(hull_points) - 1))[:, np.newaxis]
@@ -40,7 +42,7 @@ class AreaAnnotation(Annotation):
         points = np.vstack(result_points)
 
         # Apply rolling average to smooth the curve
-        window_size = 5
+        window_size = self.style.smoothing_window
         kernel = np.ones(window_size) / window_size
 
         # Pad the points array for periodic boundary conditions

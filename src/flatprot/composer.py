@@ -11,7 +11,6 @@ from flatprot.scene import (
     Scene,
     SceneGroup,
     secondary_structure_to_scene_element,
-    PointAnnotation,
 )
 from flatprot.core import CoordinateManager, CoordinateType
 from flatprot.style import StyleManager, StyleType
@@ -66,7 +65,7 @@ def structure_to_scene(
         structure, transformer, transform_parameters, projector, projection_parameters
     )
 
-    root_scene = Scene()
+    scene = Scene()
 
     # Process each chain
     offset = 0
@@ -105,14 +104,15 @@ def structure_to_scene(
         ]
 
         # Create a scene for the chain
-        chain_scene = SceneGroup(
+        chain_group = SceneGroup(
             id=f"chain_{chain.id}",
         )
-        root_scene.add_element(chain_scene)
+        scene.add_element(chain_group)
+
         for element in sorted_elements:
-            root_scene.add_element(
+            scene.add_element(
                 element,
-                chain_scene,
+                chain_group,
                 element.metadata["chain_id"],
                 element.metadata["start"],
                 element.metadata["end"],
@@ -120,4 +120,4 @@ def structure_to_scene(
 
         offset += chain.num_residues
 
-    return root_scene
+    return scene
