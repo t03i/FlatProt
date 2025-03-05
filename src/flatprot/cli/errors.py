@@ -3,6 +3,10 @@
 
 """Error classes for the FlatProt CLI."""
 
+from rich.console import Console
+
+console = Console()
+
 
 class FlatProtCLIError(Exception):
     """Base exception class for FlatProt CLI errors.
@@ -29,4 +33,14 @@ class InvalidFileFormatError(FlatProtCLIError):
 
     def __init__(self, file_path: str, expected_format: str):
         message = f"Invalid file format for {file_path}. Expected {expected_format}."
+        super().__init__(message)
+
+
+class InvalidStructureError(FlatProtCLIError):
+    """Exception raised when a structure file has an invalid format."""
+
+    def __init__(self, file_path: str, expected_format: str, details: str = None):
+        message = f"Invalid {expected_format} file: {file_path}"
+        if details:
+            message += f"\n{details}"
         super().__init__(message)
