@@ -11,7 +11,7 @@ from flatprot.style import StyleType
 
 class AreaAnnotation(Annotation):
     def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+        super().__init__(*args, indices=None, **kwargs)
         self._style_type = StyleType.AREA_ANNOTATION
 
     def display_coordinates(self) -> np.ndarray:
