@@ -14,7 +14,7 @@ class Annotation(SceneElement):
 
     def __init__(
         self,
-        content: Any,
+        label: Any,
         indices: list[int],
         targets: list[SceneElement],
         metadata: dict = {},
@@ -28,7 +28,7 @@ class Annotation(SceneElement):
             style_manager=style_manager,
             style_type=style_type,
         )
-        self.content = content
+        self.label = label
         self.indices = indices
         self.targets = targets
 
