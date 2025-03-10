@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import List, Optional, Union, Literal
 
 import toml
-from pydantic import BaseModel, ValidationError, field_validator, ConfigDict
+from pydantic import BaseModel, field_validator, ConfigDict, ValidationError
 from rich.console import Console
 
 from flatprot.io.errors import (
