@@ -6,5 +6,6 @@
 from flatprot.io.annotations import AnnotationParser
 from flatprot.io.styles import StyleParser
 from flatprot.io.structure_gemmi_adapter import GemmiStructureParser
+from flatprot.io.matrix import MatrixLoader
 
-__all__ = ["AnnotationParser", "StyleParser", "GemmiStructureParser"]
+__all__ = ["AnnotationParser", "StyleParser", "GemmiStructureParser", "MatrixLoader"]
