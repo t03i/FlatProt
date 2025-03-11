@@ -8,12 +8,24 @@ from pathlib import Path
 from typing import Optional
 
 from rich.console import Console
+import numpy as np
 
 from flatprot.cli.errors import (
     FlatProtCLIError,
     FileNotFoundError,
     InvalidStructureError,
+    TransformationError,
 )
+from flatprot.io import GemmiStructureParser, MatrixLoader
+from flatprot.core.components import Structure
+from flatprot.transformation import (
+    InertiaTransformer,
+    MatrixTransformer,
+    MatrixTransformParameters,
+    TransformationMatrix,
+)
+from flatprot.core import CoordinateManager, CoordinateType
+from flatprot.projection import OrthographicProjector, OrthographicProjectionParameters
 
 console = Console()
 
@@ -75,13 +87,138 @@ def validate_structure_file(path: Path) -> None:
         )
 
 
+def get_coordinate_manager(
+    structure: Structure, matrix_path: Optional[Path] = None
+) -> CoordinateManager:
+    """Apply transformation to a protein structure and create a coordinate manager.
+
+    Args:
+        structure: The protein structure to transform
+        matrix_path: Path to a numpy matrix file for custom transformation.
+                    If None, uses InertiaTransformer.
+
+    Returns:
+        CoordinateManager preloaded with original, transformed, and projected coordinates
+
+    Raises:
+        TransformationError: If there's an error during transformation
+    """
+    try:
+        # Check if structure has coordinates
+        if not hasattr(structure, "coordinates") or structure.coordinates is None:
+            console.print(
+                "[yellow]Warning: Structure has no coordinates, skipping transformation[/yellow]"
+            )
+            # Create empty coordinate manager
+            return CoordinateManager()
+
+        # Create coordinate manager
+        coordinate_manager = CoordinateManager()
+
+        # Add original coordinates
+        coordinate_manager.add(
+            0,
+            len(structure.coordinates),
+            structure.coordinates,
+            CoordinateType.COORDINATES,
+        )
+
+        # Set up transformer based on input
+        transformer = None
+        transform_parameters = None
+
+        if matrix_path:
+            # Load custom transformation matrix
+            try:
+                matrix_loader = MatrixLoader(matrix_path)
+                transformation_matrix = matrix_loader.load()
+                transformer = MatrixTransformer()
+                transform_parameters = MatrixTransformParameters(
+                    matrix=transformation_matrix
+                )
+            except Exception as e:
+                console.print(
+                    f"[yellow]Warning: Failed to load matrix from {matrix_path}: {str(e)}[/yellow]"
+                )
+                console.print(
+                    "[yellow]Falling back to inertia-based transformation[/yellow]"
+                )
+                matrix_path = None  # Fall back to inertia transformer
+
+        if not matrix_path:
+            # Use inertia-based transformation
+            if (
+                hasattr(structure, "coordinates")
+                and structure.coordinates is not None
+                and hasattr(structure, "residues")
+                and structure.residues
+            ):
+                transformer = InertiaTransformer()
+                transform_parameters = (
+                    None  # InertiaTransformer doesn't need parameters
+                )
+            else:
+                # If structure doesn't have proper attributes, use identity transformation
+                console.print(
+                    "[yellow]Warning: Structure lacks required properties for inertia transformation, using identity matrix[/yellow]"
+                )
+                rotation = np.eye(3)
+                translation = np.zeros(3)
+                identity_matrix = TransformationMatrix(
+                    rotation=rotation, translation=translation
+                )
+                transformer = MatrixTransformer()
+                transform_parameters = MatrixTransformParameters(matrix=identity_matrix)
+
+        # Apply transformation
+        transformed_coords = transformer.transform(
+            structure.coordinates.copy(), transform_parameters
+        )
+
+        # Add transformed coordinates
+        coordinate_manager.add(
+            0,
+            len(structure.coordinates),
+            transformed_coords,
+            CoordinateType.TRANSFORMED,
+        )
+
+        # Set up projector with default parameters
+        projector = OrthographicProjector()
+        projection_parameters = OrthographicProjectionParameters(
+            width=800,  # Default width
+            height=600,  # Default height
+            padding_x=50,  # Default padding
+            padding_y=50,  # Default padding
+            maintain_aspect_ratio=True,  # Default setting
+        )
+
+        # Project the coordinates
+        canvas_coords, depth = projector.project(
+            transformed_coords, projection_parameters
+        )
+
+        # Add projected coordinates and depth information
+        coordinate_manager.add(
+            0, len(structure.coordinates), canvas_coords, CoordinateType.CANVAS
+        )
+        coordinate_manager.add(
+            0, len(structure.coordinates), depth, CoordinateType.DEPTH
+        )
+
+        return coordinate_manager
+
+    except Exception as e:
+        raise TransformationError(f"Failed to apply transformation: {str(e)}")
+
+
 def main(
     structure_file: Path,
     output_file: Path,
     matrix: Optional[Path] = None,
     annotations: Optional[Path] = None,
     style: Optional[Path] = None,
-) -> None:
+) -> int:
     """Generate a 2D visualization of a protein structure.
 
     Args:
@@ -113,19 +250,33 @@ def main(
         if style and not style.exists():
             raise FileNotFoundError(str(style))
 
+        # Load structure
+        parser = GemmiStructureParser()
+        structure = parser.parse_structure(structure_file)
+
+        # Apply transformation and create coordinate manager
+        # ruff: noqa: F841
+        coordinate_manager = get_coordinate_manager(structure, matrix)
+
         # For now, just print a message to indicate successful parsing
-        console.print("[bold green]Successfully parsed arguments:[/bold green]")
-        console.print(f"  Structure file: {str(structure_file)}")
-        console.print(f"  Output file: {str(output_file)}")
+        console.print("[bold green]Successfully processed structure:[/bold green]")
+        console.print(f"  Structure file: {structure_file}")
+        console.print(f"  Output file: {output_file}")
+        console.print(
+            f"  Transformation: {'Custom matrix' if matrix else 'Inertia-based'}"
+        )
         if matrix:
-            console.print(f"  Matrix file: {str(matrix)}")
+            console.print(f"  Matrix file: {matrix}")
         if annotations:
-            console.print(f"  Annotations file: {str(annotations)}")
+            console.print(f"  Annotations file: {annotations}")
         if style:
-            console.print(f"  Style file: {str(style)}")
+            console.print(f"  Style file: {style}")
 
         return 0
 
     except FlatProtCLIError as e:
         console.print(f"[bold red]Error:[/bold red] {e.message}")
+        return 1
+    except Exception as e:
+        console.print(f"[bold red]Unexpected error:[/bold red] {str(e)}")
         return 1
