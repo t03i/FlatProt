@@ -44,3 +44,10 @@ class InvalidStructureError(FlatProtCLIError):
         if details:
             message += f"\n{details}"
         super().__init__(message)
+
+
+class TransformationError(FlatProtCLIError):
+    """Exception raised when a transformation operation fails."""
+
+    def __init__(self, message: str):
+        super().__init__(f"Transformation error: {message}")
