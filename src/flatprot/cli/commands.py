@@ -145,13 +145,18 @@ def get_coordinate_manager(
                 )
                 matrix_path = None  # Fall back to inertia transformer
 
+        has_valid_residues = (
+            hasattr(structure, "residues")
+            and structure.residues is not None
+            and len(structure.residues) > 0
+        )
+
         if not matrix_path:
             # Use inertia-based transformation
             if (
                 hasattr(structure, "coordinates")
                 and structure.coordinates is not None
-                and hasattr(structure, "residues")
-                and structure.residues
+                and has_valid_residues
             ):
                 transformer = InertiaTransformer()
                 transform_parameters = (
@@ -188,8 +193,8 @@ def get_coordinate_manager(
         projection_parameters = OrthographicProjectionParameters(
             width=800,  # Default width
             height=600,  # Default height
-            padding_x=50,  # Default padding
-            padding_y=50,  # Default padding
+            padding_x=0.05,  # 5% padding (values must be between 0 and 1)
+            padding_y=0.05,  # 5% padding (values must be between 0 and 1)
             maintain_aspect_ratio=True,  # Default setting
         )
 
@@ -209,6 +214,7 @@ def get_coordinate_manager(
         return coordinate_manager
 
     except Exception as e:
+        console.print(f"[red]Error applying transformation: {str(e)}[/red]")
         raise TransformationError(f"Failed to apply transformation: {str(e)}")
 
 
@@ -260,17 +266,17 @@ def main(
 
         # For now, just print a message to indicate successful parsing
         console.print("[bold green]Successfully processed structure:[/bold green]")
-        console.print(f"  Structure file: {structure_file}")
-        console.print(f"  Output file: {output_file}")
+        console.print(f"  Structure file: {str(structure_file)}")
+        console.print(f"  Output file: {str(output_file)}")
         console.print(
             f"  Transformation: {'Custom matrix' if matrix else 'Inertia-based'}"
         )
         if matrix:
-            console.print(f"  Matrix file: {matrix}")
+            console.print(f"  Matrix file: {str(matrix)}")
         if annotations:
-            console.print(f"  Annotations file: {annotations}")
+            console.print(f"  Annotations file: {str(annotations)}")
         if style:
-            console.print(f"  Style file: {style}")
+            console.print(f"  Style file: {str(style)}")
 
         return 0
 
