@@ -12,7 +12,7 @@ from .structure_elements import (
     StructureElementsTransformerParameters,
     StructureElementsTransformParameters,
 )
-from .matrix import MatrixTransformer
+from .matrix import MatrixTransformer, MatrixTransformParameters
 from .utils import TransformationMatrix
 
 __all__ = [
@@ -26,4 +26,5 @@ __all__ = [
     "StructureElementsTransformParameters",
     "TransformationMatrix",
     "MatrixTransformer",
+    "MatrixTransformParameters",
 ]
