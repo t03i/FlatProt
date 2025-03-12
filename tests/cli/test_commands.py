@@ -7,6 +7,7 @@ import os
 import tempfile
 import numpy as np
 from unittest.mock import patch, MagicMock
+from pathlib import Path
 
 import pytest
 
@@ -49,13 +50,39 @@ def temp_matrix_file():
 
 @pytest.fixture
 def temp_toml_file():
-    """Create a temporary TOML file for testing."""
+    """Create a temporary TOML file with valid content for testing."""
     with tempfile.NamedTemporaryFile(suffix=".toml", delete=False) as f:
-        # Add simple TOML content
-        f.write(b'[section]\nkey = "value"\n')
-        temp_file = f.name
-    yield temp_file
-    os.unlink(temp_file)
+        # Create a valid TOML file with all required sections
+        f.write(
+            b"""
+[helix]
+color = "#FF0000"
+line_width = 2.0
+
+[sheet]
+color = "#00FF00"
+line_width = 2.0
+
+[point]
+color = "#0000FF"
+radius = 1.0
+
+[line]
+color = "#FFFF00"
+stroke_width = 1.0
+
+[area]
+color = "#00FFFF"
+opacity = 0.5
+"""
+        )
+        f.flush()
+        temp_path = Path(f.name)
+
+    yield temp_path
+
+    # Clean up the file
+    os.unlink(temp_path)
 
 
 def test_main_with_required_args(temp_structure_file, capfd):
@@ -63,18 +90,47 @@ def test_main_with_required_args(temp_structure_file, capfd):
     output_file = "test_output.svg"
 
     # Mock the get_coordinate_manager function to avoid actual transformation
-    with patch("flatprot.cli.commands.get_coordinate_manager") as mock_transform:
+    with (
+        patch("flatprot.cli.commands.get_coordinate_manager") as mock_transform,
+        patch("flatprot.cli.commands.GemmiStructureParser") as mock_parser,
+        patch("flatprot.cli.commands.generate_svg") as mock_generate_svg,
+        patch("flatprot.cli.commands.save_svg") as mock_save_svg,
+    ):
+        # Set up mock parser to return a mock structure
+        mock_structure = MagicMock()
+        # Mock chain properties
+        mock_chain = MagicMock()
+        mock_chain.id = "A"
+        mock_chain.num_residues = 10
+        # Mock secondary structure
+        mock_helix = MagicMock()
+        mock_helix.start = 0
+        mock_helix.end = 9
+        mock_chain.secondary_structure = [mock_helix]
+        # Make structure iterable to return the chain
+        mock_structure.__iter__.return_value = [mock_chain]
+
+        mock_parser.return_value.parse_structure.return_value = mock_structure
+
         # Return a mock coordinate manager
         mock_transform.return_value = MagicMock(spec=CoordinateManager)
+
+        # Mock the generate_svg function to return a valid SVG
+        mock_generate_svg.return_value = "<svg>Test SVG</svg>"
 
         result = app([temp_structure_file, output_file])
 
         assert result == 0
+
+        # Verify interactions
+        mock_parser.return_value.parse_structure.assert_called_once()
+        mock_transform.assert_called_once()
+        mock_generate_svg.assert_called_once()
+        mock_save_svg.assert_called_once_with("<svg>Test SVG</svg>", Path(output_file))
+
+        # Check output messages
         captured = capfd.readouterr()
         assert "Successfully processed structure" in captured.out
-        # Use 'in' operator for more flexible path matching due to platform differences
-        assert str(temp_structure_file) in captured.out
-        assert output_file in captured.out
 
 
 def test_main_with_all_args(
@@ -84,9 +140,33 @@ def test_main_with_all_args(
     output_file = "test_output.svg"
 
     # Mock the get_coordinate_manager function to avoid actual transformation
-    with patch("flatprot.cli.commands.get_coordinate_manager") as mock_transform:
+    with (
+        patch("flatprot.cli.commands.get_coordinate_manager") as mock_transform,
+        patch("flatprot.cli.commands.GemmiStructureParser") as mock_parser,
+        patch("flatprot.cli.commands.generate_svg") as mock_generate_svg,
+        patch("flatprot.cli.commands.save_svg") as mock_save_svg,
+    ):
+        # Set up mock parser to return a mock structure
+        mock_structure = MagicMock()
+        # Mock chain properties
+        mock_chain = MagicMock()
+        mock_chain.id = "A"
+        mock_chain.num_residues = 10
+        # Mock secondary structure
+        mock_helix = MagicMock()
+        mock_helix.start = 0
+        mock_helix.end = 9
+        mock_chain.secondary_structure = [mock_helix]
+        # Make structure iterable to return the chain
+        mock_structure.__iter__.return_value = [mock_chain]
+
+        mock_parser.return_value.parse_structure.return_value = mock_structure
+
         # Return a mock coordinate manager
         mock_transform.return_value = MagicMock(spec=CoordinateManager)
+
+        # Mock the generate_svg function to return a valid SVG
+        mock_generate_svg.return_value = "<svg>Test SVG</svg>"
 
         result = app(
             [
@@ -102,13 +182,22 @@ def test_main_with_all_args(
         )
 
         assert result == 0
+
+        # Verify interactions
+        mock_parser.return_value.parse_structure.assert_called_once()
+        mock_transform.assert_called_once_with(mock_structure, Path(temp_matrix_file))
+        mock_generate_svg.assert_called_once_with(
+            mock_structure,
+            mock_transform.return_value,
+            Path(temp_toml_file),
+            Path(temp_toml_file),
+        )
+        mock_save_svg.assert_called_once_with("<svg>Test SVG</svg>", Path(output_file))
+
+        # Check output messages
         captured = capfd.readouterr()
         assert "Successfully processed structure" in captured.out
-        # Use 'in' operator for more flexible path matching
-        assert str(temp_structure_file) in captured.out
-        assert output_file in captured.out
-        assert str(temp_matrix_file) in captured.out
-        assert str(temp_toml_file) in captured.out
+        assert "Custom matrix" in captured.out
 
 
 def test_main_with_nonexistent_structure_file(capfd):
@@ -131,15 +220,41 @@ def test_main_with_nonexistent_output_directory():
         )
         f.flush()  # Ensure content is written before testing
 
-        # Mock the get_coordinate_manager function to avoid actual transformation
-        with patch("flatprot.cli.commands.get_coordinate_manager") as mock_transform:
+        # Mock the required functions
+        with (
+            patch("flatprot.cli.commands.get_coordinate_manager") as mock_transform,
+            patch("flatprot.cli.commands.GemmiStructureParser") as mock_parser,
+            patch("flatprot.cli.commands.generate_svg") as mock_generate_svg,
+            patch("flatprot.cli.commands.save_svg") as mock_save_svg,
+            patch("os.makedirs") as mock_makedirs,
+        ):
+            # Set up mock parser to return a mock structure
+            mock_structure = MagicMock()
+            # Mock chain properties
+            mock_chain = MagicMock()
+            mock_chain.id = "A"
+            mock_chain.num_residues = 10
+            # Mock secondary structure
+            mock_helix = MagicMock()
+            mock_helix.start = 0
+            mock_helix.end = 9
+            mock_chain.secondary_structure = [mock_helix]
+            # Make structure iterable to return the chain
+            mock_structure.__iter__.return_value = [mock_chain]
+
+            mock_parser.return_value.parse_structure.return_value = mock_structure
+
             # Return a mock coordinate manager
             mock_transform.return_value = MagicMock(spec=CoordinateManager)
 
+            # Mock the generate_svg function to return a valid SVG
+            mock_generate_svg.return_value = "<svg>Test SVG</svg>"
+
             output_path = "nonexistent_dir/output.svg"
             result = app([f.name, output_path])
+
             assert result == 0
 
-            # Clean up
-            if os.path.exists("nonexistent_dir"):
-                os.rmdir("nonexistent_dir")
+            # Verify the directory creation was attempted
+            mock_makedirs.assert_called()
+            mock_save_svg.assert_called_once()
