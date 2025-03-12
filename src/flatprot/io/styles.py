@@ -10,7 +10,7 @@ from pydantic import ValidationError
 from pydantic_extra_types.color import Color
 
 from ..style.types import StyleType
-from ..style.structure import HelixStyle, SheetStyle, ElementStyle
+from ..style.structure import HelixStyle, SheetStyle, ElementStyle, CoilStyle
 from ..style.annotation import (
     AreaAnnotationStyle,
 )
@@ -47,6 +47,7 @@ class StyleParser:
     STYLE_MAPPING = {
         "helix": (StyleType.HELIX, HelixStyle),
         "sheet": (StyleType.SHEET, SheetStyle),
+        "coil": (StyleType.COIL, CoilStyle),
         "point": (StyleType.POINT, ElementStyle),
         "line": (StyleType.ELEMENT, ElementStyle),
         "area": (StyleType.AREA_ANNOTATION, AreaAnnotationStyle),
