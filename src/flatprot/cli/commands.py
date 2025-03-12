@@ -16,7 +16,7 @@ from flatprot.cli.errors import (
     InvalidStructureError,
     TransformationError,
 )
-from flatprot.io import GemmiStructureParser, MatrixLoader
+from flatprot.io import GemmiStructureParser, MatrixLoader, StyleParser
 from flatprot.core.components import Structure
 from flatprot.transformation import (
     InertiaTransformer,
@@ -26,6 +26,11 @@ from flatprot.transformation import (
 )
 from flatprot.core import CoordinateManager, CoordinateType
 from flatprot.projection import OrthographicProjector, OrthographicProjectionParameters
+from flatprot.style import StyleManager
+from flatprot.scene import Scene, SceneGroup
+from flatprot.scene.structure import secondary_structure_to_scene_element
+from flatprot.drawing.canvas import Canvas
+from flatprot.io import AnnotationParser
 
 console = Console()
 
@@ -218,6 +223,123 @@ def get_coordinate_manager(
         raise TransformationError(f"Failed to apply transformation: {str(e)}")
 
 
+def generate_svg(
+    structure: Structure,
+    coordinate_manager: CoordinateManager,
+    annotations_path: Optional[Path] = None,
+    style_path: Optional[Path] = None,
+) -> str:
+    """Generate SVG content from a structure and coordinate manager.
+
+    Args:
+        structure: The protein structure
+        coordinate_manager: Coordinate manager with transformed and projected coordinates
+        annotations_path: Optional path to annotations file
+        style_path: Optional path to style file
+
+    Returns:
+        SVG content as a string
+    """
+    # Create style manager - either from file or default
+    if style_path:
+        style_parser = StyleParser(file_path=style_path)
+        style_manager = style_parser.get_styles()
+    else:
+        style_manager = StyleManager.create_default()
+
+    # Create scene from structure
+    scene = Scene()
+
+    # Process each chain
+    offset = 0
+    for chain in structure:
+        elements_with_z = []  # Reset for each chain
+
+        for i, element in enumerate(chain.secondary_structure):
+            start_idx = offset + element.start
+            end_idx = offset + element.end + 1
+
+            canvas_coords = coordinate_manager.get(
+                start_idx, end_idx, CoordinateType.CANVAS
+            )
+            depth = coordinate_manager.get(start_idx, end_idx, CoordinateType.DEPTH)
+
+            metadata = {
+                "chain_id": chain.id,
+                "start": element.start,
+                "end": element.end,
+                "type": element.secondary_structure_type.value,
+            }
+
+            viz_element = secondary_structure_to_scene_element(
+                element,
+                canvas_coords,
+                style_manager,
+                metadata,
+            )
+
+            elements_with_z.append((viz_element, np.mean(depth)))
+
+        # Sort elements by depth (farther objects first)
+        elements_with_z.sort(key=lambda x: x[1], reverse=True)
+
+        # Create a group for the chain
+        chain_group = SceneGroup(id=f"chain_{chain.id}")
+        chain_group.metadata["chain_id"] = chain.id
+
+        # Add sorted elements to the chain group
+        for element, _ in elements_with_z:
+            chain_group.add_element(element)
+
+        # Add chain group to scene
+        scene.add_element(chain_group)
+
+        # Update offset for next chain
+        offset += chain.num_residues
+
+    # Handle annotations if provided
+    if annotations_path:
+        annotation_parser = AnnotationParser()
+        annotations = annotation_parser.parse(annotations_path)
+        for annotation in annotations:
+            annotation.apply(scene, style_manager)
+
+    # Render scene to SVG using Canvas
+    canvas = Canvas(scene, style_manager)
+    drawing = canvas.render()
+
+    # Convert drawing to SVG string (using drawsvg's functionality)
+    svg_content = drawing.as_svg()
+
+    return svg_content
+
+
+def save_svg(svg_content: str, output_path: Path) -> None:
+    """Save SVG content to a file, creating directories if needed.
+
+    Args:
+        svg_content: SVG content as a string
+        output_path: Path to save the SVG file
+
+    Raises:
+        IOError: If the file cannot be saved
+    """
+    try:
+        # Ensure output directory exists
+        output_dir = output_path.parent
+        if not output_dir.exists():
+            os.makedirs(output_dir, exist_ok=True)
+
+        # Write SVG content to file
+        with open(output_path, "w") as f:
+            f.write(svg_content)
+
+        console.print(f"[green]SVG saved to {output_path}[/green]")
+    except Exception as e:
+        console.print(f"[red]Error saving SVG to {output_path}: {str(e)}[/red]")
+        raise IOError(f"Failed to save SVG: {str(e)}")
+
+
 def main(
     structure_file: Path,
     output_file: Path,
@@ -261,10 +383,15 @@ def main(
         structure = parser.parse_structure(structure_file)
 
         # Apply transformation and create coordinate manager
-        # ruff: noqa: F841
         coordinate_manager = get_coordinate_manager(structure, matrix)
 
-        # For now, just print a message to indicate successful parsing
+        # Generate SVG visualization
+        svg_content = generate_svg(structure, coordinate_manager, annotations, style)
+
+        # Save SVG to output file
+        save_svg(svg_content, output_file)
+
+        # Print success message
         console.print("[bold green]Successfully processed structure:[/bold green]")
         console.print(f"  Structure file: {str(structure_file)}")
         console.print(f"  Output file: {str(output_file)}")

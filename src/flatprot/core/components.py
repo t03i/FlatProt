@@ -3,8 +3,6 @@
 from typing import Iterator
 
 import numpy as np
-from pydantic import BaseModel
-from pydantic_numpy.typing import NpNDArray
 
 from .residue import Residue
 
