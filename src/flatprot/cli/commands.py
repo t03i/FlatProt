@@ -23,6 +23,7 @@ from flatprot.transformation import (
     MatrixTransformer,
     MatrixTransformParameters,
     TransformationMatrix,
+    InertiaTransformParameters,
 )
 from flatprot.core import CoordinateManager, CoordinateType
 from flatprot.projection import OrthographicProjector, OrthographicProjectionParameters
@@ -164,8 +165,9 @@ def get_coordinate_manager(
                 and has_valid_residues
             ):
                 transformer = InertiaTransformer()
-                transform_parameters = (
-                    None  # InertiaTransformer doesn't need parameters
+                # Create proper parameters with structure residues
+                transform_parameters = InertiaTransformParameters(
+                    residues=structure.residues
                 )
             else:
                 # If structure doesn't have proper attributes, use identity transformation
@@ -299,8 +301,8 @@ def generate_svg(
 
     # Handle annotations if provided
     if annotations_path:
-        annotation_parser = AnnotationParser()
-        annotations = annotation_parser.parse(annotations_path)
+        annotation_parser = AnnotationParser(file_path=annotations_path, scene=scene)
+        annotations = annotation_parser.parse()
         for annotation in annotations:
             annotation.apply(scene, style_manager)
 
@@ -341,46 +343,58 @@ def save_svg(svg_content: str, output_path: Path) -> None:
 
 
 def main(
-    structure_file: Path,
-    output_file: Path,
-    matrix: Optional[Path] = None,
-    annotations: Optional[Path] = None,
-    style: Optional[Path] = None,
-) -> int:
-    """Generate a 2D visualization of a protein structure.
+    structure: Path,
+    output: Path = None,
+    matrix: Path = None,
+    style: Path = None,
+    annotations: Path = None,
+):
+    """Generate a flat projection of a protein structure.
 
     Args:
-        structure_file: Path to a PDB/CIF structure file to visualize.
-        output_file: Path for the output SVG file containing the visualization.
-        matrix: Path to a numpy matrix file for custom transformation. If not provided, inertia-based projection will be used.
-        annotations: Path to a TOML file containing annotation specifications.
-        style: Path to a TOML file containing style specifications.
+        structure (Path): Path to the structure file (PDB or similar).
+        output (Path, optional): Path to save the SVG output.
+            If not provided, the SVG is printed to stdout.
+        matrix (Path, optional): Path to a custom transformation matrix.
+            If not provided, a default inertia transformation is used.
+        style (Path, optional): Path to a custom style file in TOML format.
+            If not provided, the default styles are used.
+        annotations (Path, optional): Path to a TOML file with annotation definitions.
+            The annotation file can define point, line, and area annotations to highlight
+            specific structural features. Examples:
+            - Point annotations mark single residues with symbols
+            - Line annotations connect residues with lines
+            - Area annotations highlight regions of the structure
+            See examples/annotations.toml for a reference annotation file.
 
     Examples:
         flatprot structure.pdb output.svg
         flatprot structure.cif output.svg --annotations annotations.toml --style style.toml
         flatprot structure.pdb output.svg --matrix custom_matrix.npy
+
+    Returns:
+        int: 0 for success, 1 for errors.
     """
     try:
         # Validate the structure file
-        validate_structure_file(structure_file)
+        validate_structure_file(structure)
 
         # Ensure the output directory exists
-        output_dir = output_file.parent
+        output_dir = output.parent
         if not output_dir.exists():
             os.makedirs(output_dir, exist_ok=True)
 
         # Verify optional files if specified
         if matrix and not matrix.exists():
             raise FileNotFoundError(str(matrix))
-        if annotations and not annotations.exists():
-            raise FileNotFoundError(str(annotations))
         if style and not style.exists():
             raise FileNotFoundError(str(style))
+        if annotations and not annotations.exists():
+            raise FileNotFoundError(str(annotations))
 
         # Load structure
         parser = GemmiStructureParser()
-        structure = parser.parse_structure(structure_file)
+        structure = parser.parse_structure(structure)
 
         # Apply transformation and create coordinate manager
         coordinate_manager = get_coordinate_manager(structure, matrix)
@@ -389,21 +403,21 @@ def main(
         svg_content = generate_svg(structure, coordinate_manager, annotations, style)
 
         # Save SVG to output file
-        save_svg(svg_content, output_file)
+        save_svg(svg_content, output)
 
         # Print success message
         console.print("[bold green]Successfully processed structure:[/bold green]")
-        console.print(f"  Structure file: {str(structure_file)}")
-        console.print(f"  Output file: {str(output_file)}")
+        console.print(f"  Structure file: {str(structure)}")
+        console.print(f"  Output file: {str(output)}")
         console.print(
             f"  Transformation: {'Custom matrix' if matrix else 'Inertia-based'}"
         )
         if matrix:
             console.print(f"  Matrix file: {str(matrix)}")
-        if annotations:
-            console.print(f"  Annotations file: {str(annotations)}")
         if style:
             console.print(f"  Style file: {str(style)}")
+        if annotations:
+            console.print(f"  Annotations file: {str(annotations)}")
 
         return 0
 
