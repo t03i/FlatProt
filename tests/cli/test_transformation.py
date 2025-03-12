@@ -3,9 +3,7 @@
 
 """Tests for transformation application in the CLI."""
 
-import os
 import tempfile
-import pytest
 import numpy as np
 from pathlib import Path
 from unittest.mock import patch, MagicMock
@@ -16,57 +14,6 @@ from flatprot.transformation import (
     TransformationMatrix,
 )
 from flatprot.core import Structure, CoordinateManager, CoordinateType
-
-
-@pytest.fixture
-def mock_structure():
-    """Create a mock structure for testing."""
-    structure = MagicMock(spec=Structure)
-
-    # Mock the coordinates property
-    structure.coordinates = np.array([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]])
-
-    # Mock the residues property to ensure it passes the has_valid_residues check
-    mock_residue = MagicMock()
-    structure.residues = [mock_residue]
-
-    return structure
-
-
-@pytest.fixture
-def valid_matrix_file():
-    """Create a temporary file with a valid transformation matrix."""
-    # Create a valid transformation matrix (4x3)
-    rotation = np.eye(3)
-    translation = np.array([1.0, 2.0, 3.0])
-    matrix = np.vstack([rotation, translation])
-
-    # Save to temporary file
-    fd, path = tempfile.mkstemp(suffix=".npy")
-    os.close(fd)
-    np.save(path, matrix)
-
-    yield Path(path)
-
-    # Clean up
-    os.unlink(path)
-
-
-@pytest.fixture
-def invalid_matrix_file():
-    """Create a temporary file with an invalid matrix."""
-    # Create an invalid matrix (wrong dimensions)
-    matrix = np.eye(3)
-
-    # Save to temporary file
-    fd, path = tempfile.mkstemp(suffix=".npy")
-    os.close(fd)
-    np.save(path, matrix)
-
-    yield Path(path)
-
-    # Clean up
-    os.unlink(path)
 
 
 def test_get_coordinate_manager_inertia(mock_structure):

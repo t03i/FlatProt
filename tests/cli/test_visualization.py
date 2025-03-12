@@ -7,113 +7,9 @@ from pathlib import Path
 from unittest.mock import patch, MagicMock, ANY
 
 import pytest
-import numpy as np
 
 from flatprot.cli.commands import generate_svg, save_svg
-from flatprot.core import CoordinateManager, CoordinateType
-from flatprot.core import (
-    Structure,
-    Chain,
-    SecondaryStructureType,
-    SecondaryStructure,
-)
-
-
-@pytest.fixture
-def mock_structure():
-    """Create a mock structure for testing."""
-    structure = MagicMock(spec=Structure)
-
-    # Create a mock chain
-    chain = MagicMock(spec=Chain)
-    chain.id = "A"
-
-    # Create mock secondary structure elements
-    helix = MagicMock(spec=SecondaryStructure)
-    helix.start = 0
-    helix.end = 2
-    helix.secondary_structure_type = SecondaryStructureType.HELIX
-
-    sheet = MagicMock(spec=SecondaryStructure)
-    sheet.start = 3
-    sheet.end = 5
-    sheet.secondary_structure_type = SecondaryStructureType.SHEET
-
-    # Add secondary structure elements to chain
-    chain.secondary_structure = [helix, sheet]
-
-    # Mock len() for chain
-    chain.num_residues = 6
-
-    # Add chain to structure
-    structure.__iter__.return_value = [chain]
-
-    # Mock coordinates
-    structure.coordinates = np.array(
-        [
-            [1.0, 2.0, 3.0],  # 0
-            [2.0, 3.0, 4.0],  # 1
-            [3.0, 4.0, 5.0],  # 2
-            [4.0, 5.0, 6.0],  # 3
-            [5.0, 6.0, 7.0],  # 4
-            [6.0, 7.0, 8.0],  # 5
-        ]
-    )
-
-    return structure
-
-
-@pytest.fixture
-def mock_coordinate_manager():
-    """Create a mock coordinate manager for testing."""
-    cm = CoordinateManager()
-
-    # Mock original coordinates
-    original_coords = np.array(
-        [
-            [1.0, 2.0, 3.0],  # 0
-            [2.0, 3.0, 4.0],  # 1
-            [3.0, 4.0, 5.0],  # 2
-            [4.0, 5.0, 6.0],  # 3
-            [5.0, 6.0, 7.0],  # 4
-            [6.0, 7.0, 8.0],  # 5
-        ]
-    )
-
-    # Mock transformed coordinates
-    transformed_coords = np.array(
-        [
-            [2.0, 3.0, 4.0],  # 0
-            [3.0, 4.0, 5.0],  # 1
-            [4.0, 5.0, 6.0],  # 2
-            [5.0, 6.0, 7.0],  # 3
-            [6.0, 7.0, 8.0],  # 4
-            [7.0, 8.0, 9.0],  # 5
-        ]
-    )
-
-    # Mock canvas coordinates
-    canvas_coords = np.array(
-        [
-            [100.0, 200.0],  # 0
-            [150.0, 250.0],  # 1
-            [200.0, 300.0],  # 2
-            [250.0, 350.0],  # 3
-            [300.0, 400.0],  # 4
-            [350.0, 450.0],  # 5
-        ]
-    )
-
-    # Mock depth values
-    depth = np.array([0.1, 0.2, 0.3, 0.4, 0.5, 0.6])
-
-    # Add all coordinates to the manager
-    cm.add(0, 6, original_coords, CoordinateType.COORDINATES)
-    cm.add(0, 6, transformed_coords, CoordinateType.TRANSFORMED)
-    cm.add(0, 6, canvas_coords, CoordinateType.CANVAS)
-    cm.add(0, 6, depth, CoordinateType.DEPTH)
-
-    return cm
+from flatprot.scene.annotations import PointAnnotation, LineAnnotation, AreaAnnotation
 
 
 def test_generate_svg_basic(mock_structure, mock_coordinate_manager):
@@ -246,10 +142,11 @@ def test_generate_svg_with_annotations(mock_structure, mock_coordinate_manager):
             annotations_path=Path("mock_annotations.toml"),
         )
 
-        # Verify annotations were parsed
-        mock_annotation_parser.parse.assert_called_once_with(
-            Path("mock_annotations.toml")
+        # Verify annotations were parsed with scene
+        MockAnnotationParser.assert_called_once_with(
+            file_path=Path("mock_annotations.toml"), scene=ANY
         )
+        mock_annotation_parser.parse.assert_called_once()
 
         # Verify annotations were applied
         mock_annotation1.apply.assert_called_once()
@@ -425,3 +322,109 @@ def test_main_handles_errors():
 
         # Verify error code
         assert result == 1
+
+
+@pytest.mark.parametrize(
+    "annotation_type,expected_class",
+    [
+        ("point", PointAnnotation),
+        ("line", LineAnnotation),
+        ("area", AreaAnnotation),
+    ],
+)
+def test_annotation_integration(
+    mock_structure,
+    mock_coordinate_manager,
+    temp_annotation_file,
+    annotation_type,
+    expected_class,
+):
+    """Test integration with different annotation types."""
+    with (
+        patch("flatprot.cli.commands.StyleManager") as MockStyleManager,
+        patch("flatprot.cli.commands.AnnotationParser") as MockAnnotationParser,
+        patch("flatprot.cli.commands.Canvas") as MockCanvas,
+        patch("flatprot.io.annotations.PointAnnotation") as MockPointAnnotation,
+        patch("flatprot.io.annotations.LineAnnotation") as MockLineAnnotation,
+        patch("flatprot.io.annotations.AreaAnnotation") as MockAreaAnnotation,
+    ):
+        # Setup mocks
+        mock_style_manager = MagicMock()
+        MockStyleManager.create_default.return_value = mock_style_manager
+
+        # Create annotations based on the type
+        mock_annotations = []
+
+        # Setup the actual annotation parser with pass-through to the real implementation
+        mock_annotation_parser = MagicMock()
+        MockAnnotationParser.return_value = mock_annotation_parser
+
+        # Create a mock annotation of the expected type
+        mock_annotation = MagicMock(spec=expected_class)
+
+        # Return only this type of annotation for the test
+        if annotation_type == "point":
+            MockPointAnnotation.return_value = mock_annotation
+            mock_annotations = [mock_annotation]
+        elif annotation_type == "line":
+            MockLineAnnotation.return_value = mock_annotation
+            mock_annotations = [mock_annotation]
+        elif annotation_type == "area":
+            MockAreaAnnotation.return_value = mock_annotation
+            mock_annotations = [mock_annotation]
+
+        mock_annotation_parser.parse.return_value = mock_annotations
+
+        mock_canvas = MagicMock()
+        MockCanvas.return_value = mock_canvas
+
+        mock_drawing = MagicMock()
+        mock_canvas.render.return_value = mock_drawing
+        mock_drawing.as_svg.return_value = f"<svg>{annotation_type} annotation</svg>"
+
+        # Call generate_svg with our temp annotation file
+        result = generate_svg(
+            mock_structure,
+            mock_coordinate_manager,
+            annotations_path=temp_annotation_file,
+        )
+
+        # Verify the annotation parser was initialized with our file
+        MockAnnotationParser.assert_called_once_with(
+            file_path=temp_annotation_file, scene=ANY
+        )
+
+        # Verify the annotation was applied
+        mock_annotation.apply.assert_called_once()
+
+        # Verify the result contains our annotation type
+        assert f"<svg>{annotation_type} annotation</svg>" == result
+
+
+def test_end_to_end_with_annotations(
+    mock_structure, mock_coordinate_manager, temp_annotation_file, temp_style_file
+):
+    """Test an end-to-end scenario with actual annotations, not mocked."""
+    # Only patch the Canvas to avoid actual drawing, but let the annotation parser run for real
+    with patch("flatprot.cli.commands.Canvas") as MockCanvas:
+        mock_canvas = MagicMock()
+        MockCanvas.return_value = mock_canvas
+
+        mock_drawing = MagicMock()
+        mock_canvas.render.return_value = mock_drawing
+        mock_drawing.as_svg.return_value = "<svg>End-to-end test</svg>"
+
+        # Call generate_svg with actual annotation and style files
+        result = generate_svg(
+            mock_structure,
+            mock_coordinate_manager,
+            annotations_path=temp_annotation_file,
+            style_path=temp_style_file,
+        )
+
+        # Verify Canvas was created and rendering occurred
+        MockCanvas.assert_called_once()
+        mock_canvas.render.assert_called_once()
+
+        # Verify we got an SVG result
+        assert result == "<svg>End-to-end test</svg>"

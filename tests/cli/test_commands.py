@@ -3,86 +3,13 @@
 
 """Tests for the FlatProt CLI commands."""
 
-import os
 import tempfile
-import numpy as np
 from unittest.mock import patch, MagicMock
 from pathlib import Path
 
-import pytest
 
 from flatprot.cli.main import app
 from flatprot.core import CoordinateManager
-
-
-@pytest.fixture
-def temp_structure_file():
-    """Create a temporary PDB file for testing."""
-    with tempfile.NamedTemporaryFile(suffix=".pdb", delete=False) as f:
-        # Add PDB content with ATOM records
-        f.write(
-            b"HEADER    PROTEIN\n"
-            b"ATOM      1  CA  ALA A   1      10.000  10.000  10.000  1.00 20.00      A    C  \n"
-            b"ATOM      2  CA  ALA A   2      10.000  10.000  11.000  1.00 20.00      A    C  \n"
-            b"ATOM      3  CA  ALA A   3      10.000  11.000  11.000  1.00 20.00      A    C  \n"
-            b"END\n"
-        )
-        temp_file = f.name
-    yield temp_file
-    os.unlink(temp_file)
-
-
-@pytest.fixture
-def temp_matrix_file():
-    """Create a temporary numpy matrix file for testing."""
-    with tempfile.NamedTemporaryFile(suffix=".npy", delete=False) as f:
-        # Create a valid transformation matrix (4x3)
-        rotation = np.eye(3)  # Identity rotation
-        translation = np.array([1.0, 2.0, 3.0])  # Simple translation
-        matrix = np.vstack([rotation, translation])  # Combined 4x3 matrix
-
-        temp_file = f.name
-        # Save the matrix to the temporary file
-        np.save(temp_file, matrix)
-    yield temp_file
-    os.unlink(temp_file)
-
-
-@pytest.fixture
-def temp_toml_file():
-    """Create a temporary TOML file with valid content for testing."""
-    with tempfile.NamedTemporaryFile(suffix=".toml", delete=False) as f:
-        # Create a valid TOML file with all required sections
-        f.write(
-            b"""
-[helix]
-color = "#FF0000"
-line_width = 2.0
-
-[sheet]
-color = "#00FF00"
-line_width = 2.0
-
-[point]
-color = "#0000FF"
-radius = 1.0
-
-[line]
-color = "#FFFF00"
-stroke_width = 1.0
-
-[area]
-color = "#00FFFF"
-opacity = 0.5
-"""
-        )
-        f.flush()
-        temp_path = Path(f.name)
-
-    yield temp_path
-
-    # Clean up the file
-    os.unlink(temp_path)
 
 
 def test_main_with_required_args(temp_structure_file, capfd):
@@ -134,7 +61,7 @@ def test_main_with_required_args(temp_structure_file, capfd):
 
 
 def test_main_with_all_args(
-    temp_structure_file, temp_matrix_file, temp_toml_file, capfd
+    temp_structure_file, valid_matrix_file, temp_toml_file, capfd
 ):
     """Test the main function with all arguments."""
     output_file = "test_output.svg"
@@ -173,7 +100,7 @@ def test_main_with_all_args(
                 str(temp_structure_file),
                 output_file,
                 "--matrix",
-                str(temp_matrix_file),
+                str(valid_matrix_file),
                 "--annotations",
                 str(temp_toml_file),
                 "--style",
@@ -185,7 +112,7 @@ def test_main_with_all_args(
 
         # Verify interactions
         mock_parser.return_value.parse_structure.assert_called_once()
-        mock_transform.assert_called_once_with(mock_structure, Path(temp_matrix_file))
+        mock_transform.assert_called_once_with(mock_structure, Path(valid_matrix_file))
         mock_generate_svg.assert_called_once_with(
             mock_structure,
             mock_transform.return_value,
