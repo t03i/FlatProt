@@ -246,8 +246,10 @@ def generate_svg(
     if style_path:
         style_parser = StyleParser(file_path=style_path)
         style_manager = style_parser.get_styles()
+        console.print(style_manager, style_parser)
     else:
         style_manager = StyleManager.create_default()
+        console.print(style_manager)
 
     # Create scene from structure
     scene = Scene()
