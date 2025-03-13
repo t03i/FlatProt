@@ -4,6 +4,7 @@
 from .components import Chain, Residue, Structure, StructureComponent
 from .secondary import SecondaryStructure, SecondaryStructureType, Helix, Sheet, Coil
 from .manager import CoordinateManager, CoordinateType
+from .error import FlatProtError
 
 all = [
     Chain,
@@ -17,4 +18,5 @@ all = [
     CoordinateManager,
     CoordinateType,
     StructureComponent,
+    FlatProtError,
 ]

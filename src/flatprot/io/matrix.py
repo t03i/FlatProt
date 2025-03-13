@@ -9,30 +9,12 @@ from typing import Union
 import numpy as np
 
 from ..transformation.utils import TransformationMatrix
-
-
-class MatrixError(Exception):
-    """Base class for matrix loading errors."""
-
-    pass
-
-
-class InvalidMatrixDimensionsError(MatrixError):
-    """Error raised when a matrix has invalid dimensions."""
-
-    pass
-
-
-class InvalidMatrixFormatError(MatrixError):
-    """Error raised when a matrix file has an invalid format."""
-
-    pass
-
-
-class MatrixFileError(MatrixError):
-    """Error raised when a matrix file can't be read."""
-
-    pass
+from .errors import (
+    FileNotFoundError,
+    MatrixFileError,
+    InvalidMatrixFormatError,
+    InvalidMatrixDimensionsError,
+)
 
 
 class MatrixLoader:
@@ -51,7 +33,7 @@ class MatrixLoader:
         self.file_path = Path(file_path)
 
         if not self.file_path.exists():
-            raise FileNotFoundError(f"Matrix file not found: {self.file_path}")
+            raise FileNotFoundError(str(self.file_path))
 
         if not self.file_path.suffix.lower() == ".npy":
             raise MatrixFileError(f"File must be a .npy file: {self.file_path}")
