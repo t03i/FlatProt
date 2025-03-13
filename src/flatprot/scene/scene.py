@@ -108,7 +108,6 @@ class Scene:
         """
         matching_elements = []
         for element, mapping in self._residue_mappings.items():
-            print(element, mapping)
             if (
                 isinstance(element, StructureSceneElement)
                 and mapping.chain_id == chain_id
