@@ -5,7 +5,7 @@ from dataclasses import dataclass
 from typing import Optional
 import numpy as np
 
-from .base import Transformer, TransformParameters
+from .base import BaseTransformer, TransformParameters
 from .utils import TransformationMatrix, apply_transformation
 
 
@@ -16,7 +16,7 @@ class MatrixTransformParameters(TransformParameters):
     matrix: TransformationMatrix
 
 
-class MatrixTransformer(Transformer):
+class MatrixTransformer(BaseTransformer):
     """Projects coordinates using a provided rotation matrix and translation vector.
 
     This projector applies a fixed projection matrix provided at initialization.

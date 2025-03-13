@@ -5,7 +5,7 @@ from dataclasses import dataclass
 import numpy as np
 from typing import Optional
 
-from .base import Transformer, TransformParameters
+from .base import BaseTransformer, TransformParameters
 from .utils import (
     TransformationMatrix,
     calculate_inertia_transformation,
@@ -57,7 +57,7 @@ class InertiaTransformParameters(TransformParameters):
     residues: list[Residue]
 
 
-class InertiaTransformer(Transformer):
+class InertiaTransformer(BaseTransformer):
     """Transforms using inertia-based calculation with residue weights."""
 
     def __init__(self, parameters: Optional[InertiaTransformerParameters] = None):
