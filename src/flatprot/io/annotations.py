@@ -15,9 +15,7 @@ from flatprot.io.errors import (
     MalformedAnnotationError,
     InvalidReferenceError,
 )
-from flatprot.scene.annotations.point import PointAnnotation
-from flatprot.scene.annotations.line import LineAnnotation
-from flatprot.scene.annotations.area import AreaAnnotation
+from flatprot.scene.annotations import PointAnnotation, LineAnnotation, AreaAnnotation
 from flatprot.scene import Scene
 
 console = Console()
@@ -161,27 +159,31 @@ class AnnotationParser:
         for i, data in enumerate(annotations_file.annotations):
             # Validate scene references and create annotation objects
             if isinstance(data, PointAnnotationData):
-                self._validate_scene_reference_point(data, i)
-                annotation_objects.append(self._create_point_annotation(data))
-
+                annotation_objects.append(
+                    self._validate_and_create_point_annotation(data, i)
+                )
             elif isinstance(data, LineAnnotationData):
-                self._validate_scene_reference_line(data, i)
-                annotation_objects.append(self._create_line_annotation(data))
-
+                annotation_objects.append(
+                    self._validate_and_create_line_annotation(data, i)
+                )
             elif isinstance(data, AreaAnnotationData):
-                self._validate_scene_reference_area(data, i)
-                annotation_objects.append(self._create_area_annotation(data))
+                annotation_objects.append(
+                    self._validate_and_create_area_annotation(data, i)
+                )
 
         return annotation_objects
 
-    def _validate_scene_reference_point(
+    def _validate_and_create_point_annotation(
         self, data: PointAnnotationData, index: int
-    ) -> None:
-        """Validate scene references for a point annotation.
+    ) -> PointAnnotation:
+        """Validate and create a point annotation object.
 
         Args:
             data: Annotation data
-            index: Index of the annotation
+            index: Index of the annotation in the file
+
+        Returns:
+            PointAnnotation object
 
         Raises:
             InvalidReferenceError: If the reference doesn't exist in the scene
@@ -192,33 +194,54 @@ class AnnotationParser:
                 "point", "residue", f"{data.index} in chain {data.chain}", index
             )
 
-    def _validate_scene_reference_line(
+        return PointAnnotation(
+            label=data.label,
+            targets=elements,
+            indices=[data.index],
+        )
+
+    def _validate_and_create_line_annotation(
         self, data: LineAnnotationData, index: int
-    ) -> None:
-        """Validate scene references for a line annotation.
+    ) -> LineAnnotation:
+        """Validate and create a line annotation object.
 
         Args:
             data: Annotation data
-            index: Index of the annotation
+            index: Index of the annotation in the file
+
+        Returns:
+            LineAnnotation object
 
         Raises:
             InvalidReferenceError: If the references don't exist in the scene
         """
+        targets = []
         for idx in data.indices:
             elements = self.scene.get_elements_for_residue(data.chain, idx)
             if not elements:
                 raise InvalidReferenceError(
                     "line/pair", "residue", f"{idx} in chain {data.chain}", index
                 )
+            # Store the first element for the residue
+            targets.append(elements[0])
 
-    def _validate_scene_reference_area(
+        return LineAnnotation(
+            label=data.label,
+            targets=targets,
+            indices=data.indices,
+        )
+
+    def _validate_and_create_area_annotation(
         self, data: AreaAnnotationData, index: int
-    ) -> None:
-        """Validate scene references for an area annotation.
+    ) -> AreaAnnotation:
+        """Validate and create an area annotation object.
 
         Args:
             data: Annotation data
-            index: Index of the annotation
+            index: Index of the annotation in the file
+
+        Returns:
+            AreaAnnotation object
 
         Raises:
             InvalidReferenceError: If the reference range doesn't exist in the scene
@@ -234,58 +257,7 @@ class AnnotationParser:
                 index,
             )
 
-    def _create_point_annotation(self, data: PointAnnotationData) -> PointAnnotation:
-        """Create a point annotation object.
-
-        Args:
-            data: Annotation data
-
-        Returns:
-            PointAnnotation object
-        """
-        targets = self.scene.get_elements_for_residue(data.chain, data.index)
-
-        return PointAnnotation(
-            label=data.label,
-            targets=targets,
-            indices=[data.index],
-        )
-
-    def _create_line_annotation(self, data: LineAnnotationData) -> LineAnnotation:
-        """Create a line annotation object.
-
-        Args:
-            data: Annotation data
-
-        Returns:
-            LineAnnotation object
-        """
-        targets = []
-        for idx in data.indices:
-            elements = self.scene.get_elements_for_residue(data.chain, idx)
-            if elements:
-                targets.append(elements[0])  # Take the first element for each residue
-
-        return LineAnnotation(
-            label=data.label,
-            targets=targets,
-            indices=data.indices,
-        )
-
-    def _create_area_annotation(self, data: AreaAnnotationData) -> AreaAnnotation:
-        """Create an area annotation object.
-
-        Args:
-            data: Annotation data
-
-        Returns:
-            AreaAnnotation object
-        """
-        targets = self.scene.get_elements_for_residue_range(
-            data.chain, data.range.start, data.range.end
-        )
-
         return AreaAnnotation(
             label=data.label,
-            targets=targets,
+            targets=elements,
         )

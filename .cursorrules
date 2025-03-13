@@ -35,3 +35,5 @@ All tests should be fully annotated and should contain docstrings.
 When writing code if you are setting foundation for a new feature be sure to ask questions to ensure you are on the right track.
 
 When writing code, be sure to use the latest version of the codebase.
+
+Do not delete comments unless they are outdated or incorrect.

@@ -9,11 +9,7 @@ import toml
 from pydantic import ValidationError
 from pydantic_extra_types.color import Color
 
-from ..style.types import StyleType
-from ..style.structure import HelixStyle, SheetStyle, ElementStyle, CoilStyle
-from ..style.annotation import (
-    AreaAnnotationStyle,
-)
+from ..style.manager import StyleManager
 from ..style.base import Style
 
 
@@ -41,17 +37,17 @@ class StyleValidationError(StyleParsingError):
 class StyleParser:
     """Parser for TOML style files."""
 
-    REQUIRED_SECTIONS = ["helix", "sheet", "point", "line", "area"]
-
-    # Mapping of TOML section names to style classes
-    STYLE_MAPPING = {
-        "helix": (StyleType.HELIX, HelixStyle),
-        "sheet": (StyleType.SHEET, SheetStyle),
-        "coil": (StyleType.COIL, CoilStyle),
-        "point": (StyleType.POINT, ElementStyle),
-        "line": (StyleType.ELEMENT, ElementStyle),
-        "area": (StyleType.AREA_ANNOTATION, AreaAnnotationStyle),
-    }
+    # Change from REQUIRED_SECTIONS to KNOWN_SECTIONS
+    KNOWN_SECTIONS = [
+        "helix",
+        "sheet",
+        "coil",
+        "point",
+        "line",
+        "area",
+        "canvas",
+        "annotation",
+    ]
 
     def __init__(self, file_path: Union[str, Path]):
         """Initialize the style parser.
@@ -78,18 +74,18 @@ class StyleParser:
     def _validate_structure(self) -> None:
         """Validates the basic structure of the style file.
 
-        Raises:
-            StyleValidationError: If required sections are missing
+        Makes sure any provided sections have valid formats.
+        All sections are optional - none are strictly required.
         """
-        missing_sections = [
-            section
-            for section in self.REQUIRED_SECTIONS
-            if section not in self.style_data
+        # Instead of checking for missing sections, just validate the ones that are present
+        unknown_sections = [
+            section for section in self.style_data if section not in self.KNOWN_SECTIONS
         ]
 
-        if missing_sections:
-            raise StyleValidationError(
-                f"Missing required style sections: {', '.join(missing_sections)}"
+        if unknown_sections:
+            # This is just a warning, not an error
+            print(
+                f"Warning: Unknown style sections found: {', '.join(unknown_sections)}"
             )
 
     def _convert_colors(self, section_data: Dict[str, Any]) -> Dict[str, Any]:
@@ -113,6 +109,55 @@ class StyleParser:
 
         return converted_data
 
+    def _process_sections(self) -> Dict[str, Dict[str, Any]]:
+        """Process all sections in the TOML file to prepare for StyleManager creation.
+
+        Returns:
+            Dict containing the processed style data with special handling for specific sections
+        """
+        processed_data = {}
+
+        for section_name, section_data in self.style_data.items():
+            # Skip unknown sections
+            if section_name not in self.KNOWN_SECTIONS:
+                continue
+
+            # Copy data to avoid modifying the original
+            processed_section = section_data.copy()
+
+            # Special handling for point style (converting radius to line_width)
+            if section_name == "point" and "radius" in processed_section:
+                radius = processed_section.pop("radius")
+                processed_section["line_width"] = radius * 2
+
+            # Special handling for line style (converting stroke_width to line_width)
+            if section_name == "line" and "stroke_width" in processed_section:
+                processed_section["line_width"] = processed_section.pop("stroke_width")
+
+            # Convert color strings to Color objects
+            processed_section = self._convert_colors(processed_section)
+
+            processed_data[section_name] = processed_section
+
+        return processed_data
+
+    def get_style_manager(self) -> StyleManager:
+        """Create and return a StyleManager populated with styles from the TOML file.
+
+        Returns:
+            StyleManager instance populated with the parsed styles
+
+        Raises:
+            StyleValidationError: If any style section has invalid data
+        """
+        try:
+            processed_data = self._process_sections()
+            return StyleManager.from_dict(processed_data)
+        except ValidationError as e:
+            raise StyleValidationError(f"Invalid style definition: {e}")
+        except Exception as e:
+            raise StyleParsingError(f"Error creating style manager: {e}")
+
     def get_style_data(self) -> Dict[str, Any]:
         """Return the validated style data.
 
@@ -120,62 +165,3 @@ class StyleParser:
             Dict containing the parsed style data
         """
         return self.style_data
-
-    def create_style(self, section_name: str) -> Style:
-        """Create a style object from a section in the TOML file.
-
-        Args:
-            section_name: Name of the section in the TOML file
-
-        Returns:
-            Style object instance
-
-        Raises:
-            StyleValidationError: If the section data is invalid
-            KeyError: If the section name is not recognized
-        """
-        if section_name not in self.STYLE_MAPPING:
-            raise KeyError(f"Unknown style section: {section_name}")
-
-        _, style_class = self.STYLE_MAPPING[section_name]
-        section_data = self.style_data.get(section_name, {})
-
-        # Copy data to avoid modifying the original
-        section_data = section_data.copy()
-
-        # Special handling for point style (converting radius to line_width)
-        if section_name == "point" and "radius" in section_data:
-            radius = section_data.pop("radius")
-            section_data["line_width"] = radius * 2
-
-        # Special handling for line style (converting stroke_width to line_width)
-        if section_name == "line" and "stroke_width" in section_data:
-            section_data["line_width"] = section_data.pop("stroke_width")
-
-        # Convert color strings to Color objects
-        converted_data = self._convert_colors(section_data)
-
-        try:
-            # Create the style object using Pydantic's model_validate
-            return style_class.model_validate(converted_data)
-        except ValidationError as e:
-            raise StyleValidationError(f"Invalid style section '{section_name}': {e}")
-
-    def get_styles(self) -> Dict[StyleType, Style]:
-        """Get all style objects from the parsed data.
-
-        Returns:
-            Dictionary mapping style types to their corresponding style objects
-
-        Raises:
-            StyleValidationError: If any style section is invalid
-        """
-        styles = {}
-
-        for section_name, (style_type, _) in self.STYLE_MAPPING.items():
-            try:
-                styles[style_type] = self.create_style(section_name)
-            except Exception as e:
-                raise StyleValidationError(f"Error creating {section_name} style: {e}")
-
-        return styles

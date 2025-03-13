@@ -109,7 +109,7 @@ class SceneGroup(SceneElement):
         return np.concatenate(coords, axis=0)
 
     def __repr__(self) -> str:
-        repr = f"SceneGroup(id={self.id}, elements={len(self._elements)}, parent={self.parent.id if self.parent else None})"
+        repr = f"SceneGroup(id='{self.id}', elements={len(self._elements)}, parent={self.parent.id if self.parent else None})"
         print(self._elements)
         for element in self._elements:
             if self != element:

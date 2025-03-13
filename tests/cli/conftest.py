@@ -79,23 +79,23 @@ def temp_annotation_file():
     """Create a temporary annotation file for testing."""
     with tempfile.NamedTemporaryFile(suffix=".toml", delete=False) as tmp:
         content = """
-        [point.residue_A_1]
-        target = "A:1"
+        [[annotations]]
+        type = "point"
         label = "Residue 1"
-        color = "#FF0000"
-        scale = 1.2
+        index = 1
+        chain = "A"
 
-        [line.connect_A_1_3]
-        target = ["A:1", "A:3"]
+        [[annotations]]
+        type = "line"
         label = "Connection 1-3"
-        color = "#00FF00"
-        stroke_width = 2
+        indices = [1, 3]
+        chain = "A"
 
-        [area.region_A_1_5]
-        target = ["A:1", "A:2", "A:3", "A:4", "A:5"]
+        [[annotations]]
+        type = "area"
         label = "Region 1-5"
-        color = "#0000FF"
-        opacity = 0.5
+        range = { start = 1, end = 5 }
+        chain = "A"
         """
         tmp.write(content.encode())
         tmp.flush()
@@ -118,7 +118,7 @@ def temp_style_file():
         line_width = 3.0
         min_sheet_length = 2
 
-        [loop]
+        [coil]
         color = "#0000FF"
         line_width = 1.0
         """
