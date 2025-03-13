@@ -31,7 +31,7 @@ class PointAnnotationData(BaseModel):
 
     label: str
     type: Literal["point"]
-    indices: int
+    index: int
     chain: str
 
     model_config = ConfigDict(frozen=True)
@@ -157,6 +157,7 @@ class AnnotationParser:
 
         # Create annotation objects
         annotation_objects = []
+
         for i, data in enumerate(annotations_file.annotations):
             # Validate scene references and create annotation objects
             if isinstance(data, PointAnnotationData):
@@ -185,10 +186,10 @@ class AnnotationParser:
         Raises:
             InvalidReferenceError: If the reference doesn't exist in the scene
         """
-        elements = self.scene.get_elements_for_residue(data.chain, data.indices)
+        elements = self.scene.get_elements_for_residue(data.chain, data.index)
         if not elements:
             raise InvalidReferenceError(
-                "point", "residue", f"{data.indices} in chain {data.chain}", index
+                "point", "residue", f"{data.index} in chain {data.chain}", index
             )
 
     def _validate_scene_reference_line(
@@ -242,12 +243,12 @@ class AnnotationParser:
         Returns:
             PointAnnotation object
         """
-        targets = self.scene.get_elements_for_residue(data.chain, data.indices)
+        targets = self.scene.get_elements_for_residue(data.chain, data.index)
 
         return PointAnnotation(
             label=data.label,
             targets=targets,
-            indices=[data.indices],
+            indices=[data.index],
         )
 
     def _create_line_annotation(self, data: LineAnnotationData) -> LineAnnotation:
