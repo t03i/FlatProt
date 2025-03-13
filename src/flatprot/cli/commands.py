@@ -341,8 +341,8 @@ def generate_svg(
 
     # Render scene to SVG using Canvas
     canvas = Canvas(scene, style_manager)
-    drawing = canvas.render()
 
+    drawing = canvas.render()
     # Convert drawing to SVG string (using drawsvg's functionality)
     svg_content = drawing.as_svg()
 
