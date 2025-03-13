@@ -312,7 +312,8 @@ def generate_svg(
         annotation_parser = AnnotationParser(file_path=annotations_path, scene=scene)
         annotations = annotation_parser.parse()
         for annotation in annotations:
-            annotation.apply(scene, style_manager)
+            console.print(annotation)
+            scene.add_element(annotation)
 
     # Render scene to SVG using Canvas
     canvas = Canvas(scene, style_manager)
