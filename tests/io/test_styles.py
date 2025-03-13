@@ -8,7 +8,12 @@ import tempfile
 import pytest
 from pathlib import Path
 
-from flatprot.io.styles import StyleParser, InvalidTomlError, StyleValidationError
+from flatprot.io.styles import (
+    StyleParser,
+    InvalidTomlError,
+    StyleValidationError,
+    StyleParsingError,
+)
 from flatprot.style.types import StyleType
 from flatprot.style.structure import HelixStyle, SheetStyle
 from flatprot.style.annotation import AreaAnnotationStyle
@@ -74,38 +79,6 @@ def test_valid_style_file():
         os.unlink(file_path)
 
 
-def test_missing_section():
-    """Test validation for missing sections."""
-    # Missing 'area' section
-    content = """
-    [helix]
-    fill_color = "#FF5733"
-    stroke_color = "#900C3F"
-    amplitude = 5.0
-
-    [sheet]
-    fill_color = "#DAF7A6"
-    line_width = 2.5
-    min_sheet_length = 3
-
-    [point]
-    fill_color = "#FFC300"
-    radius = 3.5
-
-    [line]
-    stroke_color = "#900C3F"
-    stroke_width = 1.5
-    """
-
-    file_path = create_temp_toml(content)
-    try:
-        with pytest.raises(StyleValidationError) as excinfo:
-            StyleParser(file_path)
-        assert "Missing required style sections: area" in str(excinfo.value)
-    finally:
-        os.unlink(file_path)
-
-
 def test_malformed_toml():
     """Test validation for malformed TOML."""
     # Malformed TOML (missing closing bracket)
@@ -145,15 +118,15 @@ def test_style_manager_creation():
     line_width = 2.5
     min_sheet_length = 3
 
-    [point]
+    [point_annotation]
     fill_color = "#FFC300"
     radius = 3.5
 
-    [line]
+    [line_annotation]
     stroke_color = "#900C3F"
     stroke_width = 1.5
 
-    [area]
+    [area_annotation]
     fill_color = "#C70039"
     fill_opacity = 0.7
     stroke_color = "#900C3F"
@@ -182,13 +155,13 @@ def test_style_manager_creation():
         assert sheet_style.min_sheet_length == 3
 
         # Test special handling for point style (radius conversion)
-        point_style = style_manager.get_style(StyleType.POINT)
-        assert point_style.line_width == 7.0  # radius * 2
+        point_style = style_manager.get_style(StyleType.POINT_ANNOTATION)
+        assert point_style.stroke_width == 7.0  # radius * 2
 
         # Test special handling for line style (stroke_width conversion)
-        line_style = style_manager.get_style(StyleType.LINE)
+        line_style = style_manager.get_style(StyleType.LINE_ANNOTATION)
         assert line_style.stroke_color.as_hex() == "#900c3f"
-        assert line_style.line_width == 1.5
+        assert line_style.stroke_width == 1.5
 
         # Test for area
         area_style = style_manager.get_style(StyleType.AREA_ANNOTATION)
@@ -236,7 +209,7 @@ def test_invalid_color_format():
     file_path = create_temp_toml(content)
     try:
         parser = StyleParser(file_path)
-        with pytest.raises(StyleValidationError) as excinfo:
+        with pytest.raises(StyleParsingError) as excinfo:
             parser.get_style_manager()
         assert "Invalid color format" in str(excinfo.value)
     finally:

@@ -18,6 +18,7 @@ from flatprot.core import (
     SecondaryStructureType,
     CoordinateManager,
     CoordinateType,
+    Residue,
 )
 
 
@@ -223,6 +224,14 @@ def mock_structure():
             [6.0, 7.0, 8.0],  # 5
         ]
     )
+    structure.residues = [
+        Residue.ALA,
+        Residue.ALA,
+        Residue.ALA,
+        Residue.ALA,
+        Residue.ALA,
+        Residue.ALA,
+    ]
 
     return structure
 
