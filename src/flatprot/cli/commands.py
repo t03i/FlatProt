@@ -245,11 +245,11 @@ def generate_svg(
     # Create style manager - either from file or default
     if style_path:
         style_parser = StyleParser(file_path=style_path)
-        style_manager = style_parser.get_styles()
-        console.print(style_manager, style_parser)
+        style_manager = style_parser.get_style_manager()
+        console.print(f"Using custom styles from {style_path}")
     else:
         style_manager = StyleManager.create_default()
-        console.print(style_manager)
+        console.print("Using default styles")
 
     # Create scene from structure
     scene = Scene()
@@ -288,15 +288,21 @@ def generate_svg(
         elements_with_z.sort(key=lambda x: x[1], reverse=True)
 
         # Create a group for the chain
-        chain_group = SceneGroup(id=f"chain_{chain.id}")
+        chain_group = SceneGroup(id=chain.id)
         chain_group.metadata["chain_id"] = chain.id
-
-        # Add sorted elements to the chain group
-        for element, _ in elements_with_z:
-            chain_group.add_element(element)
 
         # Add chain group to scene
         scene.add_element(chain_group)
+
+        # Add sorted elements to the chain group
+        for element, _ in elements_with_z:
+            scene.add_element(
+                element,
+                chain_group,
+                element.metadata["chain_id"],
+                element.metadata["start"],
+                element.metadata["end"],
+            )
 
         # Update offset for next chain
         offset += chain.num_residues
@@ -396,13 +402,15 @@ def main(
 
         # Load structure
         parser = GemmiStructureParser()
-        structure = parser.parse_structure(structure)
+        structure_obj = parser.parse_structure(structure)
 
         # Apply transformation and create coordinate manager
-        coordinate_manager = get_coordinate_manager(structure, matrix)
+        coordinate_manager = get_coordinate_manager(structure_obj, matrix)
 
         # Generate SVG visualization
-        svg_content = generate_svg(structure, coordinate_manager, annotations, style)
+        svg_content = generate_svg(
+            structure_obj, coordinate_manager, annotations, style
+        )
 
         # Save SVG to output file
         save_svg(svg_content, output)
