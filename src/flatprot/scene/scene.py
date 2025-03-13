@@ -70,12 +70,12 @@ class Scene:
     def _set_parent(self, element: SceneElement, parent: SceneGroup) -> None:
         """Internal method to set the parent of an element."""
         assert element in self._elements, "Element must be registered in the scene"
-        assert parent is None or parent in self._elements, (
-            "Parent group must be registered in the scene"
-        )
-        assert parent is None or isinstance(parent, SceneGroup), (
-            "Parent must be a SceneGroup instance"
-        )
+        assert (
+            parent is None or parent in self._elements
+        ), "Parent group must be registered in the scene"
+        assert parent is None or isinstance(
+            parent, SceneGroup
+        ), "Parent must be a SceneGroup instance"
 
         if parent is None:
             parent = self._root_group
@@ -120,13 +120,13 @@ class Scene:
         self, global_index: int, element: StructureSceneElement
     ) -> int:
         """Get the index of an element from a global index"""
-        assert element in self._residue_mappings, (
-            "Element must be registered in the scene"
-        )
+        assert (
+            element in self._residue_mappings
+        ), "Element must be registered in the scene"
         mapping = self._residue_mappings[element]
-        assert global_index in mapping.residue_range, (
-            "Global index must be in the element's residue range"
-        )
+        assert (
+            global_index in mapping.residue_range
+        ), "Global index must be in the element's residue range"
         return global_index - mapping.start
 
     def get_elements_for_residue_range(
@@ -240,3 +240,10 @@ class Scene:
         if parent is None:
             parent = self._root_group
         parent.add_element(element=group)
+
+    def __repr__(self) -> str:
+        repr = f"Scene(elements={len(self._elements)})"
+        for element in self._elements:
+            if isinstance(element, SceneGroup):
+                repr += f"\n\t{element}"
+        return repr

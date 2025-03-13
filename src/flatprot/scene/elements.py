@@ -44,6 +44,9 @@ class SceneElement(ABC):
         """Calculate the coordinates of the scene element."""
         pass
 
+    def __repr__(self) -> str:
+        return f"{self.__class__.__name__}(parent={self.parent.id if self.parent else None}, metadata={self.metadata})"
+
 
 class SceneGroup(SceneElement):
     def __init__(
@@ -66,9 +69,9 @@ class SceneGroup(SceneElement):
         return self._transforms
 
     def add_element(self, element: SceneElement) -> None:
-        assert isinstance(element, SceneElement), (
-            "Element must be an instance of SceneElement"
-        )
+        assert isinstance(
+            element, SceneElement
+        ), "Element must be an instance of SceneElement"
         if hasattr(element, "_parent"):
             element._parent = self
         self._elements.append(element)
@@ -104,3 +107,11 @@ class SceneGroup(SceneElement):
             return None
 
         return np.concatenate(coords, axis=0)
+
+    def __repr__(self) -> str:
+        repr = f"SceneGroup(id={self.id}, elements={len(self._elements)}, parent={self.parent.id if self.parent else None})"
+        print(self._elements)
+        for element in self._elements:
+            if self != element:
+                repr += f"\n\t{element}"
+        return repr
