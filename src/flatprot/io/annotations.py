@@ -4,7 +4,7 @@
 """Parser for annotation files in TOML format."""
 
 from pathlib import Path
-from typing import List, Optional, Union, Literal
+from typing import List, Union, Literal
 
 import toml
 from pydantic import BaseModel, field_validator, ConfigDict, ValidationError
@@ -14,6 +14,7 @@ from flatprot.io.errors import (
     AnnotationFileNotFoundError,
     MalformedAnnotationError,
     InvalidReferenceError,
+    AnnotationError,
 )
 from flatprot.scene.annotations import PointAnnotation, LineAnnotation, AreaAnnotation
 from flatprot.scene import Scene
@@ -107,13 +108,13 @@ class AnnotationParser:
     def __init__(
         self,
         file_path: Path,
-        scene: Optional[Scene] = None,
+        scene: Scene = None,
     ):
-        """Initialize the parser with a file path and optional scene.
+        """Initialize the parser with a file path and  scene.
 
         Args:
             file_path: Path to the TOML file containing annotations
-            scene: Optional scene object to map annotations to
+            scene: Scene object to map annotations to
 
         Raises:
             AnnotationFileNotFoundError: If the file does not exist
@@ -135,6 +136,10 @@ class AnnotationParser:
             MalformedAnnotationError: If the TOML file is malformed or missing required structure
             InvalidReferenceError: If an annotation references a nonexistent chain or residue
         """
+        # If no scene provided, we just validate the TOML but can't create objects
+        if self.scene is None:
+            raise AnnotationError("Scene is required to create annotation objects")
+
         try:
             # Parse TOML content
             content = toml.load(self.file_path)
@@ -148,10 +153,6 @@ class AnnotationParser:
             )
         except ValidationError as e:
             raise MalformedAnnotationError(str(self.file_path), str(e))
-
-        # If no scene provided, we just validated the TOML but can't create objects
-        if not self.scene:
-            return []
 
         # Create annotation objects
         annotation_objects = []
