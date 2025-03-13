@@ -42,9 +42,9 @@ class StyleParser:
         "helix",
         "sheet",
         "coil",
-        "point",
-        "line",
-        "area",
+        "point_annotation",
+        "line_annotation",
+        "area_annotation",
         "canvas",
         "annotation",
     ]
@@ -126,13 +126,9 @@ class StyleParser:
             processed_section = section_data.copy()
 
             # Special handling for point style (converting radius to line_width)
-            if section_name == "point" and "radius" in processed_section:
+            if section_name == "point_annotation" and "radius" in processed_section:
                 radius = processed_section.pop("radius")
-                processed_section["line_width"] = radius * 2
-
-            # Special handling for line style (converting stroke_width to line_width)
-            if section_name == "line" and "stroke_width" in processed_section:
-                processed_section["line_width"] = processed_section.pop("stroke_width")
+                processed_section["stroke_width"] = radius * 2
 
             # Convert color strings to Color objects
             processed_section = self._convert_colors(processed_section)
