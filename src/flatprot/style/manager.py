@@ -96,7 +96,6 @@ class StyleManager:
 
     def get_style(self, element_type: StyleType) -> Style:
         """Get the style for a specific element type, applying global overrides"""
-        print(self._element_styles)
         base_style = self._element_styles[element_type]
         if self._element_styles[StyleType.ELEMENT]:
             return base_style.model_copy(
