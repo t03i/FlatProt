@@ -3,7 +3,6 @@
 
 from pathlib import Path
 from typing import Optional
-from collections import namedtuple
 
 import numpy as np
 import gemmi
