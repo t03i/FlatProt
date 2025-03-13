@@ -11,7 +11,7 @@ index = 45
 type = "point"
 label = "Binding Site"
 chain = "A"
-index = 78
+index = 70
 
 [[annotations]]
 type = "line"
