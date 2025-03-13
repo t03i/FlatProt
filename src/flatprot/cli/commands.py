@@ -323,16 +323,18 @@ def generate_svg(
             annotation_parser = AnnotationParser(
                 file_path=annotations_path,
                 scene=scene,
+                style_manager=style_manager,
             )
             annotations = annotation_parser.parse()
 
             console.print(
-                f"[green]Loaded {len(annotations)} annotations from {annotations_path}[/green]"
+                f"[blue]Loaded {len(annotations)} annotations from {annotations_path}[/blue]"
             )
             for i, annotation in enumerate(annotations):
                 # Apply appropriate style based on annotation type
-                annotation_type = annotation.__class__.__name__
-                console.print(f"  Adding {annotation_type} to scene")
+                console.print(
+                    f"  Adding {annotation.label} ({annotation.__class__.__name__}) to scene"
+                )
                 scene.add_element(annotation)
         except Exception as e:
             console.print(

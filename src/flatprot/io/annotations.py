@@ -16,8 +16,8 @@ from flatprot.io.errors import (
     InvalidReferenceError,
     AnnotationError,
 )
-from flatprot.scene.annotations import PointAnnotation, LineAnnotation, AreaAnnotation
-from flatprot.scene import Scene
+from flatprot.scene import PointAnnotation, LineAnnotation, AreaAnnotation, Scene
+from flatprot.style import StyleManager
 
 console = Console()
 
@@ -109,6 +109,7 @@ class AnnotationParser:
         self,
         file_path: Path,
         scene: Scene = None,
+        style_manager: StyleManager = None,
     ):
         """Initialize the parser with a file path and  scene.
 
@@ -121,6 +122,7 @@ class AnnotationParser:
         """
         self.file_path = file_path
         self.scene = scene
+        self.style_manager = style_manager or StyleManager.create_default()
 
         # Check file existence
         if not file_path.exists():
@@ -202,6 +204,7 @@ class AnnotationParser:
             label=data.label,
             targets=[elements[0]],
             indices=[element_idx],
+            style_manager=self.style_manager,
         )
 
     def _validate_and_create_line_annotation(
@@ -236,6 +239,7 @@ class AnnotationParser:
             label=data.label,
             targets=[t for t, _ in targets],
             indices=[i for _, i in targets],
+            style_manager=self.style_manager,
         )
 
     def _validate_and_create_area_annotation(
@@ -267,4 +271,5 @@ class AnnotationParser:
         return AreaAnnotation(
             label=data.label,
             targets=elements,
+            style_manager=self.style_manager,
         )
