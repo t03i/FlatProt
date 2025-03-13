@@ -414,11 +414,6 @@ def main(
         # Validate the structure file
         validate_structure_file(structure)
 
-        # Ensure the output directory exists
-        output_dir = output.parent
-        if not output_dir.exists():
-            os.makedirs(output_dir, exist_ok=True)
-
         # Verify optional files if specified
         if matrix and not matrix.exists():
             raise FileNotFoundError(str(matrix))
@@ -439,13 +434,21 @@ def main(
             structure_obj, coordinate_manager, annotations, style
         )
 
-        # Save SVG to output file
-        save_svg(svg_content, output)
+        if output is not None:
+            # Ensure the output directory exists
+            output_dir = output.parent
+            if not output_dir.exists():
+                os.makedirs(output_dir, exist_ok=True)
+            # Save SVG to output file
+            save_svg(svg_content, output)
+        else:
+            # Print SVG to stdout
+            console.print(svg_content)
 
         # Print success message
         console.print("[bold green]Successfully processed structure:[/bold green]")
         console.print(f"  Structure file: {str(structure)}")
-        console.print(f"  Output file: {str(output)}")
+        console.print(f"  Output file: {str(output) if output else 'stdout'}")
         console.print(
             f"  Transformation: {'Custom matrix' if matrix else 'Inertia-based'}"
         )
