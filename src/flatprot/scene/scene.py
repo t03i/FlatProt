@@ -108,6 +108,7 @@ class Scene:
         """
         matching_elements = []
         for element, mapping in self._residue_mappings.items():
+            print(element, mapping)
             if (
                 isinstance(element, StructureSceneElement)
                 and mapping.chain_id == chain_id
@@ -212,7 +213,7 @@ class Scene:
         # Restore mapping if it existed
         if mapping:
             self._register_element(
-                element, mapping.chain_id, mapping.start, mapping.end
+                element, mapping.chain_id, int(mapping.start), int(mapping.end)
             )
 
     @property

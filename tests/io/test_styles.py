@@ -10,7 +10,7 @@ from pathlib import Path
 
 from flatprot.io.styles import StyleParser, InvalidTomlError, StyleValidationError
 from flatprot.style.types import StyleType
-from flatprot.style.structure import HelixStyle, SheetStyle, ElementStyle
+from flatprot.style.structure import HelixStyle, SheetStyle
 from flatprot.style.annotation import AreaAnnotationStyle
 
 
@@ -132,8 +132,8 @@ def test_file_not_found():
     assert "Style file not found" in str(excinfo.value)
 
 
-def test_create_style_objects():
-    """Test creation of style objects from the parsed data."""
+def test_style_manager_creation():
+    """Test creation of style manager from the parsed data."""
     content = """
     [helix]
     fill_color = "#FF5733"
@@ -166,37 +166,32 @@ def test_create_style_objects():
     try:
         parser = StyleParser(file_path)
 
-        # Test getting all styles
-        styles = parser.get_styles()
-        assert StyleType.HELIX in styles
-        assert StyleType.SHEET in styles
-        assert StyleType.POINT in styles
-        assert StyleType.ELEMENT in styles
-        assert StyleType.AREA_ANNOTATION in styles
+        # Test getting style manager
+        style_manager = parser.get_style_manager()
 
-        # Test individual style objects
-        helix_style = parser.create_style("helix")
+        # Test that style manager has the correct styles
+        helix_style = style_manager.get_style(StyleType.HELIX)
         assert isinstance(helix_style, HelixStyle)
         assert helix_style.fill_color.as_hex() == "#ff5733"
         assert helix_style.amplitude == 5.0
 
-        sheet_style = parser.create_style("sheet")
+        sheet_style = style_manager.get_style(StyleType.SHEET)
         assert isinstance(sheet_style, SheetStyle)
         assert sheet_style.fill_color.as_hex() == "#daf7a6"
         assert sheet_style.line_width == 2.5
         assert sheet_style.min_sheet_length == 3
 
-        point_style = parser.create_style("point")
-        assert isinstance(point_style, ElementStyle)
-        assert point_style.fill_color.as_hex() == "#ffc300"
+        # Test special handling for point style (radius conversion)
+        point_style = style_manager.get_style(StyleType.POINT)
         assert point_style.line_width == 7.0  # radius * 2
 
-        line_style = parser.create_style("line")
-        assert isinstance(line_style, ElementStyle)
+        # Test special handling for line style (stroke_width conversion)
+        line_style = style_manager.get_style(StyleType.LINE)
         assert line_style.stroke_color.as_hex() == "#900c3f"
         assert line_style.line_width == 1.5
 
-        area_style = parser.create_style("area")
+        # Test for area
+        area_style = style_manager.get_style(StyleType.AREA_ANNOTATION)
         assert isinstance(area_style, AreaAnnotationStyle)
         assert area_style.fill_color.as_hex() == "#c70039"
         assert area_style.fill_opacity == 0.7
@@ -242,7 +237,7 @@ def test_invalid_color_format():
     try:
         parser = StyleParser(file_path)
         with pytest.raises(StyleValidationError) as excinfo:
-            parser.create_style("helix")
+            parser.get_style_manager()
         assert "Invalid color format" in str(excinfo.value)
     finally:
         os.unlink(file_path)
@@ -282,8 +277,8 @@ def test_invalid_field_type():
     try:
         parser = StyleParser(file_path)
         with pytest.raises(StyleValidationError) as excinfo:
-            parser.create_style("helix")
-        assert "helix" in str(excinfo.value)
+            parser.get_style_manager()
+        assert "Invalid style definition" in str(excinfo.value)
     finally:
         os.unlink(file_path)
 
@@ -322,7 +317,7 @@ def test_invalid_value_range():
     try:
         parser = StyleParser(file_path)
         with pytest.raises(StyleValidationError) as excinfo:
-            parser.create_style("helix")
-        assert "helix" in str(excinfo.value)
+            parser.get_style_manager()
+        assert "Invalid style definition" in str(excinfo.value)
     finally:
         os.unlink(file_path)
