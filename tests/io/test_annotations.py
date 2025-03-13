@@ -19,6 +19,7 @@ from flatprot.io.errors import (
     AnnotationFileNotFoundError,
     MalformedAnnotationError,
     InvalidReferenceError,
+    AnnotationError,
 )
 from flatprot.scene.annotations.point import PointAnnotation
 from flatprot.scene.annotations.line import LineAnnotation
@@ -141,16 +142,16 @@ def test_parser_with_nonexistent_file():
         AnnotationParser(Path("nonexistent_file.toml"))
 
 
-def test_parser_with_malformed_toml(malformed_toml_file):
+def test_parser_with_malformed_toml(malformed_toml_file, mock_scene):
     """Test parser with malformed TOML."""
-    parser = AnnotationParser(Path(malformed_toml_file))
+    parser = AnnotationParser(Path(malformed_toml_file), scene=mock_scene)
     with pytest.raises(MalformedAnnotationError):
         parser.parse()
 
 
-def test_parser_with_missing_annotations(missing_annotations_file):
+def test_parser_with_missing_annotations(missing_annotations_file, mock_scene):
     """Test parser with missing annotations list."""
-    parser = AnnotationParser(Path(missing_annotations_file))
+    parser = AnnotationParser(Path(missing_annotations_file), scene=mock_scene)
     with pytest.raises(MalformedAnnotationError):
         parser.parse()
 
@@ -158,10 +159,8 @@ def test_parser_with_missing_annotations(missing_annotations_file):
 def test_parser_with_valid_file_no_scene(valid_annotations_file):
     """Test parser with a valid annotations file but no scene."""
     parser = AnnotationParser(Path(valid_annotations_file))
-    annotations = parser.parse()
-
-    # Without a scene, we just validate the TOML but don't create objects
-    assert len(annotations) == 0
+    with pytest.raises(AnnotationError):
+        parser.parse()
 
 
 def test_parser_with_scene(valid_annotations_file, mock_scene):
@@ -190,7 +189,7 @@ def test_parser_with_scene(valid_annotations_file, mock_scene):
     assert annotations[2].indices is None
 
 
-def test_invalid_point_type():
+def test_invalid_point_type(mock_scene):
     """Test validation of invalid point type."""
     content = {
         "annotations": [
@@ -208,7 +207,7 @@ def test_invalid_point_type():
         temp_file = f.name
 
     try:
-        parser = AnnotationParser(Path(temp_file))
+        parser = AnnotationParser(Path(temp_file), scene=mock_scene)
         with pytest.raises(MalformedAnnotationError) as excinfo:
             parser.parse()
         assert "indices" in str(excinfo.value)
@@ -217,7 +216,7 @@ def test_invalid_point_type():
         os.unlink(temp_file)
 
 
-def test_invalid_annotation_type():
+def test_invalid_annotation_type(mock_scene):
     """Test validation of invalid annotation type."""
     content = {
         "annotations": [
@@ -235,7 +234,7 @@ def test_invalid_annotation_type():
         temp_file = f.name
 
     try:
-        parser = AnnotationParser(Path(temp_file))
+        parser = AnnotationParser(Path(temp_file), scene=mock_scene)
         with pytest.raises(MalformedAnnotationError) as excinfo:
             parser.parse()
         assert "type" in str(excinfo.value)
@@ -243,7 +242,7 @@ def test_invalid_annotation_type():
         os.unlink(temp_file)
 
 
-def test_invalid_line_indices():
+def test_invalid_line_indices(mock_scene):
     """Test validation of invalid line indices."""
     content = {
         "annotations": [
@@ -261,7 +260,7 @@ def test_invalid_line_indices():
         temp_file = f.name
 
     try:
-        parser = AnnotationParser(Path(temp_file))
+        parser = AnnotationParser(Path(temp_file), scene=mock_scene)
         with pytest.raises(MalformedAnnotationError) as excinfo:
             parser.parse()
         assert "indices" in str(excinfo.value)
@@ -270,7 +269,7 @@ def test_invalid_line_indices():
         os.unlink(temp_file)
 
 
-def test_invalid_area_range():
+def test_invalid_area_range(mock_scene):
     """Test validation of invalid area range."""
     content = {
         "annotations": [
@@ -288,7 +287,7 @@ def test_invalid_area_range():
         temp_file = f.name
 
     try:
-        parser = AnnotationParser(Path(temp_file))
+        parser = AnnotationParser(Path(temp_file), scene=mock_scene)
         with pytest.raises(MalformedAnnotationError) as excinfo:
             parser.parse()
         assert "greater than or equal to start" in str(excinfo.value)
@@ -296,7 +295,7 @@ def test_invalid_area_range():
         os.unlink(temp_file)
 
 
-def test_missing_required_field():
+def test_missing_required_field(mock_scene):
     """Test validation of missing required fields."""
     content = {
         "annotations": [
@@ -314,7 +313,7 @@ def test_missing_required_field():
         temp_file = f.name
 
     try:
-        parser = AnnotationParser(Path(temp_file))
+        parser = AnnotationParser(Path(temp_file), scene=mock_scene)
         with pytest.raises(MalformedAnnotationError) as excinfo:
             parser.parse()
         assert "chain" in str(excinfo.value)
