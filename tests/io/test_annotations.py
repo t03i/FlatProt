@@ -35,7 +35,7 @@ def valid_annotations_file():
             {
                 "label": "Catalytic Site",
                 "type": "point",
-                "indices": 42,
+                "index": 42,
                 "chain": "A",
             },
             {
@@ -329,7 +329,7 @@ def test_invalid_residue_reference(mock_scene):
             {
                 "label": "Invalid Residue",
                 "type": "point",
-                "indices": 200,  # Residue 200 doesn't exist in chain A
+                "index": 200,  # Residue 200 doesn't exist in chain A
                 "chain": "A",
             }
         ]
@@ -357,7 +357,7 @@ def test_invalid_chain_reference(mock_scene):
             {
                 "label": "Invalid Chain",
                 "type": "point",
-                "indices": 42,
+                "index": 42,
                 "chain": "C",  # Chain C doesn't exist
             }
         ]
