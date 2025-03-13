@@ -85,7 +85,7 @@ class Canvas:
         st = style_manager or StyleManager.create_default()
         self.canvas_settings = st.get_style(StyleType.CANVAS)
 
-    def render(self, output_path: Optional[str] = None) -> Drawing:
+    def render(self) -> Drawing:
         """Render the scene to SVG."""
         drawing = Drawing(
             self.canvas_settings.width,
@@ -111,8 +111,5 @@ class Canvas:
         root_scene = draw_scene(self.scene)
 
         drawing.append(root_scene)
-
-        if output_path:
-            drawing.save_svg(output_path)
 
         return drawing

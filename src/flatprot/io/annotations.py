@@ -190,6 +190,9 @@ class AnnotationParser:
             InvalidReferenceError: If the reference doesn't exist in the scene
         """
         elements = self.scene.get_elements_for_residue(data.chain, data.index)
+        element_idx = self.scene.get_element_index_from_global_index(
+            data.index, elements[0]
+        )
         if not elements:
             raise InvalidReferenceError(
                 "point", "residue", f"{data.index} in chain {data.chain}", index
@@ -197,8 +200,8 @@ class AnnotationParser:
 
         return PointAnnotation(
             label=data.label,
-            targets=elements,
-            indices=[data.index],
+            targets=[elements[0]],
+            indices=[element_idx],
         )
 
     def _validate_and_create_line_annotation(
@@ -219,17 +222,20 @@ class AnnotationParser:
         targets = []
         for idx in data.indices:
             elements = self.scene.get_elements_for_residue(data.chain, idx)
+            element_idx = self.scene.get_element_index_from_global_index(
+                idx, elements[0]
+            )
             if not elements:
                 raise InvalidReferenceError(
                     "line/pair", "residue", f"{idx} in chain {data.chain}", index
                 )
             # Store the first element for the residue
-            targets.append(elements[0])
+            targets.append((elements[0], element_idx))
 
         return LineAnnotation(
             label=data.label,
-            targets=targets,
-            indices=data.indices,
+            targets=[t for t, _ in targets],
+            indices=[i for _, i in targets],
         )
 
     def _validate_and_create_area_annotation(
