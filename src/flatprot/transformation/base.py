@@ -17,7 +17,7 @@ class TransformParameters:
     pass
 
 
-class Transformer(ABC):
+class BaseTransformer(ABC):
     """Base class for all transformations using template method pattern."""
 
     def __init__(self):
