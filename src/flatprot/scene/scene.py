@@ -244,6 +244,6 @@ class Scene:
     def __repr__(self) -> str:
         repr = f"Scene(elements={len(self._elements)})"
         for element in self._elements:
-            if isinstance(element, SceneGroup):
+            if isinstance(element, SceneGroup) or element.parent is self._root_group:
                 repr += f"\n\t{element}"
         return repr

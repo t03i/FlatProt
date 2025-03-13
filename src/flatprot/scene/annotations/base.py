@@ -35,6 +35,9 @@ class Annotation(SceneElement):
     def display_coordinates(self) -> Optional[np.ndarray]:
         return None
 
+    def __repr__(self) -> str:
+        return f"Annotation(label={self.label}, indices={self.indices})"
+
 
 class GroupAnnotation(SceneGroup):
     """A group that annotates its contained elements."""
