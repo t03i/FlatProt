@@ -10,7 +10,7 @@ import toml
 from pydantic import BaseModel, field_validator, ConfigDict, ValidationError
 from rich.console import Console
 
-from flatprot.io.errors import (
+from .errors import (
     AnnotationFileNotFoundError,
     MalformedAnnotationError,
     InvalidReferenceError,

@@ -11,27 +11,15 @@ from pydantic_extra_types.color import Color
 
 from ..style.manager import StyleManager
 from ..style.base import Style
+from .errors import (
+    StyleParsingError,
+    InvalidTomlError,
+    StyleValidationError,
+    FileNotFoundError,
+)
 
 
 StyleT = TypeVar("StyleT", bound=Style)
-
-
-class StyleParsingError(Exception):
-    """Base error for style parsing issues."""
-
-    pass
-
-
-class InvalidTomlError(StyleParsingError):
-    """Error for malformed TOML files."""
-
-    pass
-
-
-class StyleValidationError(StyleParsingError):
-    """Error for invalid style field types or values."""
-
-    pass
 
 
 class StyleParser:
