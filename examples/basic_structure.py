@@ -8,7 +8,7 @@ from flatprot.transformation.inertia import (
     InertiaTransformer,
     InertiaTransformParameters,
 )
-from flatprot.composer import structure_to_scene
+from flatprot.utils.structure import structure_to_scene
 from flatprot.drawing.canvas import Canvas
 from flatprot.style.manager import StyleManager
 from flatprot.scene import Scene, SceneGroup
