@@ -323,7 +323,6 @@ def generate_svg(
             annotation_parser = AnnotationParser(
                 file_path=annotations_path,
                 scene=scene,
-                style_manager=style_manager,  # Pass style_manager to annotation parser
             )
             annotations = annotation_parser.parse()
 
