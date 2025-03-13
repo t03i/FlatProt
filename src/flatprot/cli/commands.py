@@ -15,6 +15,7 @@ from flatprot.cli.errors import (
     FileNotFoundError,
     InvalidStructureError,
     TransformationError,
+    error_handler,
 )
 from flatprot.io import GemmiStructureParser, MatrixLoader, StyleParser
 from flatprot.core.components import Structure
@@ -247,6 +248,13 @@ def generate_svg(
         style_parser = StyleParser(file_path=style_path)
         style_manager = style_parser.get_style_manager()
         console.print(f"Using custom styles from {style_path}")
+
+        # Log applied styles for debugging
+        style_data = style_parser.get_style_data()
+        for section, properties in style_data.items():
+            console.print(f"  [blue]Applied {section} style:[/blue]")
+            for prop, value in properties.items():
+                console.print(f"    {prop}: {value}")
     else:
         style_manager = StyleManager.create_default()
         console.print("Using default styles")
@@ -275,6 +283,7 @@ def generate_svg(
                 "type": element.secondary_structure_type.value,
             }
 
+            # Get the appropriate style for this element type
             viz_element = secondary_structure_to_scene_element(
                 element,
                 canvas_coords,
@@ -309,11 +318,27 @@ def generate_svg(
 
     # Handle annotations if provided
     if annotations_path:
-        annotation_parser = AnnotationParser(file_path=annotations_path, scene=scene)
-        annotations = annotation_parser.parse()
-        for annotation in annotations:
-            console.print(annotation)
-            scene.add_element(annotation)
+        try:
+            # Pass the style manager to ensure annotations use correct styles
+            annotation_parser = AnnotationParser(
+                file_path=annotations_path,
+                scene=scene,
+                style_manager=style_manager,  # Pass style_manager to annotation parser
+            )
+            annotations = annotation_parser.parse()
+
+            console.print(
+                f"[green]Loaded {len(annotations)} annotations from {annotations_path}[/green]"
+            )
+            for i, annotation in enumerate(annotations):
+                # Apply appropriate style based on annotation type
+                annotation_type = annotation.__class__.__name__
+                console.print(f"  Adding {annotation_type} to scene")
+                scene.add_element(annotation)
+        except Exception as e:
+            console.print(
+                f"[yellow]Warning: Failed to load annotations: {str(e)}[/yellow]"
+            )
 
     # Render scene to SVG using Canvas
     canvas = Canvas(scene, style_manager)
@@ -351,6 +376,7 @@ def save_svg(svg_content: str, output_path: Path) -> None:
         raise IOError(f"Failed to save SVG: {str(e)}")
 
 
+@error_handler
 def main(
     structure: Path,
     output: Path = None,
