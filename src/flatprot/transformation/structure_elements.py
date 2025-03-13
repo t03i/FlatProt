@@ -9,7 +9,7 @@ import numpy as np
 from typing import Optional
 
 from flatprot.core.secondary import SecondaryStructure, SecondaryStructureType
-from .base import Transformer, TransformParameters
+from .base import BaseTransformer, TransformParameters
 from .utils import (
     TransformationMatrix,
     apply_transformation,
@@ -32,7 +32,7 @@ class StructureElementsTransformParameters(TransformParameters):
     structure_elements: list[SecondaryStructure]
 
 
-class StructureElementsTransformer(Transformer):
+class StructureElementsTransformer(BaseTransformer):
     """Projects using structure elements."""
 
     def __init__(
@@ -56,9 +56,9 @@ class StructureElementsTransformer(Transformer):
             # Set higher weight for structure elements
             for element in parameters.structure_elements:
                 if element.secondary_structure_type != SecondaryStructureType.COIL:
-                    weights[element.start : element.end] = (
-                        self.parameters.structure_weight
-                    )
+                    weights[
+                        element.start : element.end
+                    ] = self.parameters.structure_weight
 
         return calculate_inertia_transformation(coordinates, weights)
 
