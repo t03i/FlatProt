@@ -1,5 +1,4 @@
 import pytest
-from unittest.mock import Mock
 
 from flatprot.scene import Scene, SceneGroup, SceneElement, StructureSceneElement
 
@@ -107,11 +106,11 @@ def test_move_element_to_parent(mocker):
 # --------------------------
 
 
-def test_residue_mapping_queries():
+def test_residue_mapping_queries(mocker):
     """Test querying elements by residue position."""
     scene = Scene()
-    element1 = Mock(spec=StructureSceneElement)
-    element2 = Mock(spec=StructureSceneElement)
+    element1 = mocker.Mock(spec=StructureSceneElement)
+    element2 = mocker.Mock(spec=StructureSceneElement)
 
     scene.add_element(element1, chain_id="A", start=1, end=10)
     scene.add_element(element2, chain_id="A", start=5, end=15)
@@ -130,7 +129,7 @@ def test_residue_mapping_queries():
     assert len(scene.get_elements_for_residue("A", 20)) == 0
 
 
-def test_invalid_residue_queries():
+def test_invalid_residue_queries(mocker):
     """Test handling of invalid residue queries."""
     scene = Scene()
 
@@ -138,18 +137,18 @@ def test_invalid_residue_queries():
     assert scene.get_elements_for_residue("X", 1) == []
 
     # Test invalid residue number
-    element = Mock(spec=StructureSceneElement)
+    element = mocker.Mock(spec=StructureSceneElement)
     scene.add_element(element, chain_id="A", start=1, end=10)
     assert scene.get_elements_for_residue("A", 0) == []
     assert scene.get_elements_for_residue("A", 11) == []
 
 
-def test_residue_range_queries():
+def test_residue_range_queries(mocker):
     """Test querying elements by residue range with different overlap scenarios."""
     scene = Scene()
-    element1 = Mock(spec=StructureSceneElement)
-    element2 = Mock(spec=StructureSceneElement)
-    element3 = Mock(spec=StructureSceneElement)
+    element1 = mocker.Mock(spec=StructureSceneElement)
+    element2 = mocker.Mock(spec=StructureSceneElement)
+    element3 = mocker.Mock(spec=StructureSceneElement)
 
     # Set up elements with different ranges
     scene.add_element(element1, chain_id="A", start=1, end=10)  # [1-10]
@@ -189,10 +188,10 @@ def test_residue_range_queries():
     assert len(elements) == 0
 
 
-def test_residue_range_edge_cases():
+def test_residue_range_edge_cases(mocker):
     """Test edge cases for residue range queries."""
     scene = Scene()
-    element = Mock(spec=StructureSceneElement)
+    element = mocker.Mock(spec=StructureSceneElement)
     scene.add_element(element, chain_id="A", start=10, end=20)
 
     # Test exact bounds
@@ -214,11 +213,11 @@ def test_residue_range_edge_cases():
     assert element in elements
 
 
-def test_multiple_chain_residue_ranges():
+def test_multiple_chain_residue_ranges(mocker):
     """Test residue range queries across multiple chains."""
     scene = Scene()
-    element_a = Mock(spec=StructureSceneElement)
-    element_b = Mock(spec=StructureSceneElement)
+    element_a = mocker.Mock(spec=StructureSceneElement)
+    element_b = mocker.Mock(spec=StructureSceneElement)
 
     scene.add_element(element_a, chain_id="A", start=1, end=10)
     scene.add_element(element_b, chain_id="B", start=1, end=10)
@@ -235,10 +234,10 @@ def test_multiple_chain_residue_ranges():
     assert element_b not in elements_a
 
 
-def test_global_to_local_index_mapping():
+def test_global_to_local_index_mapping(mocker):
     """Test conversion from global residue indices to element-local indices."""
     scene = Scene()
-    element = Mock(spec=StructureSceneElement)
+    element = mocker.Mock(spec=StructureSceneElement)
 
     # Register element with residues 10-20
     scene.add_element(element, chain_id="A", start=10, end=20)
@@ -249,7 +248,7 @@ def test_global_to_local_index_mapping():
     assert scene.get_element_index_from_global_index(20, element) == 10  # Last residue
 
     # Test invalid element
-    invalid_element = Mock(spec=StructureSceneElement)
+    invalid_element = mocker.Mock(spec=StructureSceneElement)
     with pytest.raises(AssertionError):
         scene.get_element_index_from_global_index(10, invalid_element)
 
@@ -263,10 +262,10 @@ def test_global_to_local_index_mapping():
 # --------------------------
 
 
-def test_move_elements_to_group():
+def test_move_elements_to_group(mocker):
     """Test moving multiple elements to a new group."""
     scene = Scene()
-    elements = [Mock(spec=SceneElement) for _ in range(3)]
+    elements = [mocker.Mock(spec=SceneElement) for _ in range(3)]
     new_group = SceneGroup(id="new_group")
 
     # Add elements to scene root
@@ -283,11 +282,11 @@ def test_move_elements_to_group():
     assert new_group in scene._elements
 
 
-def test_group_registration_edge_cases():
+def test_group_registration_edge_cases(mocker):
     """Test edge cases in group registration."""
     scene = Scene()
     group = SceneGroup(id="test")
-    element = Mock(spec=SceneElement)
+    element = mocker.Mock(spec=SceneElement)
 
     # Test adding unregistered group
     with pytest.raises(AssertionError):
