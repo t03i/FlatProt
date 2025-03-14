@@ -54,6 +54,15 @@ class StructureError(IOError):
         super().__init__(f"Structure error: {message}")
 
 
+class StructureFileNotFoundError(StructureError):
+    """Exception raised when a structure file is not found."""
+
+    def __init__(self, file_path: str):
+        message = f"Structure file not found: {file_path}"
+        suggestion = "Please check that the file exists and the path is correct."
+        super().__init__(f"{message}\n{suggestion}")
+
+
 class InvalidStructureError(StructureError):
     """Exception raised when a structure file has an invalid format."""
 
@@ -74,7 +83,7 @@ class InvalidStructureError(StructureError):
         elif expected_format == "CIF":
             suggestion += "CIF files should contain _atom_site categories, loop_, or data_ sections."
 
-        super().__init__(f"{message}{suggestion}")
+        super().__init__(f"{message}\n{suggestion}")
 
 
 # Annotation-related errors
@@ -172,6 +181,14 @@ class StyleError(IOError):
         super().__init__(f"Style error: {message}")
 
 
+class StyleFileNotFoundError(StyleError):
+    """Exception raised when a style file is not found."""
+
+    def __init__(self, file_path: str):
+        message = f"Style file not found: {file_path}"
+        super().__init__(message)
+
+
 class StyleParsingError(StyleError):
     """Base error for style parsing issues."""
 
@@ -237,6 +254,14 @@ class MatrixError(IOError):
         super().__init__(f"Matrix error: {message}")
 
 
+class MatrixFileNotFoundError(MatrixError):
+    """Exception raised when a matrix file is not found."""
+
+    def __init__(self, file_path: str):
+        message = f"Matrix file not found: {file_path}"
+        super().__init__(message)
+
+
 class InvalidMatrixDimensionsError(MatrixError):
     """Error raised when a matrix has invalid dimensions."""
 
@@ -294,11 +319,3 @@ class OutputFileError(OutputError):
         suggestion = "\nPlease check that you have write permissions to the directory and sufficient disk space."
 
         super().__init__(f"{message}{suggestion}")
-
-
-# Transformation-related errors
-class TransformationError(IOError):
-    """Exception raised when a transformation operation fails."""
-
-    def __init__(self, message: str):
-        super().__init__(f"Transformation error: {message}")
