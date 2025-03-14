@@ -19,6 +19,7 @@ from flatprot.io.errors import (
     InvalidFileFormatError,
     # Structure errors
     StructureError,
+    StructureFileNotFoundError,
     InvalidStructureError,
     # Annotation errors
     AnnotationError,
@@ -30,6 +31,7 @@ from flatprot.io.errors import (
     AnnotationFileError,
     # Style errors
     StyleError,
+    StyleFileNotFoundError,
     StyleParsingError,
     InvalidTomlError,
     StyleValidationError,
@@ -37,6 +39,7 @@ from flatprot.io.errors import (
     InvalidColorError,
     # Matrix errors
     MatrixError,
+    MatrixFileNotFoundError,
     InvalidMatrixDimensionsError,
     InvalidMatrixFormatError,
     MatrixFileError,
@@ -44,8 +47,6 @@ from flatprot.io.errors import (
     # Output errors
     OutputError,
     OutputFileError,
-    # Transformation errors
-    TransformationError,
 )
 
 
@@ -64,6 +65,7 @@ __all__ = [
     "FileNotFoundError",
     "InvalidFileFormatError",
     "StructureError",
+    "StructureFileNotFoundError",
     "InvalidStructureError",
     "AnnotationError",
     "AnnotationFileNotFoundError",
@@ -73,19 +75,20 @@ __all__ = [
     "InvalidReferenceError",
     "AnnotationFileError",
     "StyleError",
+    "StyleFileNotFoundError",
     "StyleParsingError",
     "InvalidTomlError",
     "StyleValidationError",
     "StyleFileError",
     "InvalidColorError",
     "MatrixError",
+    "MatrixFileNotFoundError",
     "InvalidMatrixDimensionsError",
     "InvalidMatrixFormatError",
     "MatrixFileError",
     "InvalidMatrixError",
     "OutputError",
     "OutputFileError",
-    "TransformationError",
 ]
 
 

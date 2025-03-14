@@ -15,7 +15,7 @@ from .errors import (
     StyleParsingError,
     InvalidTomlError,
     StyleValidationError,
-    FileNotFoundError,
+    StyleFileNotFoundError,
 )
 
 
@@ -44,12 +44,12 @@ class StyleParser:
             file_path: Path to the TOML style file
 
         Raises:
-            FileNotFoundError: If the file doesn't exist
+            StyleFileNotFoundError: If the file doesn't exist
             InvalidTomlError: If the TOML is malformed
         """
         self.file_path = Path(file_path)
         if not self.file_path.exists():
-            raise FileNotFoundError(f"Style file not found: {self.file_path}")
+            raise StyleFileNotFoundError(f"Style file not found: {self.file_path}")
 
         try:
             with open(self.file_path, "r") as f:

@@ -14,6 +14,7 @@ from .structure_elements import (
 )
 from .matrix import MatrixTransformer, MatrixTransformParameters
 from .utils import TransformationMatrix
+from flatprot.core.error import FlatProtError
 
 __all__ = [
     "BaseTransformer",
@@ -27,4 +28,13 @@ __all__ = [
     "TransformationMatrix",
     "MatrixTransformer",
     "MatrixTransformParameters",
+    "TransformationError",
 ]
+
+
+# Transformation-related errors
+class TransformationError(FlatProtError):
+    """Exception raised when a transformation operation fails."""
+
+    def __init__(self, message: str):
+        super().__init__(f"Transformation error: {message}")
