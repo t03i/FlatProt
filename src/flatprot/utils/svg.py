@@ -15,7 +15,7 @@ from flatprot.style import StyleManager
 
 from .scene import process_structure_chain, process_annotations
 
-from . import console
+from .logger import logger
 
 
 def generate_svg(
@@ -79,7 +79,7 @@ def save_svg(svg_content: str, output_path: Path) -> None:
         with open(output_path, "w") as f:
             f.write(svg_content)
 
-        console.print(f"[green]SVG saved to {output_path}[/green]")
+        logger.info(f"[bold]SVG saved to {output_path}[/bold]")
     except Exception as e:
-        console.print(f"[red]Error saving SVG to {output_path}: {str(e)}[/red]")
+        logger.error(f"Error saving SVG to {output_path}: {str(e)}")
         raise IOError(f"Failed to save SVG: {str(e)}")

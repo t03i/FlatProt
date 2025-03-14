@@ -1,8 +1,6 @@
 # Copyright 2025 Tobias Olenyi.
 # SPDX-License-Identifier: Apache-2.0
 
-from rich.console import Console
+from .logger import logger, setup_logging, getLogger
 
-console = Console()
-
-__all__ = ["console"]
+__all__ = ["logger", "setup_logging", "getLogger"]

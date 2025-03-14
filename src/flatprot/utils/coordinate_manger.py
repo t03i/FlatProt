@@ -24,8 +24,7 @@ from flatprot.transformation import (
 from flatprot.io import MatrixLoader
 from flatprot.transformation import TransformationError
 
-
-from . import console
+from .logger import logger
 
 
 def get_projection_parameters(
@@ -79,9 +78,7 @@ def apply_projection(
     """Apply projection to transformed coordinates based on style settings."""
     try:
         if not coordinate_manager.has_type(CoordinateType.TRANSFORMED):
-            console.print(
-                "[yellow]Warning: No transformed coordinates to project[/yellow]"
-            )
+            logger.warning("No transformed coordinates to project")
             return coordinate_manager
 
         # Set up projector and parameters
@@ -104,7 +101,7 @@ def apply_projection(
         return coordinate_manager
 
     except Exception as e:
-        console.print(f"[red]Error applying projection: {str(e)}[/red]")
+        logger.error(f"Error applying projection: {str(e)}")
         raise ProjectionError(f"Failed to apply projection: {str(e)}")
 
 
@@ -140,12 +137,8 @@ def create_transformer(
                 matrix=transformation_matrix
             )
         except Exception as e:
-            console.print(
-                f"[yellow]Warning: Failed to load matrix from {matrix_path}: {str(e)}[/yellow]"
-            )
-            console.print(
-                "[yellow]Falling back to inertia-based transformation[/yellow]"
-            )
+            logger.warning(f"Failed to load matrix from {matrix_path}: {str(e)}")
+            logger.warning("Falling back to inertia-based transformation")
 
     # Use inertia transformer if structure has necessary properties
     if (
@@ -158,8 +151,8 @@ def create_transformer(
         )
 
     # Fallback to identity matrix if necessary
-    console.print(
-        "[yellow]Warning: Structure lacks required properties for inertia transformation, using identity matrix[/yellow]"
+    logger.warning(
+        "Structure lacks required properties for inertia transformation, using identity matrix"
     )
     rotation = np.eye(3)
     translation = np.zeros(3)
@@ -186,9 +179,7 @@ def create_coordinate_manager(
     try:
         # Check if structure has coordinates
         if not hasattr(structure, "coordinates") or structure.coordinates is None:
-            console.print(
-                "[yellow]Warning: Structure has no coordinates, skipping transformation[/yellow]"
-            )
+            logger.warning("Structure has no coordinates, skipping transformation")
             return CoordinateManager()
 
         # Create coordinate manager and add original coordinates
@@ -217,5 +208,5 @@ def create_coordinate_manager(
         return coordinate_manager
 
     except Exception as e:
-        console.print(f"[red]Error applying transformation: {str(e)}[/red]")
+        logger.error(f"Error applying transformation: {str(e)}")
         raise TransformationError(f"Failed to apply transformation: {str(e)}")
