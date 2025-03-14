@@ -92,9 +92,9 @@ def setup_logging(
 
             # Apply level-specific formatting
             if record.levelno >= logging.ERROR:
-                formatted_message = f"[error]Error:[/error] {original_message}"
+                formatted_message = f"[error]{original_message}[/error]"
             elif record.levelno == logging.WARNING:
-                formatted_message = f"[warning]Warning:[/warning] {original_message}"
+                formatted_message = f"[warning]{original_message}[/warning]"
             elif record.levelno == logging.INFO:
                 formatted_message = f"[info]{original_message}[/info]"
             elif record.levelno <= logging.DEBUG:
