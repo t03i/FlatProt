@@ -4,14 +4,17 @@
 """Command-line interface for FlatProt visualization tool."""
 
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Annotated
+import logging
+
+from cyclopts import Parameter, Group, validators
 
 from flatprot.core.error import FlatProtError
 from flatprot.cli.errors import error_handler
 from flatprot.io import GemmiStructureParser
 from flatprot.io import validate_structure_file, validate_optional_files
 
-from flatprot.utils import console
+from flatprot.utils import logger, setup_logging
 from flatprot.utils.coordinate_manger import create_coordinate_manager, apply_projection
 from flatprot.utils.svg import generate_svg, save_svg
 from flatprot.utils.style import create_style_manager
@@ -33,18 +36,25 @@ def print_success_summary(
         style_path: Path to the custom style file, or None if using default
         annotations_path: Path to the annotations file, or None if not using annotations
     """
-    console.print("[bold green]Successfully processed structure:[/bold green]")
-    console.print(f"  Structure file: {str(structure_path)}")
-    console.print(f"  Output file: {str(output_path) if output_path else 'stdout'}")
-    console.print(
+    logger.info("[bold]Successfully processed structure:[/bold]")
+    logger.info(f"  Structure file: {str(structure_path)}")
+    logger.info(f"  Output file: {str(output_path) if output_path else 'stdout'}")
+    logger.info(
         f"  Transformation: {'Custom matrix' if matrix_path else 'Inertia-based'}"
     )
     if matrix_path:
-        console.print(f"  Matrix file: {str(matrix_path)}")
+        logger.info(f"  Matrix file: {str(matrix_path)}")
     if style_path:
-        console.print(f"  Style file: {str(style_path)}")
+        logger.info(f"  Style file: {str(style_path)}")
     if annotations_path:
-        console.print(f"  Annotations file: {str(annotations_path)}")
+        logger.info(f"  Annotations file: {str(annotations_path)}")
+
+
+verbosity_group = Group(
+    "Verbosity",
+    default_parameter=Parameter(negative=""),  # Disable "--no-" flags
+    validator=validators.MutuallyExclusive(),  # Only one option is allowed to be selected.
+)
 
 
 @error_handler
@@ -54,6 +64,8 @@ def main(
     matrix: Optional[Path] = None,
     style: Optional[Path] = None,
     annotations: Optional[Path] = None,
+    quiet: Annotated[bool, Parameter(group=verbosity_group)] = False,
+    verbose: Annotated[bool, Parameter(group=verbosity_group)] = False,
 ) -> int:
     """Generate a flat projection of a protein structure.
 
@@ -72,6 +84,8 @@ def main(
             - Line annotations connect residues with lines
             - Area annotations highlight regions of the structure
             See examples/annotations.toml for a reference annotation file.
+        quiet: Suppress all output except errors
+        verbose: Print additional information
 
     Returns:
         int: 0 for success, 1 for errors.
@@ -81,6 +95,18 @@ def main(
         flatprot structure.cif output.svg --annotations annotations.toml --style style.toml
         flatprot structure.pdb output.svg --matrix custom_matrix.npy
     """
+
+    # Set logging level based on verbosity flags
+
+    if quiet:
+        level = logging.ERROR
+    elif verbose:
+        level = logging.DEBUG
+    else:
+        level = logging.INFO
+
+    setup_logging(level)
+
     try:
         # Validate the structure file
         validate_structure_file(structure)
@@ -111,16 +137,16 @@ def main(
             save_svg(svg_content, output)
         else:
             # Print SVG to stdout
-            console.print(svg_content)
+            print(svg_content)
 
-        # Print success message
+        # Print success message using the success method (which uses INFO level)
         print_success_summary(structure, output, matrix, style, annotations)
 
         return 0
 
     except FlatProtError as e:
-        console.print(f"[bold red]Error:[/bold red] {e.message}")
+        logger.error(e.message)
         return 1
     except Exception as e:
-        console.print(f"[bold red]Unexpected error:[/bold red] {str(e)}")
+        logger.error(f"Unexpected error: {str(e)}")
         return 1

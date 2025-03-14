@@ -13,7 +13,7 @@ from flatprot.scene import Scene, SceneGroup
 from flatprot.scene.structure import secondary_structure_to_scene_element
 from flatprot.io import AnnotationParser
 
-from . import console
+from .logger import logger
 
 
 def process_structure_chain(
@@ -106,13 +106,11 @@ def process_annotations(
         )
         annotations = annotation_parser.parse()
 
-        console.print(
-            f"[blue]Loaded {len(annotations)} annotations from {annotations_path}[/blue]"
-        )
+        logger.info(f"Loaded {len(annotations)} annotations from {annotations_path}")
         for annotation in annotations:
-            console.print(
+            logger.debug(
                 f"  Adding {annotation.label} ({annotation.__class__.__name__}) to scene"
             )
             scene.add_element(annotation)
     except Exception as e:
-        console.print(f"[yellow]Warning: Failed to load annotations: {str(e)}[/yellow]")
+        logger.error(f"Failed to load annotations: {str(e)}")
