@@ -1,16 +1,18 @@
-# Copyright 2024 Rostlab.
+# Copyright 2025 Tobias Olenyi.
 # SPDX-License-Identifier: Apache-2.0
 
-"""Transformation utilities for FlatProt."""
+"""Coordinate manager utilities for FlatProt."""
 
-from pathlib import Path
 from typing import Optional, Tuple, Union
+from pathlib import Path
 
 import numpy as np
-from rich.console import Console
 
-from flatprot.core.components import Structure
 from flatprot.core import CoordinateManager, CoordinateType
+from flatprot.projection import OrthographicProjector, OrthographicProjectionParameters
+from flatprot.style import StyleManager
+from flatprot.projection import ProjectionError
+from flatprot.core.components import Structure
 from flatprot.transformation import (
     InertiaTransformer,
     MatrixTransformer,
@@ -20,9 +22,90 @@ from flatprot.transformation import (
     BaseTransformer,
 )
 from flatprot.io import MatrixLoader
-from flatprot.cli.errors import TransformationError
+from flatprot.transformation import TransformationError
 
-console = Console()
+
+from . import console
+
+
+def get_projection_parameters(
+    style_manager: StyleManager,
+) -> OrthographicProjectionParameters:
+    """Create orthographic projection parameters based on style manager settings.
+
+    Args:
+        style_manager: Style manager containing canvas style information
+
+    Returns:
+        OrthographicProjectionParameters configured with style-based settings
+    """
+    # Default values
+    width = 800
+    height = 600
+    padding_x = 0.05
+    padding_y = 0.05
+    maintain_aspect_ratio = True
+
+    # Try to get values from style manager
+    if hasattr(style_manager, "canvas_style"):
+        canvas_style = style_manager.canvas_style
+        if hasattr(canvas_style, "width") and canvas_style.width is not None:
+            width = canvas_style.width
+        if hasattr(canvas_style, "height") and canvas_style.height is not None:
+            height = canvas_style.height
+        if hasattr(canvas_style, "padding_x") and canvas_style.padding_x is not None:
+            padding_x = canvas_style.padding_x
+        if hasattr(canvas_style, "padding_y") and canvas_style.padding_y is not None:
+            padding_y = canvas_style.padding_y
+        if (
+            hasattr(canvas_style, "maintain_aspect_ratio")
+            and canvas_style.maintain_aspect_ratio is not None
+        ):
+            maintain_aspect_ratio = canvas_style.maintain_aspect_ratio
+
+    return OrthographicProjectionParameters(
+        width=width,
+        height=height,
+        padding_x=padding_x,
+        padding_y=padding_y,
+        maintain_aspect_ratio=maintain_aspect_ratio,
+    )
+
+
+def apply_projection(
+    coordinate_manager: CoordinateManager,
+    style_manager: StyleManager,
+) -> CoordinateManager:
+    """Apply projection to transformed coordinates based on style settings."""
+    try:
+        if not coordinate_manager.has_type(CoordinateType.TRANSFORMED):
+            console.print(
+                "[yellow]Warning: No transformed coordinates to project[/yellow]"
+            )
+            return coordinate_manager
+
+        # Set up projector and parameters
+        projector = OrthographicProjector()
+        projection_params = get_projection_parameters(style_manager)
+
+        # Process each range of transformed coordinates individually
+        for (start, end), transformed_coords in coordinate_manager.coordinates[
+            CoordinateType.TRANSFORMED
+        ].items():
+            # Project this specific range
+            canvas_coords, depth = projector.project(
+                transformed_coords, projection_params
+            )
+
+            # Add projected coordinates directly with the same range
+            coordinate_manager.add(start, end, canvas_coords, CoordinateType.CANVAS)
+            coordinate_manager.add(start, end, depth, CoordinateType.DEPTH)
+
+        return coordinate_manager
+
+    except Exception as e:
+        console.print(f"[red]Error applying projection: {str(e)}[/red]")
+        raise ProjectionError(f"Failed to apply projection: {str(e)}")
 
 
 def create_transformer(

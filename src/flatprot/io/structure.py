@@ -7,7 +7,7 @@ from typing import Optional
 
 from ..core.components import Structure
 
-from .errors import FileNotFoundError, InvalidStructureError
+from .errors import StructureFileNotFoundError, InvalidStructureError
 
 
 def validate_structure_file(path: Path) -> None:
@@ -17,12 +17,12 @@ def validate_structure_file(path: Path) -> None:
         path: Path to the structure file
 
     Raises:
-        FileNotFoundError: If the file does not exist
+        StructureFileNotFoundError: If the file does not exist
         InvalidStructureError: If the file is not a valid PDB or CIF format
     """
     # Check file existence
     if not path.exists():
-        raise FileNotFoundError(str(path))
+        raise StructureFileNotFoundError(str(path))
 
     # Check file extension
     suffix = path.suffix.lower()

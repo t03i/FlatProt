@@ -10,7 +10,7 @@ import numpy as np
 
 from ..transformation.utils import TransformationMatrix
 from .errors import (
-    FileNotFoundError,
+    MatrixFileNotFoundError,
     MatrixFileError,
     InvalidMatrixFormatError,
     InvalidMatrixDimensionsError,
@@ -27,13 +27,13 @@ class MatrixLoader:
             file_path: Path to the numpy matrix file (.npy)
 
         Raises:
-            FileNotFoundError: If the file doesn't exist
+            MatrixFileNotFoundError: If the file doesn't exist
             MatrixFileError: If the file can't be read
         """
         self.file_path = Path(file_path)
 
         if not self.file_path.exists():
-            raise FileNotFoundError(str(self.file_path))
+            raise MatrixFileNotFoundError(str(self.file_path))
 
         if not self.file_path.suffix.lower() == ".npy":
             raise MatrixFileError(f"File must be a .npy file: {self.file_path}")

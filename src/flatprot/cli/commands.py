@@ -3,399 +3,72 @@
 
 """Command-line interface for FlatProt visualization tool."""
 
-import os
 from pathlib import Path
 from typing import Optional
 
 from rich.console import Console
-import numpy as np
 
-from flatprot.cli.errors import (
-    FlatProtCLIError,
-    FileNotFoundError,
-    InvalidStructureError,
-    TransformationError,
-    error_handler,
-)
-from flatprot.io import GemmiStructureParser, MatrixLoader, StyleParser
-from flatprot.core.components import Structure
-from flatprot.transformation import (
-    InertiaTransformer,
-    MatrixTransformer,
-    MatrixTransformParameters,
-    TransformationMatrix,
-    InertiaTransformParameters,
-)
-from flatprot.core import CoordinateManager, CoordinateType
-from flatprot.projection import OrthographicProjector, OrthographicProjectionParameters
-from flatprot.style import StyleManager
-from flatprot.scene import Scene, SceneGroup
-from flatprot.scene.structure import secondary_structure_to_scene_element
-from flatprot.drawing.canvas import Canvas
-from flatprot.io import AnnotationParser
+from flatprot.core.error import FlatProtError
+from flatprot.cli.errors import error_handler
+from flatprot.io import GemmiStructureParser
+from flatprot.io import validate_structure_file, validate_optional_files
+from flatprot.utils.transformation import create_coordinate_manager
+from flatprot.utils.projection import apply_projection
+from flatprot.utils.styling import create_style_manager
+from flatprot.utils.scene import generate_svg, save_svg
 
 console = Console()
 
 
-def validate_structure_file(path: Path) -> None:
-    """Validate that the file exists and is a valid PDB or CIF format.
+def print_success_summary(
+    structure_path: Path,
+    output_path: Optional[Path],
+    matrix_path: Optional[Path],
+    style_path: Optional[Path],
+    annotations_path: Optional[Path],
+) -> None:
+    """Print a summary of the successful operation.
 
     Args:
-        path: Path to the structure file
-
-    Raises:
-        FileNotFoundError: If the file does not exist
-        InvalidStructureError: If the file is not a valid PDB or CIF format
+        structure_path: Path to the input structure file
+        output_path: Path to the output SVG file, or None if printing to stdout
+        matrix_path: Path to the custom transformation matrix file, or None if using default
+        style_path: Path to the custom style file, or None if using default
+        annotations_path: Path to the annotations file, or None if not using annotations
     """
-    # Check file existence
-    if not path.exists():
-        raise FileNotFoundError(str(path))
-
-    # Check file extension
-    suffix = path.suffix.lower()
-    if suffix not in [".pdb", ".cif", ".mmcif", ".ent"]:
-        raise InvalidStructureError(
-            str(path),
-            "PDB or CIF",
-            "File does not have a recognized structure file extension (.pdb, .cif, .mmcif, .ent)",
-        )
-
-    # Basic content validation
-    try:
-        with open(path, "r") as f:
-            content = f.read(1000)  # Read first 1000 bytes for quick check
-
-            # Basic check for PDB format
-            if suffix in [".pdb", ".ent"]:
-                if not (
-                    "ATOM" in content or "HETATM" in content or "HEADER" in content
-                ):
-                    raise InvalidStructureError(
-                        str(path),
-                        "PDB",
-                        "File does not contain required PDB records (ATOM, HETATM, or HEADER)",
-                    )
-
-            # Basic check for mmCIF format
-            if suffix in [".cif", ".mmcif"]:
-                if not (
-                    "_atom_site." in content or "loop_" in content or "data_" in content
-                ):
-                    raise InvalidStructureError(
-                        str(path),
-                        "CIF",
-                        "File does not contain required CIF categories (_atom_site, loop_, or data_)",
-                    )
-    except UnicodeDecodeError:
-        raise InvalidStructureError(
-            str(path),
-            "PDB or CIF",
-            "File contains invalid characters and is not a valid text file",
-        )
-
-
-def get_coordinate_manager(
-    structure: Structure, matrix_path: Optional[Path] = None
-) -> CoordinateManager:
-    """Apply transformation to a protein structure and create a coordinate manager.
-
-    Args:
-        structure: The protein structure to transform
-        matrix_path: Path to a numpy matrix file for custom transformation.
-                    If None, uses InertiaTransformer.
-
-    Returns:
-        CoordinateManager preloaded with original, transformed, and projected coordinates
-
-    Raises:
-        TransformationError: If there's an error during transformation
-    """
-    try:
-        # Check if structure has coordinates
-        if not hasattr(structure, "coordinates") or structure.coordinates is None:
-            console.print(
-                "[yellow]Warning: Structure has no coordinates, skipping transformation[/yellow]"
-            )
-            # Create empty coordinate manager
-            return CoordinateManager()
-
-        # Create coordinate manager
-        coordinate_manager = CoordinateManager()
-
-        # Add original coordinates
-        coordinate_manager.add(
-            0,
-            len(structure.coordinates),
-            structure.coordinates,
-            CoordinateType.COORDINATES,
-        )
-
-        # Set up transformer based on input
-        transformer = None
-        transform_parameters = None
-
-        if matrix_path:
-            # Load custom transformation matrix
-            try:
-                matrix_loader = MatrixLoader(matrix_path)
-                transformation_matrix = matrix_loader.load()
-                transformer = MatrixTransformer()
-                transform_parameters = MatrixTransformParameters(
-                    matrix=transformation_matrix
-                )
-            except Exception as e:
-                console.print(
-                    f"[yellow]Warning: Failed to load matrix from {matrix_path}: {str(e)}[/yellow]"
-                )
-                console.print(
-                    "[yellow]Falling back to inertia-based transformation[/yellow]"
-                )
-                matrix_path = None  # Fall back to inertia transformer
-
-        has_valid_residues = (
-            hasattr(structure, "residues")
-            and structure.residues is not None
-            and len(structure.residues) > 0
-        )
-
-        if not matrix_path:
-            # Use inertia-based transformation
-            if (
-                hasattr(structure, "coordinates")
-                and structure.coordinates is not None
-                and has_valid_residues
-            ):
-                transformer = InertiaTransformer()
-                # Create proper parameters with structure residues
-                transform_parameters = InertiaTransformParameters(
-                    residues=structure.residues
-                )
-            else:
-                # If structure doesn't have proper attributes, use identity transformation
-                console.print(
-                    "[yellow]Warning: Structure lacks required properties for inertia transformation, using identity matrix[/yellow]"
-                )
-                rotation = np.eye(3)
-                translation = np.zeros(3)
-                identity_matrix = TransformationMatrix(
-                    rotation=rotation, translation=translation
-                )
-                transformer = MatrixTransformer()
-                transform_parameters = MatrixTransformParameters(matrix=identity_matrix)
-
-        # Apply transformation
-        transformed_coords = transformer.transform(
-            structure.coordinates.copy(), transform_parameters
-        )
-
-        # Add transformed coordinates
-        coordinate_manager.add(
-            0,
-            len(structure.coordinates),
-            transformed_coords,
-            CoordinateType.TRANSFORMED,
-        )
-
-        # Set up projector with default parameters
-        projector = OrthographicProjector()
-        projection_parameters = OrthographicProjectionParameters(
-            width=800,  # Default width
-            height=600,  # Default height
-            padding_x=0.05,  # 5% padding (values must be between 0 and 1)
-            padding_y=0.05,  # 5% padding (values must be between 0 and 1)
-            maintain_aspect_ratio=True,  # Default setting
-        )
-
-        # Project the coordinates
-        canvas_coords, depth = projector.project(
-            transformed_coords, projection_parameters
-        )
-
-        # Add projected coordinates and depth information
-        coordinate_manager.add(
-            0, len(structure.coordinates), canvas_coords, CoordinateType.CANVAS
-        )
-        coordinate_manager.add(
-            0, len(structure.coordinates), depth, CoordinateType.DEPTH
-        )
-
-        return coordinate_manager
-
-    except Exception as e:
-        console.print(f"[red]Error applying transformation: {str(e)}[/red]")
-        raise TransformationError(f"Failed to apply transformation: {str(e)}")
-
-
-def generate_svg(
-    structure: Structure,
-    coordinate_manager: CoordinateManager,
-    annotations_path: Optional[Path] = None,
-    style_path: Optional[Path] = None,
-) -> str:
-    """Generate SVG content from a structure and coordinate manager.
-
-    Args:
-        structure: The protein structure
-        coordinate_manager: Coordinate manager with transformed and projected coordinates
-        annotations_path: Optional path to annotations file
-        style_path: Optional path to style file
-
-    Returns:
-        SVG content as a string
-    """
-    # Create style manager - either from file or default
+    console.print("[bold green]Successfully processed structure:[/bold green]")
+    console.print(f"  Structure file: {str(structure_path)}")
+    console.print(f"  Output file: {str(output_path) if output_path else 'stdout'}")
+    console.print(
+        f"  Transformation: {'Custom matrix' if matrix_path else 'Inertia-based'}"
+    )
+    if matrix_path:
+        console.print(f"  Matrix file: {str(matrix_path)}")
     if style_path:
-        style_parser = StyleParser(file_path=style_path)
-        style_manager = style_parser.get_style_manager()
-        console.print(f"Using custom styles from {style_path}")
-
-        # Log applied styles for debugging
-        style_data = style_parser.get_style_data()
-        for section, properties in style_data.items():
-            console.print(f"  [blue]Applied {section} style:[/blue]")
-            for prop, value in properties.items():
-                console.print(f"    {prop}: {value}")
-    else:
-        style_manager = StyleManager.create_default()
-        console.print("Using default styles")
-
-    # Create scene from structure
-    scene = Scene()
-
-    # Process each chain
-    offset = 0
-    for chain in structure:
-        elements_with_z = []  # Reset for each chain
-
-        for i, element in enumerate(chain.secondary_structure):
-            start_idx = offset + element.start
-            end_idx = offset + element.end + 1
-
-            canvas_coords = coordinate_manager.get(
-                start_idx, end_idx, CoordinateType.CANVAS
-            )
-            depth = coordinate_manager.get(start_idx, end_idx, CoordinateType.DEPTH)
-
-            metadata = {
-                "chain_id": chain.id,
-                "start": element.start,
-                "end": element.end,
-                "type": element.secondary_structure_type.value,
-            }
-
-            # Get the appropriate style for this element type
-            viz_element = secondary_structure_to_scene_element(
-                element,
-                canvas_coords,
-                style_manager,
-                metadata,
-            )
-
-            elements_with_z.append((viz_element, np.mean(depth)))
-
-        # Sort elements by depth (farther objects first)
-        elements_with_z.sort(key=lambda x: x[1], reverse=True)
-
-        # Create a group for the chain
-        chain_group = SceneGroup(id=chain.id)
-        chain_group.metadata["chain_id"] = chain.id
-
-        # Add chain group to scene
-        scene.add_element(chain_group)
-
-        # Add sorted elements to the chain group
-        for element, _ in elements_with_z:
-            scene.add_element(
-                element,
-                chain_group,
-                element.metadata["chain_id"],
-                element.metadata["start"],
-                element.metadata["end"],
-            )
-
-        # Update offset for next chain
-        offset += chain.num_residues
-
-    # Handle annotations if provided
+        console.print(f"  Style file: {str(style_path)}")
     if annotations_path:
-        try:
-            # Pass the style manager to ensure annotations use correct styles
-            annotation_parser = AnnotationParser(
-                file_path=annotations_path,
-                scene=scene,
-                style_manager=style_manager,
-            )
-            annotations = annotation_parser.parse()
-
-            console.print(
-                f"[blue]Loaded {len(annotations)} annotations from {annotations_path}[/blue]"
-            )
-            for i, annotation in enumerate(annotations):
-                # Apply appropriate style based on annotation type
-                console.print(
-                    f"  Adding {annotation.label} ({annotation.__class__.__name__}) to scene"
-                )
-                scene.add_element(annotation)
-        except Exception as e:
-            console.print(
-                f"[yellow]Warning: Failed to load annotations: {str(e)}[/yellow]"
-            )
-
-    # Render scene to SVG using Canvas
-    canvas = Canvas(scene, style_manager)
-
-    drawing = canvas.render()
-    # Convert drawing to SVG string (using drawsvg's functionality)
-    svg_content = drawing.as_svg()
-
-    return svg_content
-
-
-def save_svg(svg_content: str, output_path: Path) -> None:
-    """Save SVG content to a file, creating directories if needed.
-
-    Args:
-        svg_content: SVG content as a string
-        output_path: Path to save the SVG file
-
-    Raises:
-        IOError: If the file cannot be saved
-    """
-    try:
-        # Ensure output directory exists
-        output_dir = output_path.parent
-        if not output_dir.exists():
-            os.makedirs(output_dir, exist_ok=True)
-
-        # Write SVG content to file
-        with open(output_path, "w") as f:
-            f.write(svg_content)
-
-        console.print(f"[green]SVG saved to {output_path}[/green]")
-    except Exception as e:
-        console.print(f"[red]Error saving SVG to {output_path}: {str(e)}[/red]")
-        raise IOError(f"Failed to save SVG: {str(e)}")
+        console.print(f"  Annotations file: {str(annotations_path)}")
 
 
 @error_handler
 def main(
     structure: Path,
-    output: Path = None,
-    matrix: Path = None,
-    style: Path = None,
-    annotations: Path = None,
-):
+    output: Optional[Path] = None,
+    matrix: Optional[Path] = None,
+    style: Optional[Path] = None,
+    annotations: Optional[Path] = None,
+) -> int:
     """Generate a flat projection of a protein structure.
 
     Args:
-        structure (Path): Path to the structure file (PDB or similar).
-        output (Path, optional): Path to save the SVG output.
+        structure: Path to the structure file (PDB or similar).
+        output: Path to save the SVG output.
             If not provided, the SVG is printed to stdout.
-        matrix (Path, optional): Path to a custom transformation matrix.
+        matrix: Path to a custom transformation matrix.
             If not provided, a default inertia transformation is used.
-        style (Path, optional): Path to a custom style file in TOML format.
+        style: Path to a custom style file in TOML format.
             If not provided, the default styles are used.
-        annotations (Path, optional): Path to a TOML file with annotation definitions.
+        annotations: Path to a TOML file with annotation definitions.
             The annotation file can define point, line, and area annotations to highlight
             specific structural features. Examples:
             - Point annotations mark single residues with symbols
@@ -403,43 +76,40 @@ def main(
             - Area annotations highlight regions of the structure
             See examples/annotations.toml for a reference annotation file.
 
+    Returns:
+        int: 0 for success, 1 for errors.
+
     Examples:
         flatprot structure.pdb output.svg
         flatprot structure.cif output.svg --annotations annotations.toml --style style.toml
         flatprot structure.pdb output.svg --matrix custom_matrix.npy
-
-    Returns:
-        int: 0 for success, 1 for errors.
     """
     try:
         # Validate the structure file
         validate_structure_file(structure)
 
         # Verify optional files if specified
-        if matrix and not matrix.exists():
-            raise FileNotFoundError(str(matrix))
-        if style and not style.exists():
-            raise FileNotFoundError(str(style))
-        if annotations and not annotations.exists():
-            raise FileNotFoundError(str(annotations))
+        validate_optional_files([matrix, style, annotations])
 
         # Load structure
         parser = GemmiStructureParser()
         structure_obj = parser.parse_structure(structure)
 
-        # Apply transformation and create coordinate manager
-        coordinate_manager = get_coordinate_manager(structure_obj, matrix)
+        # Create style manager
+        style_manager = create_style_manager(style)
+
+        # Process coordinates (transformation only)
+        coordinate_manager = create_coordinate_manager(structure_obj, matrix)
+
+        # Apply projection (using style information)
+        coordinate_manager = apply_projection(coordinate_manager, style_manager)
 
         # Generate SVG visualization
         svg_content = generate_svg(
-            structure_obj, coordinate_manager, annotations, style
+            structure_obj, coordinate_manager, style_manager, annotations
         )
 
         if output is not None:
-            # Ensure the output directory exists
-            output_dir = output.parent
-            if not output_dir.exists():
-                os.makedirs(output_dir, exist_ok=True)
             # Save SVG to output file
             save_svg(svg_content, output)
         else:
@@ -447,22 +117,11 @@ def main(
             console.print(svg_content)
 
         # Print success message
-        console.print("[bold green]Successfully processed structure:[/bold green]")
-        console.print(f"  Structure file: {str(structure)}")
-        console.print(f"  Output file: {str(output) if output else 'stdout'}")
-        console.print(
-            f"  Transformation: {'Custom matrix' if matrix else 'Inertia-based'}"
-        )
-        if matrix:
-            console.print(f"  Matrix file: {str(matrix)}")
-        if style:
-            console.print(f"  Style file: {str(style)}")
-        if annotations:
-            console.print(f"  Annotations file: {str(annotations)}")
+        print_success_summary(structure, output, matrix, style, annotations)
 
         return 0
 
-    except FlatProtCLIError as e:
+    except FlatProtError as e:
         console.print(f"[bold red]Error:[/bold red] {e.message}")
         return 1
     except Exception as e:
