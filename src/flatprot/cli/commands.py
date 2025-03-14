@@ -12,10 +12,10 @@ from flatprot.core.error import FlatProtError
 from flatprot.cli.errors import error_handler
 from flatprot.io import GemmiStructureParser
 from flatprot.io import validate_structure_file, validate_optional_files
-from flatprot.utils.transformation import create_coordinate_manager
-from flatprot.utils.projection import apply_projection
-from flatprot.utils.styling import create_style_manager
-from flatprot.utils.scene import generate_svg, save_svg
+
+from flatprot.utils.coordinate_manger import create_coordinate_manager, apply_projection
+from flatprot.utils.svg import generate_svg, save_svg
+from flatprot.utils.style import create_style_manager
 
 console = Console()
 
