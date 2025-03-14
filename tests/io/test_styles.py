@@ -8,15 +8,18 @@ import tempfile
 import pytest
 from pathlib import Path
 
-from flatprot.io.styles import (
-    StyleParser,
-    InvalidTomlError,
-    StyleValidationError,
-    StyleParsingError,
-)
+from flatprot.io.styles import StyleParser
+
+
 from flatprot.style.types import StyleType
 from flatprot.style.structure import HelixStyle, SheetStyle
 from flatprot.style.annotation import AreaAnnotationStyle
+from flatprot.io import (
+    InvalidTomlError,
+    StyleValidationError,
+    StyleParsingError,
+    StyleFileNotFoundError,
+)
 
 
 def create_temp_toml(content: str) -> Path:
@@ -100,7 +103,7 @@ def test_malformed_toml():
 
 def test_file_not_found():
     """Test handling of non-existent files."""
-    with pytest.raises(FileNotFoundError) as excinfo:
+    with pytest.raises(StyleFileNotFoundError) as excinfo:
         StyleParser("non_existent_file.toml")
     assert "Style file not found" in str(excinfo.value)
 
