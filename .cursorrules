@@ -30,7 +30,7 @@ Make sure you keep any comments that exist in a file.
 
 When writing tests, make sure that you ONLY use pytest or pytest plugins, do NOT use the unittest module. All tests should have typing annotations as well. All tests should be in ./tests. Be sure to create all necessary files and folders. If you are creating files inside of ./tests or ./src/flatprot, be sure to make a init.py file if one does not exist.
 
-All tests should be fully annotated and should contain docstrings.
+All tests should be fully annotated and should contain docstrings. Only use pytest and pytest-mock plugins for testing. Ask me questions if you are unsure about anything. Use the mocker fixture for any mocking needs and only mock what is necessary. If you need to additionaly pytest plugins, ask me.
 
 When writing code if you are setting foundation for a new feature be sure to ask questions to ensure you are on the right track.
 

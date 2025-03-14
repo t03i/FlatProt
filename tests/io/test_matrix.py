@@ -9,13 +9,14 @@ import pytest
 import numpy as np
 from pathlib import Path
 
-from flatprot.io.matrix import (
-    MatrixLoader,
+from flatprot.io.matrix import MatrixLoader
+from flatprot.transformation.utils import TransformationMatrix
+from flatprot.io import (
     InvalidMatrixDimensionsError,
     InvalidMatrixFormatError,
     MatrixFileError,
+    MatrixFileNotFoundError,
 )
-from flatprot.transformation.utils import TransformationMatrix
 
 
 def create_valid_matrix_file() -> Path:
@@ -148,7 +149,7 @@ def test_corrupted_file():
 
 def test_file_not_found():
     """Test handling of non-existent files."""
-    with pytest.raises(FileNotFoundError) as excinfo:
+    with pytest.raises(MatrixFileNotFoundError) as excinfo:
         MatrixLoader("non_existent_file.npy")
     assert "Matrix file not found" in str(excinfo.value)
 
