@@ -26,6 +26,7 @@ def print_success_summary(
     matrix_path: Optional[Path],
     style_path: Optional[Path],
     annotations_path: Optional[Path],
+    dssp_path: Optional[Path],
 ) -> None:
     """Print a summary of the successful operation.
 
@@ -35,6 +36,7 @@ def print_success_summary(
         matrix_path: Path to the custom transformation matrix file, or None if using default
         style_path: Path to the custom style file, or None if using default
         annotations_path: Path to the annotations file, or None if not using annotations
+        dssp_path: Path to the DSSP file for secondary structure information, or None if using default
     """
     logger.info("[bold]Successfully processed structure:[/bold]")
     logger.info(f"  Structure file: {str(structure_path)}")
@@ -48,6 +50,8 @@ def print_success_summary(
         logger.info(f"  Style file: {str(style_path)}")
     if annotations_path:
         logger.info(f"  Annotations file: {str(annotations_path)}")
+    if dssp_path:
+        logger.info(f"  DSSP file: {str(dssp_path)}")
 
 
 verbosity_group = Group(
@@ -64,6 +68,7 @@ def main(
     matrix: Optional[Path] = None,
     style: Optional[Path] = None,
     annotations: Optional[Path] = None,
+    dssp: Optional[Path] = None,
     quiet: Annotated[bool, Parameter(group=verbosity_group)] = False,
     verbose: Annotated[bool, Parameter(group=verbosity_group)] = False,
 ) -> int:
@@ -84,6 +89,8 @@ def main(
             - Line annotations connect residues with lines
             - Area annotations highlight regions of the structure
             See examples/annotations.toml for a reference annotation file.
+        dssp: Path to a DSSP file with secondary structure assignments.
+            If not provided, secondary structure is assumed to be in the input structure file.
         quiet: Suppress all output except errors
         verbose: Print additional information
 
@@ -94,6 +101,7 @@ def main(
         flatprot structure.pdb output.svg
         flatprot structure.cif output.svg --annotations annotations.toml --style style.toml
         flatprot structure.pdb output.svg --matrix custom_matrix.npy
+        flatprot structure.pdb output.svg --dssp structure.dssp
     """
 
     # Set logging level based on verbosity flags
@@ -111,12 +119,23 @@ def main(
         # Validate the structure file
         validate_structure_file(structure)
 
+        # Check if secondary structure information can be extracted
+        is_cif_file = structure.suffix.lower() in (".cif", ".mmcif")
+        if not is_cif_file and dssp is None:
+            raise FlatProtError(
+                "Secondary structure information cannot be extracted from non-CIF files. "
+                "Please provide either:\n"
+                "  - A structure file in CIF format (.cif, .mmcif), or\n"
+                "  - A DSSP file using the --dssp option\n"
+                "Example: flatprot structure.pdb output.svg --dssp structure.dssp"
+            )
+
         # Verify optional files if specified
-        validate_optional_files([matrix, style, annotations])
+        validate_optional_files([matrix, style, annotations, dssp])
 
         # Load structure
         parser = GemmiStructureParser()
-        structure_obj = parser.parse_structure(structure)
+        structure_obj = parser.parse_structure(structure, dssp)
 
         # Create style manager
         style_manager = create_style_manager(style)
@@ -140,7 +159,7 @@ def main(
             print(svg_content)
 
         # Print success message using the success method (which uses INFO level)
-        print_success_summary(structure, output, matrix, style, annotations)
+        print_success_summary(structure, output, matrix, style, annotations, dssp)
 
         return 0
 
