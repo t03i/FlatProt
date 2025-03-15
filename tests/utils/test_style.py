@@ -11,6 +11,7 @@ from pytest_mock import MockerFixture
 from flatprot.utils.style import create_style_manager
 from flatprot.style import StyleManager
 from flatprot.io import StyleParser
+from flatprot.core import FlatProtError
 
 
 @pytest.fixture
@@ -60,20 +61,31 @@ def mock_style_manager(mocker):
     return mock_manager
 
 
-def test_create_style_manager_with_default(mocker: MockerFixture) -> None:
+@pytest.fixture
+def mock_logger(mocker: MockerFixture):
+    """Fixture providing a mocked logger.
+
+    Args:
+        mocker: pytest-mock fixture
+
+    Returns:
+        Mocked logger instance
+    """
+    return mocker.patch("flatprot.utils.style.logger")
+
+
+def test_create_style_manager_with_default(mocker: MockerFixture, mock_logger) -> None:
     """Test creating a style manager with default styles.
 
     Args:
         mocker: pytest-mock fixture
+        mock_logger: Mocked logger instance
     """
     # Mock StyleManager.create_default
     mock_manager = mocker.MagicMock(spec=StyleManager)
     mocker.patch(
         "flatprot.style.StyleManager.create_default", return_value=mock_manager
     )
-
-    # Mock console to avoid actual printing
-    mock_console = mocker.patch("flatprot.utils.style.console")
 
     # Call the function with no style_path
     result = create_style_manager()
@@ -82,14 +94,15 @@ def test_create_style_manager_with_default(mocker: MockerFixture) -> None:
     assert result is mock_manager
     assert result == mock_manager
 
-    # Verify console output
-    mock_console.print.assert_called_once_with("Using default styles")
+    # Verify logger output
+    mock_logger.info.assert_called_once_with("Using default styles")
 
 
 def test_create_style_manager_with_custom_style(
     mocker: MockerFixture,
     mock_style_parser,
     mock_style_data: Dict[str, Dict[str, Any]],
+    mock_logger,
 ) -> None:
     """Test creating a style manager with a custom style file.
 
@@ -97,14 +110,12 @@ def test_create_style_manager_with_custom_style(
         mocker: pytest-mock fixture
         mock_style_parser: Mocked StyleParser instance
         mock_style_data: Mock style data
+        mock_logger: Mocked logger instance
     """
     # Mock StyleParser initialization
     mock_style_parser_class = mocker.patch(
         "flatprot.utils.style.StyleParser", return_value=mock_style_parser
     )
-
-    # Mock console to avoid actual printing
-    mock_console = mocker.patch("flatprot.utils.style.console")
 
     # Mock Path.exists to avoid file system checks
     mocker.patch.object(Path, "exists", return_value=True)
@@ -121,21 +132,59 @@ def test_create_style_manager_with_custom_style(
     # Verify get_style_manager was called
     mock_style_parser.get_style_manager.assert_called_once()
 
-    # Verify console output
-    mock_console.print.assert_any_call(f"Using custom styles from {style_path}")
+    # Verify logger output
+    mock_logger.info.assert_called_with(f"Using custom styles from {style_path}")
 
     # Verify style sections were logged
     for section, properties in mock_style_data.items():
-        mock_console.print.assert_any_call(f"  [blue]Applied {section} style:[/blue]")
+        mock_logger.debug.assert_any_call(f"  Applied {section} style:")
         for prop, value in properties.items():
-            mock_console.print.assert_any_call(f"    {prop}: {value}")
+            mock_logger.debug.assert_any_call(f"    {prop}: {value}")
 
 
-def test_create_style_manager_integration_default(mocker: MockerFixture) -> None:
+def test_create_style_manager_with_invalid_style(
+    mocker: MockerFixture, mock_logger
+) -> None:
+    """Test creating a style manager with an invalid style file.
+
+    Args:
+        mocker: pytest-mock fixture
+        mock_logger: Mocked logger instance
+    """
+    # Mock FlatProtError when loading the style file
+    style_path = Path("/path/to/invalid_style.toml")
+
+    # Create a mock StyleParser that raises an exception
+    mock_parser_class = mocker.patch("flatprot.utils.style.StyleParser")
+    mock_parser_class.side_effect = FlatProtError("Invalid style file")
+
+    # Mock default style manager
+    mock_manager = mocker.MagicMock(spec=StyleManager)
+    mocker.patch(
+        "flatprot.style.StyleManager.create_default", return_value=mock_manager
+    )
+
+    # Call the function with the invalid style path
+    result = create_style_manager(style_path)
+
+    # Verify we got the default manager
+    assert result is mock_manager
+
+    # Verify logger warnings
+    mock_logger.warning.assert_any_call(
+        f"Could not load style file: {style_path} - Invalid style file"
+    )
+    mock_logger.warning.assert_any_call("Falling back to default styles")
+
+
+def test_create_style_manager_integration_default(
+    mocker: MockerFixture, mock_logger
+) -> None:
     """Integration test for creating a style manager with default styles.
 
     Args:
         mocker: pytest-mock fixture
+        mock_logger: Mocked logger instance
     """
     # Mock StyleManager.create_default to return a real StyleManager
     real_style_manager = StyleManager()
@@ -143,12 +192,12 @@ def test_create_style_manager_integration_default(mocker: MockerFixture) -> None
         "flatprot.style.StyleManager.create_default", return_value=real_style_manager
     )
 
-    # Mock console to avoid actual printing
-    mocker.patch("flatprot.utils.style.console")
-
     # Call the function with no style_path
     result = create_style_manager()
 
     # Verify we got back a real StyleManager
     assert isinstance(result, StyleManager)
     assert result is real_style_manager
+
+    # Verify logger output
+    mock_logger.info.assert_called_once_with("Using default styles")

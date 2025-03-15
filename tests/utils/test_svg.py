@@ -193,8 +193,8 @@ def test_save_svg_success(mocker: MockerFixture, tmp_path: Path) -> None:
         mocker: Pytest mocker fixture
         tmp_path: Pytest temporary directory fixture
     """
-    # Mock console.print
-    mock_console_print = mocker.patch("flatprot.utils.svg.console.print")
+    # Mock logger.info instead of console.print
+    mock_logger_info = mocker.patch("flatprot.utils.svg.logger.info")
 
     # Test data
     svg_content = "<svg>test</svg>"
@@ -211,9 +211,11 @@ def test_save_svg_success(mocker: MockerFixture, tmp_path: Path) -> None:
     with open(output_path, "r") as f:
         assert f.read() == svg_content
 
-    # Verify success message was printed
-    mock_console_print.assert_called_once()
-    assert f"SVG saved to {output_path}" in mock_console_print.call_args[0][0]
+    # Verify success message was logged
+    mock_logger_info.assert_called_once()
+    assert (
+        f"[bold]SVG saved to {output_path}[/bold]" in mock_logger_info.call_args[0][0]
+    )
 
 
 def test_save_svg_existing_dir(mocker: MockerFixture, tmp_path: Path) -> None:
@@ -223,8 +225,8 @@ def test_save_svg_existing_dir(mocker: MockerFixture, tmp_path: Path) -> None:
         mocker: Pytest mocker fixture
         tmp_path: Pytest temporary directory fixture
     """
-    # Mock console.print
-    mock_console_print = mocker.patch("flatprot.utils.svg.console.print")
+    # Mock logger.info instead of console.print
+    mock_logger_info = mocker.patch("flatprot.utils.svg.logger.info")
 
     # Create the directory beforehand
     subdir = tmp_path / "existing_dir"
@@ -242,9 +244,11 @@ def test_save_svg_existing_dir(mocker: MockerFixture, tmp_path: Path) -> None:
     with open(output_path, "r") as f:
         assert f.read() == svg_content
 
-    # Verify success message was printed
-    mock_console_print.assert_called_once()
-    assert f"SVG saved to {output_path}" in mock_console_print.call_args[0][0]
+    # Verify success message was logged
+    mock_logger_info.assert_called_once()
+    assert (
+        f"[bold]SVG saved to {output_path}[/bold]" in mock_logger_info.call_args[0][0]
+    )
 
 
 def test_save_svg_io_error(mocker: MockerFixture) -> None:
@@ -253,8 +257,8 @@ def test_save_svg_io_error(mocker: MockerFixture) -> None:
     Args:
         mocker: Pytest mocker fixture
     """
-    # Mock console.print
-    mock_console_print = mocker.patch("flatprot.utils.svg.console.print")
+    # Mock logger.error instead of console.print
+    mock_logger_error = mocker.patch("flatprot.utils.svg.logger.error")
 
     # Mock open to raise an error
     mock_open = mocker.patch("builtins.open")
@@ -274,9 +278,9 @@ def test_save_svg_io_error(mocker: MockerFixture) -> None:
     # Verify error message
     assert "Failed to save SVG" in str(excinfo.value)
 
-    # Verify error message was printed
-    mock_console_print.assert_called_once()
-    assert "Error saving SVG" in mock_console_print.call_args[0][0]
+    # Verify error message was logged
+    mock_logger_error.assert_called_once()
+    assert "Error saving SVG" in mock_logger_error.call_args[0][0]
 
 
 def test_save_svg_makedirs_error(mocker: MockerFixture) -> None:
@@ -285,8 +289,8 @@ def test_save_svg_makedirs_error(mocker: MockerFixture) -> None:
     Args:
         mocker: Pytest mocker fixture
     """
-    # Mock console.print
-    mock_console_print = mocker.patch("flatprot.utils.svg.console.print")
+    # Mock logger.error instead of console.print
+    mock_logger_error = mocker.patch("flatprot.utils.svg.logger.error")
 
     # Mock os.makedirs to raise an error
     mock_makedirs = mocker.patch("os.makedirs")
@@ -303,6 +307,6 @@ def test_save_svg_makedirs_error(mocker: MockerFixture) -> None:
     # Verify error message
     assert "Failed to save SVG" in str(excinfo.value)
 
-    # Verify error message was printed
-    mock_console_print.assert_called_once()
-    assert "Error saving SVG" in mock_console_print.call_args[0][0]
+    # Verify error message was logged
+    mock_logger_error.assert_called_once()
+    assert "Error saving SVG" in mock_logger_error.call_args[0][0]
