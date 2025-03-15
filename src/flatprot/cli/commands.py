@@ -1,7 +1,26 @@
 # Copyright 2024 Rostlab.
 # SPDX-License-Identifier: Apache-2.0
 
-"""Command-line interface for FlatProt visualization tool."""
+"""
+Command-line interface for FlatProt visualization tool.
+
+This module provides the main entry point for the FlatProt CLI,
+allowing users to generate 2D visualizations of protein structures
+from the command line.
+
+Examples:
+    Basic usage:
+        flatprot structure.pdb output.svg
+
+    With custom styles and annotations:
+        flatprot structure.cif output.svg --style styles.toml --annotations annotations.toml
+
+    Using a custom transformation matrix:
+        flatprot structure.pdb output.svg --matrix custom_matrix.npy
+
+    Providing secondary structure information for PDB files:
+        flatprot structure.pdb output.svg --dssp structure.dssp
+"""
 
 from pathlib import Path
 from typing import Optional, Annotated
@@ -28,7 +47,11 @@ def print_success_summary(
     annotations_path: Optional[Path],
     dssp_path: Optional[Path],
 ) -> None:
-    """Print a summary of the successful operation.
+    """
+    Print a summary of the successful operation.
+
+    This function logs information about the processed files and options
+    used during the visualization generation.
 
     Args:
         structure_path: Path to the input structure file
@@ -72,16 +95,35 @@ def main(
     quiet: Annotated[bool, Parameter(group=verbosity_group)] = False,
     verbose: Annotated[bool, Parameter(group=verbosity_group)] = False,
 ) -> int:
-    """Generate a flat projection of a protein structure.
+    """
+    Generate a flat projection of a protein structure.
+
+    This function is the main entry point for the FlatProt CLI. It processes
+    a protein structure file, applies transformations, styles, and annotations,
+    and generates a 2D SVG visualization.
 
     Args:
         structure: Path to the structure file (PDB or similar).
+            Supported formats include PDB (.pdb) and mmCIF (.cif, .mmcif).
+            The file must exist and be in a valid format.
+
         output: Path to save the SVG output.
             If not provided, the SVG is printed to stdout.
+            The directory will be created if it doesn't exist.
+
         matrix: Path to a custom transformation matrix.
             If not provided, a default inertia transformation is used.
+            The matrix should be a NumPy (.npy) file containing:
+            - A 4x3 matrix where the first 3 rows are the rotation matrix (3x3)
+              and the last row is the translation vector (1x3)
+            - Alternatively, a 3x3 rotation matrix (translation will be set to zero)
+            - The matrix can also be transposed (3x4) and will be automatically corrected
+
         style: Path to a custom style file in TOML format.
             If not provided, the default styles are used.
+            The style file can define visual properties for helices, sheets,
+            points, lines, and areas. See examples/styles.toml for reference.
+
         annotations: Path to a TOML file with annotation definitions.
             The annotation file can define point, line, and area annotations to highlight
             specific structural features. Examples:
@@ -89,23 +131,35 @@ def main(
             - Line annotations connect residues with lines
             - Area annotations highlight regions of the structure
             See examples/annotations.toml for a reference annotation file.
+
         dssp: Path to a DSSP file with secondary structure assignments.
             If not provided, secondary structure is assumed to be in the input structure file.
-        quiet: Suppress all output except errors
-        verbose: Print additional information
+            Required for PDB files, as they don't contain secondary structure information.
+
+        quiet: Suppress all output except errors.
+            When set, only error messages will be displayed.
+
+        verbose: Print additional information.
+            When set, debug-level messages will be displayed.
 
     Returns:
         int: 0 for success, 1 for errors.
 
     Examples:
-        flatprot structure.pdb output.svg
-        flatprot structure.cif output.svg --annotations annotations.toml --style style.toml
-        flatprot structure.pdb output.svg --matrix custom_matrix.npy
-        flatprot structure.pdb output.svg --dssp structure.dssp
+        Basic usage:
+            flatprot structure.pdb output.svg
+
+        With custom styles and annotations:
+            flatprot structure.cif output.svg --annotations annotations.toml --style style.toml
+
+        Using a custom transformation matrix:
+            flatprot structure.pdb output.svg --matrix custom_matrix.npy
+
+        Providing secondary structure information for PDB files:
+            flatprot structure.pdb output.svg --dssp structure.dssp
     """
 
     # Set logging level based on verbosity flags
-
     if quiet:
         level = logging.ERROR
     elif verbose:
