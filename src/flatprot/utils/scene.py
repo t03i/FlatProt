@@ -73,9 +73,13 @@ def process_structure_chain(
 
     # Add chain group to scene
     scene.add_element(chain_group)
+    logger.debug(f"[bold]Added chain {chain.id} to scene[/bold]")
 
     # Add sorted elements to the chain group
     for element, _ in elements_with_z:
+        logger.debug(
+            f"\t> {element.metadata['type']} from {element.metadata['start']} to {element.metadata['end']}"
+        )
         scene.add_element(
             element,
             chain_group,
@@ -109,7 +113,7 @@ def process_annotations(
         logger.info(f"Loaded {len(annotations)} annotations from {annotations_path}")
         for annotation in annotations:
             logger.debug(
-                f"  Adding {annotation.label} ({annotation.__class__.__name__}) to scene"
+                f"\t> {annotation.label} ({annotation.__class__.__name__}) to scene"
             )
             scene.add_element(annotation)
     except Exception as e:
