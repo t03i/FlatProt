@@ -171,16 +171,17 @@ class TestApplyProjection:
         # Setup coordinate manager to have no transformed coordinates
         coordinate_manager.has_type.return_value = False
 
-        # Mock console output
-        mock_console = mocker.patch("flatprot.utils.coordinate_manger.console.print")
+        # Mock logger warning instead of console output
+        mock_logger_warning = mocker.patch(
+            "flatprot.utils.coordinate_manger.logger.warning"
+        )
 
         # Call function
         result = apply_projection(coordinate_manager, style_manager)
 
-        # Verify warning was printed
-        mock_console.assert_called_once()
-        assert "Warning" in mock_console.call_args[0][0]
-        assert "No transformed coordinates" in mock_console.call_args[0][0]
+        # Verify warning was logged
+        mock_logger_warning.assert_called_once()
+        assert "No transformed coordinates" in mock_logger_warning.call_args[0][0]
 
         # Verify result
         assert result == coordinate_manager
@@ -214,8 +215,9 @@ class TestApplyProjection:
             return_value=mocker.Mock(),
         )
 
-        # Mock console output
-        mocker.patch("flatprot.utils.coordinate_manger.console.print")
+        mock_logger_error = mocker.patch(
+            "flatprot.utils.coordinate_manger.logger.error"
+        )
 
         # Call function and expect exception
         with pytest.raises(ProjectionError) as exc_info:
@@ -224,6 +226,10 @@ class TestApplyProjection:
         # Verify error message
         assert "Failed to apply projection" in str(exc_info.value)
         assert "Test projection error" in str(exc_info.value)
+
+        # Verify error was logged
+        mock_logger_error.assert_called_once()
+        assert "Error applying projection" in mock_logger_error.call_args[0][0]
 
 
 class TestCreateTransformer:
@@ -284,7 +290,7 @@ class TestCreateTransformer:
         structure.residues = []
 
         # Mock console output
-        mocker.patch("flatprot.utils.coordinate_manger.console.print")
+        mocker.patch("flatprot.utils.coordinate_manger.logger")
 
         # Call function
         transformer, params = create_transformer(structure)
@@ -309,7 +315,7 @@ class TestCreateTransformer:
         )
 
         # Mock console output
-        mocker.patch("flatprot.utils.coordinate_manger.console.print")
+        mocker.patch("flatprot.utils.coordinate_manger.logger")
 
         # Call function with matrix path
         matrix_path = Path("/path/to/matrix.npy")
@@ -363,8 +369,7 @@ class TestCreateCoordinateManager:
         structure = mocker.Mock(spec=Structure)
         structure.coordinates = None
 
-        # Mock console output
-        mocker.patch("flatprot.utils.coordinate_manger.console.print")
+        mocker.patch("flatprot.utils.coordinate_manger.logger")
 
         # Call function
         result = create_coordinate_manager(structure)
@@ -391,8 +396,7 @@ class TestCreateCoordinateManager:
             return_value=(mock_transformer, mock_params),
         )
 
-        # Mock console output
-        mocker.patch("flatprot.utils.coordinate_manger.console.print")
+        mocker.patch("flatprot.utils.coordinate_manger.logger")
 
         # Call function and expect exception
         with pytest.raises(TransformationError) as exc_info:

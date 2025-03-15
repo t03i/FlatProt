@@ -68,6 +68,9 @@ class TestProcessStructureChain:
             return_value=mock_element,
         )
 
+        # Mock logger
+        mock_logger = mocker.patch("flatprot.utils.scene.logger")
+
         # Call function
         offset = 0
         new_offset = process_structure_chain(
@@ -93,6 +96,12 @@ class TestProcessStructureChain:
         assert element_args[0][2] == "A"  # Chain ID
         assert element_args[0][3] == 0  # Start index
         assert element_args[0][4] == 9  # End index
+
+        # Verify logging
+        mock_logger.debug.assert_any_call("[bold]Added chain A to scene[/bold]")
+        mock_logger.debug.assert_any_call(
+            f"\t> {ss_element.secondary_structure_type.value} from {ss_element.start} to {ss_element.end}"
+        )
 
     def test_process_structure_chain_multiple_elements(self, mocker) -> None:
         """Test processing multiple secondary structure elements with depth sorting.
@@ -158,6 +167,9 @@ class TestProcessStructureChain:
             side_effect=[mock_element1, mock_element2],
         )
 
+        # Mock logger
+        mock_logger = mocker.patch("flatprot.utils.scene.logger")
+
         # Call function
         offset = 0
         new_offset = process_structure_chain(
@@ -188,6 +200,15 @@ class TestProcessStructureChain:
             third_call_element == mock_element1
         ), "Element with lower depth should be added second"
 
+        # Verify logging
+        mock_logger.debug.assert_any_call("[bold]Added chain A to scene[/bold]")
+        mock_logger.debug.assert_any_call(
+            f"\t> {ss_element1.secondary_structure_type.value} from {ss_element1.start} to {ss_element1.end}"
+        )
+        mock_logger.debug.assert_any_call(
+            f"\t> {ss_element2.secondary_structure_type.value} from {ss_element2.start} to {ss_element2.end}"
+        )
+
 
 class TestProcessAnnotations:
     """Tests for the process_annotations function."""
@@ -213,8 +234,8 @@ class TestProcessAnnotations:
 
         mocker.patch("flatprot.utils.scene.AnnotationParser", return_value=mock_parser)
 
-        # Mock console
-        mocker.patch("flatprot.utils.scene.console.print")
+        # Mock logger
+        mock_logger = mocker.patch("flatprot.utils.scene.logger")
 
         # Call function
         annotations_path = Path("/path/to/annotations.toml")
@@ -231,6 +252,14 @@ class TestProcessAnnotations:
 
         # Verify annotation was added to scene
         scene.add_element.assert_called_once_with(mock_annotation)
+
+        # Verify logging
+        mock_logger.info.assert_called_with(
+            f"Loaded 1 annotations from {annotations_path}"
+        )
+        mock_logger.debug.assert_called_with(
+            "\t> Test Annotation (PointAnnotation) to scene"
+        )
 
     def test_process_annotations_multiple(self, mocker) -> None:
         """Test processing multiple annotations.
@@ -255,8 +284,8 @@ class TestProcessAnnotations:
 
         mocker.patch("flatprot.utils.scene.AnnotationParser", return_value=mock_parser)
 
-        # Mock console
-        mocker.patch("flatprot.utils.scene.console.print")
+        # Mock logger
+        _ = mocker.patch("flatprot.utils.scene.logger")
 
         # Call function
         annotations_path = Path("/path/to/annotations.toml")
@@ -268,32 +297,28 @@ class TestProcessAnnotations:
             scene.add_element.assert_any_call(annotation)
 
     def test_process_annotations_error_handling(self, mocker) -> None:
-        """Test error handling in process_annotations.
-
-        Verifies that exceptions during annotation processing are caught and reported.
-        """
+        """Test error handling when processing annotations."""
         # Mock dependencies
-        style_manager = mocker.Mock(spec=StyleManager)
-        scene = mocker.Mock(spec=Scene)
-        scene.add_element = mocker.Mock()
+        mock_annotation_path = Path("/path/to/annotations.toml")
+        mock_scene = mocker.Mock(spec=Scene)
+        mock_style = mocker.Mock(spec=StyleManager)
 
-        # Mock AnnotationParser to raise an exception
+        # Mock annotation parser to raise exception
         mocker.patch(
             "flatprot.utils.scene.AnnotationParser",
-            side_effect=ValueError("Invalid annotation format"),
+            side_effect=Exception("Test annotation error"),
         )
 
-        # Mock console
-        console_print = mocker.patch("flatprot.utils.scene.console.print")
+        # Mock logger
+        mock_logger = mocker.patch("flatprot.utils.scene.logger")
 
         # Call function
-        annotations_path = Path("/path/to/annotations.toml")
-        process_annotations(annotations_path, scene, style_manager)
+        process_annotations(mock_annotation_path, mock_scene, mock_style)
 
-        # Verify warning was printed
-        console_print.assert_called_with(
-            "[yellow]Warning: Failed to load annotations: Invalid annotation format[/yellow]"
+        # Verify error was logged
+        mock_logger.error.assert_called_with(
+            "Failed to load annotations: Test annotation error"
         )
 
-        # Verify scene.add_element was not called
-        assert scene.add_element.call_count == 0
+        # Verify no annotations were added to scene
+        mock_scene.add_element.assert_not_called()
