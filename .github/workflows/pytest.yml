@@ -2,7 +2,7 @@ name: Python Tests
 
 on:
     pull_request:
-        branches: [main] # Triggers on PRs targeting main branch
+        branches: [staging, main] # Triggers on PRs targeting main branch
 
 jobs:
     test:
@@ -34,7 +34,7 @@ jobs:
                   python-version: ${{ matrix.python-version }}
 
             - name: Install the project
-              run: uv sync --all-extras --dev
+              run: uv sync --all-extras --dev --locked
 
             - name: Run tests
               run: uv run pytest tests
