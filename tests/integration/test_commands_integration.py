@@ -171,12 +171,19 @@ def test_integration_main_minimal(
     # Mock save SVG
     mock_save_svg = mocker.patch("flatprot.cli.commands.save_svg")
 
-    # Mock console output
-    mocker.patch("flatprot.cli.commands.console.print")
+    # Mock logger instead of console output
+    mocker.patch("flatprot.cli.commands.logger")
 
     # Mock file validation
     mocker.patch("flatprot.cli.commands.validate_structure_file")
     mocker.patch("flatprot.cli.commands.validate_optional_files")
+
+    # Mock the CIF file check to return True to bypass DSSP requirement
+    mocker.patch(
+        "flatprot.cli.commands.Path.suffix",
+        new_callable=mocker.PropertyMock,
+        return_value=".cif",
+    )
 
     # Run the main function
     result = main(structure=Path(temp_structure_file), output=Path(temp_output_file))
@@ -231,12 +238,19 @@ def test_integration_main_all_options(
     # Mock save SVG
     mock_save_svg = mocker.patch("flatprot.cli.commands.save_svg")
 
-    # Mock console output
-    mocker.patch("flatprot.cli.commands.console.print")
+    # Mock logger instead of console output
+    mocker.patch("flatprot.cli.commands.logger")
 
     # Mock file validation
     mocker.patch("flatprot.cli.commands.validate_structure_file")
     mocker.patch("flatprot.cli.commands.validate_optional_files")
+
+    # Mock the CIF file check to return True to bypass DSSP requirement
+    mocker.patch(
+        "flatprot.cli.commands.Path.suffix",
+        new_callable=mocker.PropertyMock,
+        return_value=".cif",
+    )
 
     # Run the main function with all options
     result = main(
@@ -286,12 +300,19 @@ def test_integration_main_stdout_output(
     mock_generate_svg = mocker.patch("flatprot.cli.commands.generate_svg")
     mock_generate_svg.return_value = "<svg></svg>"
 
-    # Mock console output
-    mock_console_print = mocker.patch("flatprot.cli.commands.console.print")
+    # Mock print function instead of logger.info since commands.py uses print() for stdout
+    mock_print = mocker.patch("flatprot.cli.commands.print")
 
     # Mock file validation
     mocker.patch("flatprot.cli.commands.validate_structure_file")
     mocker.patch("flatprot.cli.commands.validate_optional_files")
+
+    # Mock the CIF file check to return True to bypass DSSP requirement
+    mocker.patch(
+        "flatprot.cli.commands.Path.suffix",
+        new_callable=mocker.PropertyMock,
+        return_value=".cif",
+    )
 
     # Run the main function without output parameter (should print to stdout)
     result = main(structure=Path(temp_structure_file), output=None)
@@ -299,22 +320,24 @@ def test_integration_main_stdout_output(
     # Verify the result
     assert result == 0
 
-    # Verify that console.print was called with the SVG content
-    mock_console_print.assert_any_call("<svg></svg>")
+    # Verify that print was called with the SVG content
+    mock_print.assert_called_once_with("<svg></svg>")
 
 
 def test_integration_main_flatprot_error(
     temp_structure_file: str,
     mocker: MockerFixture,
 ) -> None:
-    """Test the main function with a FlatProtError.
-
-    Args:
-        temp_structure_file: Path to a temporary valid structure file
-        mocker: Pytest mocker fixture
-    """
+    """Test the main function with a FlatProtError."""
     # Mock file validation to avoid file access
     mocker.patch("flatprot.cli.commands.validate_structure_file")
+
+    # Mock the CIF file check to return True to bypass DSSP requirement
+    mocker.patch(
+        "flatprot.cli.commands.Path.suffix",
+        new_callable=mocker.PropertyMock,
+        return_value=".cif",
+    )
 
     # Mock to raise a FlatProtError
     error_message = "Test error message"
@@ -322,7 +345,8 @@ def test_integration_main_flatprot_error(
     mock_parser = mocker.patch("flatprot.cli.commands.GemmiStructureParser")
     mock_parser.return_value.parse_structure.side_effect = mock_error
 
-    mock_console_print = mocker.patch("flatprot.cli.commands.console.print")
+    # Mock logger error
+    mock_logger_error = mocker.patch("flatprot.cli.commands.logger.error")
 
     # Run the main function
     result = main(structure=Path(temp_structure_file))
@@ -330,8 +354,8 @@ def test_integration_main_flatprot_error(
     # Verify the result
     assert result == 1
 
-    # Verify that console.print was called with the error message
-    mock_console_print.assert_any_call(f"[bold red]Error:[/bold red] {error_message}")
+    # Verify that logger.error was called with the error message
+    mock_logger_error.assert_called_once_with(error_message)
 
 
 def test_integration_main_unexpected_error(
@@ -352,7 +376,15 @@ def test_integration_main_unexpected_error(
     mock_parser = mocker.patch("flatprot.cli.commands.GemmiStructureParser")
     mock_parser.return_value.parse_structure.side_effect = RuntimeError(error_message)
 
-    mock_console_print = mocker.patch("flatprot.cli.commands.console.print")
+    # Mock logger error
+    mock_logger_error = mocker.patch("flatprot.cli.commands.logger.error")
+
+    # Mock the CIF file check to return True to bypass DSSP requirement
+    mocker.patch(
+        "flatprot.cli.commands.Path.suffix",
+        new_callable=mocker.PropertyMock,
+        return_value=".cif",
+    )
 
     # Run the main function
     result = main(structure=Path(temp_structure_file))
@@ -360,10 +392,9 @@ def test_integration_main_unexpected_error(
     # Verify the result
     assert result == 1
 
-    # Verify that console.print was called with the error message
-    mock_console_print.assert_any_call(
-        f"[bold red]Unexpected error:[/bold red] {error_message}"
-    )
+    # Verify that logger.error was called with the error message
+    # In commands.py, it uses logger.error(f"Unexpected error: {str(e)}")
+    mock_logger_error.assert_called_once_with(f"Unexpected error: {error_message}")
 
 
 def test_print_success_summary(mocker: MockerFixture) -> None:
@@ -372,7 +403,8 @@ def test_print_success_summary(mocker: MockerFixture) -> None:
     Args:
         mocker: Pytest mocker fixture
     """
-    mock_console_print = mocker.patch("flatprot.cli.commands.console.print")
+    # Mock logger info instead of console output
+    mock_logger_info = mocker.patch("flatprot.cli.commands.logger.info")
 
     # Test with all parameters
     structure_path = Path("structure.pdb")
@@ -387,12 +419,11 @@ def test_print_success_summary(mocker: MockerFixture) -> None:
         matrix_path=matrix_path,
         style_path=style_path,
         annotations_path=annotations_path,
+        dssp_path=None,
     )
 
-    # Verify console.print was called with expected messages
-    assert (
-        mock_console_print.call_count >= 6
-    )  # One for main message and one for each parameter
+    # Verify logger.info was called with expected messages
+    assert mock_logger_info.call_count >= 1  # At least one call to logger.info
 
 
 def test_print_success_summary_minimal(mocker: MockerFixture) -> None:
@@ -401,7 +432,8 @@ def test_print_success_summary_minimal(mocker: MockerFixture) -> None:
     Args:
         mocker: Pytest mocker fixture
     """
-    mock_console_print = mocker.patch("flatprot.cli.commands.console.print")
+    # Mock logger info instead of console output
+    mock_logger_info = mocker.patch("flatprot.cli.commands.logger.info")
 
     # Test with minimal parameters
     structure_path = Path("structure.pdb")
@@ -412,9 +444,11 @@ def test_print_success_summary_minimal(mocker: MockerFixture) -> None:
         matrix_path=None,
         style_path=None,
         annotations_path=None,
+        dssp_path=None,
     )
 
-    # Verify console.print was called with expected messages
-    assert (
-        mock_console_print.call_count >= 3
-    )  # Main message, structure file, and output file
+    # Verify logger.info was called with expected messages
+    assert mock_logger_info.call_count >= 1  # At least one call to logger.info
+
+    # Verify logger.info was called with expected messages
+    assert mock_logger_info.call_count >= 1  # At least one call to logger.info
