@@ -59,6 +59,9 @@ class MatrixLoader:
                 f"Matrix must be 2-dimensional, got {matrix_array.ndim} dimensions"
             )
 
+        # TransformationMatrix expects a 4x3 matrix where:
+        # - First 3 rows are the rotation matrix (3x3)
+        # - Last row is the translation vector (1x3)
         if matrix_array.shape == (4, 3):
             # Matrix is already in the expected format (4x3)
             try:
@@ -71,9 +74,17 @@ class MatrixLoader:
                 return TransformationMatrix.from_array(matrix_array.T)
             except ValueError as e:
                 raise InvalidMatrixDimensionsError(f"Invalid matrix format: {e}")
+        elif matrix_array.shape == (3, 3):
+            # Only rotation matrix provided, assume zero translation
+            try:
+                # Create a 4x3 matrix with zero translation
+                full_matrix = np.vstack([matrix_array, np.zeros(3)])
+                return TransformationMatrix.from_array(full_matrix)
+            except ValueError as e:
+                raise InvalidMatrixDimensionsError(f"Invalid rotation matrix: {e}")
         else:
             raise InvalidMatrixDimensionsError(
-                f"Matrix must have shape (4, 3) or (3, 4), got {matrix_array.shape}"
+                f"Matrix must have shape (4, 3), (3, 4), or (3, 3), got {matrix_array.shape}"
             )
 
     @classmethod

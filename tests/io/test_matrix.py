@@ -50,8 +50,8 @@ def create_transposed_matrix_file() -> Path:
 
 def create_invalid_dimensions_file() -> Path:
     """Create a temporary file with an invalid matrix shape."""
-    # Create a 3x3 matrix (invalid for transformation)
-    matrix = np.eye(3)
+    # Create a 2x2 matrix (invalid for transformation)
+    matrix = np.eye(2)  # 2x2 identity matrix
 
     # Save to temporary file
     fd, path = tempfile.mkstemp(suffix=".npy")
@@ -78,6 +78,18 @@ def create_corrupted_file() -> Path:
     fd, path = tempfile.mkstemp(suffix=".npy")
     with os.fdopen(fd, "w") as f:
         f.write("This is not a valid numpy file")
+    return Path(path)
+
+
+def create_rotation_only_matrix_file() -> Path:
+    """Create a temporary file with only a rotation matrix (3x3)."""
+    # Create a rotation matrix (3x3)
+    rotation = np.eye(3)  # Identity rotation
+
+    # Save to temporary file
+    fd, path = tempfile.mkstemp(suffix=".npy")
+    os.close(fd)
+    np.save(path, rotation)
     return Path(path)
 
 
@@ -118,7 +130,7 @@ def test_invalid_dimensions():
         loader = MatrixLoader(file_path)
         with pytest.raises(InvalidMatrixDimensionsError) as excinfo:
             loader.load()
-        assert "Matrix must have shape (4, 3) or (3, 4)" in str(excinfo.value)
+        assert "Matrix must have shape (4, 3), (3, 4), or (3, 3)" in str(excinfo.value)
     finally:
         os.unlink(file_path)
 
@@ -178,5 +190,20 @@ def test_from_file_convenience_method():
         assert isinstance(matrix, TransformationMatrix)
         assert np.array_equal(matrix.rotation, np.eye(3))
         assert np.array_equal(matrix.translation, np.array([1.0, 2.0, 3.0]))
+    finally:
+        os.unlink(file_path)
+
+
+def test_rotation_only_matrix_load():
+    """Test loading a matrix with only rotation (3x3)."""
+    file_path = create_rotation_only_matrix_file()
+    try:
+        loader = MatrixLoader(file_path)
+        matrix = loader.load()
+
+        # Verify the matrix is loaded correctly
+        assert isinstance(matrix, TransformationMatrix)
+        assert np.array_equal(matrix.rotation, np.eye(3))
+        assert np.array_equal(matrix.translation, np.zeros(3))
     finally:
         os.unlink(file_path)
