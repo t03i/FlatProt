@@ -19,7 +19,7 @@ theme:
     - toml
     - bash
     - numpy
-site_url: https://pages.github.io/flatprot/
-repo_url: https://github.com/t03i/flatprot
+site_url: https://t03i.github.io/FlatProt/
+repo_url: https://github.com/t03i/FlatProt
 markdown_extensions:
   - admonition
