@@ -1,6 +1,20 @@
 # CHANGELOG
 
 
+## v1.0.0 (2025-03-17)
+
+### Continuous Integration
+
+- Fix workflow definition
+  ([`a47e74c`](https://github.com/t03i/FlatProt/commit/a47e74c7d6c891ae43190fa6aca7a3f8f00a4442))
+
+BREAKING CHANGE: overhauls CLI API, installation, and project structure
+
+### Breaking Changes
+
+- Overhauls CLI API, installation, and project structure
+
+
 ## v0.2.0 (2025-03-17)
 
 ### Bug Fixes
