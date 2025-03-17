@@ -116,7 +116,7 @@ class StyleParser:
             # Special handling for point style (converting radius to line_width)
             if section_name == "point_annotation" and "radius" in processed_section:
                 radius = processed_section.pop("radius")
-                processed_section["stroke_width"] = radius * 2
+                processed_section["stroke_width"] = radius
 
             # Convert color strings to Color objects
             processed_section = self._convert_colors(processed_section)

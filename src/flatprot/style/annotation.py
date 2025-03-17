@@ -30,13 +30,11 @@ class AnnotationStyle(Style):
         default=1.0, ge=0.0, le=1.0, description="Opacity value between 0 and 1"
     )
 
-    text_size: float = 12
-    connector_color: Color = Field(
-        default=Color("#666666"), description="Connector color"
-    )
-    connector_radius: float = Field(default=2, description="Connector Radius")
-    connector_opacity: float = Field(default=0.6, description="Connector opacity")
     padding: float = Field(default=5, description="Padding")
+    label_color: Color = Field(default=Color("#000000"), description="Label color")
+    label_font_size: float = Field(default=12, description="Label font size")
+    label_font_family: str = Field(default="Arial", description="Label font family")
+    label_offset: float = Field(default=10, description="Label offset")
 
 
 class AreaAnnotationStyle(AnnotationStyle):
@@ -53,4 +51,8 @@ class PointAnnotationStyle(AnnotationStyle):
 
 
 class LineAnnotationStyle(AnnotationStyle):
-    pass
+    connector_color: Color = Field(
+        default=Color("#666666"), description="Connector color"
+    )
+    connector_radius: float = Field(default=2, description="Connector Radius")
+    connector_opacity: float = Field(default=0.6, description="Connector opacity")

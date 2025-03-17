@@ -22,7 +22,7 @@ opacity = 0.7
 # Annotation styles
 
 [point_annotation]
-radius = 5               # Will be converted to stroke_width = 10
+radius = 2               # Will be converted to stroke_width = 5
 fill_color = "#FFA500"   # Orange
 stroke_color = "#000000" # Black
 opacity = 0.9
