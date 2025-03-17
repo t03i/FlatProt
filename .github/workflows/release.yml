@@ -10,12 +10,12 @@ permissions:
 
 jobs:
     python-release:
-        uses: ./.github/workflows/python.yml
+        uses: ./.github/workflows/release-python.yml
         with:
             tag: ${{ github.ref_name }}
 
     docs-release:
-        uses: ./.github/workflows/docs.yml
+        uses: ./.github/workflows/release-docs.yml
         with:
             ref: ${{ github.ref_name }}
 
@@ -28,4 +28,3 @@ jobs:
                   tag_name: ${{ github.ref_name }}
                   body_path: CHANGELOG.md
                   draft: false
-        
