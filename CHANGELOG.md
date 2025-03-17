@@ -1,6 +1,195 @@
 # CHANGELOG
 
 
+## v0.2.0 (2025-03-17)
+
+### Bug Fixes
+
+- Add h5py dep
+  ([`a5ba429`](https://github.com/t03i/FlatProt/commit/a5ba429b97bd78bdf35225aaa5e5d92fa3bf9a73))
+
+- Annotation parsing
+  ([`0bc3635`](https://github.com/t03i/FlatProt/commit/0bc36353b78ee06107946609dc721dd66c79ef02))
+
+- Missing StyleManager issue
+  ([`bcd98a5`](https://github.com/t03i/FlatProt/commit/bcd98a52f6e98a598b8ebb2849c8de130045a251))
+
+- Structure mocking
+  ([`0f75ee4`](https://github.com/t03i/FlatProt/commit/0f75ee4fa27699ac7523613094b6a1ba5af8d310))
+
+- Update matrix dimensions to be properly handled
+  ([`0d6fc02`](https://github.com/t03i/FlatProt/commit/0d6fc027f928fcdf8b254054c5f5019dba7bc01c))
+
+### Chores
+
+- Update lockfile
+  ([`ae53666`](https://github.com/t03i/FlatProt/commit/ae53666cbb8b6baf34bf48a1cc1f4a5bbb6c6f96))
+
+- Update uv version
+  ([`50ac19c`](https://github.com/t03i/FlatProt/commit/50ac19c42b839627393b96460df96f15374ea4d8))
+
+### Continuous Integration
+
+- Add debug to pytest
+  ([`3442168`](https://github.com/t03i/FlatProt/commit/3442168ec6a0bafb45f6d129af60069033f6c4fe))
+
+- Fix build commit
+  ([`a70a15b`](https://github.com/t03i/FlatProt/commit/a70a15b2abd39c89266df08466aa2b558e2dca5a))
+
+- Rename release files
+  ([`1cfa377`](https://github.com/t03i/FlatProt/commit/1cfa377b2452c750f7479b69e16d75102bd3a48c))
+
+- Update python tests on staging
+  ([`b03aaac`](https://github.com/t03i/FlatProt/commit/b03aaac67b8ddc5efebf16d20ea0ad401697ecdd))
+
+### Documentation
+
+- Add basic CLI documentation
+  ([`f3a5f6a`](https://github.com/t03i/FlatProt/commit/f3a5f6a3ca17ee426f0a7cdb475d9c0d11ebe77f))
+
+- Add cursorrules
+  ([`d71abc6`](https://github.com/t03i/FlatProt/commit/d71abc6c4c39d36aa546014f1b8da884881c9a20))
+
+- Add example toml files
+  ([`b0fccc6`](https://github.com/t03i/FlatProt/commit/b0fccc68dba23dbdedceb4b22b7a363c4ddd9bc1))
+
+- Add structure documentation
+  ([`f2b84b2`](https://github.com/t03i/FlatProt/commit/f2b84b29a13798a2b1065946a515a08b6b9279f0))
+
+- Fix numbering
+  ([`8786a8b`](https://github.com/t03i/FlatProt/commit/8786a8b021a6f2b33d1eb8e192eb9ca85cbc5896))
+
+- Update example to work with 3FTx
+  ([`0281cc8`](https://github.com/t03i/FlatProt/commit/0281cc897a836c7c2704ceebbcc3eb1f5f2edbe6))
+
+- Update README
+  ([`969da70`](https://github.com/t03i/FlatProt/commit/969da707d41f934301ba7c4898575079663c4532))
+
+### Features
+
+- Add annotation parsing and validation
+  ([`e2dc6c7`](https://github.com/t03i/FlatProt/commit/e2dc6c7bda4a5a489abca712bbc412deba58ef31))
+
+- Add annotation parsing from toml
+  ([`844dc30`](https://github.com/t03i/FlatProt/commit/844dc30728a31f9151d5725eb32be42e351ec9f4))
+
+- Add cli scaffolding
+  ([`9564b9b`](https://github.com/t03i/FlatProt/commit/9564b9b559116a130632fee41104ca0ead96b852))
+
+- Add matrix loader
+  ([`e271745`](https://github.com/t03i/FlatProt/commit/e271745605b7a8182c1a9e79cb9cd7690278023d))
+
+- Add style parsing
+  ([`536684c`](https://github.com/t03i/FlatProt/commit/536684c3d291a7ef6256d6182e683f8bf5dd630b))
+
+### Refactoring
+
+- Adapt file test to refactored code
+  ([`8832568`](https://github.com/t03i/FlatProt/commit/8832568028271dabbc0b0aff9c3f5d64bbdb449f))
+
+- Add coordinate manager tests
+  ([`3289be4`](https://github.com/t03i/FlatProt/commit/3289be4ae7e8e3056da525956b7f6a025a9924df))
+
+- Add dssp option and validation
+  ([`3b06594`](https://github.com/t03i/FlatProt/commit/3b0659488ba83319cd23d5677d70a8bd6a3b07a9))
+
+- Add integration tests
+  ([`ce4bfc5`](https://github.com/t03i/FlatProt/commit/ce4bfc53903fb22ce0cef3863d093245d5321c5f))
+
+- Add logging and verbosity control
+  ([`ca577b5`](https://github.com/t03i/FlatProt/commit/ca577b5824524fbdf21be9aee5705952f49a1875))
+
+- Add scene utils tests
+  ([`9db6bb1`](https://github.com/t03i/FlatProt/commit/9db6bb1a86beebdcad1348ad81d684d2f2b18f59))
+
+- Add string representation
+  ([`d4002cd`](https://github.com/t03i/FlatProt/commit/d4002cdb1b5a87955050fa8bac8f118da1108296))
+
+- Add structure validation and remove tests
+  ([`e9df138`](https://github.com/t03i/FlatProt/commit/e9df1380c4a0d222ce6f1c48f81a56916c4e5029))
+
+- Add svg creation tests
+  ([`0fe06a1`](https://github.com/t03i/FlatProt/commit/0fe06a152c4e530a7939dbb24d4682e20fd96cbe))
+
+- Add tests for style utils
+  ([`9ff21e8`](https://github.com/t03i/FlatProt/commit/9ff21e89a414c29370e2ef969d7a5252acf3e2cb))
+
+- Add transformation utils
+  ([`bbbccab`](https://github.com/t03i/FlatProt/commit/bbbccab2d267729a5e55be9eceecb2622792d3b8))
+
+- Allow for console output of svg
+  ([`1d7f925`](https://github.com/t03i/FlatProt/commit/1d7f92508e88783c3fbfe3817e450035fc3a36bc))
+
+- Centralize cli fixtures
+  ([`1f6af7a`](https://github.com/t03i/FlatProt/commit/1f6af7abf19e6a2539666dafc6f2cbd8add870ee))
+
+- Change utils structure
+  ([`137af54`](https://github.com/t03i/FlatProt/commit/137af54066941efc4aa4697466ce98bbe24b7aed))
+
+- Fix integration tests
+  ([`a9aabfc`](https://github.com/t03i/FlatProt/commit/a9aabfc2567008ba9c2a0f205016d6e49f54d8ca))
+
+- Fix scene structure parsing
+  ([`684095c`](https://github.com/t03i/FlatProt/commit/684095ccec9cb5204920b6d6036ca02a2a59972f))
+
+- Fix styling
+  ([`f99be5c`](https://github.com/t03i/FlatProt/commit/f99be5c227b6ce40c7e4ea16ffea45d9995f8b31))
+
+- Fix test cases
+  ([`44ace30`](https://github.com/t03i/FlatProt/commit/44ace304bede4545935ef251d97d2242ba3b6ad6))
+
+- Fix test to work with point index
+  ([`cf993e8`](https://github.com/t03i/FlatProt/commit/cf993e8d4ce231c3065ee5c497c278cfe745484f))
+
+- Fix the local index calculation
+  ([`b642eec`](https://github.com/t03i/FlatProt/commit/b642eecd148cdfcd5a34c590af7b9fa61667a66c))
+
+- Fix utils test to accept logger
+  ([`b54633e`](https://github.com/t03i/FlatProt/commit/b54633ea53b3a5b6c9da9e19821bf11e842e46a3))
+
+- Implement detailed error logging
+  ([`e17e45a`](https://github.com/t03i/FlatProt/commit/e17e45af6abc1d8d6b557c01c0e37a70e1786756))
+
+- Improve tests to be behavior oriented
+  ([`573a0d1`](https://github.com/t03i/FlatProt/commit/573a0d16817304fcdb22c030d9d966b31d6e2385))
+
+- Move composer to utils
+  ([`54c95e8`](https://github.com/t03i/FlatProt/commit/54c95e80d87df8f683edc83955051d03e6f9a22b))
+
+- Move errors into io
+  ([`f55265b`](https://github.com/t03i/FlatProt/commit/f55265b2cfce7b64a9dc41058be9eca7d0ae0343))
+
+- Move tests to folder structure
+  ([`cad5923`](https://github.com/t03i/FlatProt/commit/cad59235bb2a6857c372a4cf6f28fe94f62f36b9))
+
+- Move to pytest-mock
+  ([`2fb88cf`](https://github.com/t03i/FlatProt/commit/2fb88cf382c621f47da256b317c9f740f50706c4))
+
+- Remove debug output
+  ([`c668841`](https://github.com/t03i/FlatProt/commit/c668841136b733ebba854868fe9bad1a819a8cd1))
+
+- Remove debug print
+  ([`3fa2ca9`](https://github.com/t03i/FlatProt/commit/3fa2ca941ee08c8778ef477f50e365d9fa3b89ed))
+
+- Remove unused import
+  ([`d05b17b`](https://github.com/t03i/FlatProt/commit/d05b17b13c3a0a3d8113e6bf0da0b48987d86ad5))
+
+- Rename to point index
+  ([`ff84fab`](https://github.com/t03i/FlatProt/commit/ff84fab33b20bbef56b29fdca89ffdfc5de95696))
+
+- Switch transformation loading to coordinate manager
+  ([`02d3835`](https://github.com/t03i/FlatProt/commit/02d38359cd72e14bd4061f645703869092a6f0ef))
+
+- Update function names
+  ([`9c99757`](https://github.com/t03i/FlatProt/commit/9c9975747d67eb9b5c3e32a5a5b015d11dea93dd))
+
+- Update io tests to work with changed annotation parser
+  ([`0f00d67`](https://github.com/t03i/FlatProt/commit/0f00d677f0c53b19ea2918e1e09549da03c5d7b1))
+
+- Update test for better annotation parsing
+  ([`01ba041`](https://github.com/t03i/FlatProt/commit/01ba041195deb9a1b0660eae121ebe10b2de51eb))
+
+
 ## v0.1.0 (2025-02-25)
 
 ### Bug Fixes
