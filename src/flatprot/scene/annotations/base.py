@@ -31,6 +31,7 @@ class Annotation(SceneElement):
         self.label = label
         self.indices = indices
         self.targets = targets
+        self.id = f"{hash(f'{label}_{indices}') & 0xFFFFFF:06x}"
 
     def display_coordinates(self) -> Optional[np.ndarray]:
         return None
