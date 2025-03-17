@@ -17,7 +17,7 @@ FlatProt is a tool for 2D protein visualization aimed at improving the comparabi
 
 ## Getting Started
 
-FlatProt needs python version: python= ">=3.10,<3.13"
+FlatProt needs python version: python= ">=3.11,<=3.13"
 
 ### Download FlatProt via uv
 
