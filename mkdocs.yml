@@ -21,3 +21,5 @@ theme:
     - numpy
 site_url: https://pages.github.io/flatprot/
 repo_url: https://github.com/t03i/flatprot
+markdown_extensions:
+  - admonition
