@@ -2,7 +2,7 @@
 
 <img width="910" alt="image" src="https://github.com/ConstantinCarl/prot2d/assets/156075124/34d415d3-55be-4784-a96d-035e40fc5afe">
 
-FlatProt is a tool for 2D protein visualization aimed at improving the comparability of protein structures through standardized 2D visualizations. FlatProt focuses on creating highly comparable representations for same-family proteins. In this case FlatProt was used to generate comparable representatoins for 3 3FTx structures.
+FlatProt is a tool for 2D protein visualization aimed at improving the comparability of protein structures through standardized 2D visualizations. FlatProt focuses on creating highly comparable representations for same-family proteins. In this case FlatProt was used to generate comparable representations for 3 3FTx structures.
 
 ## Contents
 
@@ -19,18 +19,18 @@ FlatProt is a tool for 2D protein visualization aimed at improving the comparabi
 
 FlatProt needs python version: python= ">=3.10,<3.13"
 
-### Download FlatProt via pip or poetry
+### Download FlatProt via uv
 
--   pip:
+We use and recommend [uv](https://github.com/astral-sh/uv) as a fast, reliable Python package installer and resolver.
 
 ```shell
-pip install FlatProt
+# Install FlatProt using uv
+uv tool add FlatProt
 ```
 
--   Poetry:
-
 ```shell
-poetry add FlatProt
+# Install FlatProt using uv
+uvx flatprot
 ```
 
 ### Install Foldseek
@@ -45,23 +45,23 @@ Instructions for downloading the Foldseek software can be found in Foldseek's Gi
 
 Instructions for downloading dssp can be found here:
 
--   [dssp instructions](http://biskit.pasteur.fr/install/applications/dssp)
+-   [dssp instructions](https://pdb-redo.eu/dssp/download)
 
-!The program runs on the mkdssp version 4.4.0! (some sources dont provide that (brew does!))
+!The program runs on the mkdssp version 4.4.0! (some sources don't provide that (brew does!))
 
 _An example download workflow for usage can also be found in the google colab_
 
 ## First experiences with Google Colab
 
-For users to get to know prot2d we've prepared a Google Colab notebook with a quick tutorial through the major functions/possibilities of prot2d. Therefore the exmample protein 1kt1 is used and visualized in different ways. This allows for basic understanding of the functionalities:
+For users to get to know FlatProt we've prepared a Google Colab notebook with a quick tutorial through the major functions/possibilities of FlatProt. Therefore the example protein 1kt1 is used and visualized in different ways. This allows for basic understanding of the functionalities:
 
 -   [Google Colab tutorial](https://colab.research.google.com/drive/17u0twE81kYYspNFsdXUHrCyP33hj0dO6?usp=sharing)
 
 Instructions in the Colab help with the first hands-on.
 
-For direct usage of prot2d including all paramters the following Collab provides functionalitys for using prot2d withput locally downloading anything.
-Users can upload theri own proteins to the Collab and visualize them as wanted.
-The runtime of the Collab is way longer than local usage. Therefore we dont advise using it for big amounts of data:
+For direct usage of FlatProt including all parameters the following Collab provides functionalities for using FlatProt without locally downloading anything.
+Users can upload their own proteins to the Collab and visualize them as wanted.
+The runtime of the Colab is way longer than local usage. Therefore we don't advise using it for big amounts of data:
 
 -   [Google Colab usage](https://colab.research.google.com/drive/1pJHMagKgpTJ1cfBHkBSh2hMlkzQk263d?usp=sharing)
 
@@ -69,12 +69,18 @@ The runtime of the Collab is way longer than local usage. Therefore we dont advi
 
 FlatProt's documentation can found here:
 
--   [FlatProt documentation!](https://constantincarl.github.io/FlatProt/)
+-   [FlatProt documentation!](https://t03i.github.io/FlatProt/)
+
+The documentation includes:
+
+-   Detailed CLI usage instructions
+-   File format specifications
+-   API reference
 
 **important notes:**
 
 -   input PDB files need a header to work (important for predicted structures)
--   FlatProt's methods can also be used via command line commands (cli)
+-   FlatProt's methods can be used via command line commands (cli)
 
 ## Data
 
@@ -90,12 +96,11 @@ This project uses datasets that can be found on Zenodo. Additional example files
 
 ### 3FTx - Family Overlay
 
-
 ### 1kt1 - domain visualization (family vis)
 
 <img width="1000" alt="image" src="https://github.com/ConstantinCarl/prot2d/assets/156075124/1f8ac748-09d1-464c-9e42-c6fd93bfeddc">
 
-### 1kt1 - full protine visualization
+### 1kt1 - full protein visualization
 
 <img width="450" alt="image" src="https://github.com/ConstantinCarl/prot2d/assets/156075124/854a89a7-e91c-4ec5-b81d-d33b4f1b96ec">
 
@@ -108,14 +113,6 @@ For highlighting features in a structure two types of highlights are possible. B
 Cystein bonds highlight annotations can be created by using FlatProt's "calculate_cystein_bonds" functionality.
 An example json can be downloaded here:
 
-...
-
-## Domain Annotation File Format:
-
-The domain annotation is needed in the following format to be procceced by prot2d (methods for converting chainsaw annotations are included in the package documentation)
-
-![image](https://github.com/ConstantinCarl/prot2d/assets/156075124/54dd63d9-933f-4358-8eae-8aa838008de5)
-
 ## Runtime for protein sizes
 
 <img width="750" alt="image" src="https://github.com/ConstantinCarl/prot2d/assets/156075124/ff033992-3339-43ab-a7d4-dd71a26dddc4">
@@ -124,6 +121,6 @@ The runtimes are measured on a local lightweight device.<br>
 
 ## Reference
 
-In the following document one can find more information on the tools methodogy, result analysis and references of the shown proteins and used software.
+In the following document one can find more information on the tool's methodology, result analysis and references of the shown proteins and used software.
 
 [BachelorThesis_ConstantinCarl_Enhancing-Protein-Comparability-with-Standardized-2D-Visualization.pdf](https://github.com/ConstantinCarl/prot2d/files/14605102/BachelorThesis_ConstantinCarl_Enhancing-Protein-Comparability-with-Standardized-2D-Visualization.pdf)
