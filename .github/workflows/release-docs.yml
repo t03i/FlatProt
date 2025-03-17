@@ -1,19 +1,19 @@
 name: Documentation
 
 on:
-    workflow_dispatch:
+    workflow_call:
         inputs:
             ref:
-                description: 'Branch, tag, or SHA to build docs from'
+                description: "Branch, tag, or SHA to build docs from"
                 required: true
-                default: 'main'
+                default: "main"
                 type: string
 
 jobs:
     docs:
         runs-on: ubuntu-latest
         environment:
-            name: github-pages
+            name: documentation
         env:
             UV_TOOL_DIR: /tmp/.uv-tools
         permissions:
