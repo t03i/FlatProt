@@ -21,6 +21,7 @@ dependencies = [
     "pydantic-numpy>=8.0.0",
     "cyclopts>=3.9.0",
     "toml>=0.10.2",
+    "h5py>=3.13.0",
 ]
 
 [project.scripts]
