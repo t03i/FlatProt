@@ -85,7 +85,7 @@ verbosity_group = Group(
 
 
 @error_handler
-def main(
+def project(
     structure: Path,
     output: Optional[Path] = None,
     matrix: Optional[Path] = None,
@@ -223,3 +223,81 @@ def main(
     except Exception as e:
         logger.error(f"Unexpected error: {str(e)}")
         return 1
+
+
+@error_handler
+def align(
+    structure_file: Path,
+    output_file: Optional[Path] = None,
+    matrix: Optional[Path] = None,
+    foldseek_path: str = "foldseek",
+    database_path: Optional[Path] = None,
+    min_probability: float = 0.5,
+    download_db: bool = False,
+) -> int:
+    """
+    Align a protein structure to known superfamilies.
+
+    This command finds the best matching protein superfamily for the given structure
+    and returns alignment information including rotation matrices.
+
+    Args:
+        structure_file: Path to the input structure file (PDB or similar).
+            Supported formats include PDB (.pdb) and mmCIF (.cif, .mmcif).
+            The file must exist and be in a valid format.
+
+        output_file: Path to save the JSON results.
+            If not provided, the results are printed to stdout.
+            The directory will be created if it doesn't exist.
+
+        matrix: Path to a custom transformation matrix.
+            If provided, this matrix will be applied to the structure before alignment.
+            Otherwise, the default inertia-based transformation is used.
+
+        foldseek_path: Path to the FoldSeek executable.
+            Defaults to "foldseek" which assumes it's in the system PATH.
+            Set this if FoldSeek is installed in a non-standard location.
+
+        database_path: Path to a custom alignment database.
+            If not provided, the default database will be used.
+            If the database doesn't exist, it will be downloaded unless download_db is False.
+
+        min_probability: Minimum probability threshold for alignments.
+            Alignments with probability below this threshold will be rejected.
+            Value should be between 0.0 and 1.0, with higher values being more stringent.
+
+        download_db: Force database download even if it already exists.
+            When set, the alignment database will be redownloaded regardless of
+            whether it already exists locally.
+
+    Returns:
+        int: 0 for success, 1 for errors.
+
+    Examples:
+        Basic usage:
+            flatprot align structure.pdb results.json
+
+        Using a custom database:
+            flatprot align structure.pdb results.json --database custom_db_path
+
+        Adjusting probability threshold:
+            flatprot align structure.pdb --min-probability 0.7
+    """
+    logger = logging.getLogger("flatprot.align")
+
+    # Validate that the structure file exists
+    if not structure_file.exists():
+        raise FileNotFoundError(f"Structure file not found: {structure_file}")
+
+    # Log the arguments
+    logger.info(f"Structure file: {structure_file}")
+    logger.info(f"Output file: {output_file or 'stdout'}")
+    logger.info(f"FoldSeek path: {foldseek_path}")
+    logger.info(f"Database path: {database_path or 'default'}")
+    logger.info(f"Minimum probability: {min_probability}")
+    logger.info(f"Force database download: {download_db}")
+
+    # TODO: Implement alignment functionality in future prompts
+    logger.info("Alignment functionality will be implemented in future steps")
+
+    return 0
