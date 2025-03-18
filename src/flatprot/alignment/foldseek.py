@@ -1,17 +1,25 @@
 # Copyright 2025 Tobias Olenyi.
 # SPDX-License-Identifier: Apache-2.0
 
-from typing import Optional
+from typing import Optional, NamedTuple
 from pathlib import Path
 import subprocess
 import tempfile
-import sys
 
 import numpy as np
 import polars as pl
 
 from flatprot.transformation import TransformationMatrix
-from .utils import AlignmentResult
+
+
+class AlignmentResult(NamedTuple):
+    """Results from a structural family alignment."""
+
+    db_id: str
+    probability: float
+    aligned_region: np.ndarray
+    alignment_scores: np.ndarray
+    rotation_matrix: TransformationMatrix
 
 
 class FoldseekAligner:

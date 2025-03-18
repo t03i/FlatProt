@@ -2,28 +2,16 @@
 # SPDX-License-Identifier: Apache-2.0
 
 
-from typing import NamedTuple
 from pathlib import Path
 
-import numpy as np
 
 from flatprot.transformation import TransformationMatrix
 from .db import AlignmentDatabase
-from .foldseek import FoldseekAligner
+from .foldseek import FoldseekAligner, AlignmentResult
 from .errors import (
     NoSignificantAlignmentError,
     DatabaseEntryNotFoundError,
 )
-
-
-class AlignmentResult(NamedTuple):
-    """Results from a structural family alignment."""
-
-    db_id: str
-    probability: float
-    aligned_region: np.ndarray
-    alignment_scores: np.ndarray
-    rotation_matrix: TransformationMatrix
 
 
 def get_aligned_rotation_database(
