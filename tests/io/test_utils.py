@@ -1,7 +1,7 @@
 import pytest
 import numpy as np
 
-from flatprot.alignment.utils import AlignmentResult, alignment_to_db_rotation
+from flatprot.alignment.utils import AlignmentResult, get_aligned_rotation_database
 from flatprot.alignment.db import AlignmentDatabase, AlignmentDBEntry
 from flatprot.transformation import TransformationMatrix
 
@@ -40,7 +40,7 @@ def mock_db(tmp_path):
 
 
 def test_alignment_to_db_rotation(sample_alignment, mock_db):
-    result = alignment_to_db_rotation(sample_alignment, mock_db)
+    result = get_aligned_rotation_database(sample_alignment, mock_db)
 
     # The combined rotation should be the composition of both rotations
     # In this case, both rotations are the same 90-degree rotation,
@@ -54,4 +54,4 @@ def test_alignment_to_db_rotation(sample_alignment, mock_db):
 def test_alignment_to_db_rotation_invalid_id(sample_alignment, mock_db):
     invalid_alignment = sample_alignment._replace(db_id="nonexistent")
     with pytest.raises(ValueError):
-        alignment_to_db_rotation(invalid_alignment, mock_db)
+        get_aligned_rotation_database(invalid_alignment, mock_db)
