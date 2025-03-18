@@ -28,10 +28,8 @@ from dataclasses import dataclass
 import logging
 import shutil
 import subprocess
-import json
 
 from cyclopts import Parameter, Group, validators
-import numpy as np
 
 from flatprot.core.error import FlatProtError
 from flatprot.cli.errors import error_handler
@@ -51,7 +49,7 @@ from flatprot.alignment import (
     DatabaseEntryNotFoundError,
 )
 from flatprot.io import OutputFileError, InvalidStructureError
-
+from flatprot.utils.alignment import save_alignment_results, save_alignment_matrix
 
 verbosity_group = Group(
     "Verbosity",
@@ -255,6 +253,7 @@ def align_structure_rotation(
     info_out_path: Optional[Path] = None,
     foldseek_path: str = "foldseek",
     database_path: Optional[Path] = None,
+    foldseek_db_path: Optional[Path] = None,
     min_probability: Annotated[
         float, Parameter(validator=validators.Number(gt=0, lt=1.0))
     ] = 0.5,
@@ -321,9 +320,11 @@ def align_structure_rotation(
         # Database handling
         db_path = ensure_database_available(database_path, download_db)
 
-        logger.info(f"Using alignment database at: {db_path}")
+        logger.debug(f"Using alignment database at: {db_path}")
 
-        foldseek_db_path = db_path / "foldseek_db"
+        foldseek_db_path = foldseek_db_path or db_path / "foldseek_db"
+
+        logger.debug(f"Using foldseek database: {foldseek_db_path}")
 
         # Initialize database
         alignment_db = AlignmentDatabase(db_path)
@@ -341,33 +342,21 @@ def align_structure_rotation(
             min_probability=min_probability,
         )
 
+        # Get database entry for the matched family
+        db_entry = alignment_db.get_entry(alignment_result.db_id)
+
         # Matrix combination
         final_matrix = get_aligned_rotation_database(alignment_result, alignment_db)
 
-        logger.info(f"Alignment result: {alignment_result}")
+        save_alignment_matrix(final_matrix, matrix_out_path)
+        logger.info(f"Saved rotation matrix to {matrix_out_path}")
 
-        # Output handling with proper error wrapping
-        try:
-            np.save(matrix_out_path, final_matrix)
-            logger.info(f"Saved rotation matrix to {matrix_out_path}")
-        except (IOError, PermissionError) as e:
-            raise OutputFileError(f"Failed to write output: {str(e)}")
-
-        if info_out_path:
-            try:
-                info_out_path.parent.mkdir(parents=True, exist_ok=True)
-                with open(info_out_path, "w") as f:
-                    data = {
-                        "structure_id": structure_file.name,
-                        "aligned_db_id": alignment_result.db_id,
-                        "alignment_probability": float(
-                            f"{alignment_result.probability:.3f}"
-                        ),
-                    }
-                    json.dump(data, f, indent=4)
-                logger.info(f"Saved alignment info to {info_out_path}")
-            except (IOError, PermissionError) as e:
-                raise OutputFileError(f"Failed to write output: {str(e)}")
+        save_alignment_results(
+            result=alignment_result,
+            db_entry=db_entry,
+            output_path=info_out_path,
+            structure_file=structure_file,
+        )
 
         logger.info("Alignment completed successfully")
         return 0
