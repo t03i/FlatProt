@@ -61,8 +61,13 @@ verbosity_group = Group(
 @Parameter(name="*")
 @dataclass
 class Common:
-    quiet: Annotated[bool, Parameter(group=verbosity_group)] = (False,)
-    verbose: Annotated[bool, Parameter(group=verbosity_group)] = (False,)
+    quiet: Annotated[
+        bool,
+        Parameter(group=verbosity_group, help="Suppress all output except errors."),
+    ] = False
+    verbose: Annotated[
+        bool, Parameter(group=verbosity_group, help="Print additional information.")
+    ] = False
 
 
 def print_success_summary(
@@ -117,7 +122,7 @@ def set_logging_level(common: Common | None = None):
 @error_handler
 def project_structure_svg(
     structure: Path,
-    output: Optional[Path] = None,
+    output: Annotated[Optional[Path], Parameter(name=["-o", "--output"])] = None,
     matrix: Optional[Path] = None,
     style: Optional[Path] = None,
     annotations: Optional[Path] = None,
@@ -128,32 +133,22 @@ def project_structure_svg(
     """
     Generate a flat projection of a protein structure.
 
-    This function is the main entry point for the FlatProt CLI. It processes
-    a protein structure file, applies transformations, styles, and annotations,
-    and generates a 2D SVG visualization.
+    This function processes a protein structure file, applies transformations, styles, and annotations, and generates a 2D SVG visualization.
 
     Args:
         structure: Path to the structure file (PDB or similar).
             Supported formats include PDB (.pdb) and mmCIF (.cif, .mmcif).
             The file must exist and be in a valid format.
-
         output: Path to save the SVG output.
             If not provided, the SVG is printed to stdout.
             The directory will be created if it doesn't exist.
-
         matrix: Path to a custom transformation matrix.
             If not provided, a default inertia transformation is used.
-            The matrix should be a NumPy (.npy) file containing:
-            - A 4x3 matrix where the first 3 rows are the rotation matrix (3x3)
-              and the last row is the translation vector (1x3)
-            - Alternatively, a 3x3 rotation matrix (translation will be set to zero)
-            - The matrix can also be transposed (3x4) and will be automatically corrected
-
+            The matrix should be a NumPy (.npy) file containing (a) A 4x3 matrix where the first 3 rows are the rotation matrix (3x3) and the last row is the translation vector (1x3) (b) Alternatively, a 3x3 rotation matrix (translation will be set to zero) (c) The matrix can also be transposed (3x4) and will be automatically corrected
         style: Path to a custom style file in TOML format.
             If not provided, the default styles are used.
             The style file can define visual properties for helices, sheets,
             points, lines, and areas. See examples/styles.toml for reference.
-
         annotations: Path to a TOML file with annotation definitions.
             The annotation file can define point, line, and area annotations to highlight
             specific structural features. Examples:
@@ -161,32 +156,21 @@ def project_structure_svg(
             - Line annotations connect residues with lines
             - Area annotations highlight regions of the structure
             See examples/annotations.toml for a reference annotation file.
-
         dssp: Path to a DSSP file with secondary structure assignments.
             If not provided, secondary structure is assumed to be in the input structure file.
             Required for PDB files, as they don't contain secondary structure information.
-
-        quiet: Suppress all output except errors.
-            When set, only error messages will be displayed.
-
-        verbose: Print additional information.
-            When set, debug-level messages will be displayed.
-
     Returns:
         int: 0 for success, 1 for errors.
-
     Examples:
         Basic usage:
             flatprot structure.pdb output.svg
-
         With custom styles and annotations:
             flatprot structure.cif output.svg --annotations annotations.toml --style style.toml
-
         Using a custom transformation matrix:
             flatprot structure.pdb output.svg --matrix custom_matrix.npy
-
         Providing secondary structure information for PDB files:
             flatprot structure.pdb output.svg --dssp structure.dssp
+
     """
     set_logging_level(common)
 
@@ -249,13 +233,27 @@ def project_structure_svg(
 @error_handler
 def align_structure_rotation(
     structure_file: Path,
-    matrix_out_path: Path = "alignment_matrix.npy",
-    info_out_path: Optional[Path] = None,
-    foldseek_path: str = "foldseek",
-    database_path: Optional[Path] = None,
-    foldseek_db_path: Optional[Path] = None,
+    matrix_out_path: Annotated[
+        Path, Parameter(name=["matrix-out-path", "-m", "--matrix"])
+    ] = "alignment_matrix.npy",
+    info_out_path: Annotated[
+        Optional[Path], Parameter(name=["info-out-path", "-i", "--info"])
+    ] = None,
+    foldseek_path: Annotated[
+        str, Parameter(name=["foldseek-path", "-f", "--foldseek"])
+    ] = "foldseek",
+    database_path: Annotated[
+        Optional[Path], Parameter(name=["database-path", "-d", "--database"])
+    ] = None,
+    foldseek_db_path: Annotated[
+        Optional[Path], Parameter(name=["foldseek-db-path", "-b", "--foldseek-db"])
+    ] = None,
     min_probability: Annotated[
-        float, Parameter(validator=validators.Number(gt=0, lt=1.0))
+        float,
+        Parameter(
+            validator=validators.Number(gt=0, lt=1.0),
+            name=["min-probability", "-p", "--min-probability"],
+        ),
     ] = 0.5,
     download_db: bool = False,
     *,
@@ -283,13 +281,17 @@ def align_structure_rotation(
             Defaults to "foldseek" which assumes it's in the system PATH.
             Set this if FoldSeek is installed in a non-standard location.
 
+        foldseek_db_path: Path to a custom foldseek database.
+            If not provided, the default database will be used.
+            If the database doesn't exist, it will be downloaded unless download_db is False.
+
         database_path: Path to a custom alignment database.
             If not provided, the default database will be used.
             If the database doesn't exist, it will be downloaded unless download_db is False.
 
         min_probability: Minimum probability threshold for alignments.
             Alignments with probability below this threshold will be rejected.
-            Value should be between 0.0 and 1.0, with higher values being more stringent.
+            Value should be larger than 0.0 and smaller than 1.0, with higher values being more stringent.
 
         download_db: Force database download even if it already exists.
             When set, the alignment database will be redownloaded regardless of
