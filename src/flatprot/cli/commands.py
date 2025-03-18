@@ -37,6 +37,7 @@ from flatprot.utils import logger, setup_logging
 from flatprot.utils.coordinate_manger import create_coordinate_manager, apply_projection
 from flatprot.utils.svg import generate_svg, save_svg
 from flatprot.utils.style import create_style_manager
+from flatprot.utils.database import ensure_database_available
 
 
 def print_success_summary(
@@ -287,6 +288,13 @@ def align_structure_rotation(
 
     # Validate that the structure file exists
     validate_structure_file(structure_file)
+
+    try:
+        db_path = ensure_database_available(database_path, download_db)
+        logger.info(f"Using alignment database at: {db_path}")
+    except RuntimeError as e:
+        logger.error(f"Database error: {str(e)}")
+        return 1
 
     # Log the arguments
     logger.info(f"Structure file: {structure_file}")
