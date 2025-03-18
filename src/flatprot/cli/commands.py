@@ -24,9 +24,14 @@ Examples:
 
 from pathlib import Path
 from typing import Optional, Annotated
+from dataclasses import dataclass
 import logging
+import shutil
+import subprocess
+import json
 
 from cyclopts import Parameter, Group, validators
+import numpy as np
 
 from flatprot.core.error import FlatProtError
 from flatprot.cli.errors import error_handler
@@ -38,6 +43,28 @@ from flatprot.utils.coordinate_manger import create_coordinate_manager, apply_pr
 from flatprot.utils.svg import generate_svg, save_svg
 from flatprot.utils.style import create_style_manager
 from flatprot.utils.database import ensure_database_available
+
+from flatprot.alignment import align_structure_database, get_aligned_rotation_database
+from flatprot.alignment import AlignmentDatabase
+from flatprot.alignment import (
+    NoSignificantAlignmentError,
+    DatabaseEntryNotFoundError,
+)
+from flatprot.io import OutputFileError, InvalidStructureError
+
+
+verbosity_group = Group(
+    "Verbosity",
+    default_parameter=Parameter(negative=""),  # Disable "--no-" flags
+    validator=validators.MutuallyExclusive(),  # Only one option is allowed to be selected.
+)
+
+
+@Parameter(name="*")
+@dataclass
+class Common:
+    quiet: Annotated[bool, Parameter(group=verbosity_group)] = (False,)
+    verbose: Annotated[bool, Parameter(group=verbosity_group)] = (False,)
 
 
 def print_success_summary(
@@ -78,11 +105,15 @@ def print_success_summary(
         logger.info(f"  DSSP file: {str(dssp_path)}")
 
 
-verbosity_group = Group(
-    "Verbosity",
-    default_parameter=Parameter(negative=""),  # Disable "--no-" flags
-    validator=validators.MutuallyExclusive(),  # Only one option is allowed to be selected.
-)
+def set_logging_level(common: Common | None = None):
+    if common and common.quiet:
+        level = logging.ERROR
+    elif common and common.verbose:
+        level = logging.DEBUG
+    else:
+        level = logging.INFO
+
+    setup_logging(level)
 
 
 @error_handler
@@ -93,8 +124,8 @@ def project_structure_svg(
     style: Optional[Path] = None,
     annotations: Optional[Path] = None,
     dssp: Optional[Path] = None,
-    quiet: Annotated[bool, Parameter(group=verbosity_group)] = False,
-    verbose: Annotated[bool, Parameter(group=verbosity_group)] = False,
+    *,
+    common: Common | None = None,
 ) -> int:
     """
     Generate a flat projection of a protein structure.
@@ -159,16 +190,7 @@ def project_structure_svg(
         Providing secondary structure information for PDB files:
             flatprot structure.pdb output.svg --dssp structure.dssp
     """
-
-    # Set logging level based on verbosity flags
-    if quiet:
-        level = logging.ERROR
-    elif verbose:
-        level = logging.DEBUG
-    else:
-        level = logging.INFO
-
-    setup_logging(level)
+    set_logging_level(common)
 
     try:
         # Validate the structure file
@@ -229,12 +251,16 @@ def project_structure_svg(
 @error_handler
 def align_structure_rotation(
     structure_file: Path,
-    output_file: Optional[Path] = None,
-    matrix: Optional[Path] = None,
+    matrix_out_path: Path = "alignment_matrix.npy",
+    info_out_path: Optional[Path] = None,
     foldseek_path: str = "foldseek",
     database_path: Optional[Path] = None,
-    min_probability: float = 0.5,
+    min_probability: Annotated[
+        float, Parameter(validator=validators.Number(gt=0, lt=1.0))
+    ] = 0.5,
     download_db: bool = False,
+    *,
+    common: Common | None = None,
 ) -> int:
     """
     Align a protein structure to known superfamilies.
@@ -247,13 +273,12 @@ def align_structure_rotation(
             Supported formats include PDB (.pdb) and mmCIF (.cif, .mmcif).
             The file must exist and be in a valid format.
 
-        output_file: Path to save the JSON results.
+        matrix_out_path: Path to save the transformation matrix.
+            Identified alignment matrix will be saved in this file.
+
+        info_out_path: Path to save the alignment information.
             If not provided, the results are printed to stdout.
             The directory will be created if it doesn't exist.
-
-        matrix: Path to a custom transformation matrix.
-            If provided, this matrix will be applied to the structure before alignment.
-            Otherwise, the default inertia-based transformation is used.
 
         foldseek_path: Path to the FoldSeek executable.
             Defaults to "foldseek" which assumes it's in the system PATH.
@@ -284,27 +309,90 @@ def align_structure_rotation(
         Adjusting probability threshold:
             flatprot align structure.pdb --min-probability 0.7
     """
-    logger = logging.getLogger("flatprot.align")
+    set_logging_level(common)
 
-    # Validate that the structure file exists
-    validate_structure_file(structure_file)
+    if not Path(foldseek_path).exists() and not shutil.which(foldseek_path):
+        raise RuntimeError(f"FoldSeek executable not found: {foldseek_path}")
 
     try:
+        # Validate structure file using shared validation
+        validate_structure_file(structure_file)
+
+        # Database handling
         db_path = ensure_database_available(database_path, download_db)
+
         logger.info(f"Using alignment database at: {db_path}")
-    except RuntimeError as e:
-        logger.error(f"Database error: {str(e)}")
+
+        foldseek_db_path = db_path / "foldseek_db"
+
+        # Initialize database
+        alignment_db = AlignmentDatabase(db_path)
+
+        # Logging configuration matches project_structure_svg pattern
+        logger.info(f"Aligning structure: {structure_file.name}")
+        logger.debug(f"Using foldseek database: {foldseek_db_path}")
+        logger.debug(f"FoldSeek path: {foldseek_path}")
+
+        # Alignment process
+        alignment_result = align_structure_database(
+            structure_file=structure_file,
+            foldseek_db_path=foldseek_db_path,
+            foldseek_command=foldseek_path,
+            min_probability=min_probability,
+        )
+
+        # Matrix combination
+        final_matrix = get_aligned_rotation_database(alignment_result, alignment_db)
+
+        logger.info(f"Alignment result: {alignment_result}")
+
+        # Output handling with proper error wrapping
+        try:
+            np.save(matrix_out_path, final_matrix)
+            logger.info(f"Saved rotation matrix to {matrix_out_path}")
+        except (IOError, PermissionError) as e:
+            raise OutputFileError(f"Failed to write output: {str(e)}")
+
+        if info_out_path:
+            try:
+                info_out_path.parent.mkdir(parents=True, exist_ok=True)
+                with open(info_out_path, "w") as f:
+                    data = {
+                        "structure_id": structure_file.name,
+                        "aligned_db_id": alignment_result.db_id,
+                        "alignment_probability": float(
+                            f"{alignment_result.probability:.3f}"
+                        ),
+                    }
+                    json.dump(data, f, indent=4)
+                logger.info(f"Saved alignment info to {info_out_path}")
+            except (IOError, PermissionError) as e:
+                raise OutputFileError(f"Failed to write output: {str(e)}")
+
+        logger.info("Alignment completed successfully")
+        return 0
+
+    except FlatProtError as e:
+        logger.error(e.message)
         return 1
-
-    # Log the arguments
-    logger.info(f"Structure file: {structure_file}")
-    logger.info(f"Output file: {output_file or 'stdout'}")
-    logger.info(f"FoldSeek path: {foldseek_path}")
-    logger.info(f"Database path: {database_path or 'default'}")
-    logger.info(f"Minimum probability: {min_probability}")
-    logger.info(f"Force database download: {download_db}")
-
-    # TODO: Implement alignment functionality in future prompts
-    logger.info("Alignment functionality will be implemented in future steps")
-
-    return 0
+    except NoSignificantAlignmentError as e:
+        logger.warning(str(e))
+        logger.info("Try lowering the --min-probability threshold")
+        return 1
+    except DatabaseEntryNotFoundError as e:
+        logger.error(str(e))
+        logger.info("This could indicate database corruption. Try --download-db")
+        return 1
+    except (FileNotFoundError, InvalidStructureError) as e:
+        logger.error(f"Input error: {str(e)}")
+        return 1
+    except OutputFileError as e:
+        logger.error(str(e))
+        return 1
+    except subprocess.SubprocessError as e:
+        logger.error(f"FoldSeek execution failed: {str(e)}")
+        return 1
+    except Exception as e:
+        logger.error(f"Unexpected error: {str(e)}")
+        logger.debug("Stack trace:", exc_info=True)
+        return 1
