@@ -2,12 +2,11 @@
 # SPDX-License-Identifier: Apache-2.0
 
 from .utils import (
-    AlignmentResult,
     get_aligned_rotation_database,
     align_structure_database,
 )
 from .db import AlignmentDatabase, AlignmentDBEntry
-from .foldseek import FoldseekAligner
+from .foldseek import FoldseekAligner, AlignmentResult
 from .errors import (
     NoSignificantAlignmentError,
     DatabaseEntryNotFoundError,
