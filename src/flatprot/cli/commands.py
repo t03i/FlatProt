@@ -131,7 +131,7 @@ def project_structure_svg(
     common: Common | None = None,
 ) -> int:
     """
-    Generate a flat projection of a protein structure.
+    Generate a 2D projection of a protein structure.
 
     This function processes a protein structure file, applies transformations, styles, and annotations, and generates a 2D SVG visualization.
 
