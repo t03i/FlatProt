@@ -85,7 +85,7 @@ verbosity_group = Group(
 
 
 @error_handler
-def project(
+def project_structure_svg(
     structure: Path,
     output: Optional[Path] = None,
     matrix: Optional[Path] = None,
@@ -226,7 +226,7 @@ def project(
 
 
 @error_handler
-def align(
+def align_structure_rotation(
     structure_file: Path,
     output_file: Optional[Path] = None,
     matrix: Optional[Path] = None,
@@ -286,8 +286,7 @@ def align(
     logger = logging.getLogger("flatprot.align")
 
     # Validate that the structure file exists
-    if not structure_file.exists():
-        raise FileNotFoundError(f"Structure file not found: {structure_file}")
+    validate_structure_file(structure_file)
 
     # Log the arguments
     logger.info(f"Structure file: {structure_file}")

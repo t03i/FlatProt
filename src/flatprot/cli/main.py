@@ -5,13 +5,13 @@ import sys
 
 from cyclopts import App
 
-from flatprot.cli.commands import project, align
+from flatprot.cli.commands import project_structure_svg, align_structure2_rotation
 from flatprot import __version__
 
 
 app = App(version=__version__)
-app.default(project)
-app.add_subcommand("align", align)
+app.default(project_structure_svg)
+app.add_subcommand("align", align_structure2_rotation)
 
 
 if __name__ == "__main__":

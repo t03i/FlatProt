@@ -11,7 +11,7 @@ from typing import Generator, Any
 import pytest
 from pytest_mock import MockerFixture
 
-from flatprot.cli.commands import project, print_success_summary
+from flatprot.cli.commands import project_structure_svg, print_success_summary
 from flatprot.core.error import FlatProtError
 
 
@@ -186,7 +186,9 @@ def test_integration_main_minimal(
     )
 
     # Run the main function
-    result = project(structure=Path(temp_structure_file), output=Path(temp_output_file))
+    result = project_structure_svg(
+        structure=Path(temp_structure_file), output=Path(temp_output_file)
+    )
 
     # Verify the result
     assert result == 0
@@ -253,7 +255,7 @@ def test_integration_main_all_options(
     )
 
     # Run the main function with all options
-    result = project(
+    result = project_structure_svg(
         structure=Path(temp_structure_file),
         output=Path(temp_output_file),
         matrix=Path(temp_matrix_file),
@@ -315,7 +317,7 @@ def test_integration_main_stdout_output(
     )
 
     # Run the main function without output parameter (should print to stdout)
-    result = project(structure=Path(temp_structure_file), output=None)
+    result = project_structure_svg(structure=Path(temp_structure_file), output=None)
 
     # Verify the result
     assert result == 0
@@ -349,7 +351,7 @@ def test_integration_main_flatprot_error(
     mock_logger_error = mocker.patch("flatprot.cli.commands.logger.error")
 
     # Run the main function
-    result = project(structure=Path(temp_structure_file))
+    result = project_structure_svg(structure=Path(temp_structure_file))
 
     # Verify the result
     assert result == 1
@@ -387,7 +389,7 @@ def test_integration_main_unexpected_error(
     )
 
     # Run the main function
-    result = project(structure=Path(temp_structure_file))
+    result = project_structure_svg(structure=Path(temp_structure_file))
 
     # Verify the result
     assert result == 1
