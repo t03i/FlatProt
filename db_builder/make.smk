@@ -2,6 +2,7 @@ from pathlib import Path
 import os
 import json
 import random
+import tempfile
 
 import polars as pl
 
@@ -30,6 +31,7 @@ ALIGNMENT_DB = f"{OUTPUT_DIR}/alignment_database.h5"
 FOLDSEEK_DB = f"{OUTPUT_DIR}/foldseek"
 DATABASE_INFO = f"{OUTPUT_DIR}/database_info.json"
 REPORT_DIR = f"{OUTPUT_DIR}/reports"
+WORK_DIR = temp(Path(tempfile.mkdtemp()))
 
 # Create output directories
 os.makedirs(OUTPUT_DIR, exist_ok=True)
@@ -153,6 +155,7 @@ rule get_domain_alignment:
         domain_db = f"{TMP_FOLDSEEK_DBS}/{{sf_id}}/db/",
     output:
         alignment = f"{MATRICES}/{{sf_id}}.m8",
+        tmp_dir = temp(f"{WORK_DIR}/{params.sf_id}")
     params:
         sf_id = "{sf_id}",
     resources:
@@ -164,13 +167,12 @@ rule get_domain_alignment:
             {input.domain_db} \
             {input.domain_db} \
             {output.alignment} \
-            /tmp/{params.sf_id} \
-            --format-output query,target,qstart,qend,tstart,tend,tseq,prob,alntmscore,a \
+            {output.tmp_dir} \
+            --format-output query,target,qstart,qend,tstart,tend,tseq,prob,alntmscore,alntmscore_seq \
             -e inf \
             --exhaustive-search 1 \
             --tm-score-threshold 0.0 \
             --alignment-type 2
-        rm -rf /tmp/{params.sf_id}
         """
 
 # Connect representative selection to domain alignments
