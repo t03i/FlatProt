@@ -21,26 +21,28 @@ FOLDSEEK_PATH = "foldseek"
 
 ## Step outputs
 SCOP_FILE = f"{WORK_DIR}/scop-cla-latest.txt"
-SCOP_INFO = f"{WORK_DIR}/superfamilies.tsv"
+SUPERFAMILIES = f"{WORK_DIR}/superfamilies.tsv"
 PDB_FILES = f"{WORK_DIR}/pdbs"
 DOMAIN_FILES = f"{WORK_DIR}/domains"
 REPRESENTATIVE_DOMAINS = f"{WORK_DIR}/representative_domains"
 MATRICES = f"{WORK_DIR}/matrices"
-ALIGNMENT_DB = f"{OUTPUT_DIR}/alignment_database.h5"
-FOLDSEEK_DB = f"{OUTPUT_DIR}/foldseek"
+ALIGNMENT_DB = f"{OUTPUT_DIR}/alignments.h5"
+FOLDSEEK_DB = f"{OUTPUT_DIR}/foldseek/db"
 DATABASE_INFO = f"{OUTPUT_DIR}/database_info.json"
 REPORT_DIR = f"{WORK_DIR}/reports"
-TMP_DIR = temp(Path(tempfile.mkdtemp()))
-TMP_FOLDSEEK_DBS = f"{TMP_DIR}/foldseek"
+TMP_DIR = Path(tempfile.mkdtemp())
+TMP_FOLDSEEK_DB = f"{TMP_DIR}/foldseek/{{sf_id}}/db"
 PDB_FLAG = f"{TMP_DIR}/download_all_pdbs.flag"
+REPRESENTATIVE_FLAG = f"{TMP_DIR}/representatives.flag"
+DOMAIN_FLAG = f"{TMP_DIR}/{{sf_id}}-extracted.flag"
 
 # Create output directories
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 os.makedirs(WORK_DIR, exist_ok=True)
+os.makedirs(Path(FOLDSEEK_DB).parent, exist_ok=True)
 os.makedirs(PDB_FILES, exist_ok=True)
 os.makedirs(DOMAIN_FILES, exist_ok=True)
 os.makedirs(REPRESENTATIVE_DOMAINS, exist_ok=True)
-os.makedirs(TMP_FOLDSEEK_DBS, exist_ok=True)
 os.makedirs(MATRICES, exist_ok=True)
 os.makedirs(REPORT_DIR, exist_ok=True)
 
@@ -52,7 +54,7 @@ os.makedirs(REPORT_DIR, exist_ok=True)
 def get_all_superfamily_ids():
     """Get list of superfamilies to process based on TEST_MODE setting."""
     try:
-        df = pl.read_csv(SCOP_INFO, separator="\t")
+        df = pl.read_csv(SUPERFAMILIES, separator="\t")
         if TEST_MODE:
             return df["sf_id"].unique().shuffle(seed=RANDOM_SEED).to_list()[:NUM_FAMILIES]
         return df["sf_id"].unique().to_list()
@@ -63,7 +65,7 @@ def get_all_superfamily_ids():
 def get_all_structure_ids():
     try:
         ids = get_all_superfamily_ids()
-        df = pl.read_csv(SCOP_INFO, separator="\t")
+        df = pl.read_csv(SUPERFAMILIES, separator="\t")
         return df.filter(pl.col("sf_id").is_in(ids))["pdb_id"].unique().to_list()
     except FileNotFoundError:
         # Return empty list if file doesn't exist yet (during DAG construction)
@@ -126,7 +128,7 @@ checkpoint parse_scop:
     input:
         scop_file = f"{SCOP_FILE}"
     output:
-        superfamilies = f"{SCOP_INFO}",
+        superfamilies = f"{SUPERFAMILIES}",
         report = report(f"{REPORT_DIR}/scop.rst", category="SCOP Analysis")
     script:
         "scop_parse.py"
@@ -153,13 +155,13 @@ rule download_pdb:
 
 rule download_all_pdbs:
     input:
-        scop_info = SCOP_INFO,
+        superfamilies = SUPERFAMILIES,
         structure_ids = [f"{PDB_FILES}/{pdb_id}.struct" for pdb_id in get_all_structure_ids()]
     output:
-        flag = temp(f"{PDB_FLAG}")  # Temporary flag only valid for this run
+        flag = temp(f"{PDB_FLAG}"),  # Temporary flag only valid for this run
         report = report(f"{REPORT_DIR}/pdb_download_report.rst", category="PDB Download Report")
-    shell:
-        "touch {output.flag}"
+    params:
+        pdb_dir = f"{PDB_FILES}"
     script:
         "pdb_download_report.py"
 
@@ -180,7 +182,7 @@ rule extract_domain:
 # Add a rule to generate domain extraction requests from SCOP data
 rule generate_domain_extraction_requests:
     input:
-        superfamilies = SCOP_INFO,
+        superfamilies = SUPERFAMILIES,
         flag = f"{PDB_FLAG}"
     output:
         sf_domains = f"{DOMAIN_FILES}/{{sf_id}}/domains.tsv"
@@ -210,30 +212,35 @@ rule extract_all_domains_for_superfamily:
         sf_domains = f"{DOMAIN_FILES}/{{sf_id}}/domains.tsv",
         domain_files = lambda wildcards: get_domains_for_superfamily(wildcards)
     output:
-        flag = f"{DOMAIN_FILES}/{{sf_id}}/extracted.flag"
+        flag = f"{DOMAIN_FLAG}"
     shell:
         "touch {output.flag}"
 
 # Update create_domain_db to depend on domain extraction completion
 rule create_domain_db:
     input:
-        extraction_complete = f"{DOMAIN_FILES}/{{sf_id}}/extracted.flag"
+        extraction_complete = f"{DOMAIN_FLAG}"
     output:
-        domain_db = directory(f"{TMP_FOLDSEEK_DBS}/{{sf_id}}/")
+        domain_db = f"{TMP_FOLDSEEK_DB}"
     params:
         sf_id = "{sf_id}",
         domain_dir = f"{DOMAIN_FILES}/{{sf_id}}/"
+    resources:
+        cpus = 1
     shell:
-        "foldseek createdb {params.domain_dir} {output.domain_db}"
+        """
+        mkdir -p $(dirname {output.domain_db}) && \
+        foldseek createdb {params.domain_dir} {output.domain_db} --threads 1 -v 1
+        """
 
 # Update get_domain_alignment to track alignment progress
 # cf. https://github.com/steineggerlab/foldseek/issues/33#issuecomment-1495652159 for all v. all
 rule get_domain_alignment:
     input:
-        domain_db = f"{TMP_FOLDSEEK_DBS}/{{sf_id}}/",
+        domain_db = f"{TMP_FOLDSEEK_DB}",
     output:
         alignment = f"{MATRICES}/{{sf_id}}.m8",
-        tmp_dir = temp(f"{WORK_DIR}/{{sf_id}}")
+        tmp_dir = temp(directory(f"{WORK_DIR}/{{sf_id}}"))
     params:
         sf_id = "{sf_id}",
     resources:
@@ -246,11 +253,13 @@ rule get_domain_alignment:
             {input.domain_db} \
             {output.alignment} \
             {output.tmp_dir} \
-            --format-output query,target,qstart,qend,tstart,tend,tseq,prob,alntmscore,alntmscore_seq \
+            --format-output query,target,qstart,qend,tstart,tend,tseq,prob,alntmscore \
             -e inf \
             --exhaustive-search 1 \
-            --tm-score-threshold 0.0 \
-            --alignment-type 2
+            --tmscore-threshold 0.0 \
+            --alignment-type 2 \
+            --threads 1 \
+            -v 1
         """
 
 # Connect representative selection to domain alignments
@@ -258,7 +267,7 @@ rule get_representative_domain:
     input:
         alignment_file = f"{MATRICES}/{{sf_id}}.m8",
     output:
-        representative_domain = f"{REPRESENTATIVE_DOMAINS}/{{sf_id}}.pdb"
+        representative_domain = f"{REPRESENTATIVE_DOMAINS}/{{sf_id}}.cif"
     params:
         sf_id = "{sf_id}",
         domain_dir = f"{DOMAIN_FILES}/{{sf_id}}"
@@ -274,20 +283,22 @@ rule get_representative_domain:
 
 rule aggregate_representatives:
     input:
-        superfamilies = SCOP_INFO,
+        superfamilies = SUPERFAMILIES,
         representative_domains = expand(
-            f"{REPRESENTATIVE_DOMAINS}/{{sf_id}}.pdb",
+            f"{REPRESENTATIVE_DOMAINS}/{{sf_id}}.cif",
             sf_id=get_all_superfamily_ids()
         )
     output:
-        flag = f"{REPRESENTATIVE_DOMAINS}/.completed"
+        flag = f"{REPRESENTATIVE_FLAG}"
     shell:
-        "touch {flag}"
+        "touch {output.flag}"
 
 
 rule create_alignment_database:
     input:
-        f"{REPRESENTATIVE_DOMAINS}/.completed",
+        flag = f"{REPRESENTATIVE_FLAG}"
+    params:
+        representative_domains = [f for f in Path(REPRESENTATIVE_DOMAINS).glob("*.cif")],
     output:
         database = f"{ALIGNMENT_DB}",
         database_info = f"{DATABASE_INFO}"
@@ -297,10 +308,10 @@ rule create_alignment_database:
 
 rule create_alignment_foldseek_db:
     input:
-        f"{REPRESENTATIVE_DOMAINS}/.completed",
+        flag = f"{REPRESENTATIVE_FLAG}"
     output:
-        directory(FOLDSEEK_DB)
+        FOLDSEEK_DB
     shell:
         """
-        {FOLDSEEK_PATH} createdb {REPRESENTATIVE_DOMAINS} {output[0]}
+        {FOLDSEEK_PATH} createdb {REPRESENTATIVE_DOMAINS} {output} --threads 1 -v 1
         """

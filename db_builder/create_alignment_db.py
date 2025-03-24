@@ -232,7 +232,9 @@ def main() -> None:
         None
     """
     # Get input/output paths from Snakemake
-    representative_domain_files = Path(snakemake.input.domain_files)
+    representative_domain_files = list(
+        map(Path, snakemake.params.representative_domains)
+    )
     output_database = Path(snakemake.output.database)
     database_info_file = Path(snakemake.output.database_info)
 

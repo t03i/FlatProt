@@ -98,7 +98,7 @@ def find_best_representative(
     """
     if alignment.is_empty():
         # If no alignments, find any PDB file in the domain directory
-        pdb_files = list(domain_dir.glob("*.pdb"))
+        pdb_files = list(domain_dir.glob("*.cif"))
         if pdb_files:
             return (pdb_files[0], 0.0)
         return None
@@ -117,14 +117,14 @@ def find_best_representative(
 
         # Extract components from domain_id (if needed)
         # Assuming domain_id format is pdb_chain_start_end
-        filename = f"{domain_id}.pdb"
+        filename = f"{domain_id}.cif"
         domain_file = domain_dir / filename
 
         if domain_file.exists():
             return (domain_file, score)
 
     # Fallback if no file is found
-    pdb_files = list(domain_dir.glob("*.pdb"))
+    pdb_files = list(domain_dir.glob("*.cif"))
     if pdb_files:
         return (pdb_files[0], 0.0)
 
