@@ -136,15 +136,15 @@ def main() -> None:
     Main function to find and save the representative domain for a superfamily.
     """
     # Get input and output from Snakemake
-    alignment_files = snakemake.input.alignment_files
+    alignment_file = Path(snakemake.input.alignment_file)
     domain_dir = Path(snakemake.params.domain_dir)
     output_file = Path(snakemake.output.representative_domain)
 
     # Ensure output directory exists
     output_file.parent.mkdir(parents=True, exist_ok=True)
 
-    # Combine all alignment files
-    alignment = combine_alignments([Path(f) for f in alignment_files])
+    # Read the single alignment file
+    alignment = read_alignment(alignment_file)
 
     # Find the best representative
     best_domain = find_best_representative(alignment, domain_dir)
@@ -156,11 +156,6 @@ def main() -> None:
         logging.info(
             f"Selected {domain_file.name} as representative domain (score: {score})"
         )
-    else:
-        # Create an empty file to satisfy Snakemake
-        with open(output_file, "w") as f:
-            f.write("NO_REPRESENTATIVE_FOUND\n")
-        logging.warning(f"No representative domain found for {snakemake.params.sf_id}")
 
 
 if __name__ == "__main__":

@@ -9,7 +9,7 @@ import polars as pl
 
 # Default values if not in config
 OUTPUT_DIR = "data/alignment_db"
-TMP_DIR = "out/alignment_pipeline"
+WORK_DIR = "out/alignment_pipeline"
 
 RETRY_COUNT = 3
 TEST_MODE = True
@@ -19,13 +19,13 @@ CONCURRENT_DOWNLOADS = 5
 FOLDSEEK_PATH = "foldseek"
 
 ## Step outputs
-SCOP_FILE = f"{TMP_DIR}/scop-cla-latest.txt"
+SCOP_FILE = f"{WORK_DIR}/scop-cla-latest.txt"
 SCOP_INFO = f"{OUTPUT_DIR}/superfamilies.tsv"
-PDB_FILES = f"{TMP_DIR}/pdbs"
-DOMAIN_FILES = f"{TMP_DIR}/domains"
-REPRESENTATIVE_DOMAINS = f"{TMP_DIR}/representative_domains"
-TMP_FOLDSEEK_DBS = f"{TMP_DIR}/foldseek"
-MATRICES = f"{TMP_DIR}/matrices"
+PDB_FILES = f"{WORK_DIR}/pdbs"
+DOMAIN_FILES = f"{WORK_DIR}/domains"
+REPRESENTATIVE_DOMAINS = f"{WORK_DIR}/representative_domains"
+TMP_FOLDSEEK_DBS = f"{WORK_DIR}/foldseek"
+MATRICES = f"{WORK_DIR}/matrices"
 ALIGNMENT_DB = f"{OUTPUT_DIR}/alignment_database.h5"
 FOLDSEEK_DB = f"{OUTPUT_DIR}/foldseek"
 DATABASE_INFO = f"{OUTPUT_DIR}/database_info.json"
@@ -33,7 +33,7 @@ REPORT_DIR = f"{OUTPUT_DIR}/reports"
 
 # Create output directories
 os.makedirs(OUTPUT_DIR, exist_ok=True)
-os.makedirs(TMP_DIR, exist_ok=True)
+os.makedirs(WORK_DIR, exist_ok=True)
 os.makedirs(PDB_FILES, exist_ok=True)
 os.makedirs(DOMAIN_FILES, exist_ok=True)
 os.makedirs(REPRESENTATIVE_DOMAINS, exist_ok=True)
@@ -43,7 +43,7 @@ os.makedirs(REPORT_DIR, exist_ok=True)
 # Final output files - defines the complete workflow end result
 rule all:
     input:
-        directory(FOLDSEEK_DB),
+        FOLDSEEK_DB,
         ALIGNMENT_DB,
         DATABASE_INFO
 
@@ -54,7 +54,7 @@ rule all:
 
 rule download_scop:
     output:
-        scop_file = f"{TMP_DIR}/scop-cla-latest.txt"
+        scop_file = f"{SCOP_FILE}"
     shell:
         """
         wget -O {output.scop_file} https://www.ebi.ac.uk/pdbe/scop/files/scop-cla-latest.txt
@@ -73,7 +73,7 @@ checkpoint parse_scop:
 #                           Download PDBs and extract domains                            #
 # -------------------------------------------------------------------------------------- #
 
-TIMEOUT = 60  # Default timeout in seconds
+TIMEOUT = 20  # Default timeout in seconds
 
 rule download_pdb:
     output:
@@ -94,7 +94,7 @@ rule extract_domain:
     input:
         pdb_file = f"{PDB_FILES}/{{pdb_id}}.pdb"
     output:
-        domain_file = f"{DOMAIN_FILES}/{{sf_id}}/{{pdb_id}}_{{chain}}_{{start}}_{{end}}.pdb"
+        domain_file = f"{DOMAIN_FILES}/{{sf_id}}/{{pdb_id}}_{{chain}}_{{start}}_{{end}}.cif"
     params:
         sf_id = "{sf_id}",
         chain = "{chain}",
@@ -108,14 +108,12 @@ rule generate_domain_extraction_requests:
     input:
         superfamilies = SCOP_INFO
     output:
-        sf_domains = f"{TMP_DIR}/sf_domains/{{sf_id}}.tsv"
+        sf_domains = f"{WORK_DIR}/sf_domains/{{sf_id}}.tsv"
     params:
         sf_id = "{sf_id}"
     run:
         df = pl.read_csv(input.superfamilies, separator="\t")
-        # Filter for this superfamily
         sf_df = df.filter(pl.col("sf_id") == params.sf_id)
-        # Save domains for this superfamily
         sf_df.write_csv(output.sf_domains, separator="\t")
 
 
@@ -127,73 +125,58 @@ rule generate_domain_extraction_requests:
 
 rule extract_all_domains_for_superfamily:
     input:
-        sf_domains = f"{TMP_DIR}/sf_domains/{{sf_id}}.tsv",
+        sf_domains = f"{WORK_DIR}/sf_domains/{{sf_id}}.tsv",
         # Use dynamic input based on checkpoint data
         domain_files = lambda wildcards: get_domains_for_superfamily(wildcards)
     output:
-        flag = f"{TMP_DIR}/domains_extracted/{{sf_id}}.flag"
+        flag = f"{WORK_DIR}/domains_extracted/{{sf_id}}.flag"
     shell:
         "touch {output.flag}"
 
 # Update create_domain_db to depend on domain extraction completion
 rule create_domain_db:
     input:
-        domain_dir = directory(f"{DOMAIN_FILES}/{{sf_id}}"),
-        extraction_complete = f"{TMP_DIR}/domains_extracted/{{sf_id}}.flag"
+        extraction_complete = f"{WORK_DIR}/domains_extracted/{{sf_id}}.flag"
     output:
         domain_db = directory(f"{TMP_FOLDSEEK_DBS}/{{sf_id}}/db")
-    shell:
-        "foldseek createdb {input.domain_dir} {output.domain_db}"
-
-# Update get_domain_alignment to track alignment progress
-rule get_domain_alignment:
-    input:
-        domain_db = directory(f"{TMP_FOLDSEEK_DBS}/{{sf_id}}/db"),
-        domain_file = f"{DOMAIN_FILES}/{{sf_id}}/{{pdb_id}}_{{chain}}_{{start}}_{{end}}.pdb"
-    output:
-        alignment = f"{MATRICES}/{{sf_id}}/{{pdb_id}}_{{chain}}_{{start}}_{{end}}.m8",
-        flag = touch(f"{MATRICES}/{{sf_id}}/{{pdb_id}}_{{chain}}_{{start}}_{{end}}.complete")
     params:
         sf_id = "{sf_id}"
+        domain_dir = f"{DOMAIN_FILES}/{{sf_id}}/"
+    shell:
+        "foldseek createdb {params.domain_dir} {output.domain_db}"
+
+# Update get_domain_alignment to track alignment progress
+# cf. https://github.com/steineggerlab/foldseek/issues/33#issuecomment-1495652159 for all v. all
+
+rule get_domain_alignment:
+    input:
+        domain_db = f"{TMP_FOLDSEEK_DBS}/{{sf_id}}/db/",
+    output:
+        alignment = f"{MATRICES}/{{sf_id}}.m8",
+    params:
+        sf_id = "{sf_id}",
     resources:
         cpus = 1
     shell:
         """
         mkdir -p {MATRICES}/{params.sf_id}
-        foldseek easy-search {input.domain_file} {input.domain_db} {output.alignment} /tmp/{params.sf_id} --format-output query,target,qstart,qend,tstart,tend,tseq,prob,alntmscore
+        foldseek easy-search \
+            {input.domain_db} \
+            {input.domain_db} \
+            {output.alignment} \
+            /tmp/{params.sf_id} \
+            --format-output query,target,qstart,qend,tstart,tend,tseq,prob,alntmscore,a \
+            -e inf \
+            --exhaustive-search 1 \
+            --tm-score-threshold 0.0 \
+            --alignment-type 2
         rm -rf /tmp/{params.sf_id}
         """
 
 # Connect representative selection to domain alignments
 rule get_representative_domain:
     input:
-        # Get all domain files for this superfamily
-        domain_files = lambda wildcards: expand(
-            f"{DOMAIN_FILES}/{{sf_id}}/{{pdb_id}}_{{chain}}_{{start}}_{{end}}.pdb",
-            sf_id=wildcards.sf_id,
-            pdb_id=glob_wildcards(f"{DOMAIN_FILES}/{wildcards.sf_id}/{{pdb_id}}_{{chain}}_{{start}}_{{end}}.pdb").pdb_id,
-            chain=glob_wildcards(f"{DOMAIN_FILES}/{wildcards.sf_id}/{{pdb_id}}_{{chain}}_{{start}}_{{end}}.pdb").chain,
-            start=glob_wildcards(f"{DOMAIN_FILES}/{wildcards.sf_id}/{{pdb_id}}_{{chain}}_{{start}}_{{end}}.pdb").start,
-            end=glob_wildcards(f"{DOMAIN_FILES}/{wildcards.sf_id}/{{pdb_id}}_{{chain}}_{{start}}_{{end}}.pdb").end
-        ),
-        # Get all alignment files for this superfamily
-        alignment_files = lambda wildcards: expand(
-            f"{MATRICES}/{{sf_id}}/{{pdb_id}}_{{chain}}_{{start}}_{{end}}.m8",
-            sf_id=wildcards.sf_id,
-            pdb_id=glob_wildcards(f"{DOMAIN_FILES}/{wildcards.sf_id}/{{pdb_id}}_{{chain}}_{{start}}_{{end}}.pdb").pdb_id,
-            chain=glob_wildcards(f"{DOMAIN_FILES}/{wildcards.sf_id}/{{pdb_id}}_{{chain}}_{{start}}_{{end}}.pdb").chain,
-            start=glob_wildcards(f"{DOMAIN_FILES}/{wildcards.sf_id}/{{pdb_id}}_{{chain}}_{{start}}_{{end}}.pdb").start,
-            end=glob_wildcards(f"{DOMAIN_FILES}/{wildcards.sf_id}/{{pdb_id}}_{{chain}}_{{start}}_{{end}}.pdb").end
-        ),
-        # Make sure all alignments are complete
-        alignment_flags = lambda wildcards: expand(
-            f"{MATRICES}/{{sf_id}}/{{pdb_id}}_{{chain}}_{{start}}_{{end}}.complete",
-            sf_id=wildcards.sf_id,
-            pdb_id=glob_wildcards(f"{DOMAIN_FILES}/{wildcards.sf_id}/{{pdb_id}}_{{chain}}_{{start}}_{{end}}.pdb").pdb_id,
-            chain=glob_wildcards(f"{DOMAIN_FILES}/{wildcards.sf_id}/{{pdb_id}}_{{chain}}_{{start}}_{{end}}.pdb").chain,
-            start=glob_wildcards(f"{DOMAIN_FILES}/{wildcards.sf_id}/{{pdb_id}}_{{chain}}_{{start}}_{{end}}.pdb").start,
-            end=glob_wildcards(f"{DOMAIN_FILES}/{wildcards.sf_id}/{{pdb_id}}_{{chain}}_{{start}}_{{end}}.pdb").end
-        )
+        alignment_file = f"{MATRICES}/{{sf_id}}.m8",
     output:
         representative_domain = f"{REPRESENTATIVE_DOMAINS}/{{sf_id}}.pdb"
     params:
@@ -211,19 +194,18 @@ rule get_representative_domain:
 
 rule aggregate_representatives:
     input:
-        # Trigger representative domain selection for all superfamilies
         superfamilies = SCOP_INFO,
-        representative_domains = lambda wildcards: expand(
+        representative_domains = expand(
             f"{REPRESENTATIVE_DOMAINS}/{{sf_id}}.pdb",
             sf_id=get_all_superfamily_ids()
         )
-    output:
-        directory(REPRESENTATIVE_DOMAINS)
+    shell:
+        "touch {REPRESENTATIVE_DOMAINS}/.completed"
 
 
 rule create_alignment_database:
     input:
-        directory(REPRESENTATIVE_DOMAINS)
+        f"{REPRESENTATIVE_DOMAINS}/.completed",
     output:
         database = f"{ALIGNMENT_DB}",
         database_info = f"{DATABASE_INFO}"
@@ -233,12 +215,12 @@ rule create_alignment_database:
 
 rule create_alignment_foldseek_db:
     input:
-        directory(REPRESENTATIVE_DOMAINS)
+        f"{REPRESENTATIVE_DOMAINS}/.completed",
     output:
         directory(FOLDSEEK_DB)
     shell:
         """
-        {FOLDSEEK_PATH} createdb {input} {output}
+        {FOLDSEEK_PATH} createdb {REPRESENTATIVE_DOMAINS} {output[0]}
         """
 
 
@@ -249,20 +231,15 @@ rule create_alignment_foldseek_db:
 
 def get_all_superfamily_ids():
     """Get list of superfamilies to process based on TEST_MODE setting."""
-    df = pl.read_csv(SCOP_INFO, separator="\t")
-    if TEST_MODE:
-        return df["sf_id"].unique().shuffle(seed=RANDOM_SEED).to_list()[:NUM_FAMILIES]
-    return df["sf_id"].unique().to_list()
-
-def get_domain_alignments_for_superfamily(wildcards):
-    """Get all alignment files for a superfamily based on what exists on disk."""
-    sf_id = wildcards.sf_id
-    matrix_dir = Path(f"{MATRICES}/{sf_id}")
-
-    if not matrix_dir.exists():
+    try:
+        df = pl.read_csv(SCOP_INFO, separator="\t")
+        if TEST_MODE:
+            return df["sf_id"].unique().shuffle(seed=RANDOM_SEED).to_list()[:NUM_FAMILIES]
+        return df["sf_id"].unique().to_list()
+    except FileNotFoundError:
+        # Return empty list if file doesn't exist yet (during DAG construction)
         return []
 
-    return list(matrix_dir.glob("*.m8"))
 
 def get_domains_for_superfamily(wildcards):
     """Get domains for a superfamily based on checkpoint output and successful downloads."""
