@@ -98,7 +98,7 @@ def extract_domain(
 
         # Add model to structure and save as mmCIF
         domain.add_model(model)
-        domain.write_mmcif(str(output_file))
+        domain.make_mmcif_document().write_file(str(output_file))
 
         logger.info(
             f"Extracted domain from {struct_file}: chain {chain}, "
