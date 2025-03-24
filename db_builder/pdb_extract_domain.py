@@ -2,14 +2,14 @@
 # SPDX-License-Identifier: Apache-2.0
 
 """
-Extract domain from PDB structure based on chain and residue range.
+Extract domain from structure file (PDB or mmCIF) based on chain and residue range.
 
-This script extracts a specific domain from a PDB structure file based on
+This script extracts a specific domain from a structure file based on
 the provided chain ID and residue range (start-end). It uses the gemmi
-library for efficient structure manipulation.
+library for efficient structure manipulation and can handle both PDB and mmCIF formats.
 
-The extracted domain is saved as a new PDB file with naming convention:
-{pdb_id}_{chain}_{start}_{end}.pdb
+The extracted domain is saved as a new mmCIF file with naming convention:
+{pdb_id}_{chain}_{start}_{end}.cif
 """
 
 import logging
@@ -29,28 +29,29 @@ logger = logging.getLogger(__name__)
 
 
 def extract_domain(
-    pdb_file: Path, chain: str, start_res: int, end_res: int, output_file: Path
+    struct_file: Path, chain: str, start_res: int, end_res: int, output_file: Path
 ) -> bool:
     """
-    Extract a domain from a PDB file using gemmi.
+    Extract a domain from a structure file (PDB or mmCIF) using gemmi.
 
     Args:
-        pdb_file: Path to the input PDB file
+        struct_file: Path to the input structure file (PDB or mmCIF)
         chain: Chain identifier
         start_res: Start residue number
         end_res: End residue number
-        output_file: Path to save the extracted domain
+        output_file: Path to save the extracted domain (always as mmCIF)
 
     Returns:
         bool: True if extraction was successful, False otherwise
     """
     try:
-        # Parse PDB file with gemmi
-        structure = gemmi.read_structure(str(pdb_file))
+        structure = gemmi.read_structure(
+            str(struct_file), merge_chain_parts=True, format=gemmi.CoorFormat.Detect
+        )
 
         # Create a new structure for the domain
         domain = gemmi.Structure()
-        domain.name = f"{pdb_file.stem}_{chain}_{start_res}_{end_res}"
+        domain.name = f"{struct_file.stem}_{chain}_{start_res}_{end_res}"
 
         # Create a new model
         model = gemmi.Model("1")
@@ -79,41 +80,41 @@ def extract_domain(
 
         # Check if extraction was successful
         if not found_chain:
-            logger.warning(f"Chain {chain} not found in {pdb_file}")
+            logger.warning(f"Chain {chain} not found in {struct_file}")
             return False
 
         if extracted_residues == 0:
             logger.warning(
-                f"No residues in range {start_res}-{end_res} found in chain {chain} of {pdb_file}"
+                f"No residues in range {start_res}-{end_res} found in chain {chain} of {struct_file}"
             )
             return False
 
         # Only consider it a success if we extracted more than 10% of the chain
         if chain_len > 0 and extracted_residues < 0.1 * chain_len:
             logger.warning(
-                f"Extracted only {extracted_residues}/{chain_len} residues from {pdb_file}, "
+                f"Extracted only {extracted_residues}/{chain_len} residues from {struct_file}, "
                 f"which is less than 10% of the chain"
             )
 
-        # Add model to structure and save
+        # Add model to structure and save as mmCIF
         domain.add_model(model)
-        domain.write_pdb(str(output_file))
+        domain.write_mmcif(str(output_file))
 
         logger.info(
-            f"Extracted domain from {pdb_file}: chain {chain}, residues {start_res}-{end_res} "
-            f"({extracted_residues} residues)"
+            f"Extracted domain from {struct_file}: chain {chain}, "
+            f"residues {start_res}-{end_res} ({extracted_residues} residues)"
         )
         return True
 
     except Exception as e:
-        logger.error(f"Failed to extract domain from {pdb_file}: {e}")
+        logger.error(f"Failed to extract domain from {struct_file}: {e}")
         return False
 
 
 # Snakemake integration
 if __name__ == "__main__":
     # Get parameters from Snakemake
-    pdb_file = Path(snakemake.input.pdb_file)
+    struct_file = Path(snakemake.input.struct_file)
     output_file = Path(snakemake.output.domain_file)
     chain = snakemake.params.chain
     start_res = int(snakemake.params.start)
@@ -123,4 +124,4 @@ if __name__ == "__main__":
     output_file.parent.mkdir(parents=True, exist_ok=True)
 
     # Extract the domain
-    extract_domain(pdb_file, chain, start_res, end_res, output_file)
+    extract_domain(struct_file, chain, start_res, end_res, output_file)

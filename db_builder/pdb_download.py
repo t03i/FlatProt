@@ -13,12 +13,33 @@ from snakemake.script import snakemake
 from httpx_retries import RetryTransport
 
 URLS = [
+    # Try CIF format first
+    ("CIF", "https://files.rcsb.org/download/{pdb_id}.cif.gz"),
+    (
+        "CIF",
+        "https://ftp.ebi.ac.uk/pub/databases/pdb/data/structures/divided/mmCIF/{middle_chars}/{pdb_id}.cif.gz",
+    ),
+    # Then try PDB format as fallback
     ("PDB", "https://files.rcsb.org/download/{pdb_id}.pdb.gz"),
     (
         "PDB",
-        "https://ftp.ebi.ac.uk/pub/databases/rcsb/pdb-remediated/data/structures/divided/pdb/fm/pdb{pdb_id}.ent.gz",
+        "https://ftp.ebi.ac.uk/pub/databases/rcsb/pdb-remediated/data/structures/divided/pdb/{middle_chars}/pdb{pdb_id}.ent.gz",
     ),
 ]
+
+
+def get_middle_chars(pdb_id: str) -> str:
+    """Extract the middle characters of a PDB ID for directory structure in some repositories.
+
+    Args:
+        pdb_id: The 4-character PDB ID
+
+    Returns:
+        The 2 middle characters of the PDB ID
+    """
+    if len(pdb_id) >= 4:
+        return pdb_id[1:3].lower()
+    return ""
 
 
 def download_pdb_file(
@@ -29,7 +50,7 @@ def download_pdb_file(
     timeout: int = 30,
 ) -> Dict[str, Any]:
     """
-    Download a PDB file with retry logic using httpx and RetryTransport.
+    Download a structure file (CIF or PDB) with retry logic using httpx and RetryTransport.
 
     Args:
         pdb_id: The PDB ID to download
@@ -42,10 +63,12 @@ def download_pdb_file(
         Dict with status information for Snakemake reporting
     """
     pdb_id = pdb_id.lower()
+    middle_chars = get_middle_chars(pdb_id)
     output_path = Path(output_file)
     tmp_file = str(output_file) + ".gz"
     success = False
     error_message = ""
+    downloaded_format = None
 
     # Ensure the output directory exists
     os.makedirs(output_path.parent, exist_ok=True)
@@ -58,11 +81,14 @@ def download_pdb_file(
 
     client = httpx.Client(transport=transport, timeout=timeout)
 
-    # Try RCSB PDB first, then PDBe as fallback
+    # Try each URL in order (CIF first, then PDB)
     for format, url in URLS:
         try:
+            # Format URL with PDB ID and middle characters
+            formatted_url = url.format(pdb_id=pdb_id, middle_chars=middle_chars)
+
             # Download compressed file
-            response = client.get(url.format(pdb_id=pdb_id))
+            response = client.get(formatted_url)
             response.raise_for_status()
 
             # Save compressed data to file
@@ -78,15 +104,15 @@ def download_pdb_file(
             if os.path.exists(tmp_file):
                 os.unlink(tmp_file)
 
-            client.close()
+            downloaded_format = format
             success = True
-            logging.info(f"Successfully downloaded PDB file {pdb_id}")
+            logging.info(f"Successfully downloaded {format} file for {pdb_id}")
             break  # Success, exit the loop
 
         except (httpx.HTTPError, IOError, Exception) as e:
             error_msg = f"{type(e).__name__}: {str(e)}"
             error_message = (
-                f"Error downloading PDB file {pdb_id} from {url}: {error_msg}"
+                f"Error downloading {format} file {pdb_id} from {url}: {error_msg}"
             )
             logging.error(error_message)
             # Continue to the next URL if available
@@ -94,22 +120,23 @@ def download_pdb_file(
     # Close the client
     client.close()
 
-    # If all URLs failed, create an empty PDB file to satisfy Snakemake
+    # If all URLs failed, create an empty file to satisfy Snakemake
     if not success:
         with open(output_file, "w") as f:
-            f.write(f"# Failed to download PDB {pdb_id}\n")
-        logging.error(f"All download attempts failed for PDB {pdb_id}")
+            f.write(f"# Failed to download structure for {pdb_id}\n")
+        logging.error(f"All download attempts failed for structure {pdb_id}")
 
-    # Write status file
+    # Write status file with format information
     with open(status_file, "w") as f:
         if success:
-            f.write("success")
+            f.write(f"success\nformat:{downloaded_format}")
         else:
             f.write(f"failed\n{error_message}")
 
     return {
         "success": success,
         "pdb_id": pdb_id,
+        "format": downloaded_format if success else None,
         "error": error_message if not success else "",
     }
 
