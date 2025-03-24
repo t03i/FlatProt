@@ -9,7 +9,7 @@ import logging
 import sys
 from collections import Counter
 from typing import Dict
-
+from pathlib import Path
 from snakemake.script import snakemake
 
 # Configure logging
@@ -79,7 +79,7 @@ def get_missing_structures_by_superfamily(
         .group_by("sf_id")
         .agg(
             pl.count().alias("missing_count"),
-            pl.col("pdb_id").list().alias("missing_pdbs"),
+            pl.col("pdb_id").alias("missing_pdbs"),
         )
     )
 
@@ -187,8 +187,9 @@ def main() -> None:
     """
     # Get input and output paths from Snakemake
     superfamilies_file = snakemake.input.superfamilies
-    pdb_dir = f"{snakemake.config.get('PDB_FILES', 'tmp/alignment_pipeline/pdbs')}"
+    pdb_dir = snakemake.params.pdb_dir
     report_output = snakemake.output.report
+    flag_file = snakemake.output.flag
 
     # Load superfamilies data
     logger.info(f"Loading superfamily information from {superfamilies_file}")
@@ -206,6 +207,9 @@ def main() -> None:
     generate_rst_report(missing_by_sf, status_dict, report_output)
 
     logger.info("Download report generation completed")
+    Path(flag_file).touch()
+
+    logger.info("Flag file created")
 
 
 # Run main function with snakemake object
