@@ -110,7 +110,7 @@ def calculate_inertia_matrix_from_pdb(pdb_file: Path) -> Optional[Transformation
 
 
 def create_alignment_database(
-    representative_domains_dir: Path,
+    domain_files: list[Path],
     output_database: Path,
     database_info_file: Path,
     superfamilies_file: Optional[Path] = None,
@@ -127,18 +127,11 @@ def create_alignment_database(
     Returns:
         None
     """
-    logger.info(f"Creating alignment database from {representative_domains_dir}")
-
-    # Ensure output directory exists
-    output_database.parent.mkdir(parents=True, exist_ok=True)
-
-    # Get all representative domain structures
-    domain_files = list(representative_domains_dir.glob("*.pdb"))
     if not domain_files:
-        logger.error(f"No domain files found in {representative_domains_dir}")
+        logger.error("No domain files supplied")
         sys.exit(1)
 
-    logger.info(f"Found {len(domain_files)} representative domain structures")
+    logger.info(f"Creating alignment database from {len(domain_files)} domain files")
 
     # Load superfamily information if available
     sf_metadata = {}
@@ -239,7 +232,7 @@ def main() -> None:
         None
     """
     # Get input/output paths from Snakemake
-    representative_domains_dir = Path(snakemake.input[0])
+    representative_domain_files = Path(snakemake.input.domain_files)
     output_database = Path(snakemake.output.database)
     database_info_file = Path(snakemake.output.database_info)
 
@@ -250,7 +243,7 @@ def main() -> None:
 
     # Create the alignment database
     create_alignment_database(
-        representative_domains_dir=representative_domains_dir,
+        domain_files=representative_domain_files,
         output_database=output_database,
         database_info_file=database_info_file,
         superfamilies_file=superfamilies_file,
