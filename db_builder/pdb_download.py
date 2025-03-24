@@ -8,9 +8,10 @@ import httpx
 from pathlib import Path
 import logging
 from typing import Dict, Any
+import json
 
 from snakemake.script import snakemake
-from httpx_retries import RetryTransport
+from httpx_retries import RetryTransport, Retry
 
 URLS = [
     # Try CIF format first
@@ -73,13 +74,8 @@ def download_pdb_file(
     # Ensure the output directory exists
     os.makedirs(output_path.parent, exist_ok=True)
 
-    # Create a client with retry transport
-    transport = RetryTransport(
-        max_retries=retry_count,
-        retry_backoff_factor=1.0,
-    )
-
-    client = httpx.Client(transport=transport, timeout=timeout)
+    # Create a retry strategy
+    retry = Retry(total=retry_count, backoff_factor=1.0)
 
     # Try each URL in order (CIF first, then PDB)
     for format, url in URLS:
@@ -87,13 +83,16 @@ def download_pdb_file(
             # Format URL with PDB ID and middle characters
             formatted_url = url.format(pdb_id=pdb_id, middle_chars=middle_chars)
 
-            # Download compressed file
-            response = client.get(formatted_url)
-            response.raise_for_status()
+            # Create a new client for each request with the retry transport
+            transport = RetryTransport(retry=retry)
+            with httpx.Client(transport=transport, timeout=timeout) as client:
+                # Download compressed file
+                response = client.get(formatted_url)
+                response.raise_for_status()
 
-            # Save compressed data to file
-            with open(tmp_file, "wb") as f:
-                f.write(response.content)
+                # Save compressed data to file
+                with open(tmp_file, "wb") as f:
+                    f.write(response.content)
 
             # Decompress
             with gzip.open(tmp_file, "rb") as f_in:
@@ -117,28 +116,24 @@ def download_pdb_file(
             logging.error(error_message)
             # Continue to the next URL if available
 
-    # Close the client
-    client.close()
-
     # If all URLs failed, create an empty file to satisfy Snakemake
     if not success:
         with open(output_file, "w") as f:
             f.write(f"# Failed to download structure for {pdb_id}\n")
         logging.error(f"All download attempts failed for structure {pdb_id}")
 
-    # Write status file with format information
-    with open(status_file, "w") as f:
-        if success:
-            f.write(f"success\nformat:{downloaded_format}")
-        else:
-            f.write(f"failed\n{error_message}")
-
-    return {
+    # Write status file with format information as JSON
+    status_data = {
         "success": success,
         "pdb_id": pdb_id,
         "format": downloaded_format if success else None,
         "error": error_message if not success else "",
     }
+
+    with open(status_file, "w") as f:
+        json.dump(status_data, f, indent=2)
+
+    return status_data
 
 
 def main() -> None:
@@ -153,7 +148,7 @@ def main() -> None:
     """
     # Get parameters from Snakemake
     pdb_id = snakemake.params.pdb_id
-    output_file = snakemake.output.pdb_file
+    output_file = snakemake.output.struct_file
     status_file = snakemake.output.status
 
     # Get configuration parameters

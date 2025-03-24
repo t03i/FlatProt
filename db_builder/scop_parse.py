@@ -63,21 +63,25 @@ def get_sf_proteins_domains_region(scop_file: str) -> pl.DataFrame:
 
     # Extract superfamily IDs from the SCOPCLA column
     df = df.with_columns(
-        pl.col("SCOPCLA").str.extract_all("SF=(\d+)").list.get(0).alias("sf_id")
+        pl.col("SCOPCLA")
+        .str.extract_all(pattern=r"SF=(\d+)")
+        .list.get(0)
+        .str.replace("SF=", "")
+        .alias("sf_id")
     )
 
     # Process PDB regions to extract chain and residue range
     df = df.with_columns(
         [
             # Extract chain (characters before the colon)
-            pl.col("SF_PDBREG").str.extract("([A-Za-z0-9]+):").alias("chain"),
+            pl.col("SF_PDBREG").str.extract(r"([A-Za-z0-9]+):").alias("chain"),
             # Extract start residue (first number after colon)
             pl.col("SF_PDBREG")
-            .str.extract(":(\d+)-")
+            .str.extract(r":(\d+)-")
             .cast(pl.Int32)
             .alias("start_res"),
             # Extract end residue (number after dash)
-            pl.col("SF_PDBREG").str.extract("-(\d+)").cast(pl.Int32).alias("end_res"),
+            pl.col("SF_PDBREG").str.extract(r"-(\d+)").cast(pl.Int32).alias("end_res"),
         ]
     )
 
@@ -111,9 +115,7 @@ def generate_rst_report(
     domain_count = df.height
 
     # Count domains per superfamily
-    sf_domain_counts = (
-        df.group_by("sf_id").agg(pl.count()).sort("count", descending=True)
-    )
+    sf_domain_counts = df.group_by("sf_id").agg(pl.len()).sort("len", descending=True)
     top_sf = sf_domain_counts.head(10)
 
     # Calculate average domains per superfamily
@@ -146,7 +148,7 @@ def generate_rst_report(
             f.write(f"     - {row[1]}\n")
 
         # Distribution of domain counts
-        domain_dist = Counter(sf_domain_counts.get_column("count").to_list())
+        domain_dist = Counter(sf_domain_counts.get_column("len").to_list())
         domain_dist_sorted = sorted(domain_dist.items())
 
         f.write("\nDomain Count Distribution\n")
@@ -172,7 +174,6 @@ def main() -> None:
     """
     scop_file = snakemake.input.scop_file
     superfamilies_output = snakemake.output.superfamilies
-    pdb_list_output = snakemake.output.pdb_list
     report_output = snakemake.output.report
 
     # Parse SCOP file
@@ -184,11 +185,6 @@ def main() -> None:
 
     # Extract unique PDB IDs and save to file
     unique_pdbs = df.get_column("pdb_id").unique().to_list()
-    with open(pdb_list_output, "w") as f:
-        for pdb in unique_pdbs:
-            f.write(f"{pdb}\n")
-
-    logger.info(f"Saved list of {len(unique_pdbs)} PDB IDs to {pdb_list_output}")
 
     # Generate RST report
     generate_rst_report(df, unique_pdbs, report_output)
