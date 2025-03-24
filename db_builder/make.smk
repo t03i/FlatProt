@@ -79,8 +79,7 @@ TIMEOUT = 20  # Default timeout in seconds
 
 rule download_pdb:
     output:
-        pdb_file = f"{PDB_FILES}/{{pdb_id}}.pdb",
-        # Add a status file to indicate success/failure
+        struct_file = f"{PDB_FILES}/{{pdb_id}}.struct",  # Generic extension to handle both formats
         status = f"{PDB_FILES}/{{pdb_id}}.status"
     params:
         pdb_id = "{pdb_id}",
@@ -94,7 +93,7 @@ rule download_pdb:
 
 rule extract_domain:
     input:
-        pdb_file = f"{PDB_FILES}/{{pdb_id}}.pdb"
+        struct_file = f"{PDB_FILES}/{{pdb_id}}.struct"
     output:
         domain_file = f"{DOMAIN_FILES}/{{sf_id}}/{{pdb_id}}_{{chain}}_{{start}}_{{end}}.cif"
     params:
@@ -263,11 +262,11 @@ def get_domains_for_superfamily(wildcards):
         status_file = f"{PDB_FILES}/{pdb_id}.status"
         if os.path.exists(status_file):
             with open(status_file, 'r') as f:
-                status = f.read().strip()
+                status = f.read().strip().split('\n')[0]  # Get just the first line
 
             # Only include domain if download was successful
             if status == "success":
-                domain_file = f"{DOMAIN_FILES}/{wildcards.sf_id}/{pdb_id}_{chain}_{start}_{end}.pdb"
+                domain_file = f"{DOMAIN_FILES}/{wildcards.sf_id}/{pdb_id}_{chain}_{start}_{end}.cif"
                 domain_files.append(domain_file)
 
     return domain_files
