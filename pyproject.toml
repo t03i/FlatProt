@@ -38,6 +38,10 @@ dev = [
     "pytest-mock>=3.14.0",
     "pytest>=8.3.4",
 ]
+db-builder = [
+    "httpx-retries>=0.3.0",
+    "snakemake>=9.0.1",
+]
 
 [project.urls]
 Repository = "https://github.com/t03i/FlatProt"
