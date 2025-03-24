@@ -42,7 +42,57 @@ os.makedirs(REPRESENTATIVE_DOMAINS, exist_ok=True)
 os.makedirs(TMP_FOLDSEEK_DBS, exist_ok=True)
 os.makedirs(MATRICES, exist_ok=True)
 os.makedirs(REPORT_DIR, exist_ok=True)
-# Final output files - defines the complete workflow end result
+
+
+# -------------------------------------------------------------------------------------- #
+#                               Helper Functions                                         #
+# -------------------------------------------------------------------------------------- #
+
+def get_all_superfamily_ids():
+    """Get list of superfamilies to process based on TEST_MODE setting."""
+    try:
+        df = pl.read_csv(SCOP_INFO, separator="\t")
+        if TEST_MODE:
+            return df["sf_id"].unique().shuffle(seed=RANDOM_SEED).to_list()[:NUM_FAMILIES]
+        return df["sf_id"].unique().to_list()
+    except FileNotFoundError:
+        # Return empty list if file doesn't exist yet (during DAG construction)
+        return []
+
+
+def get_domains_for_superfamily(wildcards):
+    """Get domains for a superfamily based on checkpoint output and successful downloads."""
+    checkpoint_output = checkpoints.parse_scop.get().output[0]
+    df = pl.read_csv(checkpoint_output, separator="\t")
+
+    # Filter for this superfamily
+    sf_df = df.filter(pl.col("sf_id") == wildcards.sf_id)
+
+    # Return list of domain files, but only for successfully downloaded PDBs
+    domain_files = []
+    for row in sf_df.iter_rows(named=True):
+        pdb_id = row["pdb_id"]
+        chain = row["chain"]
+        start = row["start"]
+        end = row["end"]
+
+        # Check if the PDB was successfully downloaded
+        status_file = f"{PDB_FILES}/{pdb_id}.status"
+        if os.path.exists(status_file):
+            with open(status_file, 'r') as f:
+                status = f.read().strip().split('\n')[0]  # Get just the first line
+
+            # Only include domain if download was successful
+            if status == "success":
+                domain_file = f"{DOMAIN_FILES}/{wildcards.sf_id}/{pdb_id}_{chain}_{start}_{end}.cif"
+                domain_files.append(domain_file)
+
+    return domain_files
+
+# -------------------------------------------------------------------------------------- #
+#                                      Target rule                                       #
+# -------------------------------------------------------------------------------------- #
+
 rule all:
     input:
         FOLDSEEK_DB,
@@ -141,7 +191,7 @@ rule create_domain_db:
     output:
         domain_db = directory(f"{TMP_FOLDSEEK_DBS}/{{sf_id}}/db")
     params:
-        sf_id = "{sf_id}"
+        sf_id = "{sf_id}",
         domain_dir = f"{DOMAIN_FILES}/{{sf_id}}/"
     shell:
         "foldseek createdb {params.domain_dir} {output.domain_db}"
@@ -154,7 +204,7 @@ rule get_domain_alignment:
         domain_db = f"{TMP_FOLDSEEK_DBS}/{{sf_id}}/db/",
     output:
         alignment = f"{MATRICES}/{{sf_id}}.m8",
-        tmp_dir = temp(f"{WORK_DIR}/{params.sf_id}")
+        tmp_dir = temp(f"{WORK_DIR}/{{sf_id}}")
     params:
         sf_id = "{sf_id}",
     resources:
@@ -223,50 +273,3 @@ rule create_alignment_foldseek_db:
         """
         {FOLDSEEK_PATH} createdb {REPRESENTATIVE_DOMAINS} {output[0]}
         """
-
-
-
-# -------------------------------------------------------------------------------------- #
-#                               Helper Functions                                         #
-# -------------------------------------------------------------------------------------- #
-
-def get_all_superfamily_ids():
-    """Get list of superfamilies to process based on TEST_MODE setting."""
-    try:
-        df = pl.read_csv(SCOP_INFO, separator="\t")
-        if TEST_MODE:
-            return df["sf_id"].unique().shuffle(seed=RANDOM_SEED).to_list()[:NUM_FAMILIES]
-        return df["sf_id"].unique().to_list()
-    except FileNotFoundError:
-        # Return empty list if file doesn't exist yet (during DAG construction)
-        return []
-
-
-def get_domains_for_superfamily(wildcards):
-    """Get domains for a superfamily based on checkpoint output and successful downloads."""
-    checkpoint_output = checkpoints.parse_scop.get().output[0]
-    df = pl.read_csv(checkpoint_output, separator="\t")
-
-    # Filter for this superfamily
-    sf_df = df.filter(pl.col("sf_id") == wildcards.sf_id)
-
-    # Return list of domain files, but only for successfully downloaded PDBs
-    domain_files = []
-    for row in sf_df.iter_rows(named=True):
-        pdb_id = row["pdb_id"]
-        chain = row["chain"]
-        start = row["start"]
-        end = row["end"]
-
-        # Check if the PDB was successfully downloaded
-        status_file = f"{PDB_FILES}/{pdb_id}.status"
-        if os.path.exists(status_file):
-            with open(status_file, 'r') as f:
-                status = f.read().strip().split('\n')[0]  # Get just the first line
-
-            # Only include domain if download was successful
-            if status == "success":
-                domain_file = f"{DOMAIN_FILES}/{wildcards.sf_id}/{pdb_id}_{chain}_{start}_{end}.cif"
-                domain_files.append(domain_file)
-
-    return domain_files
