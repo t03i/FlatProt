@@ -54,8 +54,8 @@ wildcard_constraints:
     sf_id=r"\d+",
     pdb_id="[^/]+",
     chain="[^/]+",
-    start=r"\d+",
-    end=r"\d+"
+    start=r"-?\d+",
+    end=r"-?\d+"
 
 # -------------------------------------------------------------------------------------- #
 #                               Helper Functions                                         #
