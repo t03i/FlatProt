@@ -46,6 +46,12 @@ os.makedirs(REPRESENTATIVE_DOMAINS, exist_ok=True)
 os.makedirs(MATRICES, exist_ok=True)
 os.makedirs(REPORT_DIR, exist_ok=True)
 
+wildcard_constraints:
+    sf_id=r"\d+",
+    pdb_id="[^/]+",
+    chain="[^/]+",
+    start=r"\d+",
+    end=r"\d+"
 
 # -------------------------------------------------------------------------------------- #
 #                               Helper Functions                                         #
@@ -163,7 +169,7 @@ rule download_all_pdbs:
     params:
         pdb_dir = f"{PDB_FILES}"
     script:
-        "pdb_download_report.py"
+        "pdb_report.py"
 
 
 rule extract_domain:
@@ -177,7 +183,7 @@ rule extract_domain:
         start = "{start}",
         end = "{end}"
     script:
-        "pdb_extract_domain.py"
+        "domain_extract.py"
 
 # Add a rule to generate domain extraction requests from SCOP data
 rule generate_domain_extraction_requests:
@@ -193,20 +199,6 @@ rule generate_domain_extraction_requests:
         sf_df = df.filter(pl.col("sf_id") == int(params.sf_id))
         sf_df.write_csv(output.sf_domains, separator="\t")
 
-
-
-# -------------------------------------------------------------------------------------- #
-#                          Foldseek Alignment for all families                           #
-# -------------------------------------------------------------------------------------- #
-
-# Fix wildcard constraints by using raw strings or proper escaping
-wildcard_constraints:
-    sf_id=r"\d+",  # Using raw string for digit pattern
-    pdb_id="[^/]+",
-    chain="[^/]+",
-    start=r"\d+",
-    end=r"\d+"
-
 rule extract_all_domains_for_superfamily:
     input:
         sf_domains = f"{DOMAIN_FILES}/{{sf_id}}/domains.tsv",
@@ -215,6 +207,22 @@ rule extract_all_domains_for_superfamily:
         flag = f"{DOMAIN_FLAG}"
     shell:
         "touch {output.flag}"
+
+rule domain_extraction_report:
+    input:
+        superfamilies = SUPERFAMILIES,
+        flags = expand(f"{DOMAIN_FLAG}", sf_id=get_all_superfamily_ids())
+    output:
+        report = report(f"{REPORT_DIR}/domain_extraction_report.rst", category="Domain Extraction Report")
+    params:
+        pdb_dir = PDB_FILES,
+        domain_dir = DOMAIN_FILES
+    script:
+        "domain_report.py"
+
+# -------------------------------------------------------------------------------------- #
+#                          Foldseek Alignment for all families                           #
+# -------------------------------------------------------------------------------------- #
 
 # Update create_domain_db to depend on domain extraction completion
 rule create_domain_db:
@@ -272,7 +280,7 @@ rule get_representative_domain:
         sf_id = "{sf_id}",
         domain_dir = f"{DOMAIN_FILES}/{{sf_id}}"
     script:
-        "representative_domain.py"
+        "domain_select.py"
 
 
 # -------------------------------------------------------------------------------------- #
@@ -303,7 +311,7 @@ rule create_alignment_database:
         database = f"{ALIGNMENT_DB}",
         database_info = f"{DATABASE_INFO}"
     script:
-        "create_alignment_db.py"
+        "db_create.py"
 
 
 rule create_alignment_foldseek_db:
