@@ -235,7 +235,7 @@ def align_structure_rotation(
     structure_file: Path,
     matrix_out_path: Annotated[
         Path, Parameter(name=["matrix-out-path", "-m", "--matrix"])
-    ] = "alignment_matrix.npy",
+    ] = Path("alignment_matrix.npy"),
     info_out_path: Annotated[
         Optional[Path], Parameter(name=["info-out-path", "-i", "--info"])
     ] = None,
@@ -245,6 +245,9 @@ def align_structure_rotation(
     database_path: Annotated[
         Optional[Path], Parameter(name=["database-path", "-d", "--database"])
     ] = None,
+    database_file_name: Annotated[
+        str, Parameter(name=["database-file-name", "-n", "--database-file-name"])
+    ] = "alignments.h5",
     foldseek_db_path: Annotated[
         Optional[Path], Parameter(name=["foldseek-db-path", "-b", "--foldseek-db"])
     ] = None,
@@ -285,9 +288,12 @@ def align_structure_rotation(
             If not provided, the default database will be used.
             If the database doesn't exist, it will be downloaded unless download_db is False.
 
-        database_path: Path to a custom alignment database.
+        database_path: Path to the directory containing the custom alignment database.
             If not provided, the default database will be used.
             If the database doesn't exist, it will be downloaded unless download_db is False.
+
+        database_file_name: Name of the alignment database file.
+            Defaults to "alignments.h5".
 
         min_probability: Minimum probability threshold for alignments.
             Alignments with probability below this threshold will be rejected.
@@ -321,15 +327,16 @@ def align_structure_rotation(
 
         # Database handling
         db_path = ensure_database_available(database_path, download_db)
+        db_file_path = db_path / database_file_name
 
-        logger.debug(f"Using alignment database at: {db_path}")
+        logger.debug(f"Using alignment database at: {db_file_path}")
 
-        foldseek_db_path = foldseek_db_path or db_path.parent / "foldseek" / "db"
+        foldseek_db_path = foldseek_db_path or db_path / "foldseek" / "db"
 
         logger.debug(f"Using foldseek database: {foldseek_db_path}")
 
         # Initialize database
-        alignment_db = AlignmentDatabase(db_path)
+        alignment_db = AlignmentDatabase(db_file_path)
 
         # Logging configuration matches project_structure_svg pattern
         logger.info(f"Aligning structure: {structure_file.name}")
@@ -344,13 +351,12 @@ def align_structure_rotation(
             min_probability=min_probability,
         )
 
-        # Get database entry for the matched family
-        db_entry = alignment_db.get_entry(alignment_result.db_id)
-
         # Matrix combination
-        final_matrix = get_aligned_rotation_database(alignment_result, alignment_db)
+        final_matrix, db_entry = get_aligned_rotation_database(
+            alignment_result, alignment_db
+        )
 
-        save_alignment_matrix(final_matrix, matrix_out_path)
+        save_alignment_matrix(final_matrix, Path(matrix_out_path))
         logger.info(f"Saved rotation matrix to {matrix_out_path}")
 
         save_alignment_results(

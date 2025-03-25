@@ -27,26 +27,25 @@ def save_alignment_results(
         structure_file: Original input structure file path
     """
     aligned_region = {
-        "start": result.query_start,
-        "end": result.query_end,
-        "length": result.query_end - result.query_start + 1,
+        "start_0": float(result.aligned_region[0]),
+        "end_0": float(result.aligned_region[1]),
+        "length": float(result.aligned_region[1] - result.aligned_region[0] + 1),
     }
 
     data = {
         "structure_file": str(structure_file.resolve()),
         "matched_family": {
-            "scop_id": db_entry.scop_id,
-            "family": db_entry.family,
-            "superfamily": db_entry.superfamily,
-            "fold": db_entry.fold,
+            "superfamily": db_entry.entry_id,
         },
         "probability": round(result.probability, 3),
         "aligned_region": aligned_region,
-        "rotation_matrix": result.rotation_matrix.tolist(),
+        "rotation_matrix": list(
+            map(float, result.rotation_matrix.to_array().flatten())
+        ),
         "message": (
-            f"Structure aligned to {db_entry.superfamily} (SCOP {db_entry.scop_id}) "
+            f"Structure aligned to {db_entry.entry_id} "
             f"with probability {result.probability:.1%}. "
-            f"Aligned region: residues {result.query_start}-{result.query_end}."
+            f"Aligned region: residues {result.aligned_region[0] + 1}-{result.aligned_region[1] + 1}."
         ),
     }
 
@@ -67,4 +66,4 @@ def save_alignment_matrix(matrix: np.ndarray, output_path: Path) -> None:
         output_path: Path to save the matrix
     """
     output_path.parent.mkdir(parents=True, exist_ok=True)
-    np.save(output_path, matrix)
+    np.save(output_path, matrix.to_array(), allow_pickle=False)
