@@ -13,7 +13,7 @@ OUTPUT_DIR = "out/alignment_db"
 WORK_DIR = "tmp/alignment_pipeline"
 
 RETRY_COUNT = 3
-TEST_MODE = True
+TEST_MODE = False
 NUM_FAMILIES = 401
 RANDOM_SEED = 42
 CONCURRENT_DOWNLOADS = 5
