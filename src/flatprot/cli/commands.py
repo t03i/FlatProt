@@ -324,7 +324,7 @@ def align_structure_rotation(
 
         logger.debug(f"Using alignment database at: {db_path}")
 
-        foldseek_db_path = foldseek_db_path or db_path / "foldseek_db"
+        foldseek_db_path = foldseek_db_path or db_path.parent / "foldseek" / "db"
 
         logger.debug(f"Using foldseek database: {foldseek_db_path}")
 
