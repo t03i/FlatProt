@@ -6,7 +6,6 @@ import os
 import json
 import polars as pl
 import logging
-import sys
 from collections import Counter
 from typing import Dict
 from pathlib import Path
@@ -16,7 +15,7 @@ from snakemake.script import snakemake
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(levelname)s - %(message)s",
-    handlers=[logging.StreamHandler(sys.stdout)],
+    filename=snakemake.log[0],
 )
 logger = logging.getLogger(__name__)
 
