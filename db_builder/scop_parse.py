@@ -74,13 +74,16 @@ def get_sf_proteins_domains_region(scop_file: str) -> pl.DataFrame:
         [
             # Extract chain (characters before the colon)
             pl.col("SF_PDBREG").str.extract(r"([A-Za-z0-9]+):").alias("chain"),
-            # Extract start residue (first number after colon)
+            # Extract start residue (number between colon and dash)
             pl.col("SF_PDBREG")
-            .str.extract(r":(\d+)-")
+            .str.extract(r":(-?\d+)-")
             .cast(pl.Int32)
             .alias("start_res"),
-            # Extract end residue (number after dash)
-            pl.col("SF_PDBREG").str.extract(r"-(\d+)").cast(pl.Int32).alias("end_res"),
+            # Extract end residue (last number in the string)
+            pl.col("SF_PDBREG")
+            .str.extract(r"-(-?\d+)$")
+            .cast(pl.Int32)
+            .alias("end_res"),
         ]
     )
 
