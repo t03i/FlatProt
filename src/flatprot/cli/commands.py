@@ -246,7 +246,7 @@ def align_structure_rotation(
         Optional[Path], Parameter(name=["database-path", "-d", "--database"])
     ] = None,
     database_file_name: Annotated[
-        str, Parameter(name=["database-file-name", "-n", "--database-file-name"])
+        str, Parameter(name=["database-file-name", "-n"])
     ] = "alignments.h5",
     foldseek_db_path: Annotated[
         Optional[Path], Parameter(name=["foldseek-db-path", "-b", "--foldseek-db"])
