@@ -228,7 +228,7 @@ rule extract_all_domains_for_superfamily:
         sf_domains = f"{DOMAIN_FILES}/{{sf_id}}/domains.tsv",
         domain_files = lambda wildcards: get_domains_for_superfamily(wildcards)
     output:
-        flag = temp(f"{DOMAIN_FLAG}"),
+        flag = f"{DOMAIN_FLAG}",
     log:
         f"{LOG_DIR}/extract_all_domains_{{sf_id}}.log"
     shell:
@@ -265,13 +265,13 @@ rule create_domain_db:
         sf_id = "{sf_id}",
         domain_dir = str(Path(f"{DOMAIN_FLAG}").parent)
     resources:
-        cpus = 4
+        cpus = 2
     log:
         f"{LOG_DIR}/create_domain_db_{{sf_id}}.log"
     shell:
         """
         mkdir -p $(dirname {output.domain_db}) && \
-        foldseek createdb {params.domain_dir} {output.domain_db} --threads 4 -v 3  2>&1 > {log}
+        foldseek createdb {params.domain_dir} {output.domain_db} --threads 2 -v 3  2>&1 > {log}
         """
 
 # Update get_domain_alignment to track alignment progress
@@ -285,7 +285,7 @@ rule get_domain_alignment:
     params:
         sf_id = "{sf_id}"
     resources:
-        cpus = 4
+        cpus = 2
     log:
         f"{LOG_DIR}/get_domain_alignment_{{sf_id}}.log"
     shell:
@@ -300,7 +300,7 @@ rule get_domain_alignment:
             --exhaustive-search 1 \
             --tmscore-threshold 0.0 \
             --alignment-type 2 \
-            --threads 4 \
+            --threads 2 \
             -v 3 2>&1 > {log}
         """
 
