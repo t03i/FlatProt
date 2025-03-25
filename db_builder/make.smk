@@ -107,6 +107,12 @@ def get_domains_for_superfamily(wildcards):
 
     return domain_files
 
+def generate_domain_tsv(sf_id, input_file, output_file):
+    """Generate a TSV file for a superfamily."""
+    df = pl.read_csv(input_file, separator="\t")
+    sf_df = df.filter(pl.col("sf_id") == int(sf_id))
+    sf_df.write_csv(output_file, separator="\t")
+
 # -------------------------------------------------------------------------------------- #
 #                                      Target rule                                       #
 # -------------------------------------------------------------------------------------- #
@@ -151,7 +157,6 @@ rule download_pdb:
         status = f"{PDB_FILES}/{{pdb_id}}.status"
     params:
         pdb_id = "{pdb_id}",
-        pdb_dir = f"{PDB_FILES}",
         retry_count = RETRY_COUNT,
         timeout = TIMEOUT
     resources:
@@ -195,28 +200,27 @@ rule generate_domain_extraction_requests:
     params:
         sf_id = "{sf_id}"
     run:
-        df = pl.read_csv(input.superfamilies, separator="\t")
-        sf_df = df.filter(pl.col("sf_id") == int(params.sf_id))
-        sf_df.write_csv(output.sf_domains, separator="\t")
+        generate_domain_tsv(params.sf_id, input.superfamilies, output.sf_domains)
 
 rule extract_all_domains_for_superfamily:
     input:
         sf_domains = f"{DOMAIN_FILES}/{{sf_id}}/domains.tsv",
         domain_files = lambda wildcards: get_domains_for_superfamily(wildcards)
     output:
-        flag = f"{DOMAIN_FLAG}"
+        flag = temp(f"{DOMAIN_FLAG}")
     shell:
         "touch {output.flag}"
+
 
 rule domain_extraction_report:
     input:
         superfamilies = SUPERFAMILIES,
-        flags = expand(f"{DOMAIN_FLAG}", sf_id=get_all_superfamily_ids())
+        flags = expand(f"{DOMAIN_FLAG}", sf_id=get_all_superfamily_ids()),
+        pdb_dir = PDB_FILES,
+        domain_dir = DOMAIN_FILES
     output:
         report = report(f"{REPORT_DIR}/domain_extraction_report.rst", category="Domain Extraction Report")
     params:
-        pdb_dir = PDB_FILES,
-        domain_dir = DOMAIN_FILES
     script:
         "domain_report.py"
 
@@ -229,7 +233,7 @@ rule create_domain_db:
     input:
         extraction_complete = f"{DOMAIN_FLAG}"
     output:
-        domain_db = f"{TMP_FOLDSEEK_DB}"
+        domain_db = temp(f"{TMP_FOLDSEEK_DB}")
     params:
         sf_id = "{sf_id}",
         domain_dir = f"{DOMAIN_FILES}/{{sf_id}}/"
@@ -255,7 +259,6 @@ rule get_domain_alignment:
         cpus = 4
     shell:
         """
-        mkdir -p {MATRICES}/{params.sf_id}
         foldseek easy-search \
             {input.domain_db} \
             {input.domain_db} \
@@ -274,11 +277,11 @@ rule get_domain_alignment:
 rule get_representative_domain:
     input:
         alignment_file = f"{MATRICES}/{{sf_id}}.m8",
+        domain_dir = f"{DOMAIN_FILES}/{{sf_id}}"
     output:
         representative_domain = f"{REPRESENTATIVE_DOMAINS}/{{sf_id}}.cif"
     params:
         sf_id = "{sf_id}",
-        domain_dir = f"{DOMAIN_FILES}/{{sf_id}}"
     script:
         "domain_select.py"
 
@@ -295,17 +298,16 @@ rule aggregate_representatives:
         representative_domains = expand(
             f"{REPRESENTATIVE_DOMAINS}/{{sf_id}}.cif",
             sf_id=get_all_superfamily_ids()
-        )
+        ),
     output:
-        flag = f"{REPRESENTATIVE_FLAG}"
+        flag = temp(f"{REPRESENTATIVE_FLAG}")
     shell:
         "touch {output.flag}"
 
 
 rule create_alignment_database:
     input:
-        flag = f"{REPRESENTATIVE_FLAG}"
-    params:
+        flag = f"{REPRESENTATIVE_FLAG}",
         representative_domains = [f for f in Path(REPRESENTATIVE_DOMAINS).glob("*.cif")],
     output:
         database = f"{ALIGNMENT_DB}",
@@ -316,12 +318,13 @@ rule create_alignment_database:
 
 rule create_alignment_foldseek_db:
     input:
-        flag = f"{REPRESENTATIVE_FLAG}"
+        flag = f"{REPRESENTATIVE_FLAG}",
+        representative_domains_folder = REPRESENTATIVE_DOMAINS
     output:
         FOLDSEEK_DB
     resources:
         cpus = 4
     shell:
         """
-        {FOLDSEEK_PATH} createdb {REPRESENTATIVE_DOMAINS} {output} --threads 4 -v 1
+        {FOLDSEEK_PATH} createdb {input.representative_domains_folder} {output} --threads 4 -v 1
         """
