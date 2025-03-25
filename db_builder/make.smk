@@ -9,12 +9,12 @@ import polars as pl
 
 
 # Default values if not in config
-OUTPUT_DIR = "data/alignment_db"
+OUTPUT_DIR = "out/alignment_db"
 WORK_DIR = "tmp/alignment_pipeline"
 
 RETRY_COUNT = 3
 TEST_MODE = True
-NUM_FAMILIES = 5
+NUM_FAMILIES = 15
 RANDOM_SEED = 42
 CONCURRENT_DOWNLOADS = 5
 FOLDSEEK_PATH = "foldseek"
