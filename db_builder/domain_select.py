@@ -144,7 +144,7 @@ def main() -> None:
     """
     # Get input and output from Snakemake
     alignment_file = Path(snakemake.input.alignment_file)
-    domain_dir = Path(snakemake.input.domain_dir)
+    domain_dir = Path(snakemake.params.domain_dir)
     output_file = Path(snakemake.output.representative_domain)
 
     # Ensure output directory exists

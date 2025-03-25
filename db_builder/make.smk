@@ -24,6 +24,7 @@ SCOP_FILE = f"{WORK_DIR}/scop-cla-latest.txt"
 SUPERFAMILIES = f"{WORK_DIR}/superfamilies.tsv"
 PDB_FILES = f"{WORK_DIR}/pdbs"
 DOMAIN_FILES = f"{WORK_DIR}/domains"
+DOMAIN_FLAG = f"{DOMAIN_FILES}/{{sf_id}}-extracted.flag"
 REPRESENTATIVE_DOMAINS = f"{WORK_DIR}/representative_domains"
 MATRICES = f"{WORK_DIR}/matrices"
 ALIGNMENT_DB = f"{OUTPUT_DIR}/alignments.h5"
@@ -34,7 +35,6 @@ TMP_DIR = Path(tempfile.mkdtemp())
 TMP_FOLDSEEK_DB = f"{TMP_DIR}/foldseek/{{sf_id}}/db"
 PDB_FLAG = f"{TMP_DIR}/download_all_pdbs.flag"
 REPRESENTATIVE_FLAG = f"{TMP_DIR}/representatives.flag"
-DOMAIN_FLAG = f"{TMP_DIR}/{{sf_id}}-extracted.flag"
 
 # Add log directory
 LOG_DIR = f"{WORK_DIR}/logs"
@@ -226,7 +226,7 @@ rule extract_all_domains_for_superfamily:
         sf_domains = f"{DOMAIN_FILES}/{{sf_id}}/domains.tsv",
         domain_files = lambda wildcards: get_domains_for_superfamily(wildcards)
     output:
-        flag = temp(f"{DOMAIN_FLAG}")
+        flag = temp(f"{DOMAIN_FLAG}"),
     log:
         f"{LOG_DIR}/extract_all_domains_{{sf_id}}.log"
     shell:
@@ -256,12 +256,12 @@ rule domain_extraction_report:
 # Update create_domain_db to depend on domain extraction completion
 rule create_domain_db:
     input:
-        extraction_complete = f"{DOMAIN_FLAG}"
+        extraction_complete = f"{DOMAIN_FLAG}",
     output:
         domain_db = temp(f"{TMP_FOLDSEEK_DB}")
     params:
         sf_id = "{sf_id}",
-        domain_dir = f"{DOMAIN_FILES}/{{sf_id}}/"
+        domain_dir = Path(f"{DOMAIN_FLAG}").parent
     resources:
         cpus = 4
     log:
@@ -306,10 +306,11 @@ rule get_domain_alignment:
 rule get_representative_domain:
     input:
         alignment_file = f"{MATRICES}/{{sf_id}}.m8",
-        domain_dir = f"{DOMAIN_FILES}/{{sf_id}}"
+        domain_flag = f"{DOMAIN_FLAG}"
     output:
         representative_domain = f"{REPRESENTATIVE_DOMAINS}/{{sf_id}}.cif"
     params:
+        domain_dir = Path(f"{DOMAIN_FLAG}").parent,
         sf_id = "{sf_id}"
     log:
         f"{LOG_DIR}/get_representative_domain_{{sf_id}}.log"
