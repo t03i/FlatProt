@@ -17,7 +17,7 @@ DEFAULT_DB_URL = "https://flatprot.org/databases/alignment_db.tar.gz"
 DEFAULT_DB_DIR = Path.home() / ".flatprot" / "databases" / "alignment"
 
 # Files that must be present in a valid alignment database
-REQUIRED_DB_FILES = ["alignment.h5", "db_info.tsv", "foldseek_db/db.index"]
+REQUIRED_DB_FILES = ["alignments.h5", "database_info.json", "foldseek/db.index"]
 
 
 def ensure_database_available(

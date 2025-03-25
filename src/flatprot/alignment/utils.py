@@ -14,6 +14,15 @@ from .errors import (
 )
 
 
+def _foldseek_id_to_db_id(foldseek_id: str) -> str:
+    """Convert FoldSeek ID to database ID.
+
+    Args:
+        foldseek_id: FoldSeek ID
+    """
+    return f"sf_{foldseek_id}"
+
+
 def get_aligned_rotation_database(
     alignment: AlignmentResult, db: AlignmentDatabase
 ) -> TransformationMatrix:
@@ -29,11 +38,18 @@ def get_aligned_rotation_database(
     Raises:
         DatabaseEntryNotFoundError: If matched database entry is missing
     """
-    if not db.contains_entry_id(alignment.db_id):
-        raise DatabaseEntryNotFoundError(f"Database entry {alignment.db_id} not found")
+    with db:
+        db_id = _foldseek_id_to_db_id(alignment.db_id)
+        if not db.contains_entry_id(db_id):
+            raise DatabaseEntryNotFoundError(
+                f"Database entry {alignment.db_id} not found"
+            )
 
-    db_entry = db.get_by_entry_id(alignment.db_id)
-    return alignment.rotation_matrix.combined_rotation(db_entry.rotation_matrix)
+        db_entry = db.get_by_entry_id(db_id)
+
+    return alignment.rotation_matrix.combined_rotation(
+        db_entry.rotation_matrix
+    ), db_entry
 
 
 def align_structure_database(
