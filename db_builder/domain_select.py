@@ -5,7 +5,7 @@ import polars as pl
 from pathlib import Path
 import shutil
 import logging
-from typing import List, Optional, Tuple
+from typing import Optional, Tuple
 
 from snakemake.script import snakemake
 
@@ -61,53 +61,17 @@ def read_alignment(alignment_file: Path) -> pl.DataFrame:
         )
 
 
-def combine_alignments(alignment_files: List[Path]) -> pl.DataFrame:
-    """
-    Combine multiple alignment files into a single DataFrame.
-
-    Args:
-        alignment_files: List of alignment file paths
-
-    Returns:
-        Combined Polars DataFrame
-    """
-    if not alignment_files:
-        return pl.DataFrame(
-            schema={
-                "query": str,
-                "target": str,
-                "qstart": int,
-                "qend": int,
-                "tstart": int,
-                "tend": int,
-                "tseq": str,
-                "prob": float,
-                "alntmscore": float,
-            }
-        )
-
-    dataframes = [read_alignment(f) for f in alignment_files]
-    return pl.concat(dataframes)
-
-
-def find_best_representative(
-    alignment: pl.DataFrame, domain_dir: Path
-) -> Optional[Tuple[Path, float]]:
+def find_best_representative(alignment: pl.DataFrame) -> Optional[Tuple[str, float]]:
     """
     Find the best representative domain based on alignment scores.
 
     Args:
         alignment: DataFrame with alignment information
-        domain_dir: Directory containing domain PDB files
 
     Returns:
-        Tuple of (path to best domain file, score) or None if no valid domains
+        Tuple of (best domain filename, score) or None if no valid alignments
     """
     if alignment.is_empty():
-        # If no alignments, find any PDB file in the domain directory
-        pdb_files = list(domain_dir.glob("*.cif"))
-        if pdb_files:
-            return (pdb_files[0], 0.0)
         return None
 
     # Calculate average TM-score for each domain when it's used as a target
@@ -117,25 +81,12 @@ def find_best_representative(
         .sort("avg_tmscore", descending=True)
     )
 
-    # Iterate through domains in order of score
-    for row in avg_scores.iter_rows(named=True):
-        domain_id = row["target"]
-        score = row["avg_tmscore"]
+    if avg_scores.is_empty():
+        return None
 
-        # Extract components from domain_id (if needed)
-        # Assuming domain_id format is pdb_chain_start_end
-        filename = f"{domain_id}.cif"
-        domain_file = domain_dir / filename
-
-        if domain_file.exists():
-            return (domain_file, score)
-
-    # Fallback if no file is found
-    pdb_files = list(domain_dir.glob("*.cif"))
-    if pdb_files:
-        return (pdb_files[0], 0.0)
-
-    return None
+    # Get the best scoring domain
+    best_domain = avg_scores.row(0, named=True)
+    return (best_domain["target"], best_domain["avg_tmscore"])
 
 
 def main() -> None:
@@ -154,15 +105,21 @@ def main() -> None:
     alignment = read_alignment(alignment_file)
 
     # Find the best representative
-    best_domain = find_best_representative(alignment, domain_dir)
+    best_domain = find_best_representative(alignment)
 
     if best_domain:
-        domain_file, score = best_domain
-        # Copy the best domain file to the output location
-        shutil.copy(domain_file, output_file)
-        logging.info(
-            f"Selected {domain_file.name} as representative domain (score: {score})"
-        )
+        domain_name, score = best_domain
+        source_file = domain_dir / f"{domain_name}.cif"
+        if source_file.exists():
+            # Copy the best domain file to the output location
+            shutil.copy(source_file, output_file)
+            logging.info(
+                f"Selected {domain_name} as representative domain (score: {score})"
+            )
+        else:
+            logging.error(f"Best domain file {domain_name} not found in {domain_dir}")
+    else:
+        logging.warning("No valid domains found in alignment")
 
 
 if __name__ == "__main__":

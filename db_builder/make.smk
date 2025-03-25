@@ -14,7 +14,7 @@ WORK_DIR = "tmp/alignment_pipeline"
 
 RETRY_COUNT = 3
 TEST_MODE = True
-NUM_FAMILIES = 15
+NUM_FAMILIES = 20
 RANDOM_SEED = 42
 CONCURRENT_DOWNLOADS = 5
 FOLDSEEK_PATH = "foldseek"
@@ -24,7 +24,7 @@ SCOP_FILE = f"{WORK_DIR}/scop-cla-latest.txt"
 SUPERFAMILIES = f"{WORK_DIR}/superfamilies.tsv"
 PDB_FILES = f"{WORK_DIR}/pdbs"
 DOMAIN_FILES = f"{WORK_DIR}/domains"
-DOMAIN_FLAG = f"{DOMAIN_FILES}/{{sf_id}}-extracted.flag"
+DOMAIN_FLAG = f"{DOMAIN_FILES}/{{sf_id}}/extracted.flag"
 REPRESENTATIVE_DOMAINS = f"{WORK_DIR}/representative_domains"
 MATRICES = f"{WORK_DIR}/matrices"
 ALIGNMENT_DB = f"{OUTPUT_DIR}/alignments.h5"
@@ -261,7 +261,7 @@ rule create_domain_db:
         domain_db = temp(f"{TMP_FOLDSEEK_DB}")
     params:
         sf_id = "{sf_id}",
-        domain_dir = Path(f"{DOMAIN_FLAG}").parent
+        domain_dir = str(Path(f"{DOMAIN_FLAG}").parent)
     resources:
         cpus = 4
     log:
@@ -269,7 +269,7 @@ rule create_domain_db:
     shell:
         """
         mkdir -p $(dirname {output.domain_db}) && \
-        foldseek createdb {params.domain_dir} {output.domain_db} --threads 4 -v 3 2>&1 | tee {log}
+        foldseek createdb {params.domain_dir} {output.domain_db} --threads 4 -v 3  2>&1 > {log}
         """
 
 # Update get_domain_alignment to track alignment progress
@@ -299,7 +299,7 @@ rule get_domain_alignment:
             --tmscore-threshold 0.0 \
             --alignment-type 2 \
             --threads 4 \
-            -v 3 2>&1 | tee {log}
+            -v 3 2>&1 > {log}
         """
 
 # Connect representative selection to domain alignments
@@ -310,7 +310,7 @@ rule get_representative_domain:
     output:
         representative_domain = f"{REPRESENTATIVE_DOMAINS}/{{sf_id}}.cif"
     params:
-        domain_dir = Path(f"{DOMAIN_FLAG}").parent,
+        domain_dir = str(Path(f"{DOMAIN_FLAG}").parent),
         sf_id = "{sf_id}"
     log:
         f"{LOG_DIR}/get_representative_domain_{{sf_id}}.log"
@@ -341,16 +341,19 @@ rule aggregate_representatives:
         touch {output.flag}
         """
 
-
 rule create_alignment_database:
     input:
         flag = f"{REPRESENTATIVE_FLAG}",
         representative_domains = [f for f in Path(REPRESENTATIVE_DOMAINS).glob("*.cif")],
+        scop_file = SCOP_FILE
     output:
         database = f"{ALIGNMENT_DB}",
         database_info = f"{DATABASE_INFO}"
     log:
         f"{LOG_DIR}/create_alignment_database.log"
+    params:
+        test_mode = TEST_MODE,
+        num_families = NUM_FAMILIES
     script:
         "db_create.py"
 
@@ -358,14 +361,18 @@ rule create_alignment_database:
 rule create_alignment_foldseek_db:
     input:
         flag = f"{REPRESENTATIVE_FLAG}",
-        representative_domains_folder = REPRESENTATIVE_DOMAINS
+        representative_domains_folder = REPRESENTATIVE_DOMAINS,
+        scop_file = SCOP_FILE
     output:
         FOLDSEEK_DB
     resources:
         cpus = 4
+    params:
+        test_mode = TEST_MODE,
+        num_families = NUM_FAMILIES
     log:
         f"{LOG_DIR}/create_alignment_foldseek_db.log"
     shell:
         """
-        {FOLDSEEK_PATH} createdb {input.representative_domains_folder} {output} --threads 4 -v 3 2>&1 | tee {log}
+        {FOLDSEEK_PATH} createdb {input.representative_domains_folder} {output} --threads 4 -v 3 2>&1 > {log}
         """
