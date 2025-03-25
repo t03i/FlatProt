@@ -36,6 +36,10 @@ PDB_FLAG = f"{TMP_DIR}/download_all_pdbs.flag"
 REPRESENTATIVE_FLAG = f"{TMP_DIR}/representatives.flag"
 DOMAIN_FLAG = f"{TMP_DIR}/{{sf_id}}-extracted.flag"
 
+# Add log directory
+LOG_DIR = f"{WORK_DIR}/logs"
+os.makedirs(LOG_DIR, exist_ok=True)
+
 # Create output directories
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 os.makedirs(WORK_DIR, exist_ok=True)
@@ -131,9 +135,11 @@ rule all:
 rule download_scop:
     output:
         scop_file = f"{SCOP_FILE}"
+    log:
+        f"{LOG_DIR}/download_scop.log"
     shell:
         """
-        wget -O {output.scop_file} https://www.ebi.ac.uk/pdbe/scop/files/scop-cla-latest.txt
+        wget -O {output.scop_file} https://www.ebi.ac.uk/pdbe/scop/files/scop-cla-latest.txt 2>&1 | tee {log}
         """
 
 checkpoint parse_scop:
@@ -142,6 +148,8 @@ checkpoint parse_scop:
     output:
         superfamilies = f"{SUPERFAMILIES}",
         report = report(f"{REPORT_DIR}/scop.rst", category="SCOP Analysis")
+    log:
+        f"{LOG_DIR}/parse_scop.log"
     script:
         "scop_parse.py"
 
@@ -153,14 +161,16 @@ TIMEOUT = 20  # Default timeout in seconds
 
 rule download_pdb:
     output:
-        struct_file = f"{PDB_FILES}/{{pdb_id}}.struct",  # Generic extension to handle both formats
+        struct_file = f"{PDB_FILES}/{{pdb_id}}.struct",
         status = f"{PDB_FILES}/{{pdb_id}}.status"
     params:
         pdb_id = "{pdb_id}",
         retry_count = RETRY_COUNT,
         timeout = TIMEOUT
     resources:
-        network_connections = 1,
+        network_connections = 1
+    log:
+        f"{LOG_DIR}/download_pdb_{{pdb_id}}.log"
     script:
         "pdb_download.py"
 
@@ -169,10 +179,12 @@ rule download_all_pdbs:
         superfamilies = SUPERFAMILIES,
         structure_ids = [f"{PDB_FILES}/{pdb_id}.struct" for pdb_id in get_all_structure_ids()]
     output:
-        flag = temp(f"{PDB_FLAG}"),  # Temporary flag only valid for this run
+        flag = temp(f"{PDB_FLAG}"),
         report = report(f"{REPORT_DIR}/pdb_download_report.rst", category="PDB Download Report")
     params:
         pdb_dir = f"{PDB_FILES}"
+    log:
+        f"{LOG_DIR}/download_all_pdbs.log"
     script:
         "pdb_report.py"
 
@@ -187,6 +199,8 @@ rule extract_domain:
         chain = "{chain}",
         start = "{start}",
         end = "{end}"
+    log:
+        f"{LOG_DIR}/extract_domain_{{sf_id}}_{{pdb_id}}_{{chain}}_{{start}}_{{end}}.log"
     script:
         "domain_extract.py"
 
@@ -199,8 +213,13 @@ rule generate_domain_extraction_requests:
         sf_domains = f"{DOMAIN_FILES}/{{sf_id}}/domains.tsv"
     params:
         sf_id = "{sf_id}"
+    log:
+        f"{LOG_DIR}/generate_domain_extraction_requests_{{sf_id}}.log"
     run:
-        generate_domain_tsv(params.sf_id, input.superfamilies, output.sf_domains)
+        with open(log[0], "w") as f:
+            f.write(f"Generating domain extraction requests for superfamily {params.sf_id}\n")
+            generate_domain_tsv(params.sf_id, input.superfamilies, output.sf_domains)
+            f.write("Domain extraction requests generated successfully\n")
 
 rule extract_all_domains_for_superfamily:
     input:
@@ -208,8 +227,13 @@ rule extract_all_domains_for_superfamily:
         domain_files = lambda wildcards: get_domains_for_superfamily(wildcards)
     output:
         flag = temp(f"{DOMAIN_FLAG}")
+    log:
+        f"{LOG_DIR}/extract_all_domains_{{sf_id}}.log"
     shell:
-        "touch {output.flag}"
+        """
+        echo "Completed domain extraction for superfamily {wildcards.sf_id}" > {log}
+        touch {output.flag}
+        """
 
 
 rule domain_extraction_report:
@@ -220,7 +244,8 @@ rule domain_extraction_report:
         domain_dir = DOMAIN_FILES
     output:
         report = report(f"{REPORT_DIR}/domain_extraction_report.rst", category="Domain Extraction Report")
-    params:
+    log:
+        f"{LOG_DIR}/domain_extraction_report.log"
     script:
         "domain_report.py"
 
@@ -239,24 +264,28 @@ rule create_domain_db:
         domain_dir = f"{DOMAIN_FILES}/{{sf_id}}/"
     resources:
         cpus = 4
+    log:
+        f"{LOG_DIR}/create_domain_db_{{sf_id}}.log"
     shell:
         """
         mkdir -p $(dirname {output.domain_db}) && \
-        foldseek createdb {params.domain_dir} {output.domain_db} --threads 4 -v 1
+        foldseek createdb {params.domain_dir} {output.domain_db} --threads 4 -v 3 2>&1 | tee {log}
         """
 
 # Update get_domain_alignment to track alignment progress
 # cf. https://github.com/steineggerlab/foldseek/issues/33#issuecomment-1495652159 for all v. all
 rule get_domain_alignment:
     input:
-        domain_db = f"{TMP_FOLDSEEK_DB}",
+        domain_db = f"{TMP_FOLDSEEK_DB}"
     output:
         alignment = f"{MATRICES}/{{sf_id}}.m8",
         tmp_dir = temp(directory(f"{WORK_DIR}/{{sf_id}}"))
     params:
-        sf_id = "{sf_id}",
+        sf_id = "{sf_id}"
     resources:
         cpus = 4
+    log:
+        f"{LOG_DIR}/get_domain_alignment_{{sf_id}}.log"
     shell:
         """
         foldseek easy-search \
@@ -270,7 +299,7 @@ rule get_domain_alignment:
             --tmscore-threshold 0.0 \
             --alignment-type 2 \
             --threads 4 \
-            -v 1
+            -v 3 2>&1 | tee {log}
         """
 
 # Connect representative selection to domain alignments
@@ -281,7 +310,9 @@ rule get_representative_domain:
     output:
         representative_domain = f"{REPRESENTATIVE_DOMAINS}/{{sf_id}}.cif"
     params:
-        sf_id = "{sf_id}",
+        sf_id = "{sf_id}"
+    log:
+        f"{LOG_DIR}/get_representative_domain_{{sf_id}}.log"
     script:
         "domain_select.py"
 
@@ -298,11 +329,16 @@ rule aggregate_representatives:
         representative_domains = expand(
             f"{REPRESENTATIVE_DOMAINS}/{{sf_id}}.cif",
             sf_id=get_all_superfamily_ids()
-        ),
+        )
     output:
         flag = temp(f"{REPRESENTATIVE_FLAG}")
+    log:
+        f"{LOG_DIR}/aggregate_representatives.log"
     shell:
-        "touch {output.flag}"
+        """
+        echo "Aggregating representatives completed" > {log}
+        touch {output.flag}
+        """
 
 
 rule create_alignment_database:
@@ -312,6 +348,8 @@ rule create_alignment_database:
     output:
         database = f"{ALIGNMENT_DB}",
         database_info = f"{DATABASE_INFO}"
+    log:
+        f"{LOG_DIR}/create_alignment_database.log"
     script:
         "db_create.py"
 
@@ -324,7 +362,9 @@ rule create_alignment_foldseek_db:
         FOLDSEEK_DB
     resources:
         cpus = 4
+    log:
+        f"{LOG_DIR}/create_alignment_foldseek_db.log"
     shell:
         """
-        {FOLDSEEK_PATH} createdb {input.representative_domains_folder} {output} --threads 4 -v 1
+        {FOLDSEEK_PATH} createdb {input.representative_domains_folder} {output} --threads 4 -v 3 2>&1 | tee {log}
         """
