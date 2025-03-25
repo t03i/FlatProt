@@ -108,13 +108,17 @@ def generate_rst_report(
         df: Polars DataFrame with superfamily information
         unique_pdbs: List of unique PDB IDs
         output_file: Path to save the RST report
-        test_mode: Whether the parsing was done in test mode
-        num_families: Number of families selected in test mode
     """
     # Calculate statistics
     sf_count = df.get_column("sf_id").n_unique()
     pdb_count = len(unique_pdbs)
     domain_count = df.height
+
+    # Get invalid entries
+    invalid_entries = df.filter(
+        (pl.col("start_res").is_null()) | (pl.col("end_res").is_null())
+    ).select(["sf_id", "pdb_id", "chain", "start_res", "end_res"])
+    invalid_count = invalid_entries.height
 
     # Count domains per superfamily
     sf_domain_counts = df.group_by("sf_id").agg(pl.len()).sort("len", descending=True)
@@ -134,7 +138,25 @@ def generate_rst_report(
         f.write(f"* **Total Superfamilies**: {sf_count}\n")
         f.write(f"* **Total PDB Entries**: {pdb_count}\n")
         f.write(f"* **Total Domains**: {domain_count}\n")
+        f.write(f"* **Invalid Residue Ranges**: {invalid_count}\n")
         f.write(f"* **Average Domains per Superfamily**: {avg_domains_per_sf:.2f}\n\n")
+
+        # Add invalid entries section if any exist
+        if invalid_count > 0:
+            f.write("Invalid Residue Ranges\n")
+            f.write("--------------------\n\n")
+            f.write(".. list-table::\n")
+            f.write("   :header-rows: 1\n\n")
+            f.write("   * - Superfamily ID\n")
+            f.write("     - PDB ID\n")
+            f.write("     - Region\n")
+
+            for row in invalid_entries.iter_rows():
+                f.write(f"   * - {row[0]}\n")
+                f.write(f"     - {row[1]}\n")
+                f.write(f"     - {row[2]}\n")
+
+            f.write("\n")
 
         # Top superfamilies by domain count
         f.write("Top Superfamilies\n")
@@ -181,15 +203,20 @@ def main() -> None:
     # Parse SCOP file
     df = get_sf_proteins_domains_region(scop_file)
 
-    # Save superfamilies information
-    df.write_csv(superfamilies_output, separator="\t")
+    # Generate RST report before filtering
+    generate_rst_report(df, df.get_column("pdb_id").unique().to_list(), report_output)
+
+    # Filter out entries with null values and log the count
+    total_rows = df.height
+    df_filtered = df.filter(
+        (pl.col("start_res").is_not_null()) & (pl.col("end_res").is_not_null())
+    )
+    dropped_rows = total_rows - df_filtered.height
+    logger.info(f"Dropped {dropped_rows} rows with invalid residue ranges")
+
+    # Save filtered superfamilies information
+    df_filtered.write_csv(superfamilies_output, separator="\t")
     logger.info(f"Saved superfamily information to {superfamilies_output}")
-
-    # Extract unique PDB IDs and save to file
-    unique_pdbs = df.get_column("pdb_id").unique().to_list()
-
-    # Generate RST report
-    generate_rst_report(df, unique_pdbs, report_output)
 
 
 # Run main function with snakemake object
