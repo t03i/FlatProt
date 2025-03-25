@@ -14,7 +14,7 @@ WORK_DIR = "tmp/alignment_pipeline"
 
 RETRY_COUNT = 3
 TEST_MODE = True
-NUM_FAMILIES = 20
+NUM_FAMILIES = 40
 RANDOM_SEED = 42
 CONCURRENT_DOWNLOADS = 5
 FOLDSEEK_PATH = "foldseek"
@@ -82,9 +82,11 @@ def get_all_structure_ids():
         return []
 
 def get_domains_for_superfamily(wildcards):
-    """Get domains for a superfamily based on checkpoint output and successful downloads."""
-    checkpoint_output = checkpoints.parse_scop.get().output[0]
-    df = pl.read_csv(checkpoint_output, separator="\t")
+    """Get domains for a superfamily based on successful downloads."""
+    # We only need to wait for the checkpoint to complete, no need to use its output
+    checkpoints.download_all_pdbs.get()
+
+    df = pl.read_csv(SUPERFAMILIES, separator="\t")
 
     # Filter for this superfamily
     sf_df = df.filter(pl.col("sf_id") == int(wildcards.sf_id))
@@ -142,7 +144,7 @@ rule download_scop:
         wget -O {output.scop_file} https://www.ebi.ac.uk/pdbe/scop/files/scop-cla-latest.txt 2>&1 | tee {log}
         """
 
-checkpoint parse_scop:
+rule parse_scop:
     input:
         scop_file = f"{SCOP_FILE}"
     output:
@@ -174,7 +176,7 @@ rule download_pdb:
     script:
         "pdb_download.py"
 
-rule download_all_pdbs:
+checkpoint download_all_pdbs:
     input:
         superfamilies = SUPERFAMILIES,
         structure_ids = [f"{PDB_FILES}/{pdb_id}.struct" for pdb_id in get_all_structure_ids()]
