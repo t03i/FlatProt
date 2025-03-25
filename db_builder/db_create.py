@@ -44,8 +44,8 @@ from flatprot.transformation.inertia import InertiaTransformerParameters
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
+    filename=snakemake.log[0],
     format="%(asctime)s - %(levelname)s - %(message)s",
-    handlers=[logging.StreamHandler(sys.stdout)],
 )
 logger = logging.getLogger(__name__)
 

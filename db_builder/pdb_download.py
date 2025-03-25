@@ -13,6 +13,13 @@ import json
 from snakemake.script import snakemake
 from httpx_retries import RetryTransport, Retry
 
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(levelname)s - %(message)s",
+    filename=snakemake.log[0],
+)
+logger = logging.getLogger(__name__)
+
 URLS = [
     # Try CIF format first
     ("CIF", "https://files.rcsb.org/download/{pdb_id}.cif.gz"),

@@ -13,7 +13,6 @@ The extracted domain is saved as a new mmCIF file with naming convention:
 """
 
 import logging
-import sys
 from pathlib import Path
 
 import gemmi
@@ -23,7 +22,7 @@ from snakemake.script import snakemake
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(levelname)s - %(message)s",
-    handlers=[logging.StreamHandler(sys.stdout)],
+    filename=snakemake.log[0],
 )
 logger = logging.getLogger(__name__)
 

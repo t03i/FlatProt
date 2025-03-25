@@ -9,6 +9,13 @@ from typing import List, Optional, Tuple
 
 from snakemake.script import snakemake
 
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(levelname)s - %(message)s",
+    filename=snakemake.log[0],
+)
+logger = logging.getLogger(__name__)
+
 
 def read_alignment(alignment_file: Path) -> pl.DataFrame:
     """
