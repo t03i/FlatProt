@@ -78,15 +78,13 @@ def get_missing_structures_by_superfamily(
         updated_df.filter(~pl.col("download_success"))
         .group_by("sf_id")
         .agg(
-            pl.count().alias("missing_count"),
+            pl.len().alias("missing_count"),
             pl.col("pdb_id").alias("missing_pdbs"),
         )
     )
 
     # Add total structures count per superfamily
-    total_by_sf = superfamilies_df.group_by("sf_id").agg(
-        pl.count().alias("total_count")
-    )
+    total_by_sf = superfamilies_df.group_by("sf_id").agg(pl.len().alias("total_count"))
 
     # Join to get both missing and total counts
     result = missing_by_sf.join(total_by_sf, on="sf_id", how="right")

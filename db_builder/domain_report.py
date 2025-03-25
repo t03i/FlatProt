@@ -177,8 +177,8 @@ def generate_report(superfamilies_file: Path, pdb_dir: Path, domain_dir: Path) -
 if __name__ == "__main__":
     # Access Snakemake parameters
     superfamilies_file = Path(snakemake.input.superfamilies)
-    pdb_dir = Path(snakemake.params.pdb_dir)
-    domain_dir = Path(snakemake.params.domain_dir)
+    pdb_dir = Path(snakemake.input.pdb_dir)
+    domain_dir = Path(snakemake.input.domain_dir)
     output_file = Path(snakemake.output.report)
 
     # Generate and write report
