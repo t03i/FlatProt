@@ -226,11 +226,11 @@ rule create_domain_db:
         sf_id = "{sf_id}",
         domain_dir = f"{DOMAIN_FILES}/{{sf_id}}/"
     resources:
-        cpus = 1
+        cpus = 4
     shell:
         """
         mkdir -p $(dirname {output.domain_db}) && \
-        foldseek createdb {params.domain_dir} {output.domain_db} --threads 1 -v 1
+        foldseek createdb {params.domain_dir} {output.domain_db} --threads 4 -v 1
         """
 
 # Update get_domain_alignment to track alignment progress
@@ -244,7 +244,7 @@ rule get_domain_alignment:
     params:
         sf_id = "{sf_id}",
     resources:
-        cpus = 1
+        cpus = 4
     shell:
         """
         mkdir -p {MATRICES}/{params.sf_id}
@@ -258,7 +258,7 @@ rule get_domain_alignment:
             --exhaustive-search 1 \
             --tmscore-threshold 0.0 \
             --alignment-type 2 \
-            --threads 1 \
+            --threads 4 \
             -v 1
         """
 
@@ -311,7 +311,9 @@ rule create_alignment_foldseek_db:
         flag = f"{REPRESENTATIVE_FLAG}"
     output:
         FOLDSEEK_DB
+    resources:
+        cpus = 4
     shell:
         """
-        {FOLDSEEK_PATH} createdb {REPRESENTATIVE_DOMAINS} {output} --threads 1 -v 1
+        {FOLDSEEK_PATH} createdb {REPRESENTATIVE_DOMAINS} {output} --threads 4 -v 1
         """
