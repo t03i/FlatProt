@@ -27,8 +27,8 @@ def save_alignment_results(
         structure_file: Original input structure file path
     """
     aligned_region = {
-        "start_0": float(result.aligned_region[0]),
-        "end_0": float(result.aligned_region[1]),
+        "start": float(result.aligned_region[0]),
+        "end": float(result.aligned_region[1]),
         "length": float(result.aligned_region[1] - result.aligned_region[0] + 1),
     }
 
@@ -45,7 +45,7 @@ def save_alignment_results(
         "message": (
             f"Structure aligned to {db_entry.entry_id} "
             f"with probability {result.probability:.1%}. "
-            f"Aligned region: residues {result.aligned_region[0] + 1}-{result.aligned_region[1] + 1}."
+            f"Aligned region: residues {result.aligned_region[0]}-{result.aligned_region[1]}."
         ),
     }
 
