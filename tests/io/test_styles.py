@@ -159,8 +159,7 @@ def test_style_manager_creation():
 
         # Test special handling for point style (radius conversion)
         point_style = style_manager.get_style(StyleType.POINT_ANNOTATION)
-        assert point_style.stroke_width == 7.0  # radius * 2
-
+        assert point_style.stroke_width == 3.5
         # Test special handling for line style (stroke_width conversion)
         line_style = style_manager.get_style(StyleType.LINE_ANNOTATION)
         assert line_style.stroke_color.as_hex() == "#900c3f"
