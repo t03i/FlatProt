@@ -271,7 +271,7 @@ rule create_domain_db:
     shell:
         """
         mkdir -p $(dirname {output.domain_db}) && \
-        foldseek createdb {params.domain_dir} {output.domain_db} --threads 2 -v 3  2>&1 > {log}
+        {FOLDSEEK_PATH} createdb {params.domain_dir} {output.domain_db} --threads 2 -v 3  2>&1 > {log}
         """
 
 # Update get_domain_alignment to track alignment progress
@@ -290,7 +290,7 @@ rule get_domain_alignment:
         f"{LOG_DIR}/get_domain_alignment_{{sf_id}}.log"
     shell:
         """
-        foldseek easy-search \
+        {FOLDSEEK_PATH} easy-search \
             {input.domain_db} \
             {input.domain_db} \
             {output.alignment} \

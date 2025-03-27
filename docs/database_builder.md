@@ -85,10 +85,12 @@ docker run -it --rm -v $(pwd):/app ghcr.io/astral-sh/uv:python3.13-bookworm-slim
 ```
 
 ```bash
-apt update && apt install -y git
+apt update && apt install -y git wget
+wget https://mmseqs.com/foldseek/foldseek-linux-avx2.tar.gz; tar xvzf foldseek-linux-avx2.tar.gz
 git clone https://github.com/t03i/flatprot.git
+
 cd flatprot
 git checkout staging
-uv sync --all-extras
+uv sync --all-groups
 uv run snakemake -s db_builder/snakefile --cores all --quiet
 ```
