@@ -17,7 +17,7 @@ jobs:
     docs-release:
         uses: ./.github/workflows/release-docs.yml
         with:
-            tag: ${{ github.ref_name }}
+            ref: ${{ github.ref_name }}
 
     finalize-release:
         runs-on: ubuntu-latest
