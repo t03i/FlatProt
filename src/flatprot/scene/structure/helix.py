@@ -51,6 +51,17 @@ class HelixElement(StructureSceneElement):
     """A helical element visualization using a zigzag style"""
 
     def calculate_display_coordinates(self) -> np.ndarray:
+        """Calculate the display coordinates for the helix.
+
+        For helices shorter than min_helix_length, returns just start and end coordinates.
+        For normal helices, returns zigzag ribbon coordinates.
+
+        Returns:
+            np.ndarray: Array of coordinates forming the helix visualization
+        """
+        if len(self._coordinates) <= self.style.min_helix_length:
+            return self._coordinates[[0, -1]]  # Just return start and end points
+
         return calculate_zigzag_points(
             self._coordinates[0],
             self._coordinates[-1],
@@ -60,34 +71,42 @@ class HelixElement(StructureSceneElement):
         )
 
     def calculate_display_coordinates_at_resiude(self, residue_idx: int) -> np.ndarray:
-        """Maps a position from the original coordinate system to the middle of the zigzag wave.
+        """Maps a position from the original coordinate system to the display coordinates.
 
-        For a helix, this finds the corresponding point on the central zigzag line
-        (halfway between the top and bottom ribbon edges).
+        For short helices (length <= min_helix_length), interpolates linearly between
+        start and end points. For normal helices, finds the corresponding point on the
+        central zigzag line.
 
         Args:
-            position: Integer index in the original coordinate system
+            residue_idx: Integer index in the original coordinate system
 
         Returns:
-            np.ndarray: Corresponding point on the middle of the zigzag wave
+            np.ndarray: Corresponding point in display coordinates
+
+        Raises:
+            IndexError: If no coordinates are available
         """
-        display_coords = self._display_coordinates
-        if len(display_coords) == 0:
+        if len(self._coordinates) == 0:
             raise IndexError("No coordinates available")
 
-        if len(self.coordinates) <= 1:
-            return display_coords[0]
+        if len(self._coordinates) <= 1:
+            return self._coordinates[0]
 
-        # Calculate how far along the helix we are (0 to 1)
-        progress = residue_idx / (len(self._coordinates) - 1)
+        # For short helices, interpolate linearly
+        if len(self._coordinates) <= self.style.min_helix_length:
+            progress = residue_idx / (len(self._coordinates) - 1)
+            return (1 - progress) * self._coordinates[0] + progress * self._coordinates[
+                -1
+            ]
 
-        # Find the corresponding points on top and bottom waves
+        # Normal zigzag helix calculation
+        display_coords = self._display_coordinates
         wave_points = len(display_coords) // 2
-        wave_position = int(progress * (wave_points - 1))
+        progress = residue_idx / (len(self._coordinates) - 1)
+        wave_position = min(int(progress * (wave_points - 1)), wave_points - 1)
 
         # Get points from top and bottom waves
         top_point = display_coords[wave_position]
         bottom_point = display_coords[-(wave_position + 1)]
 
-        # Return the midpoint between top and bottom
         return (top_point + bottom_point) / 2
