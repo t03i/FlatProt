@@ -8,16 +8,22 @@ import polars as pl
 
 
 
-# Default values if not in config
-OUTPUT_DIR = "out/alignment_db"
-WORK_DIR = "tmp/alignment_pipeline"
+# Load configuration
+configfile: "config.yaml"
 
-RETRY_COUNT = 3
-TEST_MODE = False
-NUM_FAMILIES = 401
-RANDOM_SEED = 42
-CONCURRENT_DOWNLOADS = 5
-FOLDSEEK_PATH = "foldseek"
+# Use config values with defaults
+OUTPUT_DIR = config.get("output_dir", "out/alignment_db")
+WORK_DIR = config.get("work_dir", "tmp/alignment_pipeline")
+
+RETRY_COUNT = config.get("pdb_retry_count", 3)
+TIMEOUT = config.get("pdb_network_timeout", 20)
+TEST_MODE = config.get("test_mode", False)
+NUM_FAMILIES = config.get("num_families", 401)
+RANDOM_SEED = config.get("random_seed", 42)
+CONCURRENT_DOWNLOADS = config.get("concurrent_downloads", 5)
+FOLDSEEK_PATH = config.get("foldseek_path", "foldseek")
+FOLDSEEK_FAMILY_THREADS = config.get("foldseek_small_threads", 4)
+FOLDSEEK_DOMAIN_THREADS = config.get("foldseek_large_threads", 10)
 
 ## Step outputs
 SCOP_FILE = f"{WORK_DIR}/scop-cla-latest.txt"
@@ -159,8 +165,6 @@ rule parse_scop:
 #                           Download PDBs and extract domains                            #
 # -------------------------------------------------------------------------------------- #
 
-TIMEOUT = 20  # Default timeout in seconds
-
 rule download_pdb:
     output:
         struct_file = f"{PDB_FILES}/{{pdb_id}}.struct",
@@ -265,13 +269,13 @@ rule create_domain_db:
         sf_id = "{sf_id}",
         domain_dir = str(Path(f"{DOMAIN_FLAG}").parent)
     resources:
-        cpus = 2
+        cpus = FOLDSEEK_SMALL_THREADS
     log:
         f"{LOG_DIR}/create_domain_db_{{sf_id}}.log"
     shell:
         """
         mkdir -p $(dirname {output.domain_db}) && \
-        {FOLDSEEK_PATH} createdb {params.domain_dir} {output.domain_db} --threads 2 -v 3  2>&1 > {log}
+        {FOLDSEEK_PATH} createdb {params.domain_dir} {output.domain_db} --threads {resources.cpus} -v 3  2>&1 > {log}
         """
 
 # Update get_domain_alignment to track alignment progress
@@ -285,7 +289,7 @@ rule get_domain_alignment:
     params:
         sf_id = "{sf_id}"
     resources:
-        cpus = 2
+        cpus = FOLDSEEK_SMALL_THREADS
     log:
         f"{LOG_DIR}/get_domain_alignment_{{sf_id}}.log"
     shell:
@@ -300,7 +304,7 @@ rule get_domain_alignment:
             --exhaustive-search 1 \
             --tmscore-threshold 0.0 \
             --alignment-type 2 \
-            --threads 2 \
+            --threads {resources.cpus} \
             -v 3 2>&1 > {log}
         """
 
@@ -368,7 +372,7 @@ rule create_alignment_foldseek_db:
     output:
         FOLDSEEK_DB
     resources:
-        cpus = 4
+        cpus = FOLDSEEK_LARGE_THREADS
     params:
         test_mode = TEST_MODE,
         num_families = NUM_FAMILIES
@@ -376,5 +380,5 @@ rule create_alignment_foldseek_db:
         f"{LOG_DIR}/create_alignment_foldseek_db.log"
     shell:
         """
-        {FOLDSEEK_PATH} createdb {input.representative_domains_folder} {output} --threads 4 -v 3 2>&1 > {log}
+        {FOLDSEEK_PATH} createdb {input.representative_domains_folder} {output} --threads {resources.cpus} -v 3 2>&1 > {log}
         """

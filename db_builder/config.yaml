@@ -1,0 +1,20 @@
+# Output directories
+output_dir: "out/alignment_db"
+work_dir: "tmp/alignment_pipeline"
+
+# Pipeline settings
+pdb_retry_count: 3
+pdb_network_timeout: 20
+test_mode: false
+num_families: 401
+random_seed: 42
+concurrent_downloads: 10
+
+# External tools
+foldseek_path: "foldseek"
+
+# Network settings
+
+# Resource settings
+foldseek_small_threads: 4
+foldseek_large_threads: 10
