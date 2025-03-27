@@ -4,7 +4,10 @@
 site_name: FlatProt
 nav:
   - Home: index.md
-  - CLI: cli.md
+  - Installation: installation.md
+  - Commands:
+      - Project: commands/project.md
+      - Align: commands/align.md
   - File Formats:
       - Matrix Files: file_formats/matrix.md
       - Style Files: file_formats/style.md
