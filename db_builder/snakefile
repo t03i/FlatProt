@@ -9,7 +9,7 @@ import polars as pl
 
 
 # Load configuration
-configfile: "config.yaml"
+configfile: "db_builder/config.yaml"
 
 # Use config values with defaults
 OUTPUT_DIR = config.get("output_dir", "out/alignment_db")
@@ -22,8 +22,8 @@ NUM_FAMILIES = config.get("num_families", 401)
 RANDOM_SEED = config.get("random_seed", 42)
 CONCURRENT_DOWNLOADS = config.get("concurrent_downloads", 5)
 FOLDSEEK_PATH = config.get("foldseek_path", "foldseek")
-FOLDSEEK_FAMILY_THREADS = config.get("foldseek_small_threads", 4)
-FOLDSEEK_DOMAIN_THREADS = config.get("foldseek_large_threads", 10)
+FOLDSEEK_SMALL_THREADS = config.get("foldseek_small_threads", 4)
+FOLDSEEK_LARGE_THREADS = config.get("foldseek_large_threads", 10)
 
 ## Step outputs
 SCOP_FILE = f"{WORK_DIR}/scop-cla-latest.txt"
