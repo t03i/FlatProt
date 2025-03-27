@@ -3,10 +3,10 @@
 
 
 from pathlib import Path
-
+from typing import Callable
 
 from flatprot.transformation import TransformationMatrix
-from .db import AlignmentDatabase
+from .db import AlignmentDatabase, AlignmentDBEntry
 from .foldseek import FoldseekAligner, AlignmentResult
 from .errors import (
     NoSignificantAlignmentError,
@@ -24,22 +24,27 @@ def _foldseek_id_to_db_id(foldseek_id: str) -> str:
 
 
 def get_aligned_rotation_database(
-    alignment: AlignmentResult, db: AlignmentDatabase
-) -> TransformationMatrix:
+    alignment: AlignmentResult,
+    db: AlignmentDatabase,
+    id_transform: Callable[[str], str] = _foldseek_id_to_db_id,
+) -> tuple[TransformationMatrix, AlignmentDBEntry]:
     """Combines alignment rotation with database rotation.
 
     Args:
         alignment: Alignment result from align_structure_database
         db: Initialized AlignmentDatabase instance
+        id_transform: Function to transform FoldSeek IDs to database IDs
 
     Returns:
-        Combined transformation matrix
+        tuple: A tuple containing:
+            - Combined transformation matrix
+            - Database entry object for the matched alignment
 
     Raises:
         DatabaseEntryNotFoundError: If matched database entry is missing
     """
     with db:
-        db_id = _foldseek_id_to_db_id(alignment.db_id)
+        db_id = id_transform(alignment.db_id)
         if not db.contains_entry_id(db_id):
             raise DatabaseEntryNotFoundError(
                 f"Database entry {alignment.db_id} not found"

@@ -171,8 +171,8 @@ def create_alignment_database(
                 sf_id = domain_file.stem  # SF ID is the filename without extension
 
                 # Create entry ID and structure name
-                entry_id = f"sf_{sf_id}"
-                structure_name = f"superfamily_{sf_id}"
+                entry_id = f"{sf_id}"
+                structure_name = f"{sf_id}"
 
                 # Calculate inertia transformation matrix
                 transformation = calculate_inertia_matrix_from_pdb(domain_file)
