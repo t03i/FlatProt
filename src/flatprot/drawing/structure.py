@@ -21,6 +21,8 @@ def draw_coil(element: CoilElement) -> DrawingElement:
         stroke=element.style.stroke_color,
         stroke_width=element.style.line_width * element.style.stroke_width_factor,
         fill=element.style.fill_color,
+        stroke_opacity=element.style.opacity,
+        opacity=element.style.opacity,
         class_="element coil",
         linecap="round",
     )
@@ -41,6 +43,8 @@ def draw_short_element(element: StructureSceneElement) -> DrawingElement:
         *element.coordinates[0],
         *element.coordinates[-1],
         stroke=element.style.fill_color,
+        stroke_opacity=element.style.opacity,
+        opacity=element.style.opacity,
         stroke_width=element.style.line_width * element.style.stroke_width_factor,
         class_=f"element {element_class} short-element",
         linecap="round",
@@ -59,6 +63,8 @@ def draw_helix(element: HelixElement) -> DrawingElement:
         stroke=element.style.stroke_color,
         stroke_width=element.style.line_width * element.style.stroke_width_factor,
         fill=element.style.fill_color,
+        stroke_opacity=element.style.opacity,
+        opacity=element.style.opacity,
         class_="element helix",
     )
 
@@ -93,6 +99,8 @@ def draw_sheet(element: SheetElement) -> DrawingElement:
         stroke=element.style.stroke_color,
         stroke_width=element.style.line_width * element.style.stroke_width_factor,
         fill=element.style.fill_color,
+        stroke_opacity=element.style.opacity,
+        opacity=element.style.opacity,
         class_="element sheet",
     )
 
