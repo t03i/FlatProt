@@ -1,14 +1,18 @@
 # Copyright 2024 Rostlab.
 # SPDX-License-Identifier: Apache-2.0
 
-from .components import Chain, Residue, Structure, StructureComponent
 from .secondary import SecondaryStructure, SecondaryStructureType, Helix, Sheet, Coil
 from .manager import CoordinateManager, CoordinateType
-from .error import FlatProtError
+from .components import Chain, Structure, StructureComponent
+from .error import FlatProtError, CoordinateError
+from .residue import Residue, ResidueCoordinate, ResidueRange, ResidueRangeSet
 
 all = [
-    Chain,
     Residue,
+    ResidueCoordinate,
+    ResidueRange,
+    ResidueRangeSet,
+    Chain,
     Structure,
     SecondaryStructure,
     SecondaryStructureType,
@@ -19,4 +23,5 @@ all = [
     CoordinateType,
     StructureComponent,
     FlatProtError,
+    CoordinateError,
 ]

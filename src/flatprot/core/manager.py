@@ -1,9 +1,11 @@
 # Copyright 2025 Tobias Olenyi.
 # SPDX-License-Identifier: Apache-2.0
 from enum import Enum
-from collections import defaultdict
 import numpy as np
-from typing import Optional
+from typing import Optional, Dict
+
+from .residue import ResidueCoordinate, ResidueRange, ResidueRangeSet
+from .error import CoordinateError
 
 
 class CoordinateType(Enum):
@@ -22,9 +24,9 @@ class CoordinateManager:
 
     def __init__(self) -> None:
         """Initialize an empty coordinate manager."""
-        self.coordinates: dict[
-            CoordinateType, dict[tuple[int, int], np.ndarray]
-        ] = defaultdict(dict)
+        self._coordinates: Dict[
+            CoordinateType, Dict[ResidueCoordinate, np.ndarray]
+        ] = {}
 
     def add(
         self,
@@ -46,7 +48,7 @@ class CoordinateManager:
         """
         if end < start:
             raise ValueError("End must be >= start")
-        target_map = self.coordinates[coord_type]
+        target_map = self._coordinates[coord_type]
         target_map[start, end] = np.asarray(coords)
 
     def get(
@@ -69,7 +71,7 @@ class CoordinateManager:
         Raises:
             KeyError: If no coordinates exist for the specified range
         """
-        target_map = self.coordinates[coord_type]
+        target_map = self._coordinates[coord_type]
 
         if end is None:
             for (s, e), coords in target_map.items():
@@ -97,7 +99,7 @@ class CoordinateManager:
         Returns:
             True if coordinates of the specified type exist, False otherwise
         """
-        return coord_type in self.coordinates and bool(self.coordinates[coord_type])
+        return coord_type in self._coordinates and bool(self._coordinates[coord_type])
 
     def get_all(self, coord_type: CoordinateType) -> np.ndarray:
         """Get all coordinates of a specific type.
@@ -117,7 +119,7 @@ class CoordinateManager:
             raise KeyError(f"No coordinates of type {coord_type.value} exist")
 
         # Collect all coordinate segments, sorted by start index
-        segments = sorted(self.coordinates[coord_type].items(), key=lambda x: x[0][0])
+        segments = sorted(self._coordinates[coord_type].items(), key=lambda x: x[0][0])
 
         # Concatenate all segments
         if not segments:
@@ -143,3 +145,61 @@ class CoordinateManager:
                 coords[:, 1].max(),
             ]
         )
+
+    def add_range(
+        self,
+        residue_range: ResidueRange,
+        coords: np.ndarray,
+        coord_type: CoordinateType,
+    ) -> None:
+        """Add coordinates for a continuous range of residues."""
+        if coords.shape[0] != len(residue_range):
+            raise CoordinateError(
+                f"Coordinate array length {coords.shape[0]} does not match range length {len(residue_range)}"
+            )
+
+        for i, residue in enumerate(residue_range):
+            self.add(residue, coords[i], coord_type)
+
+    def add_range_set(
+        self,
+        range_set: ResidueRangeSet,
+        coords: np.ndarray,
+        coord_type: CoordinateType,
+    ) -> None:
+        """Add coordinates for multiple ranges."""
+        if coords.shape[0] != len(range_set):
+            raise CoordinateError(
+                f"Coordinate array length {coords.shape[0]} does not match total range length {len(range_set)}"
+            )
+
+        offset = 0
+        for range_ in range_set.ranges:
+            length = len(range_)
+            self.add_range(range_, coords[offset : offset + length], coord_type)
+            offset += length
+
+    def get_range(
+        self,
+        residue_range: ResidueRange,
+        coord_type: CoordinateType,
+    ) -> np.ndarray:
+        """Get coordinates for a continuous range."""
+        coords = []
+        for residue in residue_range:
+            coord = self.get(residue, coord_type)
+            if coord is None:
+                raise CoordinateError(f"No coordinates found for {residue}")
+            coords.append(coord)
+        return np.array(coords)
+
+    def get_range_set(
+        self,
+        range_set: ResidueRangeSet,
+        coord_type: CoordinateType,
+    ) -> np.ndarray:
+        """Get coordinates for multiple ranges."""
+        coords = []
+        for range_ in range_set.ranges:
+            coords.append(self.get_range(range_, coord_type))
+        return np.concatenate(coords)

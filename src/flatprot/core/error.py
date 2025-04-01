@@ -8,3 +8,10 @@ class FlatProtError(Exception):
     def __init__(self, message: str):
         self.message = message
         super().__init__(self.message)
+
+
+class CoordinateError(FlatProtError):
+    """Error related to coordinate management."""
+
+    def __init__(self, message: str):
+        super().__init__(message)
