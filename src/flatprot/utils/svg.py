@@ -7,7 +7,7 @@ from typing import Optional
 from pathlib import Path
 import os
 
-from flatprot.core import CoordinateManager
+from flatprot.core import CoordinateManager, ResidueRange
 from flatprot.core.components import Structure
 from flatprot.drawing import Canvas
 from flatprot.scene import Scene
@@ -39,10 +39,20 @@ def generate_svg(
     scene = Scene()
 
     # Process each chain
-    offset = 0
     for chain in structure:
-        offset = process_structure_chain(
-            chain, offset, coordinate_manager, style_manager, scene
+        # Create ResidueRange for this chain
+        chain_range = ResidueRange(
+            chain_id=chain.id,
+            start=chain.residues[0].number if chain.residues else 0,
+            end=chain.residues[-1].number if chain.residues else 0,
+        )
+
+        process_structure_chain(
+            chain=chain,
+            residue_range=chain_range,
+            coordinate_manager=coordinate_manager,
+            style_manager=style_manager,
+            scene=scene,
         )
 
     # Handle annotations if provided
@@ -53,10 +63,7 @@ def generate_svg(
     canvas = Canvas(scene, style_manager)
     drawing = canvas.render()
 
-    # Convert drawing to SVG string
-    svg_content = drawing.as_svg()
-
-    return svg_content
+    return drawing.as_svg()
 
 
 def save_svg(svg_content: str, output_path: Path) -> None:

@@ -18,6 +18,7 @@ from .errors import (
 )
 from flatprot.scene import PointAnnotation, LineAnnotation, AreaAnnotation, Scene
 from flatprot.style import StyleManager
+from flatprot.core import ResidueCoordinate, ResidueRange
 
 console = Console()
 
@@ -191,15 +192,14 @@ class AnnotationParser:
         Raises:
             InvalidReferenceError: If the reference doesn't exist in the scene
         """
-        elements = self.scene.get_elements_for_residue(data.chain, data.index)
+        residue = ResidueCoordinate(chain_id=data.chain, residue_index=data.index)
+        elements = self.scene.get_elements_for_residue(residue)
         if not elements:
             raise InvalidReferenceError(
                 "point", "residue", f"{data.index} in chain {data.chain}", index
             )
 
-        element_idx = self.scene.get_element_index_from_global_index(
-            data.index, elements[0]
-        )
+        element_idx = self.scene.get_element_index_from_residue(residue, elements[0])
         return PointAnnotation(
             label=data.label,
             targets=[elements[0]],
@@ -224,13 +224,14 @@ class AnnotationParser:
         """
         targets = []
         for idx in data.indices:
-            elements = self.scene.get_elements_for_residue(data.chain, idx)
+            residue = ResidueCoordinate(chain_id=data.chain, residue_index=idx)
+            elements = self.scene.get_elements_for_residue(residue)
             if not elements:
                 raise InvalidReferenceError(
                     "line/pair", "residue", f"{idx} in chain {data.chain}", index
                 )
-            element_idx = self.scene.get_element_index_from_global_index(
-                idx, elements[0]
+            element_idx = self.scene.get_element_index_from_residue(
+                residue, elements[0]
             )
             # Store the first element for the residue
             targets.append((elements[0], element_idx))
@@ -257,9 +258,10 @@ class AnnotationParser:
         Raises:
             InvalidReferenceError: If the reference range doesn't exist in the scene
         """
-        elements = self.scene.get_elements_for_residue_range(
-            data.chain, data.range.start, data.range.end
+        residue_range = ResidueRange(
+            chain_id=data.chain, start=data.range.start, end=data.range.end
         )
+        elements = self.scene.get_elements_for_residue_range(residue_range)
         if not elements:
             raise InvalidReferenceError(
                 "area",

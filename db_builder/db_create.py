@@ -38,7 +38,7 @@ from snakemake.script import snakemake
 from flatprot.transformation import TransformationMatrix
 from flatprot.transformation.inertia import calculate_inertia_transformation
 from flatprot.alignment.db import AlignmentDBEntry, AlignmentDatabase
-from flatprot.core.residue import Residue
+from flatprot.core.types import ResidueType
 from flatprot.transformation.inertia import InertiaTransformerParameters
 
 # Configure logging
@@ -78,7 +78,7 @@ def calculate_inertia_matrix_from_pdb(pdb_file: Path) -> Optional[Transformation
                     # Try to map PDB residue name to our Residue enum
                     try:
                         res_name = residue.name.strip()
-                        res_type = Residue[res_name]
+                        res_type = ResidueType[res_name]
                     except (KeyError, ValueError):
                         # If not a standard amino acid, use default weight
                         res_type = None

@@ -25,6 +25,7 @@ from flatprot.scene.annotations.line import LineAnnotation
 from flatprot.scene.annotations.area import AreaAnnotation
 from flatprot.scene.elements import SceneElement
 from flatprot.scene import Scene
+from flatprot.core import ResidueCoordinate, ResidueRange
 
 
 @pytest.fixture
@@ -130,7 +131,7 @@ def mock_scene_element(mocker: MockFixture) -> Any:
 
 @pytest.fixture
 def mock_scene(mocker: MockFixture, mock_scene_element: Any) -> Any:
-    """Create a mock scene object.
+    """Create a mock scene object reflecting the updated Scene interface.
 
     Args:
         mocker: Pytest-mock fixture.
@@ -141,41 +142,77 @@ def mock_scene(mocker: MockFixture, mock_scene_element: Any) -> Any:
     """
     scene = mocker.MagicMock(spec=Scene)
 
-    # Set up mock get_elements_for_residue
-    def mock_get_elements_for_residue(chain_id: str, residue_idx: int) -> List[Any]:
-        if chain_id == "A" and 0 <= residue_idx <= 100 and residue_idx != 5:
+    # Set up mock get_elements_for_residue (accepts ResidueCoordinate)
+    def mock_get_elements_for_residue(residue: ResidueCoordinate) -> List[Any]:
+        """Mock implementation for get_elements_for_residue."""
+        if (
+            residue.chain_id == "A"
+            and 0 <= residue.residue_index <= 100
+            and residue.residue_index != 5
+        ):
             return [mock_scene_element]
-        elif chain_id == "B" and 0 <= residue_idx <= 50:
+        elif residue.chain_id == "B" and 0 <= residue.residue_index <= 50:
             return [mock_scene_element]
         else:
             return []
 
     scene.get_elements_for_residue.side_effect = mock_get_elements_for_residue
 
-    # Set up mock get_elements_for_residue_range
+    # Set up mock get_elements_for_residue_range (accepts ResidueRange)
     def mock_get_elements_for_residue_range(
-        chain_id: str, start: int, end: int
+        residue_range: ResidueRange,
     ) -> List[Any]:
-        if start > end:
-            return []
+        """Mock implementation for get_elements_for_residue_range."""
+        # Basic validation consistent with ResidueRange
+        if residue_range.start > residue_range.end:
+            raise ValueError("Start cannot be greater than end in ResidueRange")
 
         elements = []
-        if chain_id == "A":
-            for i in range(start, min(end + 1, 101)):
-                if i != 5:  # Skip residue 5 to simulate discontinuity
+        if residue_range.chain_id == "A":
+            # Simulate fetching elements for the range, skipping residue 5
+            for i in range(residue_range.start, min(residue_range.end + 1, 101)):
+                if i != 5:
+                    # Check if the individual residue exists using the single residue mock logic
+                    if mock_get_elements_for_residue(
+                        ResidueCoordinate(residue_range.chain_id, i)
+                    ):
+                        elements.append(mock_scene_element)
+        elif residue_range.chain_id == "B":
+            for i in range(residue_range.start, min(residue_range.end + 1, 51)):
+                # Check if the individual residue exists using the single residue mock logic
+                if mock_get_elements_for_residue(
+                    ResidueCoordinate(residue_range.chain_id, i)
+                ):
                     elements.append(mock_scene_element)
-        elif chain_id == "B":
-            for i in range(start, min(end + 1, 51)):
-                elements.append(mock_scene_element)
-
-        return elements
+        # Return unique elements if multiple were added for the same mock object
+        # In a real scenario, different elements might be returned.
+        # For this mock, just returning the single mock element if any match is found is sufficient.
+        return elements  # Return the list containing one mock element per valid residue found
 
     scene.get_elements_for_residue_range.side_effect = (
         mock_get_elements_for_residue_range
     )
 
-    # Set up mock get_element_index_from_global_index
-    scene.get_element_index_from_global_index.return_value = 0
+    # Set up mock get_element_index_from_residue (accepts ResidueCoordinate)
+    # Keep it simple for now, just return 0 like the previous mock
+    def mock_get_element_index_from_residue(
+        residue: ResidueCoordinate, element: SceneElement
+    ) -> int:
+        """Mock implementation for get_element_index_from_residue."""
+        # Basic check to ensure the element passed is the one we expect
+        assert element == mock_scene_element
+        # Simple mock: return 0 or a basic calculation if needed
+        # Assuming the annotation parser just needs *an* index
+        return 0  # residue.residue_index - start_offset_if_known
+
+    scene.get_element_index_from_residue.side_effect = (
+        mock_get_element_index_from_residue
+    )
+
+    # Remove the old mock attribute if it exists from previous runs/setups
+    # Ensures we don't accidentally use the old mock
+    if hasattr(scene, "get_element_index_from_global_index"):
+        del scene.get_element_index_from_global_index
 
     return scene
 
@@ -305,6 +342,7 @@ class TestAnnotationParsing:
 
             # Should have 10 targets (0-10 range minus the missing residue 5)
             assert len(annotations[0].targets) == 10
+
         finally:
             os.unlink(temp_file)
 

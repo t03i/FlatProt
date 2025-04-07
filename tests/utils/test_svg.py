@@ -24,6 +24,15 @@ def mock_structure(mocker: MockerFixture) -> Structure:
         Mock Structure object with a chain
     """
     mock_chain = mocker.MagicMock(spec=Chain)
+    mock_chain.id = "A"
+
+    # Configure mock residues with integer 'number' attributes
+    mock_residue_start = mocker.MagicMock()
+    mock_residue_start.number = 1
+    mock_residue_end = mocker.MagicMock()
+    mock_residue_end.number = 100
+    mock_chain.residues = [mock_residue_start, mock_residue_end]
+
     mock_structure = mocker.MagicMock(spec=Structure)
     mock_structure.__iter__.return_value = [mock_chain]
     return mock_structure
@@ -95,9 +104,8 @@ def test_generate_svg(
     mocker.patch("flatprot.utils.svg.Scene", return_value=mock_scene)
     mocker.patch("flatprot.utils.svg.Canvas", return_value=mock_canvas)
 
-    # Mock the process_structure_chain function
+    # Mock the process_structure_chain function to return the scene object
     mock_process_chain = mocker.patch("flatprot.utils.svg.process_structure_chain")
-    mock_process_chain.return_value = 10  # Return an offset
 
     # Mock the process_annotations function
     mock_process_annotations = mocker.patch("flatprot.utils.svg.process_annotations")
@@ -152,7 +160,6 @@ def test_generate_svg_with_annotations(
 
     # Mock the process_structure_chain function
     mock_process_chain = mocker.patch("flatprot.utils.svg.process_structure_chain")
-    mock_process_chain.return_value = 10  # Return an offset
 
     # Mock the process_annotations function
     mock_process_annotations = mocker.patch("flatprot.utils.svg.process_annotations")

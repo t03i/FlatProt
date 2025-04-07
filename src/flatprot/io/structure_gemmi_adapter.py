@@ -7,7 +7,7 @@ from typing import Optional
 import numpy as np
 import gemmi
 
-from flatprot.core.residue import Residue
+from flatprot.core.types import ResidueType
 from flatprot.core.components import Structure, Chain
 from flatprot.core.secondary import SecondaryStructureType
 from .dssp import parse_dssp
@@ -64,8 +64,9 @@ class GemmiStructureParser(StructureParser):
                 residue_indices.append(residue.seqid.num)
                 residue = gemmi.find_tabulated_residue(residue.name).one_letter_code
                 residue = "X" if not residue.isupper() else residue
-                residue_names.append(Residue(residue))
-
+                residue_names.append(ResidueType(residue))
+        assert len(residue_indices) == len(coordinates)
+        assert len(residue_indices) == len(residue_names)
         return {
             "index": np.array(residue_indices, dtype=np.int32),
             "residues": residue_names,

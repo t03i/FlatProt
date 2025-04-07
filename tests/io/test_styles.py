@@ -43,15 +43,15 @@ def test_valid_style_file():
     line_width = 2.5
     min_sheet_length = 3
 
-    [point]
+    [point_annotation]
     fill_color = "#FFC300"
     radius = 3.5
 
-    [line]
+    [line_annotation]
     stroke_color = "#900C3F"
     stroke_width = 1.5
 
-    [area]
+    [area_annotation]
     fill_color = "#C70039"
     fill_opacity = 0.7
     stroke_color = "#900C3F"
@@ -68,16 +68,16 @@ def test_valid_style_file():
         # Test that all sections are present
         assert "helix" in style_data
         assert "sheet" in style_data
-        assert "point" in style_data
-        assert "line" in style_data
-        assert "area" in style_data
+        assert "point_annotation" in style_data
+        assert "line_annotation" in style_data
+        assert "area_annotation" in style_data
 
         # Test specific values
         assert style_data["helix"]["fill_color"] == "#FF5733"
         assert style_data["sheet"]["line_width"] == 2.5
-        assert style_data["point"]["radius"] == 3.5
-        assert style_data["line"]["stroke_width"] == 1.5
-        assert style_data["area"]["interpolation_points"] == 100
+        assert style_data["point_annotation"]["radius"] == 3.5
+        assert style_data["line_annotation"]["stroke_width"] == 1.5
+        assert style_data["area_annotation"]["interpolation_points"] == 100
     finally:
         os.unlink(file_path)
 
@@ -191,15 +191,15 @@ def test_invalid_color_format():
     line_width = 2.5
     min_sheet_length = 3
 
-    [point]
+    [point_annotation]
     fill_color = "#FFC300"
     radius = 3.5
 
-    [line]
+    [line_annotation]
     stroke_color = "#900C3F"
     stroke_width = 1.5
 
-    [area]
+    [area_annotation]
     fill_color = "#C70039"
     fill_opacity = 0.7
     stroke_color = "#900C3F"
@@ -231,15 +231,15 @@ def test_invalid_field_type():
     line_width = 2.5
     min_sheet_length = 3
 
-    [point]
+    [point_annotation]
     fill_color = "#FFC300"
     radius = 3.5
 
-    [line]
+    [line_annotation]
     stroke_color = "#900C3F"
     stroke_width = 1.5
 
-    [area]
+    [area_annotation]
     fill_color = "#C70039"
     fill_opacity = 0.7
     stroke_color = "#900C3F"
@@ -271,15 +271,15 @@ def test_invalid_value_range():
     line_width = 2.5
     min_sheet_length = 3
 
-    [point]
+    [point_annotation]
     fill_color = "#FFC300"
     radius = 3.5
 
-    [line]
+    [line_annotation]
     stroke_color = "#900C3F"
     stroke_width = 1.5
 
-    [area]
+    [area_annotation]
     fill_color = "#C70039"
     fill_opacity = 0.7
     stroke_color = "#900C3F"

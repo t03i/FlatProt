@@ -1,24 +1,11 @@
 # Copyright 2025 Tobias Olenyi.
 # SPDX-License-Identifier: Apache-2.0
 
-from dataclasses import dataclass
-from typing import Optional
+from typing import Optional, Dict
 
 from .structure import StructureSceneElement
 from .elements import SceneGroup, SceneElement
-
-
-@dataclass
-class ResidueMapping:
-    """Mapping information for a structure element"""
-
-    chain_id: str
-    start: int
-    end: int
-
-    @property
-    def residue_range(self) -> range:
-        return range(self.start, self.end + 1)
+from flatprot.core import ResidueCoordinate, ResidueRange, ResidueRangeSet
 
 
 class Scene:
@@ -40,32 +27,32 @@ class Scene:
 
     def __init__(self):
         self._elements: list[SceneElement] = []
-        self._residue_mappings: dict[StructureSceneElement, ResidueMapping] = {}
+        self._residue_mappings: Dict[StructureSceneElement, ResidueRangeSet] = {}
         self._residue_ranges: dict[str, list[tuple[range, StructureSceneElement]]] = {}
         self._root_group = SceneGroup(id="root")
 
     def _register_element(
         self,
         element: SceneElement,
-        residue_mapping: ResidueMapping | None = None,
+        range_set: Optional[ResidueRangeSet] = None,
     ) -> None:
         """Internal method to register a structural element in the scene.
 
         Updates residue mappings if the element is a StructureSceneElement.
         """
-        if residue_mapping is not None:
-            self._residue_mappings[element] = residue_mapping
+        if range_set is not None:
+            self._residue_mappings[element] = range_set
         self._elements.append(element)
 
-    def _unregister_element(self, element: SceneElement) -> ResidueMapping | None:
+    def _unregister_element(self, element: SceneElement) -> ResidueRangeSet | None:
         """Internal method to unregister a structural element from the scene."""
-        mapping = None
+        range_set = None
         if element in self._residue_mappings:
-            mapping = self._residue_mappings[element]
+            range_set = self._residue_mappings[element]
             del self._residue_mappings[element]
 
         self._elements.remove(element)
-        return mapping
+        return range_set
 
     def _set_parent(self, element: SceneElement, parent: SceneGroup) -> None:
         """Internal method to set the parent of an element."""
@@ -95,70 +82,84 @@ class Scene:
         element._parent = None
 
     def get_elements_for_residue(
-        self, chain_id: str, residue: int
+        self, residue: ResidueCoordinate
     ) -> list[StructureSceneElement]:
-        """Get all structural elements containing the specified residue.
-
-        Args:
-            chain_id: The chain ID to search for elements
-            residue: The residue number to search for
-
-        Returns:
-            A list of StructureSceneElements that contain the specified residue
-        """
+        """Get all structural elements containing the specified residue."""
         matching_elements = []
-        for element, mapping in self._residue_mappings.items():
-            if (
-                isinstance(element, StructureSceneElement)
-                and mapping.chain_id == chain_id
-                and residue in mapping.residue_range
-            ):
-                matching_elements.append(element)
+        for element, range_set in self._residue_mappings.items():
+            if isinstance(element, StructureSceneElement):
+                for range_ in range_set.ranges:
+                    if (
+                        range_.chain_id == residue.chain_id
+                        and range_.start <= residue.residue_index <= range_.end
+                    ):
+                        matching_elements.append(element)
+                        break
         return matching_elements
 
-    def get_element_index_from_global_index(
-        self, global_index: int, element: StructureSceneElement
+    def get_element_index_from_residue(
+        self, residue: ResidueCoordinate, element: StructureSceneElement
     ) -> int:
-        """Get the index of an element from a global index"""
+        """Convert a ResidueCoordinate to a 0-based index within a specific element.
+
+        Args:
+            residue: The ResidueCoordinate (chain and index) to convert.
+            element: The StructureSceneElement to get the local index for.
+
+        Returns:
+            The 0-based index within the element.
+
+        Raises:
+            AssertionError: If the element is not registered or the residue is
+                          not within the element's range set.
+        """
         assert (
             element in self._residue_mappings
         ), "Element must be registered in the scene"
-        mapping = self._residue_mappings[element]
+        range_set = self._residue_mappings[element]
+        # Check if the specific ResidueCoordinate is within the element's ranges
         assert (
-            global_index in mapping.residue_range
-        ), "Global index must be in the element's residue range"
-        return global_index - mapping.start
+            residue in range_set
+        ), f"Residue {residue} must be in the element's residue range set {range_set}"
+
+        # Find the specific range the residue belongs to (assuming non-overlapping ranges within an element)
+        # and calculate the offset. This assumes simple continuous ranges for now.
+        # More complex logic might be needed if elements can map discontinuous ranges.
+        # For now, we'll assume the first range is the relevant one for simplicity,
+        # matching the previous logic, but this might need refinement if elements
+        # can represent multiple discontinuous segments.
+        relevant_range = next(
+            (
+                r
+                for r in range_set.ranges
+                if r.chain_id == residue.chain_id
+                and r.start <= residue.residue_index <= r.end
+            ),
+            None,
+        )
+        if relevant_range is None:
+            # This should theoretically not happen due to the 'residue in range_set' check above,
+            # but added for robustness.
+            raise ValueError(
+                f"Could not find range containing {residue} in element's range set {range_set}"
+            )
+
+        return residue.residue_index - relevant_range.start
 
     def get_elements_for_residue_range(
-        self, chain_id: str, start: int, end: int
+        self, residue_range: ResidueRange
     ) -> list[StructureSceneElement]:
-        """Get all structural elements containing the specified residue range.
-
-        Args:
-            chain_id: The chain ID to search for elements
-            start: The start residue number to search for
-            end: The end residue number to search for
-
-        Returns:
-            A list of StructureSceneElements that contain the specified residue range
-        """
-        # Return empty list if start > end
-        if start > end:
-            return []
-
+        """Get all structural elements overlapping with the specified range."""
         matching_elements = []
-        for element, mapping in self._residue_mappings.items():
-            if (
-                isinstance(element, StructureSceneElement)
-                and mapping.chain_id == chain_id
-                and (
-                    # Check if ranges overlap
-                    (mapping.start <= start <= mapping.end)
-                    or (mapping.start <= end <= mapping.end)
-                    or (start <= mapping.start and end >= mapping.end)
-                )
-            ):
-                matching_elements.append(element)
+        for element, range_set in self._residue_mappings.items():
+            if isinstance(element, StructureSceneElement):
+                for range_ in range_set.ranges:
+                    if range_.chain_id == residue_range.chain_id and not (
+                        range_.end < residue_range.start
+                        or range_.start > residue_range.end
+                    ):
+                        matching_elements.append(element)
+                        break
         return matching_elements
 
     def add_element(
@@ -173,11 +174,11 @@ class Scene:
         assert element not in self._elements, "Element must not be in the scene"
         assert parent is None or parent in self._elements, "Parent must be in the scene"
 
-        residue_mapping = None
+        range_set = None
         if chain_id is not None and start is not None and end is not None:
-            residue_mapping = ResidueMapping(chain_id, start, end)
+            range_set = ResidueRangeSet([ResidueRange(chain_id, start, end)])
 
-        self._register_element(element, residue_mapping)
+        self._register_element(element, range_set)
         self._set_parent(element, parent)
 
     def move_element_to_parent(
@@ -195,7 +196,7 @@ class Scene:
             new_parent: The group that will become the element's new parent
         """
         # Store mapping info if it exists
-        mapping = self._residue_mappings.get(element)
+        range_set = self._residue_mappings.get(element)
 
         assert new_parent in self._elements, "New parent must be in the scene"
         assert element in self._elements, "Element must be in the scene"
@@ -210,10 +211,8 @@ class Scene:
         new_parent.add_element(element)
 
         # Restore mapping if it existed
-        if mapping:
-            self._register_element(
-                element, mapping.chain_id, int(mapping.start), int(mapping.end)
-            )
+        if range_set:
+            self._register_element(element, range_set)
 
     @property
     def root(self) -> SceneGroup:

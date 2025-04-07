@@ -12,7 +12,7 @@ from flatprot.transformation.structure_elements import (
     StructureElementsTransformerParameters,
 )
 from flatprot.transformation.matrix import MatrixTransformer, MatrixTransformParameters
-from flatprot.core.components import Structure, Chain, Residue
+from flatprot.core.components import Structure, Chain, ResidueType
 from flatprot.core.secondary import SecondaryStructureType
 from flatprot.transformation.utils import TransformationMatrix
 
@@ -21,14 +21,14 @@ from flatprot.transformation.utils import TransformationMatrix
 def mock_structure():
     # Chain A: simple helix-like structure
     coords_a = np.array([[0, 0, 0], [1, 1, 1], [2, 2, 2], [3, 3, 3]])
-    residues_a = [Residue.ALA for i in range(len(coords_a))]
+    residues_a = [ResidueType.ALA for i in range(len(coords_a))]
     index_a = np.arange(len(coords_a)) + 1
     chain_a = Chain("A", residues_a, index_a, coords_a)
     chain_a.add_secondary_structure(SecondaryStructureType.HELIX, 1, 4)
 
     # Chain B: non-structured region
     coords_b = np.array([[0, 0, 2], [1, 1, 3], [2, 2, 4]])
-    residues_b = [Residue.GLY for i in range(len(coords_b))]
+    residues_b = [ResidueType.GLY for i in range(len(coords_b))]
     index_b = np.arange(len(coords_b)) + 1
     chain_b = Chain("B", residues_b, index_b, coords_b)
 
@@ -40,7 +40,7 @@ def mock_structure():
 def large_mock_structure():
     # Chain A: larger helix-like structure
     coords_a = np.array([[i, np.sin(i / 3), np.cos(i / 3)] for i in range(20)])
-    residues_a = [Residue.ALA for _ in range(len(coords_a))]
+    residues_a = [ResidueType.ALA for _ in range(len(coords_a))]
     index_a = np.arange(len(coords_a)) + 1
     chain_a = Chain("A", residues_a, index_a, coords_a)
     chain_a.add_secondary_structure(SecondaryStructureType.HELIX, 1, 10)

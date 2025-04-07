@@ -65,6 +65,7 @@ def temp_style_file() -> Generator[str, None, None]:
     with tempfile.NamedTemporaryFile(suffix=".toml", delete=False) as f:
         f.write(b"[canvas]\nwidth = 800\nheight = 600\n")
         f.write(b"[helix]\nstroke_color = '#FF0000'\n")
+        f.write(b"[point_annotation]\nstroke_color = '#0000FF'\nstroke_width = 2.0\n")
         temp_path = f.name
 
     yield temp_path
@@ -79,7 +80,7 @@ def temp_annotations_file() -> Generator[str, None, None]:
         Path to the temporary annotations file
     """
     with tempfile.NamedTemporaryFile(suffix=".toml", delete=False) as f:
-        f.write(b"[[point]]\nchain = 'A'\nresidue = 1\nsymbol = 'circle'\n")
+        f.write(b"[[point_annotation]]\nchain = 'A'\nresidue = 1\n")
         temp_path = f.name
 
     yield temp_path
@@ -286,6 +287,8 @@ def test_integration_main_stdout_output(
         mock_structure_obj: Mock structure object
         mocker: Pytest mocker fixture
     """
+    mocker.patch("flatprot.cli.commands.logger.info")
+
     # Mock all the necessary components properly
     mock_parser = mocker.patch("flatprot.cli.commands.GemmiStructureParser")
     mock_parser.return_value.parse_structure.return_value = mock_structure_obj
@@ -349,7 +352,7 @@ def test_integration_main_flatprot_error(
 
     # Mock logger error
     mock_logger_error = mocker.patch("flatprot.cli.commands.logger.error")
-
+    mocker.patch("flatprot.cli.commands.logger.info")
     # Run the main function
     result = project_structure_svg(structure=Path(temp_structure_file))
 
@@ -370,6 +373,7 @@ def test_integration_main_unexpected_error(
         temp_structure_file: Path to a temporary valid structure file
         mocker: Pytest mocker fixture
     """
+
     # Mock file validation to avoid file access
     mocker.patch("flatprot.cli.commands.validate_structure_file")
 
@@ -380,6 +384,7 @@ def test_integration_main_unexpected_error(
 
     # Mock logger error
     mock_logger_error = mocker.patch("flatprot.cli.commands.logger.error")
+    mocker.patch("flatprot.cli.commands.logger.info")
 
     # Mock the CIF file check to return True to bypass DSSP requirement
     mocker.patch(

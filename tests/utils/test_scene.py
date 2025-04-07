@@ -4,11 +4,12 @@
 """Tests for scene utility functions."""
 
 from pathlib import Path
+from typing import Optional
 
 import numpy as np
 
 from flatprot.utils.scene import process_structure_chain, process_annotations
-from flatprot.core import CoordinateManager, CoordinateType
+from flatprot.core import CoordinateManager, CoordinateType, ResidueRange
 from flatprot.style import StyleManager
 from flatprot.scene import (
     Scene,
@@ -72,13 +73,7 @@ class TestProcessStructureChain:
         mock_logger = mocker.patch("flatprot.utils.scene.logger")
 
         # Call function
-        offset = 0
-        new_offset = process_structure_chain(
-            chain, offset, coordinate_manager, style_manager, scene
-        )
-
-        # Verify results
-        assert new_offset == 10, "Should return offset + chain.num_residues"
+        process_structure_chain(chain, coordinate_manager, style_manager, scene)
 
         # Verify scene.add_element was called exactly twice
         assert scene.add_element.call_count == 2, "Should add group and element"
@@ -131,19 +126,26 @@ class TestProcessStructureChain:
         chain.secondary_structure = [ss_element1, ss_element2]
         chain.num_residues = 20
 
-        # Mock coordinate and depth data
-        def mock_get_data(start: int, end: int, ctype: CoordinateType) -> np.ndarray:
-            if ctype == CoordinateType.CANVAS:
-                return np.array([[i, i] for i in range(start, end)])
-            elif ctype == CoordinateType.DEPTH:
-                # Make second element have greater depth (further back)
-                if start >= 10:
-                    return np.ones(end - start) * 20  # Higher value = farther back
-                else:
-                    return np.ones(end - start) * 10
-            return None
+        # Mock coordinate and depth data retrieval using get_range
+        def mock_get_range_data(
+            residue_range: ResidueRange, ctype: CoordinateType
+        ) -> Optional[np.ndarray]:
+            """Mocks CoordinateManager.get_range behavior for the test."""
+            start = residue_range.start
+            length = len(residue_range)
 
-        coordinate_manager.get.side_effect = mock_get_data
+            if ctype == CoordinateType.CANVAS:
+                # Generate dummy canvas coordinates based on start index
+                return np.array([[i, i] for i in range(start, start + length)])
+            elif ctype == CoordinateType.DEPTH:
+                # Assign depth based on the start index of the range
+                if start >= 10:  # Second element (starts at 10)
+                    return np.ones(length) * 20  # Higher depth (further back)
+                else:  # First element (starts at 0)
+                    return np.ones(length) * 10  # Lower depth (closer)
+            return None  # Should not be called for other types in this test
+
+        coordinate_manager.get_range.side_effect = mock_get_range_data
 
         # Mock the scene elements
         mock_element1 = mocker.Mock(spec=StructureSceneElement)
@@ -171,13 +173,7 @@ class TestProcessStructureChain:
         mock_logger = mocker.patch("flatprot.utils.scene.logger")
 
         # Call function
-        offset = 0
-        new_offset = process_structure_chain(
-            chain, offset, coordinate_manager, style_manager, scene
-        )
-
-        # Verify results
-        assert new_offset == 20, "Should return offset + chain.num_residues"
+        process_structure_chain(chain, coordinate_manager, style_manager, scene)
 
         # Verify scene.add_element was called exactly 3 times
         assert scene.add_element.call_count == 3, "Should add group and two elements"

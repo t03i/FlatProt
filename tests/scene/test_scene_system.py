@@ -1,6 +1,7 @@
 import pytest
 
 from flatprot.scene import Scene, SceneGroup, SceneElement, StructureSceneElement
+from flatprot.core import ResidueCoordinate, ResidueRange
 
 
 # --------------------------
@@ -34,9 +35,9 @@ def test_element_unregistration(mocker):
     mapping = scene._unregister_element(element)
     assert element not in scene._elements
     assert mapping is not None
-    assert mapping.chain_id == "A"
-    assert mapping.start == 1
-    assert mapping.end == 10
+    assert mapping.ranges[0].chain_id == "A"
+    assert mapping.ranges[0].start == 1
+    assert mapping.ranges[0].end == 10
 
 
 # --------------------------
@@ -118,15 +119,38 @@ def test_residue_mapping_queries(mocker):
     assert len(list(scene)) == 2, "Scene should have 2 elements"
 
     # Test overlapping region
-    elements = scene.get_elements_for_residue("A", 7)
+    elements = scene.get_elements_for_residue(
+        ResidueCoordinate(chain_id="A", residue_index=7)
+    )
     assert len(elements) == 2, "Should identify 2 elements for the residue query"
     assert element1 in elements
     assert element2 in elements
 
     # Test boundary conditions
-    assert len(scene.get_elements_for_residue("A", 1)) == 1
-    assert len(scene.get_elements_for_residue("A", 15)) == 1
-    assert len(scene.get_elements_for_residue("A", 20)) == 0
+    assert (
+        len(
+            scene.get_elements_for_residue(
+                ResidueCoordinate(chain_id="A", residue_index=1)
+            )
+        )
+        == 1
+    )
+    assert (
+        len(
+            scene.get_elements_for_residue(
+                ResidueCoordinate(chain_id="A", residue_index=15)
+            )
+        )
+        == 1
+    )
+    assert (
+        len(
+            scene.get_elements_for_residue(
+                ResidueCoordinate(chain_id="A", residue_index=20)
+            )
+        )
+        == 0
+    )
 
 
 def test_invalid_residue_queries(mocker):
@@ -134,13 +158,24 @@ def test_invalid_residue_queries(mocker):
     scene = Scene()
 
     # Test non-existent chain
-    assert scene.get_elements_for_residue("X", 1) == []
+    assert (
+        scene.get_elements_for_residue(ResidueCoordinate(chain_id="X", residue_index=1))
+        == []
+    )
 
     # Test invalid residue number
     element = mocker.Mock(spec=StructureSceneElement)
     scene.add_element(element, chain_id="A", start=1, end=10)
-    assert scene.get_elements_for_residue("A", 0) == []
-    assert scene.get_elements_for_residue("A", 11) == []
+    assert (
+        scene.get_elements_for_residue(ResidueCoordinate(chain_id="A", residue_index=0))
+        == []
+    )
+    assert (
+        scene.get_elements_for_residue(
+            ResidueCoordinate(chain_id="A", residue_index=11)
+        )
+        == []
+    )
 
 
 def test_residue_range_queries(mocker):
@@ -156,35 +191,47 @@ def test_residue_range_queries(mocker):
     scene.add_element(element3, chain_id="A", start=20, end=30)  # [20-30]
 
     # Test complete overlap
-    elements = scene.get_elements_for_residue_range("A", 7, 8)
+    elements = scene.get_elements_for_residue_range(
+        ResidueRange(chain_id="A", start=7, end=8)
+    )
     assert len(elements) == 2
     assert element1 in elements
     assert element2 in elements
 
     # Test partial overlap at start
-    elements = scene.get_elements_for_residue_range("A", 3, 7)
+    elements = scene.get_elements_for_residue_range(
+        ResidueRange(chain_id="A", start=3, end=7)
+    )
     assert len(elements) == 2
     assert element1 in elements
     assert element2 in elements
 
     # Test partial overlap at end
-    elements = scene.get_elements_for_residue_range("A", 8, 12)
+    elements = scene.get_elements_for_residue_range(
+        ResidueRange(chain_id="A", start=8, end=12)
+    )
     assert len(elements) == 2
     assert element1 in elements
     assert element2 in elements
 
     # Test range containing an element
-    elements = scene.get_elements_for_residue_range("A", 4, 16)
+    elements = scene.get_elements_for_residue_range(
+        ResidueRange(chain_id="A", start=4, end=16)
+    )
     assert len(elements) == 2
     assert element1 in elements
     assert element2 in elements
 
     # Test non-overlapping range
-    elements = scene.get_elements_for_residue_range("A", 16, 19)
+    elements = scene.get_elements_for_residue_range(
+        ResidueRange(chain_id="A", start=16, end=19)
+    )
     assert len(elements) == 0
 
     # Test range between elements
-    elements = scene.get_elements_for_residue_range("A", 16, 19)
+    elements = scene.get_elements_for_residue_range(
+        ResidueRange(chain_id="A", start=16, end=19)
+    )
     assert len(elements) == 0
 
 
@@ -195,20 +242,28 @@ def test_residue_range_edge_cases(mocker):
     scene.add_element(element, chain_id="A", start=10, end=20)
 
     # Test exact bounds
-    elements = scene.get_elements_for_residue_range("A", 10, 20)
+    elements = scene.get_elements_for_residue_range(
+        ResidueRange(chain_id="A", start=10, end=20)
+    )
     assert len(elements) == 1
     assert element in elements
 
     # Test invalid chain
-    elements = scene.get_elements_for_residue_range("B", 10, 20)
+    elements = scene.get_elements_for_residue_range(
+        ResidueRange(chain_id="B", start=10, end=20)
+    )
     assert len(elements) == 0
 
     # Test invalid range (start > end)
-    elements = scene.get_elements_for_residue_range("A", 20, 10)
-    assert len(elements) == 0
+    with pytest.raises(ValueError):
+        elements = scene.get_elements_for_residue_range(
+            ResidueRange(chain_id="A", start=20, end=10)
+        )
 
     # Test single residue range
-    elements = scene.get_elements_for_residue_range("A", 15, 15)
+    elements = scene.get_elements_for_residue_range(
+        ResidueRange(chain_id="A", start=15, end=15)
+    )
     assert len(elements) == 1
     assert element in elements
 
@@ -223,8 +278,12 @@ def test_multiple_chain_residue_ranges(mocker):
     scene.add_element(element_b, chain_id="B", start=1, end=10)
 
     # Test same range in different chains
-    elements_a = scene.get_elements_for_residue_range("A", 1, 5)
-    elements_b = scene.get_elements_for_residue_range("B", 1, 5)
+    elements_a = scene.get_elements_for_residue_range(
+        ResidueRange(chain_id="A", start=1, end=5)
+    )
+    elements_b = scene.get_elements_for_residue_range(
+        ResidueRange(chain_id="B", start=1, end=5)
+    )
 
     assert len(elements_a) == 1
     assert len(elements_b) == 1
@@ -234,27 +293,45 @@ def test_multiple_chain_residue_ranges(mocker):
     assert element_b not in elements_a
 
 
-def test_global_to_local_index_mapping(mocker):
-    """Test conversion from global residue indices to element-local indices."""
+def test_residue_to_local_index_mapping(mocker):
+    """Test conversion from ResidueCoordinate to element-local indices."""
     scene = Scene()
     element = mocker.Mock(spec=StructureSceneElement)
+    element.id = "test_element"  # Add an ID for better debugging if needed
 
-    # Register element with residues 10-20
+    # Register element with residues A:10-20
     scene.add_element(element, chain_id="A", start=10, end=20)
 
-    # Test various index conversions
-    assert scene.get_element_index_from_global_index(10, element) == 0  # First residue
-    assert scene.get_element_index_from_global_index(15, element) == 5  # Middle residue
-    assert scene.get_element_index_from_global_index(20, element) == 10  # Last residue
+    # Test various index conversions using ResidueCoordinate
+    residue_start = ResidueCoordinate(chain_id="A", residue_index=10)
+    residue_middle = ResidueCoordinate(chain_id="A", residue_index=15)
+    residue_end = ResidueCoordinate(chain_id="A", residue_index=20)
+
+    assert (
+        scene.get_element_index_from_residue(residue_start, element) == 0
+    )  # First residue
+    assert (
+        scene.get_element_index_from_residue(residue_middle, element) == 5
+    )  # Middle residue
+    assert (
+        scene.get_element_index_from_residue(residue_end, element) == 10
+    )  # Last residue
 
     # Test invalid element
     invalid_element = mocker.Mock(spec=StructureSceneElement)
-    with pytest.raises(AssertionError):
-        scene.get_element_index_from_global_index(10, invalid_element)
+    invalid_element.id = "invalid_element"
+    with pytest.raises(AssertionError, match="Element must be registered"):
+        scene.get_element_index_from_residue(residue_start, invalid_element)
 
-    # Test global index outside element range
-    with pytest.raises(AssertionError):
-        scene.get_element_index_from_global_index(21, element)
+    # Test residue outside element range
+    residue_outside = ResidueCoordinate(chain_id="A", residue_index=21)
+    with pytest.raises(AssertionError, match="must be in the element's residue range"):
+        scene.get_element_index_from_residue(residue_outside, element)
+
+    # Test residue with wrong chain
+    residue_wrong_chain = ResidueCoordinate(chain_id="B", residue_index=15)
+    with pytest.raises(AssertionError, match="must be in the element's residue range"):
+        scene.get_element_index_from_residue(residue_wrong_chain, element)
 
 
 # --------------------------

@@ -12,57 +12,62 @@ from flatprot.style import StyleManager
 from flatprot.scene import Scene, SceneGroup
 from flatprot.scene.structure import secondary_structure_to_scene_element
 from flatprot.io import AnnotationParser
+from flatprot.core import ResidueRange, CoordinateError
 
 from .logger import logger
 
 
 def process_structure_chain(
     chain: Any,
-    offset: int,
     coordinate_manager: CoordinateManager,
     style_manager: StyleManager,
     scene: Scene,
-) -> int:
+) -> Scene:
     """Process a single chain from a structure and add elements to the scene.
 
     Args:
         chain: The chain to process
-        offset: The current coordinate offset
+        residue_range: ResidueRange for this chain
         coordinate_manager: Coordinate manager with transformed and projected coordinates
         style_manager: Style manager for styling elements
         scene: The scene to add elements to
 
     Returns:
-        int: The new offset after processing this chain
+        scene: The updated scene
     """
-    elements_with_z = []  # Reset for each chain
+    elements_with_z = []
 
     # Process each secondary structure element
     for element in chain.secondary_structure:
-        start_idx = offset + element.start
-        end_idx = offset + element.end + 1
+        # Create ResidueRange for this secondary structure element
+        ss_range = ResidueRange(chain_id=chain.id, start=element.start, end=element.end)
 
-        canvas_coords = coordinate_manager.get(
-            start_idx, end_idx, CoordinateType.CANVAS
-        )
-        depth = coordinate_manager.get(start_idx, end_idx, CoordinateType.DEPTH)
+        try:
+            canvas_coords = coordinate_manager.get_range(
+                ss_range, CoordinateType.CANVAS
+            )
+            depth = coordinate_manager.get_range(ss_range, CoordinateType.DEPTH)
 
-        metadata = {
-            "chain_id": chain.id,
-            "start": element.start,
-            "end": element.end,
-            "type": element.secondary_structure_type.value,
-        }
+            metadata = {
+                "chain_id": chain.id,
+                "start": element.start,
+                "end": element.end,
+                "type": element.secondary_structure_type.value,
+            }
 
-        # Get the appropriate scene element
-        viz_element = secondary_structure_to_scene_element(
-            element,
-            canvas_coords,
-            style_manager,
-            metadata,
-        )
+            # Get the appropriate scene element
+            viz_element = secondary_structure_to_scene_element(
+                element,
+                canvas_coords,
+                style_manager,
+                metadata,
+            )
 
-        elements_with_z.append((viz_element, np.mean(depth)))
+            elements_with_z.append((viz_element, np.mean(depth)))
+
+        except CoordinateError as e:
+            logger.warning(f"Could not get coordinates for {ss_range}: {e}")
+            continue
 
     # Sort elements by depth (farther objects first)
     elements_with_z.sort(key=lambda x: x[1], reverse=True)
@@ -88,8 +93,7 @@ def process_structure_chain(
             element.metadata["end"],
         )
 
-    # Return the updated offset for next chain
-    return offset + chain.num_residues
+    return scene
 
 
 def process_annotations(
