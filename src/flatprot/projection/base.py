@@ -20,13 +20,11 @@ class BaseProjectionParameters(BaseModel):
 P = TypeVar("P", bound=BaseProjectionParameters)
 
 
-class Projector(ABC, Generic[P]):
+class BaseProjection(ABC, Generic[P]):
     """Base class for all projections."""
 
     @abstractmethod
-    def project(
-        self, coordinates: np.ndarray, parameters: P
-    ) -> tuple[np.ndarray, np.ndarray]:
+    def project(self, coordinates: np.ndarray, parameters: P) -> np.ndarray:
         """Project 3D coordinates to 2D space.
 
         Args:
@@ -34,7 +32,9 @@ class Projector(ABC, Generic[P]):
             parameters: Optional projection parameters
 
         Returns:
-            Array of shape (N, 2) containing projected coordinates
-            Array of shape (N,) containing depth values
+            A NumPy array of shape (N, 3), where N is the number of coordinates.
+            Column 0: X canvas coordinate (float)
+            Column 1: Y canvas coordinate (float)
+            Column 2: Depth value (float, representing scaled Z for visibility/layering)
         """
         pass
