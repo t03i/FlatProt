@@ -13,7 +13,7 @@ from .coordinates import (
     ResidueRangeSet,
 )
 
-from .components import (
+from .structure import (
     Chain,
     Structure,
 )
