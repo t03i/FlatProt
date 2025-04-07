@@ -11,7 +11,7 @@ from pytest_mock import MockerFixture
 
 from flatprot.utils.svg import generate_svg, save_svg
 from flatprot.core import CoordinateManager
-from flatprot.core.components import Structure, Chain
+from flatprot.core.structure import Structure, Chain
 from flatprot.style import StyleManager
 from flatprot.scene import Scene
 

@@ -1,20 +1,23 @@
 import pytest
 import numpy as np
 
-from flatprot.transformation.inertia import (
+from flatprot.transformation.inertia_transformation import (
     InertiaTransformer,
     InertiaTransformParameters,
-    InertiaTransformerParameters,
+    InertiaTransformationParameters,
 )
 from flatprot.transformation.structure_elements import (
     StructureElementsTransformer,
     StructureElementsTransformParameters,
     StructureElementsTransformerParameters,
 )
-from flatprot.transformation.matrix import MatrixTransformer, MatrixTransformParameters
-from flatprot.core.components import Structure, Chain, ResidueType
+from flatprot.transformation.matrix_transformation import (
+    MatrixTransformer,
+    MatrixTransformParameters,
+)
+from flatprot.core.structure import Structure, Chain, ResidueType
 from flatprot.core.secondary import SecondaryStructureType
-from flatprot.transformation.utils import TransformationMatrix
+from flatprot.transformation.transformation_matrix import TransformationMatrix
 
 
 @pytest.fixture
@@ -121,7 +124,7 @@ def test_inertia_transformer(large_mock_structure):
 
 def test_inertia_transformer_custom_weights():
     coords = np.array([[0, 0, 0], [1, 1, 1], [2, 2, 2]])
-    custom_weights = InertiaTransformerParameters(
+    custom_weights = InertiaTransformationParameters(
         residue_weights={"ALA": 1.0, "GLY": 0.5}, use_weights=True
     )
     transformer = InertiaTransformer(parameters=custom_weights)

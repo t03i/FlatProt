@@ -7,9 +7,7 @@ from typing import Optional
 import numpy as np
 import gemmi
 
-from flatprot.core.types import ResidueType
-from flatprot.core.components import Structure, Chain
-from flatprot.core.secondary import SecondaryStructureType
+from flatprot.core import ResidueType, SecondaryStructureType, Structure, Chain
 from .dssp import parse_dssp
 
 from .structure import StructureParser

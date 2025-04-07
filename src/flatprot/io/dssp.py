@@ -1,6 +1,6 @@
 import polars as pl
 
-from flatprot.core.secondary import SecondaryStructureType
+from flatprot.core import SecondaryStructureType
 
 
 def parse_dssp(dssp_file):

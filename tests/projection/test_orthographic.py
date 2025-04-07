@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 from flatprot.projection.orthographic import (
-    OrthographicProjector,
+    OrthographicProjection,
     OrthographicProjectionParameters,
 )
 
@@ -24,7 +24,7 @@ def simple_cube():
 
 
 def test_basic_projection(simple_cube):
-    projector = OrthographicProjector()
+    projector = OrthographicProjection()
     params = OrthographicProjectionParameters(
         width=100, height=100, padding_x=0.05, padding_y=0.05
     )
@@ -46,7 +46,7 @@ def test_basic_projection(simple_cube):
 
 
 def test_view_directions():
-    projector = OrthographicProjector()
+    projector = OrthographicProjection()
     coords = np.array([[0, 0, 1], [0, 0, -1]])  # Points along z-axis
 
     # Front view
@@ -63,7 +63,7 @@ def test_view_directions():
 
 
 def test_aspect_ratio_preservation():
-    projector = OrthographicProjector()
+    projector = OrthographicProjection()
     # Rectangle in 3D space
     coords = np.array([[0, 0, 0], [2, 0, 0], [2, 1, 0], [0, 1, 0]])
 
@@ -82,7 +82,7 @@ def test_aspect_ratio_preservation():
 
 
 def test_centering_option():
-    projector = OrthographicProjector()
+    projector = OrthographicProjection()
     # Offset coordinates
     coords = np.array([[1, 1, 1], [2, 2, 2]])
 
@@ -99,7 +99,7 @@ def test_centering_option():
 
 def test_padding_behavior(simple_cube):
     """Test that padding is correctly applied as percentages of canvas dimensions."""
-    projector = OrthographicProjector()
+    projector = OrthographicProjection()
 
     # Test different padding configurations
     test_cases = [
@@ -129,7 +129,7 @@ def test_padding_behavior(simple_cube):
 
 def test_padding_with_aspect_ratio():
     """Test padding behavior when maintain_aspect_ratio is True."""
-    projector = OrthographicProjector()
+    projector = OrthographicProjection()
 
     # Rectangle in 3D space (2:1 aspect ratio)
     coords = np.array([[0, 0, 0], [2, 0, 0], [2, 1, 0], [0, 1, 0]])

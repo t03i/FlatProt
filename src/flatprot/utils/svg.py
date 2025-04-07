@@ -8,7 +8,7 @@ from pathlib import Path
 import os
 
 from flatprot.core import CoordinateManager, ResidueRange
-from flatprot.core.components import Structure
+from flatprot.core.structure import Structure
 from flatprot.drawing import Canvas
 from flatprot.scene import Scene
 from flatprot.style import StyleManager

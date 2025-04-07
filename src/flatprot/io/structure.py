@@ -5,7 +5,7 @@ from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import Optional
 
-from ..core.components import Structure
+from ..core.structure import Structure
 
 from .errors import StructureFileNotFoundError, InvalidStructureError
 

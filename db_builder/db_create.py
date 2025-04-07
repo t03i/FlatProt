@@ -36,10 +36,14 @@ from snakemake.script import snakemake
 
 # Import required FlatProt modules
 from flatprot.transformation import TransformationMatrix
-from flatprot.transformation.inertia import calculate_inertia_transformation
+from flatprot.transformation.inertia_transformation import (
+    calculate_inertia_transformation_matrix,
+)
 from flatprot.alignment.db import AlignmentDBEntry, AlignmentDatabase
 from flatprot.core.types import ResidueType
-from flatprot.transformation.inertia import InertiaTransformerParameters
+from flatprot.transformation.inertia_transformation import (
+    InertiaTransformationParameters,
+)
 
 # Configure logging
 logging.basicConfig(
@@ -62,7 +66,7 @@ def calculate_inertia_matrix_from_pdb(pdb_file: Path) -> Optional[Transformation
     """
     try:
         # Get default residue weights
-        default_params = InertiaTransformerParameters.default()
+        default_params = InertiaTransformationParameters.default()
         residue_weights = default_params.residue_weights
 
         # Read the structure with gemmi
@@ -100,7 +104,9 @@ def calculate_inertia_matrix_from_pdb(pdb_file: Path) -> Optional[Transformation
                 weights[i] = residue_weights[res_type]
 
         # Calculate inertia transformation with weights
-        transformation = calculate_inertia_transformation(ca_coords_array, weights)
+        transformation = calculate_inertia_transformation_matrix(
+            ca_coords_array, weights
+        )
 
         return transformation
 

@@ -20,13 +20,13 @@ from flatprot.core import (
     ResidueRange,
 )
 from flatprot.style import StyleManager, StyleType, CanvasStyle
-from flatprot.core.components import (
+from flatprot.core.structure import (
     Structure,
     Chain,
     ResidueType,
 )  # Import Chain and Residue for mocking
 from flatprot.projection import (
-    OrthographicProjector,
+    OrthographicProjection,
     ProjectionError,
     OrthographicProjectionParameters,  # Import specific parameters class
 )
@@ -35,7 +35,7 @@ from flatprot.transformation import (
     MatrixTransformer,
     TransformationError,
     TransformationMatrix,
-    BaseTransformer,  # Import BaseTransformer
+    BaseTransformation,  # Import BaseTransformer
     MatrixTransformParameters,  # Import specific parameters class
     InertiaTransformParameters,  # Import specific parameters class
 )
@@ -114,7 +114,7 @@ class TestApplyProjection:
             CoordinateType.TRANSFORMED: {(0, 2): transformed_coords}
         }
 
-        mock_projector = mocker.Mock(spec=OrthographicProjector)
+        mock_projector = mocker.Mock(spec=OrthographicProjection)
         canvas_coords = np.array([[100, 200], [300, 400]])
         depth_values = np.array([3.0, 6.0])  # Depth from z-coordinates
         mock_projector.project.return_value = (canvas_coords, depth_values)
@@ -200,7 +200,7 @@ class TestApplyProjection:
             CoordinateType.TRANSFORMED: {(0, 1): transformed_coords}
         }
 
-        mock_projector = mocker.Mock(spec=OrthographicProjector)
+        mock_projector = mocker.Mock(spec=OrthographicProjection)
         projection_exception = Exception("Test projection error")
         mock_projector.project.side_effect = projection_exception
 
@@ -430,7 +430,7 @@ class TestCreateCoordinateManager:
     ) -> None:
         """Test basic creation with transformation using InertiaTransformer."""
         # Mock transformer and transformed coordinates
-        mock_transformer = mocker.Mock(spec=BaseTransformer)  # Use BaseTransformer
+        mock_transformer = mocker.Mock(spec=BaseTransformation)  # Use BaseTransformer
         mock_params = mocker.Mock(
             spec=InertiaTransformParameters
         )  # Assume Inertia for default
@@ -538,7 +538,7 @@ class TestCreateCoordinateManager:
     ) -> None:
         """Test error handling during transformation step."""
         # Mock transformer to raise exception during transform
-        mock_transformer = mocker.Mock(spec=BaseTransformer)
+        mock_transformer = mocker.Mock(spec=BaseTransformation)
         mock_params = mocker.Mock()  # Type doesn't strictly matter here
         transform_exception = Exception("Test transformation error")
         mock_transformer.transform.side_effect = transform_exception
