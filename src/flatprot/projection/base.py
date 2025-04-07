@@ -3,13 +3,13 @@
 
 from abc import ABC, abstractmethod
 import numpy as np
-from typing import Optional
+from typing import TypeVar, Generic
 
 from pydantic import BaseModel, Field
 from pydantic_numpy.typing import NpNDArray
 
 
-class ProjectionParameters(BaseModel):
+class BaseProjectionParameters(BaseModel):
     """Base parameters for projections."""
 
     view_direction: NpNDArray = Field(default_factory=lambda: np.array([0, 0, 1]))
@@ -17,12 +17,15 @@ class ProjectionParameters(BaseModel):
     center: bool = True
 
 
-class Projector(ABC):
+P = TypeVar("P", bound=BaseProjectionParameters)
+
+
+class Projector(ABC, Generic[P]):
     """Base class for all projections."""
 
     @abstractmethod
     def project(
-        self, coordinates: np.ndarray, parameters: Optional[ProjectionParameters] = None
+        self, coordinates: np.ndarray, parameters: P
     ) -> tuple[np.ndarray, np.ndarray]:
         """Project 3D coordinates to 2D space.
 

@@ -2,14 +2,14 @@
 # SPDX-License-Identifier: Apache-2.0
 
 from .orthographic import OrthographicProjector, OrthographicProjectionParameters
-from .base import Projector, ProjectionParameters
+from .base import Projector, BaseProjectionParameters
 from flatprot.core.error import FlatProtError
 
 __all__ = [
     "OrthographicProjector",
     "OrthographicProjectionParameters",
     "Projector",
-    "ProjectionParameters",
+    "BaseProjectionParameters",
     "ProjectionError",
 ]
 

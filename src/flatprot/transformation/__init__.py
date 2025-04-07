@@ -1,10 +1,10 @@
 # Copyright 2024 Tobias Olenyi.
 # SPDX-License-Identifier: Apache-2.0
 
-from .base import BaseTransformer, TransformParameters
+from .base import BaseTransformation, TransformationParameters
 from .inertia import (
     InertiaTransformer,
-    InertiaTransformerParameters,
+    InertiaTransformationParameters,
     InertiaTransformParameters,
 )
 from .structure_elements import (
@@ -17,10 +17,10 @@ from .utils import TransformationMatrix
 from flatprot.core.error import FlatProtError
 
 __all__ = [
-    "BaseTransformer",
-    "TransformParameters",
+    "BaseTransformation",
+    "TransformationParameters",
     "InertiaTransformer",
-    "InertiaTransformerParameters",
+    "InertiaTransformationParameters",
     "InertiaTransformParameters",
     "StructureElementsTransformer",
     "StructureElementsTransformerParameters",

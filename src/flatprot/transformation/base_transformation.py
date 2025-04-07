@@ -4,29 +4,44 @@
 from abc import ABC, abstractmethod
 import numpy as np
 from pathlib import Path
-from typing import Optional
+from typing import Optional, TypeVar, Generic
 from dataclasses import dataclass
 
-from .utils import TransformationMatrix
+from .transformation_matrix import TransformationMatrix
 
 
 @dataclass
-class TransformParameters:
-    """Parameters for the transformation."""
+class BaseTransformationParameters:
+    """Base class for parameters configuring a transformation instance."""
 
     pass
 
 
-class BaseTransformer(ABC):
+P = TypeVar("P", bound=BaseTransformationParameters)
+
+
+# --- Runtime Arguments (for transform method) ---
+@dataclass
+class BaseTransformationArguments:
+    """Base class for arguments specific to a single transform() call."""
+
+    pass
+
+
+A = TypeVar("A", bound=BaseTransformationArguments)
+
+
+class BaseTransformation(ABC, Generic[P, A]):
     """Base class for all transformations using template method pattern."""
 
-    def __init__(self):
+    def __init__(self, parameters: Optional[P]):
         self._cached_transformation: Optional[TransformationMatrix] = None
+        self.parameters = parameters
 
     def transform(
         self,
         coordinates: np.ndarray,
-        parameters: Optional[TransformParameters] = None,
+        arguments: Optional[A],
     ) -> np.ndarray:
         """Transform 3D coordinates.
 
@@ -37,20 +52,18 @@ class BaseTransformer(ABC):
             Array of shape (N, 3) containing transformed coordinates
         """
         if self._cached_transformation is None:
-            self._cached_transformation = self._calculate_transformation(
-                coordinates, parameters
+            self._cached_transformation = self._calculate_transformation_matrix(
+                coordinates, arguments
             )
 
-        transformed = self._apply_cached_transformation(
-            coordinates, self._cached_transformation, parameters
-        )
+        transformed = self._apply_transformation(coordinates)
         return transformed
 
     @abstractmethod
-    def _calculate_transformation(
+    def _calculate_transformation_matrix(
         self,
         coordinates: np.ndarray,
-        parameters: Optional[TransformParameters] = None,
+        arguments: Optional[A],
     ) -> TransformationMatrix:
         """Calculate transformation matrix for given coordinates.
 
@@ -62,15 +75,12 @@ class BaseTransformer(ABC):
         """
         pass
 
-    @abstractmethod
-    def _apply_cached_transformation(
+    def _apply_transformation(
         self,
         coordinates: np.ndarray,
-        cached_transformation: TransformationMatrix,
-        parameters: Optional[TransformParameters] = None,
     ) -> np.ndarray:
         """Apply cached transformation to coordinates."""
-        pass
+        return self._cached_transformation.apply(coordinates)
 
     def save(self, path: Path) -> None:
         """Saves transformation parameters."""

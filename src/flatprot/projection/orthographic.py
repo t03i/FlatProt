@@ -1,15 +1,15 @@
 # Copyright 2025 Tobias Olenyi.
 # SPDX-License-Identifier: Apache-2.0
-from typing import Optional
-from typing_extensions import Annotated
+from typing import Annotated
+
 import numpy as np
 
-from .base import Projector, ProjectionParameters
+from .base import Projector, BaseProjectionParameters
 
 from pydantic import Field
 
 
-class OrthographicProjectionParameters(ProjectionParameters):
+class OrthographicProjectionParameters(BaseProjectionParameters):
     """Parameters for orthographic canvas projection."""
 
     width: int = 1200
@@ -25,9 +25,9 @@ class OrthographicProjector(Projector):
     def project(
         self,
         coordinates: np.ndarray,
-        parameters: Optional[OrthographicProjectionParameters] = None,
+        parameters: OrthographicProjectionParameters,
     ) -> tuple[np.ndarray, np.ndarray]:
-        params = parameters or OrthographicProjectionParameters()
+        params = parameters
 
         # 1. Project to view space
         view = params.view_direction / np.linalg.norm(params.view_direction)
