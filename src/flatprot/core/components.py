@@ -16,6 +16,11 @@ class Chain:
         index: np.ndarray,
         coordinates: np.ndarray,
     ):
+        assert len(index) == len(residues) == len(coordinates), (
+            f"Index, residues, and coordinates must have the same length, "
+            f"got {len(index)}, {len(residues)}, and {len(coordinates)}"
+        )
+
         self.id = chain_id
         self.__secondary_structure: List[ResidueRange] = []
         self.__chain_coordinates: Dict[int, ResidueCoordinate] = {}
@@ -24,6 +29,19 @@ class Chain:
                 chain_id, idx, residue, contig
             )
         self.__coordinates = coordinates
+
+    def __len__(self) -> int:
+        return len(self.__chain_coordinates)
+
+    @property
+    def coordinates(self) -> np.ndarray:
+        return self.__coordinates
+
+    @property
+    def residues(self) -> list[ResidueType]:
+        return [
+            self.__chain_coordinates[idx].residue for idx in self.__chain_coordinates
+        ]
 
     def _check_range_contiguous(
         self, residue_start: ResidueCoordinate, residue_end: ResidueCoordinate
@@ -204,6 +222,18 @@ class Chain:
 
         return ranges
 
+    def __iter__(self) -> Iterator[ResidueCoordinate]:
+        return iter(self.__chain_coordinates.values())
+
+    def __getitem__(self, residue_index: int) -> ResidueCoordinate:
+        return self.__chain_coordinates[residue_index]
+
+    def __contains__(self, residue_index: int) -> bool:
+        return residue_index in self.__chain_coordinates
+
+    def coordinate_index(self, residue_index: int) -> int:
+        return self.__chain_coordinates[residue_index].coordinate_index
+
 
 class Structure:
     def __init__(self, chains: list[Chain]):
@@ -212,7 +242,12 @@ class Structure:
     def __getitem__(self, chain_id: str) -> Chain:
         return self.__chains[chain_id]
 
-    def __contains__(self, chain_id: str) -> bool:
+    def __contains__(self, chain_id: str | ResidueCoordinate) -> bool:
+        if isinstance(chain_id, ResidueCoordinate):
+            return (
+                chain_id.chain_id in self.__chains
+                and chain_id.residue_index in self.__chains[chain_id.chain_id]
+            )
         return chain_id in self.__chains
 
     def __iter__(self) -> Iterator[Chain]:
@@ -239,3 +274,6 @@ class Structure:
     def coordinates(self) -> np.ndarray:
         """Get coordinates from all chains concatenated in a single array."""
         return np.concatenate([chain.coordinates for chain in self.__chains.values()])
+
+    def __str__(self) -> str:
+        return f"Structure with {len(self.__chains)} chains"

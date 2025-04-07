@@ -4,6 +4,7 @@
 from .error import FlatProtError, CoordinateError
 from .types import (
     ResidueType,
+    SecondaryStructureType,
 )
 
 from .coordinates import (
@@ -11,41 +12,21 @@ from .coordinates import (
     ResidueRange,
     ResidueRangeSet,
 )
-from .secondary import (
-    SecondaryStructure,
-    SecondaryStructureType,
-    Helix,
-    Sheet,
-    Coil,
-)
+
 from .components import (
     Chain,
     Structure,
 )
-from .manager import (
-    CoordinateManager,
-    CoordinateType,
-)
+
 
 __all__ = [
-    # Error types
     "FlatProtError",
     "CoordinateError",
-    # Residue types and handling
     "ResidueType",
     "ResidueCoordinate",
     "ResidueRange",
     "ResidueRangeSet",
-    # Secondary structure
-    "SecondaryStructure",
     "SecondaryStructureType",
-    "Helix",
-    "Sheet",
-    "Coil",
-    # Structure components
     "Chain",
     "Structure",
-    # Coordinate management
-    "CoordinateManager",
-    "CoordinateType",
 ]
