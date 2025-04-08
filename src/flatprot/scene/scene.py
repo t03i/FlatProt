@@ -411,6 +411,14 @@ class Scene:
                         break  # Found overlap for this element, no need to check its other ranges
         return matching_elements
 
+    def get_all_elements(self) -> List[BaseSceneElement]:
+        """Returns a flat list of all elements in the scene graph.
+
+        Returns:
+            A list containing all BaseSceneElement objects registered in the scene.
+        """
+        return list(self._element_registry.values())
+
     def __iter__(self) -> Iterator[BaseSceneElement]:
         """Iterate over the top-level nodes of the scene graph."""
         return iter(self._nodes)

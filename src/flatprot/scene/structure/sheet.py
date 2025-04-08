@@ -168,7 +168,7 @@ class SheetSceneElement(BaseStructureSceneElement[SheetStyle]):
         self._cached_display_coords = np.array([left_point, right_point, tip_point])
         return self._cached_display_coords
 
-    def get_2d_coordinate_at_residue(
+    def get_coordinate_at_residue(
         self, residue: ResidueCoordinate, structure: Structure
     ) -> Optional[np.ndarray]:
         """Retrieves the specific 2D coordinate + Depth corresponding to a residue

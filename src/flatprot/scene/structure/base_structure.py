@@ -128,7 +128,7 @@ class BaseStructureSceneElement(
         """
         raise NotImplementedError
 
-    def get_2d_coordinate_at_residue(
+    def get_coordinate_at_residue(
         self, residue: ResidueCoordinate, structure: Structure
     ) -> Optional[np.ndarray]:
         """Retrieves the specific 2D canvas coordinate + Depth corresponding

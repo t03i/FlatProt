@@ -34,7 +34,11 @@ class LineAnnotationStyle(BaseAnnotationStyle):
         default=False,
         description="Whether to draw an arrowhead at the end of the line.",
     )
-    # Inherits color, offset, label etc. from BaseAnnotationStyle
+    connector_radius: float = Field(
+        default=2.0,
+        ge=0,
+        description="Radius of the connector circles at the start and end of the line.",
+    )
 
 
 # --- Line Annotation Scene Element ---

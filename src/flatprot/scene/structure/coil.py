@@ -169,7 +169,7 @@ class CoilSceneElement(BaseStructureSceneElement[CoilStyle]):
 
         return self._cached_smoothed_coords
 
-    def get_2d_coordinate_at_residue(
+    def get_coordinate_at_residue(
         self, residue: ResidueCoordinate, structure: Structure
     ) -> Optional[np.ndarray]:
         """Retrieves the specific 2D coordinate + Depth corresponding to a residue

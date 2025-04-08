@@ -22,10 +22,10 @@ class PointAnnotationStyle(BaseAnnotationStyle):
     marker_shape: Literal["circle", "square", "triangle", "diamond"] = Field(
         default="circle", description="Shape of the marker."
     )
-    marker_size: float = Field(
+    point_radius: float = Field(
         default=5.0,
         ge=0,
-        description="Size (e.g., radius or half-width) of the marker.",
+        description="Radius of the point marker.",
     )
     # Inherits color, offset, label etc. from BaseAnnotationStyle
 
