@@ -6,7 +6,8 @@ import numpy as np
 
 from .base import BaseProjection, BaseProjectionParameters
 
-from pydantic import Field, validator
+from pydantic import Field
+from pydantic_numpy.typing import Np3DArrayFp64
 
 
 class OrthographicProjectionParameters(BaseProjectionParameters):
@@ -18,19 +19,9 @@ class OrthographicProjectionParameters(BaseProjectionParameters):
     padding_x: Annotated[float, Field(strict=True, ge=0, lt=0.5)] = 0.05
     padding_y: Annotated[float, Field(strict=True, ge=0, lt=0.5)] = 0.05
     maintain_aspect_ratio: bool = True
-    center: bool = True  # Add center parameter
-    # Define view and up vectors if needed, otherwise default might be identity
-    view_direction: np.ndarray = np.array([0.0, 0.0, 1.0])
-    up_vector: np.ndarray = np.array([0.0, 1.0, 0.0])
-
-    @validator("view_direction", "up_vector", pre=True, allow_reuse=True)
-    def check_numpy_array(cls, v):
-        if not isinstance(v, np.ndarray):
-            v = np.array(v, dtype=float)
-        if v.shape != (3,):
-            raise ValueError("Vectors must have shape (3,)")
-        # Check for non-zero vectors if necessary
-        return v
+    center: bool = True
+    view_direction: Np3DArrayFp64 = np.array([0.0, 0.0, 1.0])
+    up_vector: Np3DArrayFp64 = np.array([0.0, 1.0, 0.0])
 
 
 class OrthographicProjection(BaseProjection[OrthographicProjectionParameters]):
