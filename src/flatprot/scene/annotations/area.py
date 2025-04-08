@@ -56,7 +56,7 @@ class AreaAnnotation(BaseAnnotationElement[AreaAnnotationStyle]):
     def __init__(
         self,
         id: str,
-        style: AreaAnnotationStyle,  # Style is mandatory
+        style: Optional[AreaAnnotationStyle] = None,
         label: Optional[str] = None,
         residue_range_set: Optional[ResidueRangeSet] = None,
         target_coordinates: Optional[List[ResidueCoordinate]] = None,

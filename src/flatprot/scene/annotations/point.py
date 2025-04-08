@@ -38,7 +38,7 @@ class PointAnnotation(BaseAnnotationElement[PointAnnotationStyle]):
         self,
         id: str,
         target_coordinate: ResidueCoordinate,  # Expects a single coordinate
-        style: PointAnnotationStyle,
+        style: Optional[PointAnnotationStyle] = None,
         parent: Optional[SceneGroupType] = None,
     ):
         """Initializes a PointAnnotation.

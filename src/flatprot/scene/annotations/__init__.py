@@ -2,15 +2,18 @@
 # SPDX-License-Identifier: Apache-2.0
 
 
-from .point import PointAnnotation
-from .line import LineAnnotation
-from .area import AreaAnnotation
+from .point import PointAnnotation, PointAnnotationStyle
+from .line import LineAnnotation, LineAnnotationStyle
+from .area import AreaAnnotation, AreaAnnotationStyle
 from .base_annotation import BaseAnnotationStyle, BaseAnnotationElement
 
 __all__ = [
     "PointAnnotation",
+    "PointAnnotationStyle",
     "LineAnnotation",
+    "LineAnnotationStyle",
     "AreaAnnotation",
+    "AreaAnnotationStyle",
     "BaseAnnotationStyle",
     "BaseAnnotationElement",
 ]

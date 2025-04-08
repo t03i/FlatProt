@@ -43,7 +43,7 @@ class BaseSceneElement(ABC, Generic[StyleType]):
         self,
         id: str,
         residue_range_set: ResidueRangeSet,
-        style: StyleType,
+        style: Optional[StyleType] = None,
         parent: Optional[SceneGroupType] = None,
     ):
         """Initializes a BaseSceneElement.
@@ -61,7 +61,7 @@ class BaseSceneElement(ABC, Generic[StyleType]):
 
         self.id: str = id
         self.residue_range_set: ResidueRangeSet = residue_range_set
-        self._style: StyleType = style
+        self._style: Optional[StyleType] = style or self.default_style()
         self._parent: Optional[SceneGroupType] = parent
 
     @property

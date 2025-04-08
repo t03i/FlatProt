@@ -45,7 +45,7 @@ class LineAnnotation(BaseAnnotationElement[LineAnnotationStyle]):
         self,
         id: str,
         target_coordinates: List[ResidueCoordinate],  # Expects exactly two coordinates
-        style: LineAnnotationStyle,  # Style is now mandatory
+        style: Optional[LineAnnotationStyle] = None,
         label: Optional[str] = None,
         parent: Optional[SceneGroupType] = None,
     ):

@@ -1,7 +1,7 @@
 # Copyright 2025 Tobias Olenyi.
 # SPDX-License-Identifier: Apache-2.0
 
-from typing import Optional, Dict, Any
+from typing import Optional
 
 import numpy as np
 from pydantic import Field
@@ -51,11 +51,10 @@ class SheetSceneElement(BaseStructureSceneElement[SheetStyle]):
         self,
         residue_range_set: ResidueRangeSet,
         style: Optional[SheetStyle] = None,
-        metadata: Optional[Dict[str, Any]] = None,
         parent: Optional[SceneGroupType] = None,
     ):
         """Initializes the SheetSceneElement."""
-        super().__init__(residue_range_set, style, metadata, parent)
+        super().__init__(residue_range_set, style, parent)
         # Cache for the calculated arrow coordinates and original length
         self._cached_display_coords: Optional[np.ndarray] = None
         self._original_coords_len: Optional[int] = None

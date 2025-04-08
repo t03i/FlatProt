@@ -2,18 +2,18 @@
 # SPDX-License-Identifier: Apache-2.0
 
 
-from .base_structure import BaseStructureSceneElement, StructureStyleType
+from .base_structure import BaseStructureSceneElement, BaseStructureStyle
 from .coil import CoilSceneElement, CoilStyle
-from .helix import HelixElement, HelixStyle
+from .helix import HelixSceneElement, HelixStyle
 from .sheet import SheetSceneElement, SheetStyle
 
 
 __all__ = [
     "BaseStructureSceneElement",
-    "StructureStyleType",
+    "BaseStructureStyle",
     "CoilSceneElement",
     "CoilStyle",
-    "HelixElement",
+    "HelixSceneElement",
     "HelixStyle",
     "SheetSceneElement",
     "SheetStyle",

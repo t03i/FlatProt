@@ -52,6 +52,9 @@ class ResidueRange:
     coordinates_start_index: Optional[int] = None
     secondary_structure: Optional[SecondaryStructureType] = None
 
+    def to_set(self) -> "ResidueRangeSet":
+        return ResidueRangeSet([self])
+
     def __post_init__(self) -> None:
         if self.start > self.end:
             raise ValueError(f"Invalid range: {self.start} > {self.end}")

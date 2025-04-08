@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 from abc import ABC, abstractmethod
-from typing import Generic, TypeVar, Optional, Dict, Any
+from typing import Generic, TypeVar, Optional
 
 import numpy as np
 from pydantic import Field
@@ -52,7 +52,6 @@ class BaseStructureSceneElement(
         self,
         residue_range_set: ResidueRangeSet,
         style: Optional[StructureStyleType] = None,
-        metadata: Optional[Dict[str, Any]] = None,
         parent: Optional[SceneGroupType] = None,
     ):
         """Initializes a BaseStructureSceneElement.
@@ -79,7 +78,6 @@ class BaseStructureSceneElement(
             id=generated_id,
             residue_range_set=residue_range_set,
             style=style,  # Pass the direct input style (can be None)
-            metadata=metadata,
             parent=parent,
         )
 

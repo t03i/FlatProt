@@ -28,7 +28,6 @@ class SceneGroup(BaseSceneElement[GroupStyle]):
         children: Optional[List[BaseSceneElement]] = None,
         transforms: Optional[Dict[str, Any]] = None,
         style: Optional[GroupStyle] = None,
-        metadata: Optional[Dict[str, Any]] = None,
         parent: Optional["SceneGroup"] = None,  # Type hint refers to its own class
     ):
         """Initializes a SceneGroup.
@@ -47,7 +46,7 @@ class SceneGroup(BaseSceneElement[GroupStyle]):
         # Initialize BaseSceneElement with an empty or calculated range set
         # The range set will be updated as children are added/removed.
         initial_range_set = self._calculate_combined_range_set(children or [])
-        super().__init__(id, initial_range_set, style, metadata, parent)
+        super().__init__(id, initial_range_set, style, parent)
 
         # Add initial children after super().__init__ has run
         if children:
