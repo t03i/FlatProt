@@ -24,11 +24,11 @@ class BaseStructureStyle(BaseSceneStyle):
     """Base style for elements representing parts of the protein structure."""
 
     color: Color = Field(
-        default=Color(r=0.5, g=0.5, b=0.5),
+        default=Color((0.5, 0.5, 0.5)),
         description="Default color for the element (hex string). Grey.",
     )
     stroke_color: Color = Field(
-        default=Color(r=0.0, g=0.0, b=0.0),
+        default=Color((0.0, 0.0, 0.0)),
         description="Color for the stroke (hex string). Black.",
     )
     stroke_width: float = Field(

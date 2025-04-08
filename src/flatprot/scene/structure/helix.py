@@ -96,7 +96,7 @@ class HelixStyle(BaseStructureStyle):
 
     # Override inherited defaults
     color: Color = Field(
-        default=Color("#FF0000"), description="Default color for helix (red)."
+        default=Color((1.0, 0.0, 0.0)), description="Default color for helix (red)."
     )
     stroke_width: float = Field(
         default=3.0, description="Reference width for calculating helix dimensions."

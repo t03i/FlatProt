@@ -6,6 +6,7 @@ from typing import Generic, TypeVar, Optional, List, Tuple
 
 import numpy as np
 from pydantic import Field
+from pydantic_extra_types.color import Color
 
 from flatprot.core.coordinates import ResidueRangeSet, ResidueCoordinate, ResidueRange
 from flatprot.core.structure import Structure
@@ -20,8 +21,8 @@ AnnotationStyleType = TypeVar("AnnotationStyleType", bound="BaseAnnotationStyle"
 class BaseAnnotationStyle(BaseSceneStyle):
     """Base style for annotation elements."""
 
-    color: str = Field(
-        default="#FF0000",
+    color: Color = Field(
+        default=Color((1.0, 0.0, 0.0)),
         description="Default color for the annotation (hex string). Red.",
     )
     offset: Tuple[float, float] = Field(
@@ -32,8 +33,8 @@ class BaseAnnotationStyle(BaseSceneStyle):
         default=(0.0, 0.0),
         description="2D offset (x, y) from the label anchor point in canvas units.",
     )
-    label_color: str = Field(
-        default="#000000",
+    label_color: Color = Field(
+        default=Color((0.0, 0.0, 0.0)),
         description="Default color for the label (hex string). Black.",
     )
     label_font_size: float = Field(

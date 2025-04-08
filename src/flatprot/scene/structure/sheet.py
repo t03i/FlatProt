@@ -25,7 +25,7 @@ class SheetStyle(BaseStructureStyle):
 
     # Override inherited defaults
     color: Color = Field(
-        default=Color("#FFFF00"), description="Default color for sheet (yellow)."
+        default=Color((0.0, 0.0, 1.0)), description="Default color for sheet (blue)."
     )
     stroke_width: float = Field(
         default=3.0, description="Base width of the sheet arrow."

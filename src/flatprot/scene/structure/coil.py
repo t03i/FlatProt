@@ -51,7 +51,7 @@ class CoilStyle(BaseStructureStyle):
 
     # Override inherited defaults
     color: Color = Field(
-        default=Color(r=0.8, g=0.8, b=0.8),
+        default=Color((0.8, 0.8, 0.8)),
         description="Default color for coil (light grey).",
     )
     stroke_width: float = Field(default=2.0, description="Line width for coil.")
