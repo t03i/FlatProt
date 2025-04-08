@@ -11,7 +11,7 @@ from typing import Generator, Any
 import pytest
 from pytest_mock import MockerFixture
 
-from flatprot.cli.commands import project_structure_svg, print_success_summary
+from flatprot.cli.align import project_structure_svg, print_success_summary
 from flatprot.core.error import FlatProtError
 
 

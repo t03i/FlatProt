@@ -15,7 +15,7 @@ import requests
 import polars as pl
 import tempfile
 
-from flatprot.cli.commands import align_structure_rotation, project_structure_svg
+from flatprot.cli.align import align_structure_rotation, project_structure_svg
 from flatprot.core.error import FlatProtError
 
 
