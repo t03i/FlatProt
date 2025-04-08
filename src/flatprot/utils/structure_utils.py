@@ -7,13 +7,13 @@ from pathlib import Path
 from typing import Optional, Callable
 import numpy as np
 
-from flatprot.core import Structure
+from flatprot.core import Structure, logger
 
 # Assuming ResidueType might be needed indirectly via InertiaTransformationParameters defaults
 from flatprot.io import MatrixLoader
 
 # Assuming these specific error types exist in flatprot.io.errors
-from flatprot.io.errors import MatrixFileNotFoundError, MatrixFileError
+from flatprot.io import MatrixFileNotFoundError, MatrixFileError
 from flatprot.projection import (
     OrthographicProjection,
     OrthographicProjectionParameters,
@@ -27,10 +27,6 @@ from flatprot.transformation import (
     TransformationMatrix,
     TransformationError,  # Assuming this specific error type exists
 )
-
-
-# Assuming logger is appropriately configured in flatprot.utils
-from ..core.logger import logger
 
 
 def _load_transformation_matrix(

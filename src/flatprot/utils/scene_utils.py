@@ -136,7 +136,7 @@ def create_scene_from_structure(
     return scene
 
 
-def process_annotations(annotations_path: Path, scene: Scene) -> None:
+def add_annotations_to_scene(annotations_path: Path, scene: Scene) -> None:
     """Process and add annotations to the scene.
 
     Args:
