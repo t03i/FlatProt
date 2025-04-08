@@ -1,51 +1,245 @@
-# Copyright 2024 Tobias Olenyi.
+# Copyright 2025 Tobias Olenyi.
 # SPDX-License-Identifier: Apache-2.0
 
+from typing import Optional, Dict, Any
+
 import numpy as np
+from pydantic import Field
+from pydantic_extra_types.color import Color
 
-from .base import StructureSceneElement
+from flatprot.core import ResidueRangeSet, ResidueCoordinate, Structure
+from ..base_element import SceneGroupType
+from .base_structure import (
+    BaseStructureSceneElement,
+    BaseStructureStyle,
+)
+from ..errors import CoordinateCalculationError
 
 
-class SheetElement(StructureSceneElement):
-    """A beta sheet element visualization using a simple triangular arrow"""
+# --- Sheet Specific Style ---
+class SheetStyle(BaseStructureStyle):
+    """Style properties specific to Sheet elements.
 
-    def calculate_display_coordinates(self) -> np.ndarray:
-        start_point = self._coordinates[0]
-        end_point = self._coordinates[-1]
+    Defines properties for rendering beta sheets as triangular arrows.
+    """
 
-        direction = (end_point - start_point) / np.linalg.norm(end_point - start_point)
-        length = np.linalg.norm(start_point - end_point)
+    # Override inherited defaults
+    color: Color = Field(
+        default=Color("#FFFF00"), description="Default color for sheet (yellow)."
+    )
+    stroke_width: float = Field(
+        default=3.0, description="Base width of the sheet arrow."
+    )
 
-        if (
-            np.isclose(length, 0)
-            or len(self._coordinates) <= self.style.min_sheet_length
-        ):
-            return np.array([start_point, end_point])
+    # Sheet-specific attributes
+    arrow_width_factor: float = Field(
+        default=1.5,
+        description="Factor to multiply linewidth by for the arrowhead base width.",
+    )
+    min_sheet_length: int = Field(
+        default=3,
+        ge=1,
+        description="Minimum number of residues required to draw an arrow shape instead of a line.",
+    )
 
-        perp = np.array([-direction[1], direction[0]])
-        arrow_width = self.style.line_width * self.style.arrow_width_factor
 
-        left_point = start_point + perp * (arrow_width / 2)
-        right_point = start_point - perp * (arrow_width / 2)
+# --- Sheet Scene Element ---
+class SheetSceneElement(BaseStructureSceneElement[SheetStyle]):
+    """Represents a Beta Sheet segment, visualized as a triangular arrow."""
 
-        return np.array([left_point, right_point, end_point])
+    def __init__(
+        self,
+        residue_range_set: ResidueRangeSet,
+        style: Optional[SheetStyle] = None,
+        metadata: Optional[Dict[str, Any]] = None,
+        parent: Optional[SceneGroupType] = None,
+    ):
+        """Initializes the SheetSceneElement."""
+        super().__init__(residue_range_set, style, metadata, parent)
+        # Cache for the calculated arrow coordinates and original length
+        self._cached_display_coords: Optional[np.ndarray] = None
+        self._original_coords_len: Optional[int] = None
 
-    def calculate_display_coordinates_at_resiude(self, residue_idx: int) -> np.ndarray:
-        """Returns the display coordinates for a specific position along the sheet.
+    @property
+    def default_style(self) -> SheetStyle:
+        """Provides the default style for Sheet elements."""
+        return SheetStyle()
+
+    def _get_original_coords_slice(self, structure: Structure) -> Optional[np.ndarray]:
+        """Helper to extract the original coordinate slice for this sheet."""
+        coords_list = []
+        if not self.residue_range_set.ranges:
+            raise CoordinateCalculationError(
+                f"Cannot get coordinates for Sheet '{self.id}': no residue ranges defined."
+            )
+        sheet_range = self.residue_range_set.ranges[0]
+
+        try:
+            chain = structure.get_chain(sheet_range.chain_id)
+            for res_idx in range(sheet_range.start, sheet_range.end + 1):
+                if res_idx in chain:
+                    coord_idx = chain.coordinate_index(res_idx)
+                    if 0 <= coord_idx < len(structure.coordinates):
+                        coords_list.append(structure.coordinates[coord_idx])
+                    else:
+                        raise CoordinateCalculationError(
+                            f"Sheet '{self.id}': Coordinate index {coord_idx} out of bounds for residue {sheet_range.chain_id}:{res_idx}."
+                        )
+                else:
+                    raise CoordinateCalculationError(
+                        f"Sheet '{self.id}': Residue {sheet_range.chain_id}:{res_idx} not found in chain coordinate map."
+                    )
+        except (KeyError, IndexError, AttributeError) as e:
+            raise CoordinateCalculationError(
+                f"Error fetching coordinates for sheet '{self.id}': {e}"
+            ) from e
+
+        return np.array(coords_list) if coords_list else None
+
+    def get_coordinates(self, structure: Structure) -> Optional[np.ndarray]:
+        """Retrieve the 2D + Depth coordinates for the sheet arrow.
+
+        Calculates the three points (arrow base left, base right, tip) based
+        on the start and end points of the pre-projected coordinate slice.
+        Handles minimum length requirement.
 
         Args:
-            position: Integer index of the position along the sheet
+            structure: The core Structure object containing pre-projected data.
 
         Returns:
-            np.ndarray: Array of coordinates for the triangular arrow at the given position
+            A NumPy array of the arrow coordinates (shape [3, 3] or [2, 3])
+            containing [X, Y, Depth] for each point.
         """
-        if len(self._display_coordinates) == 2 and residue_idx <= 1:
-            return self._display_coordinates[residue_idx]
+        if self._cached_display_coords is not None:
+            return self._cached_display_coords
 
-        end_point = self._display_coordinates[-1]
-        midpoint = (self._display_coordinates[0] + self._display_coordinates[1]) / 2
+        original_coords = self._get_original_coords_slice(structure)
+        if original_coords is None or len(original_coords) == 0:
+            self._cached_display_coords = None
+            self._original_coords_len = 0
+            return None
 
-        direction = (end_point - midpoint) / np.linalg.norm(end_point - midpoint)
-        segment_length = np.linalg.norm(end_point - midpoint) / len(self._coordinates)
+        self._original_coords_len = len(original_coords)
 
-        return midpoint + direction * residue_idx * segment_length
+        # If only one point, cannot draw line or arrow
+        if self._original_coords_len == 1:
+            self._cached_display_coords = np.array(
+                [original_coords[0]]
+            )  # Return the single point
+            return self._cached_display_coords
+
+        # Use only X, Y for shape calculation, keep Z (depth)
+        start_point_xy = original_coords[0, :2]
+        end_point_xy = original_coords[-1, :2]
+
+        # Use average depth of start/end for the base, end depth for tip
+        start_depth = original_coords[0, 2]
+        end_depth = original_coords[-1, 2]
+        avg_base_depth = (start_depth + end_depth) / 2.0
+
+        direction = end_point_xy - start_point_xy
+        length = np.linalg.norm(direction)
+
+        # If too short or degenerate, return a simple line (start and end points)
+        if length < 1e-6 or self._original_coords_len < self.style.min_sheet_length:
+            # Return original start and end points (X, Y, Depth)
+            self._cached_display_coords = np.array(
+                [original_coords[0], original_coords[-1]]
+            )
+            return self._cached_display_coords
+
+        # Normalize direction vector (only need X, Y)
+        direction /= length
+
+        # Calculate perpendicular vector in 2D
+        perp = np.array([-direction[1], direction[0]])
+        arrow_base_half_width = (
+            self.style.stroke_width * self.style.arrow_width_factor
+        ) / 2.0
+
+        # Calculate arrow base points (X, Y)
+        left_point_xy = start_point_xy + perp * arrow_base_half_width
+        right_point_xy = start_point_xy - perp * arrow_base_half_width
+
+        # Combine XY with Depth
+        left_point = np.append(left_point_xy, avg_base_depth)
+        right_point = np.append(right_point_xy, avg_base_depth)
+        tip_point = np.append(end_point_xy, end_depth)  # Tip uses depth of last residue
+
+        self._cached_display_coords = np.array([left_point, right_point, tip_point])
+        return self._cached_display_coords
+
+    def get_2d_coordinate_at_residue(
+        self, residue: ResidueCoordinate, structure: Structure
+    ) -> Optional[np.ndarray]:
+        """Retrieves the specific 2D coordinate + Depth corresponding to a residue
+        along the central axis of the sheet arrow representation.
+
+        Interpolates along the axis from the base midpoint to the tip, or along
+        the line if the arrow shape is not drawn.
+
+        Args:
+            residue: The residue coordinate (chain and index) to find the point for.
+            structure: The core Structure object containing pre-projected data.
+
+        Returns:
+            A NumPy array [X, Y, Depth] interpolated along the sheet axis.
+        """
+        # 1. Ensure display coordinates are calculated and length is known
+        display_coords = self.get_coordinates(structure)
+        if (
+            display_coords is None
+            or self._original_coords_len is None
+            or self._original_coords_len == 0
+        ):
+            return None
+
+        # 2. Check if residue is within the element's range
+        if residue not in self.residue_range_set:
+            return None
+        # Assuming single continuous range for sheet element representation
+        element_range = self.residue_range_set.ranges[0]
+        if residue.chain_id != element_range.chain_id:
+            return None
+
+        # 3. Calculate the 0-based index within the original sequence length
+        try:
+            original_sequence_index = residue.residue_index - element_range.start
+            # Validate index against the original length before simplification/arrow calc
+            if not (0 <= original_sequence_index < self._original_coords_len):
+                raise CoordinateCalculationError(
+                    f"Residue index {original_sequence_index} derived from {residue} is out of original bounds [0, {self._original_coords_len}) for element {self.id}."
+                )
+        except Exception as e:
+            raise CoordinateCalculationError(
+                f"Error calculating original sequence index for {residue} in element {self.id}: {e}"
+            ) from e
+
+        # Handle single point case
+        if self._original_coords_len == 1:
+            return display_coords[
+                0
+            ]  # Return the single point calculated by get_coordinates
+
+        # 4. Handle the case where a line was drawn (display_coords has 2 points)
+        if len(display_coords) == 2:
+            # Simple linear interpolation between the start and end points of the line
+            frac = original_sequence_index / (self._original_coords_len - 1)
+            interpolated_coord = (
+                display_coords[0] * (1 - frac) + display_coords[1] * frac
+            )
+            return interpolated_coord
+
+        # 5. Interpolate along the arrow axis (base midpoint to tip)
+        # display_coords has shape [3, 3]: [left_base, right_base, tip]
+        base_midpoint = (display_coords[0] + display_coords[1]) / 2.0
+        tip_point = display_coords[2]
+
+        # Calculate fraction along the length (0 = base midpoint, 1 = tip)
+        # Based on position within the *original* sequence length
+        frac = original_sequence_index / (self._original_coords_len - 1)
+
+        # Linear interpolation between base midpoint and tip point
+        interpolated_coord = base_midpoint * (1 - frac) + tip_point * frac
+
+        return interpolated_coord

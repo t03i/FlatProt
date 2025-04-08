@@ -2,7 +2,8 @@
 # SPDX-License-Identifier: Apache-2.0
 
 from .scene import Scene
-from .elements import SceneGroup, SceneElement
+from .base_element import BaseSceneElement, BaseSceneStyle
+from .group import SceneGroup
 from .structure import (
     HelixElement,
     SheetElement,
@@ -21,7 +22,8 @@ from .annotations import (
 __all__ = [
     "Scene",
     "SceneGroup",
-    "SceneElement",
+    "BaseSceneElement",
+    "BaseSceneStyle",
     "HelixElement",
     "SheetElement",
     "CoilElement",

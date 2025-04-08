@@ -18,6 +18,7 @@ from .structure import (
     Structure,
 )
 
+from .logger import logger
 
 __all__ = [
     "FlatProtError",
@@ -29,4 +30,5 @@ __all__ = [
     "SecondaryStructureType",
     "Chain",
     "Structure",
+    "logger",
 ]

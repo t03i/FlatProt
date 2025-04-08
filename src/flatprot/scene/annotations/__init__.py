@@ -5,12 +5,12 @@
 from .point import PointAnnotation
 from .line import LineAnnotation
 from .area import AreaAnnotation
-from .base import Annotation, GroupAnnotation
+from .base_annotation import BaseAnnotationStyle, BaseAnnotationElement
 
 __all__ = [
     "PointAnnotation",
     "LineAnnotation",
     "AreaAnnotation",
-    "Annotation",
-    "GroupAnnotation",
+    "BaseAnnotationStyle",
+    "BaseAnnotationElement",
 ]

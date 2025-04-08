@@ -14,7 +14,7 @@ from flatprot.scene.structure import secondary_structure_to_scene_element
 from flatprot.io import AnnotationParser
 from flatprot.core import ResidueRange, CoordinateError
 
-from .logger import logger
+from ..core.logger import logger
 
 
 def process_structure_chain(

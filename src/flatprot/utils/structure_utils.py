@@ -30,7 +30,7 @@ from flatprot.transformation import (
 
 
 # Assuming logger is appropriately configured in flatprot.utils
-from .logger import logger
+from ..core.logger import logger
 
 
 def _load_transformation_matrix(

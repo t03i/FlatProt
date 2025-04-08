@@ -10,7 +10,7 @@ from typing import Optional
 import httpx
 import asyncio
 
-from .logger import logger
+from ..core.logger import logger
 
 # Default database settings
 DEFAULT_DB_URL = "https://flatprot.org/databases/alignment_db.tar.gz"

@@ -1,16 +1,12 @@
-# Copyright 2024 Rostlab.
+# Copyright 2025 Tobias Olenyi.
 # SPDX-License-Identifier: Apache-2.0
 
-"""Logging utilities for FlatProt."""
-
-import logging
 from typing import Optional
+import logging
 
 from rich.console import Console
 from rich.logging import RichHandler
 from rich.theme import Theme
-
-from flatprot import __app_name__
 
 
 # Create a theme for consistent styling
@@ -22,20 +18,6 @@ RICH_THEME = Theme(
         "debug": "blue",
     }
 )
-
-
-def getLogger(name: str = __app_name__) -> logging.Logger:
-    """Get a configured logger with the given name.
-
-    Args:
-        name: Logger name (defaults to "flatprot")
-
-    Returns:
-        Configured logging.Logger instance
-    """
-    # Get the logger
-    logger = logging.getLogger(name)
-    return logger
 
 
 def setup_logging(
@@ -116,7 +98,3 @@ def setup_logging(
     # Set the formatter on the Rich handler
     formatter = LevelAwareFormatter("%(message)s", datefmt="%Y-%m-%d %H:%M:%S")
     rich_handler.setFormatter(formatter)
-
-
-# Create the default logger instance
-logger = getLogger()

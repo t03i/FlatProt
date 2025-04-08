@@ -15,7 +15,7 @@ from flatprot.style import StyleManager
 
 from .scene import process_structure_chain, process_annotations
 
-from .logger import logger
+from ..core.logger import logger
 
 
 def generate_svg(
