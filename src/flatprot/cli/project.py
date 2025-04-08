@@ -124,7 +124,7 @@ def project_structure_svg(
 
         styles_dict = None
         if style is not None:
-            styles_dict = StyleParser().parse_style(style)
+            styles_dict = StyleParser(style).parse()
 
         scene = create_scene_from_structure(structure_obj, styles_dict)
 

@@ -1,17 +1,20 @@
 # Copyright 2025 Tobias Olenyi.
 # SPDX-License-Identifier: Apache-2.0
 
-from typing import Dict, Optional, Type, Tuple
+from typing import Dict, Optional, Type, Tuple, List
 from pathlib import Path
 
 from flatprot.core import (
     Structure,
     ResidueRange,
+    ResidueRangeSet,
     SecondaryStructureType,
     logger,
 )
 from flatprot.scene import Scene, SceneGroup
 from flatprot.scene import CoordinateCalculationError, SceneCreationError
+
+# Import specific annotation types
 from flatprot.scene import (
     BaseStructureSceneElement,
     BaseStructureStyle,
@@ -21,9 +24,16 @@ from flatprot.scene import (
     HelixStyle,
     SheetStyle,
     CoilStyle,
+    BaseAnnotationElement,  # Import base for type hinting
 )
 
-from flatprot.io import AnnotationParser
+# Import the refactored AnnotationParser and its errors
+from flatprot.io import (
+    AnnotationParser,
+    AnnotationError,
+    AnnotationFileNotFoundError,
+    MalformedAnnotationError,
+)
 
 # Mapping from SS type enum to the corresponding SceneElement class and default style class
 STRUCTURE_ELEMENT_MAP: Dict[
@@ -87,9 +97,12 @@ def create_scene_from_structure(
                 continue
 
             ElementClass, DefaultStyleClass = element_info
-            ss_range_set = ResidueRange(
-                chain_id=chain_id, start=ss_element.start, end=ss_element.end
-            ).to_set()
+            # Ensure ss_element start/end are valid ints
+            start_idx = int(ss_element.start)
+            end_idx = int(ss_element.end)
+            ss_range_set = ResidueRangeSet(
+                [ResidueRange(chain_id=chain_id, start=start_idx, end=end_idx)]
+            )
 
             # Determine the style: Use provided default or element's default
             element_type_key = ss_type.value.lower()
@@ -137,25 +150,51 @@ def create_scene_from_structure(
 
 
 def add_annotations_to_scene(annotations_path: Path, scene: Scene) -> None:
-    """Process and add annotations to the scene.
+    """Parses annotations from a file and adds them to the scene.
 
     Args:
-        annotations_path: Path to annotations file
-        scene: The scene to add annotations to
-        style_manager: Style manager for styling annotations
+        annotations_path: Path to the TOML annotations file.
+        scene: The Scene object to add annotations to.
+
+    Raises:
+        AnnotationFileNotFoundError: If the annotation file is not found.
+        MalformedAnnotationError: If the annotation file has invalid content or format.
+        AnnotationError: For other annotation parsing related errors.
+        SceneCreationError: If adding an element to the scene fails (e.g., duplicate ID).
     """
     try:
-        annotation_parser = AnnotationParser(
-            file_path=annotations_path,
-            scene=scene,
-        )
-        annotations = annotation_parser.parse()
+        # Instantiate the parser with just the file path
+        parser = AnnotationParser(annotations_path)
+        # Parse the file to get fully initialized annotation objects
+        annotation_objects: List[BaseAnnotationElement] = parser.parse()
 
-        logger.info(f"Loaded {len(annotations)} annotations from {annotations_path}")
-        for annotation in annotations:
+        logger.info(
+            f"Loaded {len(annotation_objects)} annotations from {annotations_path}"
+        )
+
+        for annotation in annotation_objects:
             logger.debug(
-                f"\t> {annotation.label} ({annotation.__class__.__name__}) to scene"
+                f"\t> Adding annotation '{annotation.id}' ({annotation.__class__.__name__}) to scene"
             )
-            scene.add_element(annotation)
+            try:
+                scene.add_element(annotation)
+            except Exception as e:
+                logger.error(
+                    f"Failed to add annotation '{annotation.id}' to scene: {e}"
+                )
+                raise SceneCreationError(
+                    f"Failed to add annotation '{annotation.id}' to scene: {e}"
+                ) from e
+
+    except (
+        AnnotationFileNotFoundError,
+        MalformedAnnotationError,
+        AnnotationError,
+    ) as e:
+        logger.error(f"Failed to parse annotations from {annotations_path}: {e}")
+        # Re-raise parser errors as they indicate a problem with the input file
+        raise
     except Exception as e:
-        logger.error(f"Failed to load annotations: {str(e)}")
+        logger.error(f"An unexpected error occurred while adding annotations: {str(e)}")
+        # Re-raise unexpected errors
+        raise
