@@ -59,7 +59,7 @@ def _draw_point_annotation(
     marker = Circle(
         cx=center_x,
         cy=center_y,
-        r=style.point_radius,
+        r=style.marker_radius,
         fill=style.color.as_hex(),
         opacity=style.opacity,
         class_="annotation point-marker",
@@ -69,7 +69,7 @@ def _draw_point_annotation(
 
     # Use the helper function if label exists
     if annotation.label:
-        label_x = center_x + style.point_radius + style.label_offset[0]
+        label_x = center_x + style.marker_radius + style.label_offset[0]
         label_y = center_y + style.label_offset[1]
         label_element = _create_annotation_label(
             annotation, label_x, label_y, text_anchor="start"
