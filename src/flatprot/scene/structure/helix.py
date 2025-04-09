@@ -51,7 +51,8 @@ def calculate_zigzag_points(
     if length < 1e-6:  # Handle zero-length case
         return None  # Cannot draw zigzag
 
-    direction_xy /= length
+    # Ensure direction_xy is float before division or avoid in-place
+    direction_xy = direction_xy / length
     perpendicular_xy = np.array([-direction_xy[1], direction_xy[0]])
 
     num_cycles = max(1, int(length / wavelength))
