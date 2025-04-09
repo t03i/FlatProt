@@ -3,8 +3,11 @@
 
 from dataclasses import dataclass
 from typing import List, Iterator, Optional
+import re
 
 from .types import ResidueType, SecondaryStructureType
+
+_RESIDUE_COORD_PATTERN = re.compile(r"^([^:]+):(\d+)$")
 
 
 @dataclass(frozen=True)
@@ -16,18 +19,34 @@ class ResidueCoordinate:
 
     @staticmethod
     def from_string(string: str) -> "ResidueCoordinate":
-        chain_name, residue_index = string.split(":")
-        return ResidueCoordinate(chain_name, int(residue_index))
+        """Parse 'CHAIN:INDEX' format (e.g., 'A:123').
+
+        Args:
+            string: The string representation to parse.
+
+        Returns:
+            A ResidueCoordinate instance.
+
+        Raises:
+            ValueError: If the string format is invalid.
+        """
+        match = _RESIDUE_COORD_PATTERN.match(string)
+        if not match:
+            raise ValueError(
+                f"Invalid ResidueCoordinate format: '{string}'. Expected 'CHAIN:INDEX'."
+            )
+        chain_name, residue_index_str = match.groups()
+        return ResidueCoordinate(chain_name, int(residue_index_str))
 
     def __str__(self) -> str:
         if self.residue_type:
-            return f"{self.chain_id}:{self.residue_index} ({self.residue_type})"
+            return f"{self.chain_id}:{self.residue_index} ({self.residue_type.name})"
         else:
             return f"{self.chain_id}:{self.residue_index}"
 
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, ResidueCoordinate):
-            return False
+            raise TypeError(f"Cannot compare ResidueCoordinate with {type(other)}")
         return (
             self.chain_id == other.chain_id
             and self.residue_index == other.residue_index
@@ -35,11 +54,14 @@ class ResidueCoordinate:
 
     def __lt__(self, other: object) -> bool:
         if not isinstance(other, ResidueCoordinate):
-            return False
+            raise TypeError(f"Cannot compare ResidueCoordinate with {type(other)}")
 
         if self.chain_id != other.chain_id:
             return self.chain_id < other.chain_id
         return self.residue_index < other.residue_index
+
+
+_RESIDUE_RANGE_PATTERN = re.compile(r"^([^:]+):(\d+)-(\d+)$")
 
 
 @dataclass(frozen=True)
@@ -70,16 +92,30 @@ class ResidueRange:
 
     @staticmethod
     def from_string(string: str) -> "ResidueRange":
-        """Parse 'A:14-20' format."""
-        chain, range_part = string.split(":")
-        start, end = map(int, range_part.split("-"))
+        """Parse 'CHAIN:START-END' format (e.g., 'A:14-20').
+
+        Args:
+            string: The string representation to parse.
+
+        Returns:
+            A ResidueRange instance.
+
+        Raises:
+            ValueError: If the string format is invalid or start > end.
+        """
+        match = _RESIDUE_RANGE_PATTERN.match(string)
+        if not match:
+            raise ValueError(
+                f"Invalid ResidueRange format: '{string}'. Expected 'CHAIN:START-END'."
+            )
+        chain, start_str, end_str = match.groups()
+        start, end = int(start_str), int(end_str)
+        # The __post_init__ check for start > end will still run
         return ResidueRange(chain, start, end)
 
     def __str__(self) -> str:
         if self.secondary_structure:
-            return (
-                f"{self.chain_id}:{self.start}-{self.end} ({self.secondary_structure})"
-            )
+            return f"{self.chain_id}:{self.start}-{self.end} ({self.secondary_structure.name})"
         else:
             return f"{self.chain_id}:{self.start}-{self.end}"
 
@@ -94,6 +130,9 @@ class ResidueRange:
         Returns:
             bool: True if this range should come before the other
         """
+        if not isinstance(other, ResidueRange):
+            raise TypeError(f"Cannot compare ResidueRange with {type(other)}")
+
         if self.chain_id != other.chain_id:
             return self.chain_id < other.chain_id
         return self.start < other.start
@@ -108,7 +147,8 @@ class ResidueRange:
             bool: True if the ranges are equal
         """
         if not isinstance(other, ResidueRange):
-            return False
+            raise TypeError(f"Cannot compare ResidueRange with {type(other)}")
+
         return (
             self.chain_id == other.chain_id
             and self.start == other.start
@@ -141,13 +181,53 @@ class ResidueRangeSet:
     """Represents multiple ranges of residues, potentially across different chains."""
 
     def __init__(self, ranges: List[ResidueRange]):
+        # Sort ranges for consistent representation and efficient searching
         self.ranges = sorted(ranges, key=lambda r: (r.chain_id, r.start))
 
     @staticmethod
     def from_string(string: str) -> "ResidueRangeSet":
-        """Parse 'A:14-20,B:10-15' format."""
+        """Parse 'A:14-20, B:10-15' format.
+
+        Ranges are separated by commas. Whitespace around ranges and commas
+        is ignored.
+
+        Args:
+            string: The string representation to parse.
+
+        Returns:
+            A ResidueRangeSet instance.
+
+        Raises:
+            ValueError: If the string is empty, contains empty parts after
+                      splitting by comma, or if any individual range
+                      part is invalid according to ResidueRange.from_string.
+        """
+        if not string:
+            raise ValueError("Input string for ResidueRangeSet cannot be empty.")
+
         parts = string.split(",")
-        ranges = [ResidueRange.from_string(part.strip()) for part in parts]
+        ranges = []
+        for part in parts:
+            stripped_part = part.strip()
+            if not stripped_part:
+                # Handle cases like "A:1-5,,B:6-10" or leading/trailing commas
+                raise ValueError(
+                    f"Empty range part found in string: '{string}' after splitting by comma."
+                )
+            try:
+                # Leverage ResidueRange's parsing and validation
+                ranges.append(ResidueRange.from_string(stripped_part))
+            except ValueError as e:
+                # Re-raise with context about which part failed
+                raise ValueError(
+                    f"Error parsing range part '{stripped_part}' in '{string}': {e}"
+                ) from e
+
+        if not ranges:
+            # This case might be redundant if empty string/parts are caught above,
+            # but kept for robustness, e.g., if string only contains commas/whitespace.
+            raise ValueError(f"No valid residue ranges found in string: '{string}'.")
+
         return ResidueRangeSet(ranges)
 
     def __iter__(self) -> Iterator[ResidueCoordinate]:

@@ -53,7 +53,8 @@ class Chain:
     @property
     def residues(self) -> list[ResidueType]:
         return [
-            self.__chain_coordinates[idx].residue for idx in self.__chain_coordinates
+            self.__chain_coordinates[idx].residue_type
+            for idx in self.__chain_coordinates
         ]
 
     def _check_range_contiguous(
@@ -83,26 +84,28 @@ class Chain:
     def add_secondary_structure(
         self,
         type: SecondaryStructureType,
-        residue_start: ResidueCoordinate,
-        residue_end: ResidueCoordinate,
+        residue_start: int,
+        residue_end: int,
     ) -> None:
-        if not self._check_range_contiguous(
-            self.__chain_coordinates[residue_start],
-            self.__chain_coordinates[residue_end],
-        ):
+        start_coord = self.__chain_coordinates.get(residue_start, None)
+        end_coord = self.__chain_coordinates.get(residue_end, None)
+
+        if start_coord is None or end_coord is None:
+            raise ValueError(
+                f"Residue {residue_start} or {residue_end} not found in chain {self.id}"
+            )
+
+        if not self._check_range_contiguous(start_coord, end_coord):
             raise ValueError(
                 f"Residue range {residue_start} to {residue_end} is not contiguous"
             )
 
-        contig_start = self.__chain_coordinates[
-            residue_start.residue_index
-        ].coordinate_index
         self.__secondary_structure.append(
             ResidueRange(
                 self.id,
-                residue_start.residue_index,
-                residue_end.residue_index,
-                contig_start,
+                residue_start,
+                residue_end,
+                start_coord.coordinate_index,
                 type,
             )
         )
@@ -131,7 +134,7 @@ class Chain:
             # Only consider residues actually present in the chain for this element
             for idx in range(ss_element.start, ss_element.end + 1):
                 if idx in self.__chain_coordinates:
-                    defined_ss_map[idx] = ss_element.type
+                    defined_ss_map[idx] = ss_element.secondary_structure
 
         complete_ss: List[ResidueRange] = []
         segment_start_idx = residue_indices[0]
