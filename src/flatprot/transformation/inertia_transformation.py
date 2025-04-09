@@ -110,8 +110,7 @@ class InertiaTransformer(
     """Transforms using inertia-based calculation with residue weights."""
 
     def __init__(self, parameters: InertiaTransformationParameters):
-        super().__init__()
-        self.parameters = parameters
+        super().__init__(parameters=parameters)
 
     def _calculate_transformation_matrix(
         self,

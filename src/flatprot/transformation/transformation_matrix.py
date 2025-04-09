@@ -77,7 +77,7 @@ class TransformationMatrix:
         assert coordinates.shape[1] == 3, "Coordinates must have shape (N, 3)"
 
         # First center by subtracting translation
-        rotated = (self.rotation @ coordinates.T).T
-        transformed = rotated + self.translation
+        centered = coordinates - self.translation
         # Then apply rotation
-        return transformed
+        rotated = (self.rotation @ centered.T).T
+        return rotated
