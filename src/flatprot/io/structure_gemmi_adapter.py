@@ -66,7 +66,7 @@ class GemmiStructureParser(StructureParser):
         assert len(residue_indices) == len(coordinates)
         assert len(residue_indices) == len(residue_names)
         return {
-            "index": np.array(residue_indices, dtype=np.int32),
+            "index": residue_indices,
             "residues": residue_names,
             "coordinates": np.array(coordinates, dtype=np.float32),
         }

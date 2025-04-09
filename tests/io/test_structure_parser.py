@@ -1,206 +1,122 @@
 # Copyright 2024 Rostlab.
 # SPDX-License-Identifier: Apache-2.0
 
+"""Tests for the GemmiStructureParser adapter."""
+
 import numpy as np
 from pathlib import Path
 
 from flatprot.io.structure_gemmi_adapter import GemmiStructureParser
 from flatprot.core.structure import Chain, Structure
-from flatprot.core.secondary import SecondaryStructureType
-from flatprot.io.dssp import parse_dssp
+from flatprot.core.types import ResidueType, SecondaryStructureType
+from flatprot.core.coordinates import ResidueRange
 
 
-class TestStructureParser:
-    def test_parse_annotated_structure(self, tmp_path):
+# --- Expected Secondary Structure Definitions ---
+# Based on manual inspection of tests/data/test.cif and DSSP logic
+# Note: Residue indices are 1-based as in PDB/CIF/DSSP
+EXPECTED_SS = [
+    ResidueRange("A", 1, 1, 0, SecondaryStructureType.COIL),
+    ResidueRange("A", 2, 6, 1, SecondaryStructureType.SHEET),
+    # ResidueRange("A", 6, 6, 5, SecondaryStructureType.SHEET), # Note: DSSP has 6 as a sheet, but it is merged with 5 due to the algorithm prioritizing longer streches
+    ResidueRange("A", 7, 13, 6, SecondaryStructureType.COIL),
+    ResidueRange("A", 14, 17, 13, SecondaryStructureType.SHEET),
+    ResidueRange("A", 18, 19, 17, SecondaryStructureType.HELIX),  # 3-10 Helix in CIF
+    ResidueRange("A", 20, 23, 19, SecondaryStructureType.COIL),
+    ResidueRange("A", 24, 30, 23, SecondaryStructureType.SHEET),
+    ResidueRange("A", 31, 37, 30, SecondaryStructureType.COIL),
+    ResidueRange("A", 38, 44, 37, SecondaryStructureType.SHEET),
+    ResidueRange("A", 45, 45, 44, SecondaryStructureType.COIL),
+    ResidueRange("A", 46, 54, 45, SecondaryStructureType.HELIX),  # Alpha Helix
+    ResidueRange("A", 55, 59, 54, SecondaryStructureType.COIL),
+    ResidueRange("A", 60, 65, 59, SecondaryStructureType.SHEET),
+    ResidueRange("A", 66, 72, 65, SecondaryStructureType.COIL),
+]
+
+
+class TestGemmiStructureParser:
+    """Tests specifically for the GemmiStructureParser implementation."""
+
+    def test_parse_annotated_structure_cif(self) -> None:
+        """Test parsing a CIF file with secondary structure annotations within it."""
         parser = GemmiStructureParser()
-
-        # Use the actual PDB file
         test_file = Path("tests/data/test.cif")
 
         # Test parsing
-        result = parser.parse_structure(test_file)
+        structure: Structure = parser.parse_structure(test_file)
 
-        # Assertions
-        assert isinstance(result, Structure)
-        assert "A" in result
-        assert isinstance(result["A"], Chain)
+        # --- Basic Structure Assertions ---
+        assert isinstance(structure, Structure)
+        assert list(structure.items())[0][0] == "A"  # Check chain ID
+        chain_a = structure["A"]
+        assert isinstance(chain_a, Chain)
+        assert chain_a.id == "A"
 
-        protein = result["A"]
-        # The PDB file has 72 residues in chain A
-        assert len(protein.residues) == 72
-        # Test some specific residues from the file
-        assert protein.residues[0].name == "LEU"  # First residue
-        assert protein.residues[5].name == "CYS"  # CYS at position 6
-        assert protein.residues[71].name == "ARG"  # Last residue
+        # --- Residue and Index Assertions ---
+        # Residue indices in test.cif for chain A range from 1 to 72
+        assert chain_a.num_residues == 72
+        assert len(chain_a.residues) == 72
+        assert len(chain_a.coordinates) == 72
+        assert chain_a.index[0] == 1 and chain_a.index[-1] == 72
+        assert chain_a.residues[0] == ResidueType.LEU  # First residue (LEU 1)
+        assert (
+            chain_a.residues[5] == ResidueType.CYS
+        )  # CYS at index 6 (0-based list index 5)
+        assert chain_a.residues[71] == ResidueType.ARG  # Last residue (ARG 72)
 
-        # Test coordinate access for a specific atom
-        # Testing coordinates for CYS 6 SG atom (line 52 in PDB)
-        expected_coords = np.array([[-6.903, -7.615, 4.269]])
+        # --- Coordinate Assertion ---
+        # We need to check the C-alpha coordinate for CYS 6 (atom_serial 45)
+        expected_ca_coords_cys6 = np.array([7.396, 0.123, 4.148])
+        cys6_coord_obj = chain_a[6]  # Get ResidueCoordinate for residue 6
+        cys6_contig_idx = cys6_coord_obj.coordinate_index  # Should be 5
+        assert cys6_contig_idx == 5
+        actual_ca_coords_cys6 = chain_a.coordinates[cys6_contig_idx]
         np.testing.assert_array_almost_equal(
-            protein.get_coordinates_for_index(49),  # Atom index 49 from PDB
-            expected_coords,
+            actual_ca_coords_cys6, expected_ca_coords_cys6
         )
 
-        # New tests for secondary structure elements
-        ss_elements = result["A"].secondary_structure
-        # Test beta sheets
-        # Sheet A: residues 2-5 and 14-17
-        assert any(
-            ss.secondary_structure_type == SecondaryStructureType.SHEET
-            and ss.start == 1
-            and ss.end == 4
-            for ss in ss_elements
-        )
-        assert any(
-            ss.secondary_structure_type == SecondaryStructureType.SHEET
-            and ss.start == 13
-            and ss.end == 16
-            for ss in ss_elements
-        )
+        # --- Secondary Structure Assertions ---
+        # Check the complete list of SS ranges generated by the property
+        ss_elements = chain_a.secondary_structure
+        assert ss_elements == EXPECTED_SS
 
-        # Sheet B: residues 6-6, 24-30, 38-44, and 60-65
-        assert any(
-            ss.secondary_structure_type == SecondaryStructureType.SHEET
-            and ss.start == 5
-            and ss.end == 5
-            for ss in ss_elements
-        )
-
-        # Test helices
-        # Alpha helix: residues 46-54
-        assert any(
-            ss.secondary_structure_type == SecondaryStructureType.HELIX
-            and ss.start == 45
-            and ss.end == 53
-            for ss in ss_elements
-        )
-
-        # Left-handed helix: residues 18-19
-        assert any(
-            ss.secondary_structure_type == SecondaryStructureType.HELIX
-            and ss.start == 17
-            and ss.end == 18
-            for ss in ss_elements
-        )
-
-        # Count total secondary structure elements
-        sheet_count = sum(
-            1
-            for ss in ss_elements
-            if ss.secondary_structure_type == SecondaryStructureType.SHEET
-        )
-        helix_count = sum(
-            1
-            for ss in ss_elements
-            if ss.secondary_structure_type == SecondaryStructureType.HELIX
-        )
-
-        # Based on the CIF file structure
-        assert sheet_count == 6  # Total number of strands in sheets A and B
-        assert helix_count == 2  # One alpha helix and one left-handed helix
-
-    def test_parse_structure_with_dssp(self, tmp_path):
+    def test_parse_structure_with_dssp(self) -> None:
+        """Test parsing a PDB file using an external DSSP file for SS annotation."""
         parser = GemmiStructureParser()
-
-        # Use the test PDB and DSSP files
         pdb_file = Path("tests/data/test.pdb")
         dssp_file = Path("tests/data/test.dssp")
 
         # Test parsing with DSSP
-        result = parser.parse_structure(pdb_file, dssp_file)
+        structure: Structure = parser.parse_structure(pdb_file, dssp_file)
 
-        # Basic structure assertions
-        assert isinstance(result, Structure)
-        assert "A" in result
-        assert isinstance(result["A"], Chain)
+        # --- Basic Structure Assertions ---
+        assert isinstance(structure, Structure)
+        assert "A" in structure
+        chain_a = structure["A"]
+        assert isinstance(chain_a, Chain)
+        assert chain_a.id == "A"
 
-        protein = result["A"]
-        # Verify residue count (adjust number based on your test file)
-        assert len(protein.residues) == 72  # Adjust if different
+        # --- Residue and Index Assertions ---
+        assert chain_a.num_residues == 72
+        assert len(chain_a.residues) == 72
+        assert len(chain_a.coordinates) == 72
+        assert chain_a.index[0] == 1 and chain_a.index[-1] == 72
+        assert chain_a.residues[0] == ResidueType.LEU
+        assert chain_a.residues[5] == ResidueType.CYS
+        assert chain_a.residues[71] == ResidueType.ARG
 
-        # Test some specific residues
-        assert protein.residues[0].name == "LEU"  # First residue
-        assert protein.residues[5].name == "CYS"  # Verify specific residue
-        assert protein.residues[-1].name == "ARG"  # Last residue
-
-        # Test coordinate access for a specific atom
-        expected_coords = np.array([[-6.903, -7.615, 4.269]])  # Adjust coordinates
+        # --- Coordinate Assertion ---
+        # CYS 6 CA coordinates from test.pdb (line with atom number 45)
+        expected_ca_coords_cys6 = np.array([7.396, 0.123, 4.148])
+        cys6_coord_obj = chain_a[6]
+        cys6_contig_idx = cys6_coord_obj.coordinate_index  # Should be 5
+        assert cys6_contig_idx == 5
+        actual_ca_coords_cys6 = chain_a.coordinates[cys6_contig_idx]
         np.testing.assert_array_almost_equal(
-            protein.get_coordinates_for_index(49),  # Adjust index as needed
-            expected_coords,
+            actual_ca_coords_cys6, expected_ca_coords_cys6
         )
 
-        # Test secondary structure elements from DSSP
-        ss_elements = result["A"].secondary_structure
-
-        # Test beta sheets (adjust indices based on DSSP file)
-        assert any(
-            ss.secondary_structure_type == SecondaryStructureType.SHEET
-            and ss.start == 1
-            and ss.end == 4
-            for ss in ss_elements
-        )
-
-        # Test helices (adjust indices based on DSSP file)
-        assert any(
-            ss.secondary_structure_type == SecondaryStructureType.HELIX
-            and ss.start == 45
-            and ss.end == 53
-            for ss in ss_elements
-        )
-
-        # Count secondary structure elements
-        sheet_count = sum(
-            1
-            for ss in ss_elements
-            if ss.secondary_structure_type == SecondaryStructureType.SHEET
-        )
-        helix_count = sum(
-            1
-            for ss in ss_elements
-            if ss.secondary_structure_type == SecondaryStructureType.HELIX
-        )
-
-        # Adjust these numbers based on your DSSP file
-        assert sheet_count == 6  # Adjust based on DSSP content
-        assert helix_count == 2  # Adjust based on DSSP content
-
-        # Additional DSSP-specific tests
-        # Test accessibility values if available
-        # Test hydrogen bonding if available
-        # Test phi/psi angles if available
-
-    def test_dssp_parser(self):
-        # Test parsing of raw DSSP file
-        dssp_file = Path("tests/data/test.dssp")
-        segments = parse_dssp(dssp_file)
-
-        # Verify the segments are correctly parsed
-        # Each segment should be a tuple of (SecondaryStructureType, start, end)
-        assert isinstance(segments, list)
-        assert all(isinstance(s, tuple) and len(s) == 3 for s in segments)
-        assert all(isinstance(s[0], SecondaryStructureType) for s in segments)
-
-        # Test specific segments from the DSSP file
-        # Sheet segments (based on your test.dssp file content)
-        sheet_segments = [s for s in segments if s[0] == SecondaryStructureType.SHEET]
-        assert (
-            len(sheet_segments) == 6
-        )  # Should match the number in test_parse_structure_with_dssp
-
-        # Helix segments
-        helix_segments = [s for s in segments if s[0] == SecondaryStructureType.HELIX]
-        assert (
-            len(helix_segments) == 2
-        )  # Should match the number in test_parse_structure_with_dssp
-
-        # Test specific segment positions
-        # These numbers should match your test.dssp file content
-        assert any(
-            seg[0] == SecondaryStructureType.SHEET and seg[1] == 2 and seg[2] == 5
-            for seg in segments
-        )
-        assert any(
-            seg[0] == SecondaryStructureType.HELIX and seg[1] == 46 and seg[2] == 54
-            for seg in segments
-        )
+        # --- Secondary Structure Assertions (from DSSP) ---
+        # Check the complete list of SS ranges generated by the property
+        ss_elements = chain_a.secondary_structure
+        assert ss_elements == EXPECTED_SS

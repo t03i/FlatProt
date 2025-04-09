@@ -185,7 +185,6 @@ class Chain:
                 segment_type,
             )
         )
-
         return complete_ss
 
     def __str__(self) -> str:
