@@ -110,14 +110,20 @@ def get_secondary_structure_segments(
     # Map 8-state to 3-state
     # Helix types: H (α-helix), G (3-10 helix), and I (π-helix)
     # Sheet types: E (β-strand) and B (β-bridge)
+
+    helix_types = pl.Series(["H", "G", "I", "P"])
+    sheet_types = pl.Series(["E", "B"])
+
     changes = df.with_columns(
         [
-            pl.col("structure").is_in(["H", "G", "I", "P", "E", "B"]).alias("is_ss"),
-            pl.when(pl.col("structure").is_in(["H", "G", "I", "P"]))
-            .then(SecondaryStructureType.HELIX)
-            .when(pl.col("structure").is_in(["E", "B"]))
-            .then(SecondaryStructureType.SHEET)
-            .otherwise(SecondaryStructureType.COIL)
+            pl.col("structure")
+            .str.contains_any(pl.concat([helix_types, sheet_types]))
+            .alias("is_ss"),
+            pl.when(pl.col("structure").str.contains_any(helix_types))
+            .then(pl.lit(SecondaryStructureType.HELIX.value))
+            .when(pl.col("structure").str.contains_any(sheet_types))
+            .then(pl.lit(SecondaryStructureType.SHEET.value))
+            .otherwise(pl.lit(SecondaryStructureType.COIL.value))
             .alias("simple_structure"),
         ]
     )
