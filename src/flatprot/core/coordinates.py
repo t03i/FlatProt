@@ -242,6 +242,9 @@ class ResidueRangeSet:
     def __str__(self) -> str:
         return ",".join(str(r) for r in self.ranges)
 
+    def __repr__(self) -> str:
+        return f"ResidueRangeSet({self.__str__()})"
+
     def __contains__(self, other: object) -> bool:
         """Check if this range set contains another range or residue coordinate.
 
@@ -256,3 +259,17 @@ class ResidueRangeSet:
         elif isinstance(other, ResidueCoordinate):
             return any(other in range_ for range_ in self.ranges)
         return False
+
+    def __eq__(self, other: object) -> bool:
+        """Check if two range sets are equal.
+
+        Args:
+            other: Another object to compare with
+
+        Returns:
+            bool: True if the range sets are equal
+        """
+        if not isinstance(other, ResidueRangeSet):
+            raise TypeError(f"Cannot compare ResidueRangeSet with {type(other)}")
+
+        return sorted(self.ranges) == sorted(other.ranges)

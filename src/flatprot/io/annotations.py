@@ -133,9 +133,7 @@ class AnnotationParser:
                 f"'style' entry must be a table (dictionary), got {type(style_dict).__name__}.",
             )
         try:
-            # Pydantic handles validation and type conversion
-            # Use cast to help type checker with the dynamic StyleModel type
-            style_instance = cast(BaseAnnotationStyle, StyleModel(**style_dict))
+            style_instance = StyleModel.model_validate(style_dict)
             return style_instance
         except ValidationError as e:
             error_details = e.errors()
@@ -167,9 +165,7 @@ class AnnotationParser:
         return PointAnnotation(
             id=anno_id,
             target_coordinate=target_coord,
-            style=cast(
-                Optional[PointAnnotationStyle], style_instance
-            ),  # Cast for type checker
+            style=cast(Optional[PointAnnotationStyle], style_instance),
             label=label,
         )
 

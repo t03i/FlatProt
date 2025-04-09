@@ -22,7 +22,7 @@ class PointAnnotationStyle(BaseAnnotationStyle):
     marker_shape: Literal["circle", "square", "triangle", "diamond"] = Field(
         default="circle", description="Shape of the marker."
     )
-    point_radius: float = Field(
+    marker_radius: float = Field(
         default=5.0,
         ge=0,
         description="Radius of the point marker.",
@@ -38,6 +38,7 @@ class PointAnnotation(BaseAnnotationElement[PointAnnotationStyle]):
         self,
         id: str,
         target_coordinate: ResidueCoordinate,  # Expects a single coordinate
+        label: Optional[str] = None,
         style: Optional[PointAnnotationStyle] = None,
         parent: Optional[SceneGroupType] = None,
     ):
@@ -61,6 +62,7 @@ class PointAnnotation(BaseAnnotationElement[PointAnnotationStyle]):
             target_coordinates=[target_coordinate],  # Base class expects a list
             residue_range_set=None,  # Explicitly None, targeting is via coordinate
             style=style,
+            label=label,
             parent=parent,
         )
 

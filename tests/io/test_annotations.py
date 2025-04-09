@@ -1,7 +1,7 @@
 # Copyright 2024 Rostlab.
 # SPDX-License-Identifier: Apache-2.0
 
-"""Tests for annotation file parsing."""
+"""Tests for annotation file parsing (src/flatprot/io/annotations.py)."""
 
 import os
 import tempfile
@@ -10,50 +10,54 @@ from typing import Dict, Any, Generator, List
 
 import pytest
 import toml
-import numpy as np
-from pytest_mock import MockFixture
+from pydantic_extra_types.color import Color
 
 from flatprot.io.annotations import AnnotationParser
 from flatprot.io.errors import (
     AnnotationFileNotFoundError,
     MalformedAnnotationError,
-    InvalidReferenceError,
-    AnnotationError,
 )
-from flatprot.scene.annotations.point import PointAnnotation
-from flatprot.scene.annotations.line import LineAnnotation
-from flatprot.scene.annotations.area import AreaAnnotation
-from flatprot.scene.elements import SceneElement
-from flatprot.scene import Scene
-from flatprot.core import ResidueCoordinate, ResidueRange
+from flatprot.scene.annotations import (
+    PointAnnotation,
+    LineAnnotation,
+    AreaAnnotation,
+    PointAnnotationStyle,
+    LineAnnotationStyle,
+    AreaAnnotationStyle,
+)
+from flatprot.core import ResidueCoordinate, ResidueRange, ResidueRangeSet
+
+
+# --- Fixtures ---
 
 
 @pytest.fixture
 def valid_annotations_dict() -> Dict[str, List[Dict[str, Any]]]:
-    """Create a dictionary with valid annotation data.
-
-    Returns:
-        Dict containing valid annotations of different types.
-    """
+    """Provides a dictionary representing a valid TOML annotation structure."""
     return {
         "annotations": [
             {
                 "label": "Catalytic Site",
                 "type": "point",
-                "index": 42,
-                "chain": "A",
+                "index": "A:42",  # New format
+                "style": {"color": "red", "marker_radius": 1.5},
             },
             {
                 "label": "Binding Pair",
-                "type": "pair",
-                "indices": [10, 15],
-                "chain": "B",
+                "type": "line",
+                "indices": ["B:10", "B:15"],  # New format
+                "style": {"color": "#00FF00", "stroke_width": 2.0},
             },
             {
-                "label": "Domain",
+                "label": "Alpha Helix",
                 "type": "area",
-                "range": {"start": 0, "end": 15},
-                "chain": "A",
+                "range": "A:100-115",  # New format
+                "style": {"color": "blue", "fill_opacity": 0.5},
+            },
+            {
+                "label": "Another Point",  # Annotation without style
+                "type": "point",
+                "index": "C:1",
             },
         ]
     }
@@ -62,512 +66,477 @@ def valid_annotations_dict() -> Dict[str, List[Dict[str, Any]]]:
 @pytest.fixture
 def valid_annotations_file(
     valid_annotations_dict: Dict[str, List[Dict[str, Any]]],
-) -> Generator[str, None, None]:
-    """Create a temporary file with valid annotations.
-
-    Args:
-        valid_annotations_dict: Dictionary with valid annotation data.
-
-    Yields:
-        Path to the temporary file.
-    """
+) -> Generator[Path, None, None]:
+    """Creates a temporary TOML file with valid annotations."""
     with tempfile.NamedTemporaryFile(suffix=".toml", mode="w", delete=False) as f:
         toml.dump(valid_annotations_dict, f)
-        temp_file = f.name
-
-    yield temp_file
-    os.unlink(temp_file)
+        temp_file_path = Path(f.name)
+    yield temp_file_path
+    os.unlink(temp_file_path)
 
 
 @pytest.fixture
-def missing_annotations_file() -> Generator[str, None, None]:
-    """Create a temporary file without annotations list.
-
-    Yields:
-        Path to the temporary file.
-    """
-    content = {"not_annotations": []}
-
+def missing_annotations_list_file() -> Generator[Path, None, None]:
+    """Creates a temporary TOML file missing the top-level 'annotations' list."""
+    content = {"some_other_key": []}
     with tempfile.NamedTemporaryFile(suffix=".toml", mode="w", delete=False) as f:
         toml.dump(content, f)
-        temp_file = f.name
-
-    yield temp_file
-    os.unlink(temp_file)
+        temp_file_path = Path(f.name)
+    yield temp_file_path
+    os.unlink(temp_file_path)
 
 
 @pytest.fixture
-def malformed_toml_file() -> Generator[str, None, None]:
-    """Create a temporary file with malformed TOML.
-
-    Yields:
-        Path to the temporary file.
-    """
+def annotations_not_a_list_file() -> Generator[Path, None, None]:
+    """Creates a temporary TOML file where 'annotations' is not a list."""
+    content = {"annotations": {"key": "value"}}  # Should be a list
     with tempfile.NamedTemporaryFile(suffix=".toml", mode="w", delete=False) as f:
-        f.write("This is not valid TOML syntax []\n=")
-        temp_file = f.name
-
-    yield temp_file
-    os.unlink(temp_file)
-
-
-@pytest.fixture
-def mock_scene_element(mocker: MockFixture) -> Any:
-    """Create a mock scene element.
-
-    Args:
-        mocker: Pytest-mock fixture.
-
-    Returns:
-        Mock scene element.
-    """
-    element = mocker.MagicMock(spec=SceneElement)
-    element.display_coordinates = np.array([0.0, 0.0])
-    element.calculate_display_coordinates_at_resiude = lambda residue_idx: np.array(
-        [float(residue_idx), float(residue_idx)]
-    )
-    return element
+        toml.dump(content, f)
+        temp_file_path = Path(f.name)
+    yield temp_file_path
+    os.unlink(temp_file_path)
 
 
 @pytest.fixture
-def mock_scene(mocker: MockFixture, mock_scene_element: Any) -> Any:
-    """Create a mock scene object reflecting the updated Scene interface.
-
-    Args:
-        mocker: Pytest-mock fixture.
-        mock_scene_element: Mock scene element fixture.
-
-    Returns:
-        Mock scene object.
-    """
-    scene = mocker.MagicMock(spec=Scene)
-
-    # Set up mock get_elements_for_residue (accepts ResidueCoordinate)
-    def mock_get_elements_for_residue(residue: ResidueCoordinate) -> List[Any]:
-        """Mock implementation for get_elements_for_residue."""
-        if (
-            residue.chain_id == "A"
-            and 0 <= residue.residue_index <= 100
-            and residue.residue_index != 5
-        ):
-            return [mock_scene_element]
-        elif residue.chain_id == "B" and 0 <= residue.residue_index <= 50:
-            return [mock_scene_element]
-        else:
-            return []
-
-    scene.get_elements_for_residue.side_effect = mock_get_elements_for_residue
-
-    # Set up mock get_elements_for_residue_range (accepts ResidueRange)
-    def mock_get_elements_for_residue_range(
-        residue_range: ResidueRange,
-    ) -> List[Any]:
-        """Mock implementation for get_elements_for_residue_range."""
-        # Basic validation consistent with ResidueRange
-        if residue_range.start > residue_range.end:
-            raise ValueError("Start cannot be greater than end in ResidueRange")
-
-        elements = []
-        if residue_range.chain_id == "A":
-            # Simulate fetching elements for the range, skipping residue 5
-            for i in range(residue_range.start, min(residue_range.end + 1, 101)):
-                if i != 5:
-                    # Check if the individual residue exists using the single residue mock logic
-                    if mock_get_elements_for_residue(
-                        ResidueCoordinate(residue_range.chain_id, i)
-                    ):
-                        elements.append(mock_scene_element)
-        elif residue_range.chain_id == "B":
-            for i in range(residue_range.start, min(residue_range.end + 1, 51)):
-                # Check if the individual residue exists using the single residue mock logic
-                if mock_get_elements_for_residue(
-                    ResidueCoordinate(residue_range.chain_id, i)
-                ):
-                    elements.append(mock_scene_element)
-        # Return unique elements if multiple were added for the same mock object
-        # In a real scenario, different elements might be returned.
-        # For this mock, just returning the single mock element if any match is found is sufficient.
-        return elements  # Return the list containing one mock element per valid residue found
-
-    scene.get_elements_for_residue_range.side_effect = (
-        mock_get_elements_for_residue_range
-    )
-
-    # Set up mock get_element_index_from_residue (accepts ResidueCoordinate)
-    # Keep it simple for now, just return 0 like the previous mock
-    def mock_get_element_index_from_residue(
-        residue: ResidueCoordinate, element: SceneElement
-    ) -> int:
-        """Mock implementation for get_element_index_from_residue."""
-        # Basic check to ensure the element passed is the one we expect
-        assert element == mock_scene_element
-        # Simple mock: return 0 or a basic calculation if needed
-        # Assuming the annotation parser just needs *an* index
-        return 0  # residue.residue_index - start_offset_if_known
-
-    scene.get_element_index_from_residue.side_effect = (
-        mock_get_element_index_from_residue
-    )
-
-    # Remove the old mock attribute if it exists from previous runs/setups
-    # Ensures we don't accidentally use the old mock
-    if hasattr(scene, "get_element_index_from_global_index"):
-        del scene.get_element_index_from_global_index
-
-    return scene
+def malformed_toml_file() -> Generator[Path, None, None]:
+    """Creates a temporary file with invalid TOML syntax."""
+    with tempfile.NamedTemporaryFile(suffix=".toml", mode="w", delete=False) as f:
+        f.write("this is = not [ valid toml\n")
+        temp_file_path = Path(f.name)
+    yield temp_file_path
+    os.unlink(temp_file_path)
 
 
-class TestFileValidation:
-    """Tests for file validation functionality."""
+@pytest.fixture
+def empty_annotations_list_file() -> Generator[Path, None, None]:
+    """Creates a temporary TOML file with an empty 'annotations' list."""
+    content = {"annotations": []}
+    with tempfile.NamedTemporaryFile(suffix=".toml", mode="w", delete=False) as f:
+        toml.dump(content, f)
+        temp_file_path = Path(f.name)
+    yield temp_file_path
+    os.unlink(temp_file_path)
+
+
+# No more mock_scene or mock_scene_element fixtures needed
+
+# --- Test Classes ---
+
+
+class TestFileLoadingAndStructure:
+    """Tests related to loading the file and basic TOML structure validation."""
 
     def test_parser_with_nonexistent_file(self) -> None:
-        """Test parser with a nonexistent file.
-
-        Ensures that AnnotationFileNotFoundError is raised for nonexistent files.
-        """
+        """Test parser raises AnnotationFileNotFoundError for nonexistent files."""
         with pytest.raises(AnnotationFileNotFoundError):
             AnnotationParser(Path("nonexistent_file.toml"))
 
-    def test_parser_with_malformed_toml(
-        self, malformed_toml_file: str, mock_scene: Any
+    def test_parser_with_malformed_toml(self, malformed_toml_file: Path) -> None:
+        """Test parser raises MalformedAnnotationError for invalid TOML syntax."""
+        parser = AnnotationParser(malformed_toml_file)
+        with pytest.raises(MalformedAnnotationError, match="Invalid TOML syntax"):
+            parser.parse()
+
+    def test_parser_with_missing_annotations_list(
+        self, missing_annotations_list_file: Path
     ) -> None:
-        """Test parser with malformed TOML.
-
-        Args:
-            malformed_toml_file: Path to file with malformed TOML content.
-            mock_scene: Mock scene object.
-
-        Ensures that MalformedAnnotationError is raised for files with invalid TOML syntax.
-        """
-        parser = AnnotationParser(Path(malformed_toml_file), scene=mock_scene)
-        with pytest.raises(MalformedAnnotationError):
+        """Test parser raises MalformedAnnotationError when 'annotations' list is missing."""
+        parser = AnnotationParser(missing_annotations_list_file)
+        with pytest.raises(
+            MalformedAnnotationError, match="Missing top-level 'annotations' list"
+        ):
             parser.parse()
 
-    def test_parser_with_missing_annotations(
-        self, missing_annotations_file: str, mock_scene: Any
+    def test_parser_annotations_not_a_list(
+        self, annotations_not_a_list_file: Path
     ) -> None:
-        """Test parser with missing annotations list.
-
-        Args:
-            missing_annotations_file: Path to file without annotations list.
-            mock_scene: Mock scene object.
-
-        Ensures that MalformedAnnotationError is raised when the annotations list is missing.
-        """
-        parser = AnnotationParser(Path(missing_annotations_file), scene=mock_scene)
-        with pytest.raises(MalformedAnnotationError):
+        """Test parser raises MalformedAnnotationError if 'annotations' is not a list."""
+        parser = AnnotationParser(annotations_not_a_list_file)
+        with pytest.raises(
+            MalformedAnnotationError, match="'annotations' key must contain a list"
+        ):
             parser.parse()
 
-    def test_parser_with_valid_file_no_scene(self, valid_annotations_file: str) -> None:
-        """Test parser with a valid annotations file but no scene.
-
-        Args:
-            valid_annotations_file: Path to file with valid annotations.
-
-        Ensures that AnnotationError is raised when no scene is provided.
-        """
-        parser = AnnotationParser(Path(valid_annotations_file))
-        with pytest.raises(AnnotationError):
-            parser.parse()
+    def test_parse_empty_annotations_list(
+        self, empty_annotations_list_file: Path
+    ) -> None:
+        """Test parsing a file with an empty annotations list returns an empty list."""
+        parser = AnnotationParser(empty_annotations_list_file)
+        annotations = parser.parse()
+        assert annotations == []
 
 
 class TestAnnotationParsing:
-    """Tests for parsing valid annotation files."""
+    """Tests parsing valid annotation entries."""
 
-    def test_parser_with_scene(
-        self, valid_annotations_file: str, mock_scene: Any
-    ) -> None:
-        """Test parser with a valid annotations file and scene.
-
-        Args:
-            valid_annotations_file: Path to file with valid annotations.
-            mock_scene: Mock scene object.
-
-        Ensures that correct annotation objects are created from a valid file.
-        """
-        parser = AnnotationParser(Path(valid_annotations_file), scene=mock_scene)
+    def test_parse_valid_annotations(self, valid_annotations_file: Path) -> None:
+        """Test parsing a file with various valid annotations and styles."""
+        parser = AnnotationParser(valid_annotations_file)
         annotations = parser.parse()
 
-        assert len(annotations) == 3
+        assert len(annotations) == 4
 
-        # Check point annotation
-        assert isinstance(annotations[0], PointAnnotation)
-        assert annotations[0].label == "Catalytic Site"
-        assert len(annotations[0].targets) == 1
-        assert annotations[0].indices == [0]  # Mock returns 0 for element index
+        # --- Check Point Annotation ---
+        anno0 = annotations[0]
+        assert isinstance(anno0, PointAnnotation)
+        assert anno0.label == "Catalytic Site"
+        assert anno0.target_coordinate == ResidueCoordinate("A", 42)
+        assert anno0.id.startswith(f"annotation_{valid_annotations_file.stem}_0_point")
+        assert isinstance(anno0.style, PointAnnotationStyle)
+        assert anno0.style.color == Color("red")
+        assert anno0.style.marker_radius == 1.5
 
-        # Check pair annotation
-        assert isinstance(annotations[1], LineAnnotation)
-        assert annotations[1].label == "Binding Pair"
-        assert len(annotations[1].targets) == 2
-        assert annotations[1].indices == [0, 0]  # Mock returns 0 for element indices
+        # --- Check Line Annotation ---
+        anno1 = annotations[1]
+        assert isinstance(anno1, LineAnnotation)
+        assert anno1.label == "Binding Pair"
+        assert anno1.target_coordinates == [
+            ResidueCoordinate("B", 10),
+            ResidueCoordinate("B", 15),
+        ]
+        assert anno1.id.startswith(f"annotation_{valid_annotations_file.stem}_1_line")
+        assert isinstance(anno1.style, LineAnnotationStyle)
+        assert anno1.style.color == Color("#00FF00")
+        assert anno1.style.stroke_width == 2.0
 
-        # Check area annotation
-        assert isinstance(annotations[2], AreaAnnotation)
-        assert annotations[2].label == "Domain"
-        assert len(annotations[2].targets) > 0
-        assert annotations[2].indices is None
+        # --- Check Area Annotation ---
+        anno2 = annotations[2]
+        assert isinstance(anno2, AreaAnnotation)
+        assert anno2.label == "Alpha Helix"
+        assert anno2.residue_range_set == ResidueRangeSet([ResidueRange("A", 100, 115)])
+        assert anno2.id.startswith(f"annotation_{valid_annotations_file.stem}_2_area")
+        assert isinstance(anno2.style, AreaAnnotationStyle)
+        assert anno2.style.color == Color("blue")
+        assert anno2.style.fill_opacity == 0.5
 
-    def test_discontinuous_range_annotation(self, mock_scene: Any) -> None:
-        """Test annotation for a range with discontinuities.
+        # --- Check Point Annotation (No Style) ---
+        anno3 = annotations[3]
+        assert isinstance(anno3, PointAnnotation)
+        assert anno3.label == "Another Point"
+        assert anno3.target_coordinate == ResidueCoordinate("C", 1)
+        assert anno3.id.startswith(f"annotation_{valid_annotations_file.stem}_3_point")
+        assert (
+            isinstance(anno3.style, PointAnnotationStyle)
+            and anno3.style == anno3.default_style
+        )
 
-        Args:
-            mock_scene: Mock scene object.
-
-        Ensures that area annotations handle ranges with discontinuities correctly.
-        """
+    def test_parse_annotation_without_label(self) -> None:
+        """Test parsing an annotation where the optional 'label' is missing."""
         content = {
             "annotations": [
                 {
-                    "label": "Discontinuous Area",
-                    "type": "area",
-                    "range": {"start": 0, "end": 10},  # Includes missing residue 5
-                    "chain": "A",
+                    # No label field
+                    "type": "point",
+                    "index": "A:10",
                 }
             ]
         }
-
         with tempfile.NamedTemporaryFile(suffix=".toml", mode="w", delete=False) as f:
             toml.dump(content, f)
-            temp_file = f.name
-
+            temp_file_path = Path(f.name)
         try:
-            parser = AnnotationParser(Path(temp_file), scene=mock_scene)
+            parser = AnnotationParser(temp_file_path)
             annotations = parser.parse()
-
-            # Check that the annotation was created correctly
             assert len(annotations) == 1
-            assert isinstance(annotations[0], AreaAnnotation)
-            assert annotations[0].label == "Discontinuous Area"
-
-            # Should have 10 targets (0-10 range minus the missing residue 5)
-            assert len(annotations[0].targets) == 10
-
+            assert isinstance(annotations[0], PointAnnotation)
+            assert annotations[0].label is None  # Label should be None
+            assert annotations[0].target_coordinate == ResidueCoordinate("A", 10)
         finally:
-            os.unlink(temp_file)
+            os.unlink(temp_file_path)
 
 
-class TestAnnotationValidation:
-    """Tests for validation of annotation data."""
+class TestAnnotationFormatValidation:
+    """Tests for validating the format of individual annotation entries."""
 
-    def test_invalid_point_type(self, mock_scene: Any) -> None:
-        """Test validation of invalid point type.
+    @pytest.mark.parametrize(
+        "entry, expected_error_msg",
+        [
+            ("not a dictionary", "Annotation entry must be a table"),
+            (
+                {"type": "point"},
+                "Missing 'index' field for 'point' annotation",
+            ),  # Missing index
+            (
+                {"type": "line"},
+                "Field 'indices' for 'line' annotation must be a list",
+            ),  # Missing indices
+            (
+                {"type": "area"},
+                "Missing 'range' field for 'area' annotation",
+            ),  # Missing range
+            ({"index": "A:1"}, "Missing or invalid 'type' field"),  # Missing type
+            (
+                {"type": 123, "index": "A:1"},
+                "Missing or invalid 'type' field",
+            ),  # Invalid type (not str)
+            (
+                {"type": "unknown", "index": "A:1"},
+                "Unknown annotation 'type': 'unknown'",
+            ),  # Unknown type
+        ],
+        ids=[
+            "entry_not_dict",
+            "point_missing_index",
+            "line_missing_indices",
+            "area_missing_range",
+            "missing_type",
+            "invalid_type_non_str",
+            "unknown_type",
+        ],
+    )
+    def test_missing_or_invalid_required_fields(
+        self, entry: Any, expected_error_msg: str
+    ) -> None:
+        """Test parser raises MalformedAnnotationError for missing/invalid required fields."""
+        content = {"annotations": [entry]}
+        with tempfile.NamedTemporaryFile(suffix=".toml", mode="w", delete=False) as f:
+            # Use a simple dumper if entry is not a dict for testing that case
+            if isinstance(entry, dict):
+                toml.dump(content, f)
+            else:
+                # Write non-dict entry manually (ensure valid TOML for the list itself)
+                f.write(f"annotations = [ {repr(entry)} ]\n")
+            temp_file_path = Path(f.name)
+        try:
+            parser = AnnotationParser(temp_file_path)
+            with pytest.raises(MalformedAnnotationError) as excinfo:
+                parser.parse()
+            assert expected_error_msg in str(excinfo.value)
+        finally:
+            os.unlink(temp_file_path)
 
-        Args:
-            mock_scene: Mock scene object.
+    # --- Point Specific Format Tests ---
+    @pytest.mark.parametrize(
+        "index_value, expected_error_msg",
+        [
+            (123, "Expected string for coordinate, got int"),  # Wrong type
+            ("A123", "Invalid coordinate format 'A123'"),  # Missing colon
+            ("A:", "Invalid coordinate format 'A:'"),  # Missing index
+            (":123", "Invalid coordinate format ':123'"),  # Missing chain
+            ("A:12:34", "Invalid coordinate format 'A:12:34'"),  # Too many colons
+            ("A:abc", "Invalid coordinate format 'A:abc'"),  # Non-numeric index
+        ],
+        ids=[
+            "int_type",
+            "no_colon",
+            "missing_index",
+            "missing_chain",
+            "too_many_colons",
+            "non_numeric_index",
+        ],
+    )
+    def test_invalid_point_index_format(
+        self, index_value: Any, expected_error_msg: str
+    ) -> None:
+        """Test invalid formats for the 'index' field of point annotations."""
+        content = {
+            "annotations": [{"type": "point", "label": "Test", "index": index_value}]
+        }
+        with tempfile.NamedTemporaryFile(suffix=".toml", mode="w", delete=False) as f:
+            toml.dump(content, f)
+            temp_file_path = Path(f.name)
+        try:
+            parser = AnnotationParser(temp_file_path)
+            with pytest.raises(MalformedAnnotationError) as excinfo:
+                parser.parse()
+            assert expected_error_msg in str(excinfo.value)
+        finally:
+            os.unlink(temp_file_path)
 
-        Ensures that MalformedAnnotationError is raised for invalid point annotation data.
-        """
+    # --- Line Specific Format Tests ---
+    @pytest.mark.parametrize(
+        "indices_value, expected_error_msg",
+        [
+            (
+                "A:10, A:20",
+                "Field 'indices' for 'line' annotation must be a list",
+            ),  # String, not list
+            (
+                ["A:10"],
+                "must be a list of exactly two coordinate strings",
+            ),  # List too short
+            (
+                ["A:10", "B:20", "C:30"],
+                "must be a list of exactly two coordinate strings",
+            ),  # List too long
+            (
+                ["A:10", "B:abc"],
+                "Invalid coordinate format 'B:abc'",
+            ),  # Invalid format in list
+        ],
+        ids=[
+            "string_not_list",
+            "list_too_short",
+            "list_too_long",
+            "invalid_format_in_list",
+        ],
+    )
+    def test_invalid_line_indices_format(
+        self, indices_value: Any, expected_error_msg: str
+    ) -> None:
+        """Test invalid formats for the 'indices' field of line annotations."""
+        content = {
+            "annotations": [{"type": "line", "label": "Test", "indices": indices_value}]
+        }
+        with tempfile.NamedTemporaryFile(suffix=".toml", mode="w", delete=False) as f:
+            toml.dump(content, f)
+            temp_file_path = Path(f.name)
+        try:
+            parser = AnnotationParser(temp_file_path)
+            with pytest.raises(MalformedAnnotationError) as excinfo:
+                parser.parse()
+            assert expected_error_msg in str(excinfo.value)
+        finally:
+            os.unlink(temp_file_path)
+
+    # --- Area Specific Format Tests ---
+    @pytest.mark.parametrize(
+        "range_value, expected_error_msg",
+        [
+            (100, "Expected string for range, got int"),  # Wrong type
+            ("A100-150", "Invalid range format 'A100-150'"),  # Missing colon
+            ("A:100", "Invalid range format 'A:100'"),  # Missing dash and end
+            ("A:100-", "Invalid range format 'A:100-'"),  # Missing end
+            ("A:-150", "Invalid range format 'A:-150'"),  # Missing start
+            (
+                "A:100-150-200",
+                "Invalid range format 'A:100-150-200'",
+            ),  # Too many dashes
+            ("A:100-abc", "Invalid range format 'A:100-abc'"),  # Non-numeric end
+            ("A:abc-150", "Invalid range format 'A:abc-150'"),  # Non-numeric start
+            (
+                "A:150-100",
+                "Start index (150) cannot be greater than end index (100)",
+            ),  # Start > End
+        ],
+        ids=[
+            "int_type",
+            "no_colon",
+            "missing_dash_end",
+            "missing_end",
+            "missing_start",
+            "too_many_dashes",
+            "non_numeric_end",
+            "non_numeric_start",
+            "start_greater_than_end",
+        ],
+    )
+    def test_invalid_area_range_format(
+        self, range_value: Any, expected_error_msg: str
+    ) -> None:
+        """Test invalid formats for the 'range' field of area annotations."""
+        content = {
+            "annotations": [{"type": "area", "label": "Test", "range": range_value}]
+        }
+        with tempfile.NamedTemporaryFile(suffix=".toml", mode="w", delete=False) as f:
+            toml.dump(content, f)
+            temp_file_path = Path(f.name)
+        try:
+            parser = AnnotationParser(temp_file_path)
+            with pytest.raises(MalformedAnnotationError) as excinfo:
+                parser.parse()
+            assert expected_error_msg in str(excinfo.value)
+        finally:
+            os.unlink(temp_file_path)
+
+
+class TestInlineStyleParsing:
+    """Tests parsing of the optional 'style' field."""
+
+    def test_parse_valid_inline_styles(self, valid_annotations_file: Path) -> None:
+        """Test that valid style dictionaries are correctly parsed into Pydantic models."""
+        # This is implicitly tested in TestAnnotationParsing.test_parse_valid_annotations
+        # We re-assert the style types and some values here for clarity.
+        parser = AnnotationParser(valid_annotations_file)
+        annotations = parser.parse()
+
+        assert isinstance(annotations[0].style, PointAnnotationStyle)
+        assert annotations[0].style.color == Color("red")
+
+        assert isinstance(annotations[1].style, LineAnnotationStyle)
+        assert annotations[1].style.stroke_width == 2.0
+
+        assert isinstance(annotations[2].style, AreaAnnotationStyle)
+        assert annotations[2].style.fill_opacity == 0.5
+
+        assert (
+            isinstance(annotations[3].style, PointAnnotationStyle)
+            and annotations[3].style == annotations[3].default_style
+        )
+
+    def test_invalid_style_type(self) -> None:
+        """Test parsing fails if 'style' is not a dictionary (table)."""
         content = {
             "annotations": [
                 {
-                    "label": "Invalid Indices Type",
                     "type": "point",
-                    "indices": "not an integer",  # Should be an integer
-                    "chain": "A",
+                    "index": "A:1",
+                    "style": "not a dictionary",  # Invalid style type
                 }
             ]
         }
-
         with tempfile.NamedTemporaryFile(suffix=".toml", mode="w", delete=False) as f:
             toml.dump(content, f)
-            temp_file = f.name
-
+            temp_file_path = Path(f.name)
         try:
-            parser = AnnotationParser(Path(temp_file), scene=mock_scene)
+            parser = AnnotationParser(temp_file_path)
             with pytest.raises(MalformedAnnotationError) as excinfo:
                 parser.parse()
-            assert "indices" in str(excinfo.value)
+            assert "'style' entry must be a table" in str(excinfo.value)
+            assert "got str" in str(excinfo.value)
         finally:
-            os.unlink(temp_file)
+            os.unlink(temp_file_path)
 
-    def test_invalid_annotation_type(self, mock_scene: Any) -> None:
-        """Test validation of invalid annotation type.
-
-        Args:
-            mock_scene: Mock scene object.
-
-        Ensures that MalformedAnnotationError is raised for unknown annotation types.
-        """
+    def test_invalid_style_content_value_type(self) -> None:
+        """Test parsing fails if a style field has the wrong value type."""
         content = {
             "annotations": [
                 {
-                    "label": "Invalid Type",
-                    "type": "unknown_type",  # Invalid type
-                    "indices": 42,
-                    "chain": "A",
-                }
-            ]
-        }
-
-        with tempfile.NamedTemporaryFile(suffix=".toml", mode="w", delete=False) as f:
-            toml.dump(content, f)
-            temp_file = f.name
-
-        try:
-            parser = AnnotationParser(Path(temp_file), scene=mock_scene)
-            with pytest.raises(MalformedAnnotationError) as excinfo:
-                parser.parse()
-            assert "type" in str(excinfo.value)
-        finally:
-            os.unlink(temp_file)
-
-    def test_invalid_line_indices(self, mock_scene: Any) -> None:
-        """Test validation of invalid line indices.
-
-        Args:
-            mock_scene: Mock scene object.
-
-        Ensures that MalformedAnnotationError is raised when line indices are invalid.
-        """
-        content = {
-            "annotations": [
-                {
-                    "label": "Invalid Line Indices",
-                    "type": "pair",
-                    "indices": [1, 2, 3],  # Should be exactly 2 indices
-                    "chain": "A",
-                }
-            ]
-        }
-
-        with tempfile.NamedTemporaryFile(suffix=".toml", mode="w", delete=False) as f:
-            toml.dump(content, f)
-            temp_file = f.name
-
-        try:
-            parser = AnnotationParser(Path(temp_file), scene=mock_scene)
-            with pytest.raises(MalformedAnnotationError) as excinfo:
-                parser.parse()
-            assert "indices" in str(excinfo.value)
-            assert "2 indices" in str(excinfo.value)
-        finally:
-            os.unlink(temp_file)
-
-    def test_invalid_area_range(self, mock_scene: Any) -> None:
-        """Test validation of invalid area range.
-
-        Args:
-            mock_scene: Mock scene object.
-
-        Ensures that MalformedAnnotationError is raised when area range is invalid.
-        """
-        content = {
-            "annotations": [
-                {
-                    "label": "Invalid Area Range",
-                    "type": "area",
-                    "range": {"start": 15, "end": 5},  # end < start
-                    "chain": "A",
-                }
-            ]
-        }
-
-        with tempfile.NamedTemporaryFile(suffix=".toml", mode="w", delete=False) as f:
-            toml.dump(content, f)
-            temp_file = f.name
-
-        try:
-            parser = AnnotationParser(Path(temp_file), scene=mock_scene)
-            with pytest.raises(MalformedAnnotationError) as excinfo:
-                parser.parse()
-            assert "greater than or equal to start" in str(excinfo.value)
-        finally:
-            os.unlink(temp_file)
-
-    def test_missing_required_field(self, mock_scene: Any) -> None:
-        """Test validation of missing required fields.
-
-        Args:
-            mock_scene: Mock scene object.
-
-        Ensures that MalformedAnnotationError is raised when required fields are missing.
-        """
-        content = {
-            "annotations": [
-                {
-                    "label": "Missing Chain",
                     "type": "point",
-                    "index": 42,
-                    # "chain" is missing
+                    "index": "A:1",
+                    "style": {
+                        "color": "red",
+                        "marker_radius": "should be float",  # Incorrect type
+                    },
                 }
             ]
         }
-
         with tempfile.NamedTemporaryFile(suffix=".toml", mode="w", delete=False) as f:
             toml.dump(content, f)
-            temp_file = f.name
-
+            temp_file_path = Path(f.name)
         try:
-            parser = AnnotationParser(Path(temp_file), scene=mock_scene)
+            parser = AnnotationParser(temp_file_path)
             with pytest.raises(MalformedAnnotationError) as excinfo:
                 parser.parse()
-            assert "chain" in str(excinfo.value)
+            # Pydantic v2 error message format:
+            assert "Invalid style definition:" in str(excinfo.value)
+            assert "marker_radius:" in str(excinfo.value)  # Field name
+            assert "Input should be a valid number" in str(
+                excinfo.value
+            )  # Pydantic error
         finally:
-            os.unlink(temp_file)
+            os.unlink(temp_file_path)
 
-    def test_invalid_residue_reference(self, mock_scene: Any) -> None:
-        """Test validation of invalid residue reference.
-
-        Args:
-            mock_scene: Mock scene object.
-
-        Ensures that InvalidReferenceError is raised for nonexistent residues.
-        """
+    def test_invalid_style_content_unknown_field(self) -> None:
+        """Test parsing fails if style contains an unknown field (strict parsing)."""
         content = {
             "annotations": [
                 {
-                    "label": "Invalid Residue",
                     "type": "point",
-                    "index": 200,  # Residue 200 doesn't exist in chain A
-                    "chain": "A",
+                    "index": "A:1",
+                    "style": {
+                        "color": "red",
+                        "unknown_style_field": True,  # Extra field
+                    },
                 }
             ]
         }
-
         with tempfile.NamedTemporaryFile(suffix=".toml", mode="w", delete=False) as f:
             toml.dump(content, f)
-            temp_file = f.name
+            temp_file_path = Path(f.name)
 
-        try:
-            # Our mock_scene only has residues 0-100 for chain A
-            parser = AnnotationParser(Path(temp_file), scene=mock_scene)
-            with pytest.raises(InvalidReferenceError) as excinfo:
-                parser.parse()
-            assert "residue" in str(excinfo.value)
-            assert "200" in str(excinfo.value)
-        finally:
-            os.unlink(temp_file)
+        with pytest.raises(MalformedAnnotationError):
+            parser = AnnotationParser(temp_file_path)
+            _ = parser.parse()
 
-    def test_invalid_chain_reference(self, mock_scene: Any) -> None:
-        """Test validation of invalid chain reference.
-
-        Args:
-            mock_scene: Mock scene object.
-
-        Ensures that InvalidReferenceError is raised for nonexistent chains.
-        """
-        content = {
-            "annotations": [
-                {
-                    "label": "Invalid Chain",
-                    "type": "point",
-                    "index": 42,
-                    "chain": "C",  # Chain C doesn't exist
-                }
-            ]
-        }
-
-        with tempfile.NamedTemporaryFile(suffix=".toml", mode="w", delete=False) as f:
-            toml.dump(content, f)
-            temp_file = f.name
-
-        try:
-            # Our mock_scene only has chains A and B
-            parser = AnnotationParser(Path(temp_file), scene=mock_scene)
-            with pytest.raises(InvalidReferenceError) as excinfo:
-                parser.parse()
-            assert "residue" in str(excinfo.value)
-            assert "chain C" in str(excinfo.value)
-        finally:
-            os.unlink(temp_file)
+        os.unlink(temp_file_path)

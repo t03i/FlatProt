@@ -22,7 +22,7 @@ class LineAnnotationStyle(BaseAnnotationStyle):
     stroke_width: float = Field(
         default=1.0, ge=0, description="Width of the annotation line."
     )
-    linestyle: Tuple[float, ...] = Field(
+    line_style: Tuple[float, ...] = Field(
         default=(),
         description="Dash pattern for the line (e.g., (5, 5) for dashed). Empty tuple means solid.",
     )
