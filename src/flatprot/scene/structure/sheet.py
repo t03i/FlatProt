@@ -74,7 +74,7 @@ class SheetSceneElement(BaseStructureSceneElement[SheetStyle]):
         sheet_range = self.residue_range_set.ranges[0]
 
         try:
-            chain = structure.get_chain(sheet_range.chain_id)
+            chain = structure[sheet_range.chain_id]
             for res_idx in range(sheet_range.start, sheet_range.end + 1):
                 if res_idx in chain:
                     coord_idx = chain.coordinate_index(res_idx)

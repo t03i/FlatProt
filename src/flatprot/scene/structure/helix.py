@@ -155,7 +155,7 @@ class HelixSceneElement(BaseStructureSceneElement[HelixStyle]):
         helix_range = self.residue_range_set.ranges[0]
 
         try:
-            chain = structure.get_chain(helix_range.chain_id)
+            chain = structure[helix_range.chain_id]
             for res_idx in range(helix_range.start, helix_range.end + 1):
                 if res_idx in chain:
                     coord_idx = chain.coordinate_index(res_idx)

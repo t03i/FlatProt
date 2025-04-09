@@ -101,7 +101,7 @@ class CoilSceneElement(BaseStructureSceneElement[CoilStyle]):
         coil_range = self.residue_range_set.ranges[0]
 
         try:
-            chain = structure.get_chain(coil_range.chain_id)
+            chain = structure[coil_range.chain_id]
             for res_idx in range(coil_range.start, coil_range.end + 1):
                 if res_idx in chain:
                     coord_idx = chain.coordinate_index(res_idx)
