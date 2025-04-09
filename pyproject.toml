@@ -18,10 +18,10 @@ dependencies = [
     "pydantic>=2.10.3",
     "pydantic-settings>=2.6.1",
     "tqdm>=4.67.1",
-    "pydantic-numpy>=8.0.0",
     "cyclopts>=3.9.0",
     "toml>=0.10.2",
     "h5py>=3.13.0",
+    "numpydantic>=1.6.8",
 ]
 
 [project.scripts]

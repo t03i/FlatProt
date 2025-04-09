@@ -7,7 +7,7 @@ import numpy as np
 from .base import BaseProjection, BaseProjectionParameters
 
 from pydantic import Field
-from pydantic_numpy.typing import Np3DArrayFp64
+from numpydantic import NDArray, Shape
 
 
 class OrthographicProjectionParameters(BaseProjectionParameters):
@@ -20,8 +20,8 @@ class OrthographicProjectionParameters(BaseProjectionParameters):
     padding_y: Annotated[float, Field(strict=True, ge=0, lt=0.5)] = 0.05
     maintain_aspect_ratio: bool = True
     center: bool = True
-    view_direction: Np3DArrayFp64 = np.array([0.0, 0.0, 1.0])
-    up_vector: Np3DArrayFp64 = np.array([0.0, 1.0, 0.0])
+    view_direction: NDArray[Shape["3"], float] = np.array([0.0, 0.0, 1.0])
+    up_vector: NDArray[Shape["3"], float] = np.array([0.0, 1.0, 0.0])
 
 
 class OrthographicProjection(BaseProjection[OrthographicProjectionParameters]):
@@ -50,7 +50,7 @@ class OrthographicProjection(BaseProjection[OrthographicProjectionParameters]):
             or coordinates.shape[1] != 3
         ):
             raise ValueError(
-                f"Input coordinates must be a NumPy array with shape (N, 3), got {coordinates.shape}"
+                f"Input coordinates must be a NumPy array with shape (N, 3), got {coordinates}"
             )
 
         if coordinates.shape[0] == 0:

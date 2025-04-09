@@ -6,14 +6,18 @@ import numpy as np
 from typing import TypeVar, Generic
 
 from pydantic import BaseModel, Field
-from pydantic_numpy.typing import NpNDArray
+from numpydantic import NDArray, Shape
 
 
 class BaseProjectionParameters(BaseModel):
     """Base parameters for projections."""
 
-    view_direction: NpNDArray = Field(default_factory=lambda: np.array([0, 0, 1]))
-    up_vector: NpNDArray = Field(default_factory=lambda: np.array([0, 1, 0]))
+    view_direction: NDArray[Shape["3"], float] = Field(
+        default_factory=lambda: np.array([0, 0, 1])
+    )
+    up_vector: NDArray[Shape["3"], float] = Field(
+        default_factory=lambda: np.array([0, 1, 0])
+    )
     center: bool = True
 
 
