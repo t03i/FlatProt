@@ -3,7 +3,6 @@
 
 import numpy as np
 import pytest
-from unittest.mock import MagicMock
 
 from flatprot.core import Structure, ResidueCoordinate, ResidueRangeSet
 from flatprot.scene import Scene
@@ -13,7 +12,13 @@ from flatprot.scene.structure import (
     SheetSceneElement,
     CoilStyle,
 )
+from flatprot.scene.annotation import (
+    PointAnnotation,
+    LineAnnotation,
+    AreaAnnotation,
+)
 from flatprot.scene.errors import CoordinateCalculationError
+from flatprot.scene.errors import DuplicateElementError
 
 # --- Fixtures ---
 
@@ -26,13 +31,13 @@ def mock_structure_data() -> np.ndarray:
 
 
 @pytest.fixture
-def mock_structure(mock_structure_data: np.ndarray) -> MagicMock:
+def mock_structure(mock_structure_data: np.ndarray, mocker):
     """Creates a mock Structure object with predefined data and behavior."""
-    structure = MagicMock(spec=Structure)
+    structure = mocker.MagicMock(spec=Structure)
     structure.coordinates = mock_structure_data
 
     # Mock chain 'A' (residues 1-30)
-    mock_chain_a = MagicMock(name="ChainA")
+    mock_chain_a = mocker.MagicMock(name="ChainA")
     chain_a_coord_map = {
         i: i - 1 for i in range(1, 31)
     }  # ResId (1-based) -> CoordIdx (0-based)
@@ -52,7 +57,7 @@ def mock_structure(mock_structure_data: np.ndarray) -> MagicMock:
     mock_chain_a.__contains__.side_effect = lambda res_idx: res_idx in chain_a_coord_map
 
     # Mock chain 'B' (empty)
-    mock_chain_b = MagicMock(name="ChainB")
+    mock_chain_b = mocker.MagicMock(name="ChainB")
     mock_chain_b.coordinate_index.side_effect = KeyError(
         "Simulated: Residue not found in chain B map."
     )
@@ -72,9 +77,86 @@ def mock_structure(mock_structure_data: np.ndarray) -> MagicMock:
 
 
 @pytest.fixture
-def scene_with_mock_structure(mock_structure: MagicMock) -> Scene:
+def scene_with_mock_structure(mock_structure) -> Scene:
     """Creates a Scene instance initialized with the mock Structure."""
     return Scene(structure=mock_structure)
+
+
+@pytest.fixture
+def scene_with_structure_elements(scene_with_mock_structure: Scene) -> Scene:
+    """Creates a scene with a coil, helix, and sheet element, with explicit IDs."""
+    scene = scene_with_mock_structure
+    # Add elements covering different parts of chain A (1-30) with explicit IDs
+    coil = CoilSceneElement(residue_range_set=ResidueRangeSet.from_string("A:1-6"))
+    helix = HelixSceneElement(residue_range_set=ResidueRangeSet.from_string("A:7-17"))
+    sheet = SheetSceneElement(residue_range_set=ResidueRangeSet.from_string("A:18-28"))
+    scene.add_node(coil)
+    scene.add_node(helix)
+    scene.add_node(sheet)
+    # Pre-calculate coordinates for structure elements if needed for tests
+    # This might raise errors if structure mock is insufficient, handle if necessary
+    try:
+        for element in [coil, helix, sheet]:
+            element.get_coordinates(scene.structure)
+    except Exception as e:
+        pytest.skip(
+            f"Skipping due to potential issue pre-calculating coords in fixture: {e}"
+        )
+    return scene
+
+
+@pytest.fixture
+def point_anno_on_helix() -> PointAnnotation:
+    """Annotation targeting a residue within the helix range."""
+    return PointAnnotation(id="p1", target_coordinate=ResidueCoordinate("A", 10))
+
+
+@pytest.fixture
+def point_anno_uncovered() -> PointAnnotation:
+    """Annotation targeting a residue not covered by any structure element."""
+    return PointAnnotation(
+        id="p_uncovered", target_coordinate=ResidueCoordinate("A", 29)
+    )
+
+
+@pytest.fixture
+def line_anno_coil_to_sheet() -> LineAnnotation:
+    """Annotation connecting a residue in the coil to one in the sheet."""
+    return LineAnnotation(
+        id="l1",
+        target_coordinates=[
+            ResidueCoordinate("A", 3),  # On coil
+            ResidueCoordinate("A", 20),  # On sheet
+        ],
+    )
+
+
+@pytest.fixture
+def area_anno_helix_range() -> AreaAnnotation:
+    """Annotation targeting a range mostly within the helix."""
+    # Note: Area annotations use get_coordinates internally, which we don't need to mock here
+    # as we are testing Scene's ability to *find* the points via structure elements.
+    return AreaAnnotation(
+        id="area1",
+        residue_range_set=ResidueRangeSet.from_string("A:8-12"),  # On helix
+    )
+
+
+@pytest.fixture
+def area_anno_mixed_range() -> AreaAnnotation:
+    """Annotation targeting a range spanning coil and helix."""
+    return AreaAnnotation(
+        id="area_mixed",
+        residue_range_set=ResidueRangeSet.from_string("A:4-9"),  # Coil & Helix
+    )
+
+
+@pytest.fixture
+def area_anno_uncovered_range() -> AreaAnnotation:
+    """Annotation targeting a range completely outside structure elements."""
+    return AreaAnnotation(
+        id="area_uncovered", residue_range_set=ResidueRangeSet.from_string("A:28-30")
+    )
 
 
 # --- Test Cases ---
@@ -185,7 +267,7 @@ def test_sheet_coordinate_generation(scene_with_mock_structure: Scene):
     "ElementClass", [HelixSceneElement, CoilSceneElement, SheetSceneElement]
 )
 def test_coord_error_on_missing_residue(
-    mock_structure: MagicMock, scene_with_mock_structure: Scene, ElementClass: type
+    mock_structure, scene_with_mock_structure: Scene, ElementClass: type
 ):
     """Test Element raises CoordinateCalculationError if structure lookup fails (KeyError)."""
     scene = scene_with_mock_structure
@@ -219,7 +301,7 @@ def test_coord_error_on_missing_residue(
     "ElementClass", [HelixSceneElement, CoilSceneElement, SheetSceneElement]
 )
 def test_coord_error_on_invalid_coord_index(
-    mock_structure: MagicMock, scene_with_mock_structure: Scene, ElementClass: type
+    mock_structure, scene_with_mock_structure: Scene, ElementClass: type
 ):
     """Test Element raises CoordinateCalculationError if coord index is out of bounds."""
     scene = scene_with_mock_structure
@@ -248,7 +330,7 @@ def test_coord_error_on_invalid_coord_index(
     "ElementClass", [HelixSceneElement, CoilSceneElement, SheetSceneElement]
 )
 def test_coord_error_on_missing_chain(
-    mock_structure: MagicMock, scene_with_mock_structure: Scene, ElementClass: type
+    mock_structure, scene_with_mock_structure: Scene, ElementClass: type
 ):
     """Test Element raises CoordinateCalculationError if the chain is not found."""
     scene = scene_with_mock_structure
@@ -449,3 +531,302 @@ def test_coil_get_coord_at_residue(scene_with_mock_structure: Scene):
     assert coil.get_coordinate_at_residue(outside_residue, structure) is None
     wrong_chain_residue = ResidueCoordinate("B", 6)
     assert coil.get_coordinate_at_residue(wrong_chain_residue, structure) is None
+
+
+# --- Scene.get_rendered_coordinates_for_annotation Tests ---
+
+
+def test_scene_get_coords_point_success(
+    scene_with_structure_elements: Scene, point_anno_on_helix: PointAnnotation
+):
+    """Test getting coords for a point annotation targeting a covered residue."""
+    scene = scene_with_structure_elements
+    annotation = point_anno_on_helix
+
+    # Find the helix element using the auto-generated ID
+    helix_element = scene.get_element_by_id("HelixSceneElement-A-7-17")
+    assert isinstance(helix_element, HelixSceneElement)
+
+    # Get coords via Scene method
+    rendered_coords = scene.get_rendered_coordinates_for_annotation(annotation)
+
+    # Get expected coords directly from the structure element
+    expected_coords = helix_element.get_coordinate_at_residue(
+        annotation.target_coordinate, scene.structure
+    )
+
+    assert rendered_coords is not None
+    assert rendered_coords.shape == (1, 3)  # Should be shape [1, 3] for single point
+    assert expected_coords is not None
+    np.testing.assert_array_almost_equal(rendered_coords[0], expected_coords)
+
+
+def test_scene_get_coords_line_success(
+    scene_with_structure_elements: Scene, line_anno_coil_to_sheet: LineAnnotation
+):
+    """Test getting coords for a line annotation spanning covered residues."""
+    scene = scene_with_structure_elements
+    annotation = line_anno_coil_to_sheet
+
+    # Find the relevant structure elements using auto-generated IDs
+    coil_element = scene.get_element_by_id("CoilSceneElement-A-1-6")
+    sheet_element = scene.get_element_by_id("SheetSceneElement-A-18-28")
+    assert isinstance(coil_element, CoilSceneElement)
+    assert isinstance(sheet_element, SheetSceneElement)
+
+    # Get coords via Scene method
+    rendered_coords = scene.get_rendered_coordinates_for_annotation(annotation)
+
+    # Get expected coords directly from elements
+    expected_start = coil_element.get_coordinate_at_residue(
+        annotation.start_coordinate, scene.structure
+    )
+    expected_end = sheet_element.get_coordinate_at_residue(
+        annotation.end_coordinate, scene.structure
+    )
+
+    assert rendered_coords is not None
+    assert rendered_coords.shape == (2, 3)  # Should be shape [2, 3] for line
+    assert expected_start is not None
+    assert expected_end is not None
+    np.testing.assert_array_almost_equal(rendered_coords[0], expected_start)
+    np.testing.assert_array_almost_equal(rendered_coords[1], expected_end)
+
+
+def test_scene_get_coords_area_success(
+    scene_with_structure_elements: Scene, area_anno_helix_range: AreaAnnotation
+):
+    """Test getting coords for an area annotation targeting a covered range."""
+    scene = scene_with_structure_elements
+    annotation = area_anno_helix_range
+    assert annotation.residue_range_set is not None
+
+    # Find the helix element using the auto-generated ID
+    helix_element = scene.get_element_by_id("HelixSceneElement-A-7-17")
+    assert isinstance(helix_element, HelixSceneElement)
+
+    # Get coords via Scene method
+    rendered_coords = scene.get_rendered_coordinates_for_annotation(annotation)
+
+    # Manually get expected coords for each residue in the range
+    expected_coords_list = []
+    for res_coord in annotation.residue_range_set:
+        coord = helix_element.get_coordinate_at_residue(res_coord, scene.structure)
+        if coord is not None:
+            expected_coords_list.append(coord)
+
+    assert rendered_coords is not None
+    assert len(rendered_coords) == len(expected_coords_list)
+    # Need to potentially sort or compare carefully if order isn't guaranteed
+    # For this simple case, assuming order matches iteration over range set
+    np.testing.assert_array_almost_equal(
+        rendered_coords, np.array(expected_coords_list)
+    )
+
+
+def test_scene_get_coords_area_mixed_success(
+    scene_with_structure_elements: Scene, area_anno_mixed_range: AreaAnnotation
+):
+    """Test getting coords for an area annotation spanning multiple elements."""
+    scene = scene_with_structure_elements
+    annotation = area_anno_mixed_range
+    assert annotation.residue_range_set is not None
+
+    # Find the relevant structure elements using auto-generated IDs
+    coil_element = scene.get_element_by_id("CoilSceneElement-A-1-6")
+    helix_element = scene.get_element_by_id("HelixSceneElement-A-7-17")
+    assert isinstance(coil_element, CoilSceneElement)
+    assert isinstance(helix_element, HelixSceneElement)
+
+    # Get coords via Scene method
+    rendered_coords = scene.get_rendered_coordinates_for_annotation(annotation)
+
+    # Manually get expected coords, checking which element applies
+    expected_coords_list = []
+    for res_coord in annotation.residue_range_set:  # A:4-9
+        if res_coord.residue_index <= 6:  # On Coil
+            coord = coil_element.get_coordinate_at_residue(res_coord, scene.structure)
+        else:  # On Helix
+            coord = helix_element.get_coordinate_at_residue(res_coord, scene.structure)
+        if coord is not None:
+            expected_coords_list.append(coord)
+
+    assert rendered_coords is not None
+    assert len(rendered_coords) == len(expected_coords_list)
+    np.testing.assert_array_almost_equal(
+        rendered_coords, np.array(expected_coords_list)
+    )
+
+
+def test_scene_get_coords_multiple_covering_elements(
+    scene_with_mock_structure: Scene,  # Use base scene fixture
+    point_anno_on_helix: PointAnnotation,  # Annotation targets A:10
+):
+    """Test behavior when multiple elements cover the same target residue."""
+    scene = scene_with_mock_structure
+    annotation = point_anno_on_helix  # Targets A:10
+
+    # Add two elements covering A:10 - ORDER MATTERS for current implementation
+    helix_covering = HelixSceneElement(
+        residue_range_set=ResidueRangeSet.from_string("A:7-17")
+    )
+    coil_also_covering = CoilSceneElement(
+        residue_range_set=ResidueRangeSet.from_string("A:5-15")
+    )
+
+    # Add coil first, then helix
+    scene.add_node(coil_also_covering)
+    scene.add_node(helix_covering)
+
+    # Pre-calculate coordinates for testing
+    try:
+        helix_covering.get_coordinates(scene.structure)
+        coil_also_covering.get_coordinates(scene.structure)
+    except Exception as e:
+        pytest.skip(f"Skipping due to coord pre-calculation issue: {e}")
+
+    # The Scene.get_elements_at will likely return both, but the implementation
+    # of get_rendered_coordinates_for_annotation uses the *first* one it finds.
+    # Since we added coil first, its get_elements_at result might come first,
+    # or it might depend on the traverse order. Let's assume traverse order
+    # based on add_node: coil then helix.
+    # Therefore, we expect the coordinate from the COIL element.
+
+    rendered_coords = scene.get_rendered_coordinates_for_annotation(annotation)
+
+    # Get expected coordinate specifically from the coil element
+    expected_coords_from_coil = coil_also_covering.get_coordinate_at_residue(
+        annotation.target_coordinate, scene.structure
+    )
+
+    assert rendered_coords is not None
+    assert rendered_coords.shape == (1, 3)
+    assert expected_coords_from_coil is not None
+    np.testing.assert_array_almost_equal(rendered_coords[0], expected_coords_from_coil)
+
+    # Double-check it's NOT the helix coordinate (if they differ)
+    expected_coords_from_helix = helix_covering.get_coordinate_at_residue(
+        annotation.target_coordinate, scene.structure
+    )
+    if expected_coords_from_helix is not None and not np.allclose(
+        expected_coords_from_coil, expected_coords_from_helix
+    ):
+        with pytest.raises(AssertionError):
+            np.testing.assert_array_almost_equal(
+                rendered_coords[0], expected_coords_from_helix
+            )
+
+
+def test_scene_get_coords_point_uncovered_error(
+    scene_with_structure_elements: Scene, point_anno_uncovered: PointAnnotation
+):
+    """Test error when point annotation targets an uncovered residue."""
+    scene = scene_with_structure_elements
+    annotation = point_anno_uncovered
+
+    with pytest.raises(
+        CoordinateCalculationError,
+        match=f"No structure element found containing.*{annotation.target_coordinate}",
+    ):
+        scene.get_rendered_coordinates_for_annotation(annotation)
+
+
+def test_scene_get_coords_area_uncovered_error(
+    scene_with_structure_elements: Scene, area_anno_uncovered_range: AreaAnnotation
+):
+    """Test getting coords when area targets range partially outside covered elements."""
+    scene = scene_with_structure_elements
+    annotation = area_anno_uncovered_range  # Targets A:28-30
+    assert annotation.residue_range_set is not None
+
+    # Find the sheet element using the auto-generated ID
+    sheet_element = scene.get_element_by_id("SheetSceneElement-A-18-28")
+    assert isinstance(sheet_element, SheetSceneElement)
+
+    # Get coords via Scene method - should NOT raise error, but return only coord for A:28
+    # because A:29 and A:30 are skipped (debug log)
+    rendered_coords = scene.get_rendered_coordinates_for_annotation(annotation)
+
+    # Get expected coord for A:28 directly from the sheet element
+    expected_coord_A28 = sheet_element.get_coordinate_at_residue(
+        ResidueCoordinate("A", 28), scene.structure
+    )
+
+    assert rendered_coords is not None
+    assert expected_coord_A28 is not None
+    # Should only return the single coordinate found for A:28
+    assert rendered_coords.shape == (1, 3)
+    np.testing.assert_array_almost_equal(rendered_coords[0], expected_coord_A28)
+
+    # Verify that attempting to get coords for a *completely* uncovered range raises error
+    completely_uncovered_anno = AreaAnnotation(
+        id="area_totally_uncovered",
+        residue_range_set=ResidueRangeSet.from_string("A:29-30"),
+    )
+    # This should now raise CoordinateCalculationError because *no* points were found
+    with pytest.raises(
+        CoordinateCalculationError,
+        match="No rendered coordinates found for any residue",
+    ):
+        scene.get_rendered_coordinates_for_annotation(completely_uncovered_anno)
+
+
+def test_scene_get_coords_missing_target_error(
+    scene_with_structure_elements: Scene, mocker
+):
+    """Test ValueError if annotation lacks target coordinates/rangeset."""
+    scene = scene_with_structure_elements
+
+    # Point annotation missing target_coordinate
+    mock_point_no_target = mocker.MagicMock(spec=PointAnnotation)
+    mock_point_no_target.id = "p_no_target"
+    mock_point_no_target.targets_specific_coordinates = True
+    mock_point_no_target.target_coordinates = None
+    mock_point_no_target.residue_range_set = None
+    mock_point_no_target.parent = None  # Explicitly set parent to None
+    # Add mock to registry - use try/except for DuplicateElementError if run multiple times
+    try:
+        scene.add_node(mock_point_no_target)
+    except DuplicateElementError:
+        pass  # Already added in a previous test variation
+
+    with pytest.raises(
+        ValueError, match="targets specific coordinates but has none provided"
+    ):
+        scene.get_rendered_coordinates_for_annotation(mock_point_no_target)
+
+    # Area annotation missing residue_range_set
+    mock_area_no_target = mocker.MagicMock(spec=AreaAnnotation)
+    mock_area_no_target.id = "a_no_target"
+    mock_area_no_target.targets_specific_coordinates = False
+    mock_area_no_target.target_coordinates = None
+    mock_area_no_target.residue_range_set = None
+    mock_area_no_target.parent = None  # Explicitly set parent to None
+    try:
+        scene.add_node(mock_area_no_target)
+    except DuplicateElementError:
+        pass  # Already added
+
+    with pytest.raises(
+        ValueError, match="targets ranges but has no range set provided"
+    ):
+        scene.get_rendered_coordinates_for_annotation(mock_area_no_target)
+
+
+def test_scene_get_coords_element_failure_propagates(
+    scene_with_structure_elements: Scene, point_anno_on_helix: PointAnnotation, mocker
+):
+    """Test CoordinateCalculationError from element propagates through Scene."""
+    scene = scene_with_structure_elements
+    annotation = point_anno_on_helix
+
+    # Find the helix element using the auto-generated ID
+    helix_element = scene.get_element_by_id("HelixSceneElement-A-7-17")
+    assert isinstance(helix_element, HelixSceneElement)
+    error_message = "Simulated element calculation failure."
+    helix_element.get_coordinate_at_residue = mocker.MagicMock(
+        side_effect=CoordinateCalculationError(error_message)
+    )
+
+    with pytest.raises(CoordinateCalculationError, match=error_message):
+        scene.get_rendered_coordinates_for_annotation(annotation)

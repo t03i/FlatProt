@@ -4,7 +4,6 @@
 """Renders a FlatProt Scene object to an SVG image using the drawsvg library."""
 
 from typing import List, Optional, Tuple, Dict
-import numpy as np
 from drawsvg import Drawing, Group, Rectangle
 
 from flatprot.scene import (
@@ -21,7 +20,6 @@ from flatprot.scene import (
     BaseStructureSceneElement,
 )
 from flatprot.core.logger import logger
-from flatprot.scene.errors import CoordinateCalculationError
 
 from .svg_structure import _draw_coil, _draw_helix, _draw_sheet
 from .svg_annotations import (
@@ -33,101 +31,7 @@ from .svg_annotations import (
 # --- Helper Functions --- #
 
 
-def _get_rendered_coords_for_annotation(
-    annotation: BaseAnnotationElement,
-    scene: Scene,
-) -> Optional[np.ndarray]:
-    """Calculate the rendered 2D+Depth coordinates for an annotation's targets.
-
-    Uses the appropriate BaseStructureSceneElement's get_coordinate_at_residue
-    method to find the coordinate(s) on the *rendered* structure.
-
-    For point/line annotations (targeting specific coordinates), returns an
-    array of coordinates corresponding to those targets.
-    For area annotations (targeting a ResidueRangeSet), returns an array
-    of coordinates for *all* residues within that range set.
-
-    Args:
-        annotation: The annotation element.
-        scene: The scene object.
-
-    Returns:
-        A numpy array of coordinates [N, 3] (X, Y, Depth),
-        or None if coordinates can't be determined.
-    """
-    structure = scene.structure
-    rendered_coords_list = []
-
-    try:
-        if annotation.targets_specific_coordinates:
-            if annotation.target_coordinates is None:
-                return None
-            target_residues = annotation.target_coordinates
-
-            for res_coord in target_residues:
-                containing_elements = scene.get_elements_at(res_coord)
-                structure_element: Optional[BaseStructureSceneElement] = None
-                for elem in containing_elements:
-                    if isinstance(elem, BaseStructureSceneElement):
-                        structure_element = elem
-                        break
-
-                if structure_element:
-                    rendered_coord = structure_element.get_coordinate_at_residue(
-                        res_coord, structure
-                    )
-                    if rendered_coord is not None:
-                        rendered_coords_list.append(rendered_coord)
-                    else:
-                        logger.warning(
-                            f"Could not get rendered coord for {res_coord} from element {structure_element.id} for annotation {annotation.id}"
-                        )
-                else:
-                    logger.warning(
-                        f"No structure element found containing {res_coord} for annotation {annotation.id}"
-                    )
-
-        else:  # Targets a ResidueRangeSet (likely for AreaAnnotation)
-            if annotation.residue_range_set is None:
-                return None
-
-            for res_coord in annotation.residue_range_set:
-                containing_elements = scene.get_elements_at(res_coord)
-                structure_element: Optional[BaseStructureSceneElement] = None
-                for elem in containing_elements:
-                    if isinstance(elem, BaseStructureSceneElement):
-                        structure_element = elem
-                        break
-
-                if structure_element:
-                    rendered_coord = structure_element.get_coordinate_at_residue(
-                        res_coord, structure
-                    )
-                    if rendered_coord is not None:
-                        rendered_coords_list.append(rendered_coord)
-                    else:
-                        logger.debug(
-                            f"Could not get rendered coord for {res_coord} from element {structure_element.id} for annotation {annotation.id}"
-                        )
-                else:
-                    logger.debug(
-                        f"No structure element found containing {res_coord} for annotation {annotation.id}"
-                    )
-
-            if not rendered_coords_list:
-                logger.warning(
-                    f"No rendered coordinates found for range set of annotation {annotation.id}"
-                )
-                return None  # Return None if no points found for the range
-
-    except (AttributeError, CoordinateCalculationError, Exception) as e:
-        logger.error(
-            f"Error calculating rendered coords for annotation {annotation.id}: {e}",
-            exc_info=True,
-        )
-        return None
-
-    return np.array(rendered_coords_list) if rendered_coords_list else None
+# Removed _get_rendered_coords_for_annotation helper function
 
 
 # --- Renderer Class --- #
@@ -323,13 +227,18 @@ class SVGRenderer:
                 )
                 continue
 
-            rendered_coords = _get_rendered_coords_for_annotation(element, self.scene)
+            # Get coordinates using the new Scene method
+            rendered_coords = self.scene.get_rendered_coordinates_for_annotation(
+                element
+            )
             if rendered_coords is None:
-                logger.warning(
-                    f"No rendered coords for annotation {element.id}, skipping."
+                # Scene method already logs warnings/errors
+                logger.debug(
+                    f"Skipping annotation {element.id} due to missing rendered coordinates."
                 )
                 continue
 
+            # Call the specific annotation drawing function
             svg_shapes = draw_func(element, rendered_coords)
             if svg_shapes:
                 # Add annotations directly to the root group to ensure they are on top

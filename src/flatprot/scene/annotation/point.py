@@ -12,7 +12,7 @@ from .base_annotation import (
     BaseAnnotationElement,
     BaseAnnotationStyle,
 )
-from ..base_element import SceneGroupType  # Need SceneGroupType for parent hint
+from ..base_element import SceneGroupType
 
 
 # --- Point Annotation Specific Style ---

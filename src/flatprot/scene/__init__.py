@@ -14,7 +14,7 @@ from .structure import (
     BaseStructureSceneElement,
     BaseStructureStyle,
 )
-from .annotations import (
+from .annotation import (
     BaseAnnotationElement,
     BaseAnnotationStyle,
     PointAnnotation,

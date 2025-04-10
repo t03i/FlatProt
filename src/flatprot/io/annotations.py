@@ -17,7 +17,7 @@ from .errors import (
 )
 
 # Import the target Pydantic annotation and style models
-from flatprot.scene.annotations import (
+from flatprot.scene.annotation import (
     PointAnnotation,
     LineAnnotation,
     AreaAnnotation,

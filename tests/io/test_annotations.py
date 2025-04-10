@@ -17,7 +17,7 @@ from flatprot.io.errors import (
     AnnotationFileNotFoundError,
     MalformedAnnotationError,
 )
-from flatprot.scene.annotations import (
+from flatprot.scene.annotation import (
     PointAnnotation,
     LineAnnotation,
     AreaAnnotation,
