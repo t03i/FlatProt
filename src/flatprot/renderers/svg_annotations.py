@@ -102,10 +102,10 @@ def _draw_line_annotation(
 
     elements = []
     line = Line(
-        x1=start_x,
-        y1=start_y,
-        x2=end_x,
-        y2=end_y,
+        sx=start_x,
+        sy=start_y,
+        ex=end_x,
+        ey=end_y,
         stroke=style.color.as_hex(),
         stroke_width=1,  # Example, make configurable?
         opacity=style.opacity,

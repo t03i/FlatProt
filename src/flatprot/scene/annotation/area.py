@@ -134,7 +134,7 @@ class AreaAnnotation(BaseAnnotationElement[AreaAnnotationStyle]):
         # Fetch coordinates for all target residues
         try:
             for res_coord in target_residues:
-                chain = structure.get_chain(res_coord.chain_id)
+                chain = structure[res_coord.chain_id]
                 if res_coord.residue_index in chain:
                     coord_index = chain.coordinate_index(res_coord.residue_index)
                     if 0 <= coord_index < len(structure.coordinates):

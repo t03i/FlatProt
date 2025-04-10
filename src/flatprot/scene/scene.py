@@ -463,6 +463,12 @@ class Scene:
                             res_coord, self.structure
                         )
                         if rendered_coord is not None:
+                            # For Point/Line annotations, *every* target coordinate must resolve.
+                            if rendered_coord is None:
+                                raise CoordinateCalculationError(
+                                    f"Could not resolve specific target coordinate {res_coord} "
+                                    f"using element '{structure_element.id}' for annotation '{annotation.id}'."
+                                )
                             rendered_coords_list.append(rendered_coord)
                         else:
                             # Raise specific error if coordinate could not be calculated by the element

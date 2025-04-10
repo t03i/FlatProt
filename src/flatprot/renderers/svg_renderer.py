@@ -106,26 +106,41 @@ class SVGRenderer:
         annotation_elements: List[Tuple[float, BaseAnnotationElement]] = []
         structure = self.scene.structure  # Get structure once
 
-        for element, _hierarchy_depth in self.scene.traverse():  # Use scene traverse
+        logger.debug("--- Starting _collect_and_sort_renderables ---")  # DEBUG
+        for element, hierarchy_depth in self.scene.traverse():  # Use scene traverse
+            logger.debug(
+                f"Traversing: {element.id} (Type: {type(element).__name__}, Depth: {hierarchy_depth})"
+            )
+
             # Skip invisible or group elements
-            if not element.style.visibility or isinstance(element, SceneGroup):
+            if not element.style.visibility:
+                logger.debug(f"Skipping {element.id}: Invisible")  # DEBUG
+                continue
+            if isinstance(element, SceneGroup):
+                logger.debug(f"Skipping {element.id}: Is SceneGroup")  # DEBUG
                 continue
 
             render_depth = element.get_depth(structure)
+            logger.debug(
+                f"Calculated render_depth for {element.id}: {render_depth}"
+            )  # DEBUG
 
             if render_depth is None:
                 logger.debug(
-                    f"Element {element.id} ({type(element).__name__}) has no rendering depth, skipping."
-                )
+                    f"Element {element.id} ({type(element).__name__}) has no rendering depth, skipping collection."
+                )  # DEBUG: Changed message slightly
                 continue
 
             # Categorize and collect
             if isinstance(element, BaseStructureSceneElement):
+                logger.debug(f"Collecting Structure Element: {element.id}")  # DEBUG
                 structure_elements.append((render_depth, element))
             elif isinstance(element, BaseAnnotationElement):
                 # Depth is inf, but store it for consistency (sorting won't change)
+                logger.debug(f"Collecting Annotation Element: {element.id}")  # DEBUG
                 annotation_elements.append((render_depth, element))
             # else: Ignore other potential non-group, non-renderable types
+        logger.debug("--- Finished _collect_and_sort_renderables ---")  # DEBUG
 
         # Sort structure elements by depth (ascending)
         structure_elements.sort(key=lambda item: item[0])

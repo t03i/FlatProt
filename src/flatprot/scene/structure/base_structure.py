@@ -158,7 +158,7 @@ class BaseStructureSceneElement(
                 )
                 return None
 
-            chain = structure.get_chain(residue.chain_id)
+            chain = structure[residue.chain_id]
 
             # Check if the residue index exists in this chain's mapping
             if residue.residue_index not in chain:
@@ -205,7 +205,7 @@ class BaseStructureSceneElement(
 
         try:
             for res_coord in self.residue_range_set:
-                chain = structure.get_chain(res_coord.chain_id)
+                chain = structure[res_coord.chain_id]
                 if res_coord.residue_index in chain:
                     coord_index = chain.coordinate_index(res_coord.residue_index)
                     if 0 <= coord_index < len(structure.coordinates):
