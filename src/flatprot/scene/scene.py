@@ -501,13 +501,11 @@ class Scene:
                             rendered_coords_list.append(rendered_coord)
                             found_any_coord = True
                         else:
-                            # Log debug if element exists but coord calculation fails within range
-                            logger.debug(
+                            raise CoordinateCalculationError(
                                 f"Could not get rendered coord for {res_coord} "
-                                f"from element '{structure_element.id}' for range annotation '{annotation.id}' (skipping point)."
+                                f"from element '{structure_element.id}' for annotation '{annotation.id}'"
                             )
                     else:
-                        # Log debug if no element covers a residue within the range
                         logger.debug(
                             f"No structure element found containing {res_coord} "
                             f"for range annotation '{annotation.id}' (skipping point)."
