@@ -8,10 +8,13 @@ from flatprot.scene import Scene, DuplicateElementError
 # If not, copy them from test_scene_system.py or create a shared conftest.py
 from .test_scene_system import create_mock_element
 
+# ruff: noqa: F401
+from .test_scene_system import scene, mock_structure
 
 # --- Complex Hierarchy Tests ---
 
 
+# ruff: noqa: F811
 def test_deep_nesting_add_remove(scene: Scene):
     """Test adding and removing elements in a deeply nested structure."""
     # Create: root -> g1 -> g2 -> g3 -> element
@@ -71,6 +74,7 @@ def test_deep_nesting_add_remove(scene: Scene):
     assert result_ids_depths == expected_ids_depths
 
 
+# ruff: noqa: F811
 def test_multiple_moves_reparenting(scene: Scene):
     """Test moving elements multiple times between different parents."""
     g1 = create_mock_element("g1_m", is_group=True)  # Use unique IDs for this test
@@ -153,6 +157,7 @@ def test_multiple_moves_reparenting(scene: Scene):
     assert len(scene) == initial_len  # No elements lost
 
 
+# ruff: noqa: F811
 def test_interleaved_add_move_remove(scene: Scene):
     """Test a sequence of adds, moves, and removes."""
     # Use unique IDs for this test
