@@ -292,96 +292,136 @@ class Chain:
 
 
 class Structure:
-    def __init__(self, chains: list[Chain]):
-        """Initializes a Structure from a list of Chains."""
+    """Represents a complete protein structure composed of multiple chains."""
+
+    def __init__(self, chains: list[Chain], id: Optional[str] = None):
+        """Initializes a Structure object.
+
+        Args:
+            chains: A list of Chain objects representing the chains in the structure.
+            id: An optional identifier for the structure (e.g., PDB ID or filename stem).
+        """
         self.__chains = {chain.id: chain for chain in chains}
+        self.id = id or "unknown_structure"  # Assign ID or a default
 
     def __getitem__(self, chain_id: str) -> Chain:
+        """Get a chain by its ID."""
         return self.__chains[chain_id]
 
     def __contains__(self, chain_id: str | ResidueCoordinate) -> bool:
-        if isinstance(chain_id, ResidueCoordinate):
+        """Check if a chain ID or ResidueCoordinate exists in the structure."""
+        if isinstance(chain_id, str):
+            return chain_id in self.__chains
+        elif isinstance(chain_id, ResidueCoordinate):
             return (
                 chain_id.chain_id in self.__chains
                 and chain_id.residue_index in self.__chains[chain_id.chain_id]
             )
-        return chain_id in self.__chains
+        return False
 
-    def __iter__(self) -> Iterator[Chain]:
-        return iter(self.__chains.values())
+    def __iter__(self) -> Iterator[tuple[str, Chain]]:
+        """Iterate over chain IDs and Chain objects."""
+        return iter(self.__chains.items())
 
     def items(self) -> Iterator[tuple[str, Chain]]:
+        """Return an iterator over chain ID / Chain pairs."""
         return self.__chains.items()
 
     def values(self) -> Iterator[Chain]:
+        """Return an iterator over Chain objects."""
         return self.__chains.values()
 
     def __len__(self) -> int:
+        """Return the number of chains in the structure."""
         return len(self.__chains)
 
     @property
     def residues(self) -> list[ResidueType]:
-        """Get all residues from all chains concatenated in a single list."""
+        """Get a flattened list of all residues across all chains."""
         all_residues = []
         for chain in self.__chains.values():
             all_residues.extend(chain.residues)
         return all_residues
 
     @property
-    def coordinates(self) -> np.ndarray:
-        """Get coordinates from all chains concatenated in a single array."""
-        return np.concatenate([chain.coordinates for chain in self.__chains.values()])
+    def coordinates(self) -> Optional[np.ndarray]:
+        """Get a concatenated array of all coordinates across all chains, or None if empty."""
+        all_coords = [
+            chain.coordinates
+            for chain in self.__chains.values()
+            if chain.coordinates is not None and chain.coordinates.size > 0
+        ]
+        if not all_coords:
+            return None
+        return np.vstack(all_coords)
 
     def __str__(self) -> str:
-        return f"Structure with {len(self.__chains)} chains"
+        return f"Structure(ID: {self.id}, Chains: {list(self.__chains.keys())})"
 
     def apply_vectorized_transformation(
         self, transformer_func: Callable[[np.ndarray], np.ndarray]
     ) -> "Structure":
-        """
-        Applies a transformation function to the combined coordinates of all chains
-        and returns a new Structure.
-
-        The transformation function operates on the concatenated coordinate array
-        of the entire structure.
+        """Applies a transformation function to all coordinates and returns a new Structure.
 
         Args:
-            transformer_func: A function that takes an Nx3 numpy array of coordinates
-                              (where N is the total number of residues in the structure)
-                              and returns a new Nx3 numpy array of transformed coordinates.
+            transformer_func: A function that takes an (N, 3) coordinate array
+                              and returns a transformed (N, 3) array.
 
         Returns:
-            A new Structure instance containing new Chain instances with the
-            transformed coordinates, preserving all other metadata.
+            A new Structure instance with transformed coordinates.
         """
-        original_coordinates = self.coordinates
-        transformed_coordinates = transformer_func(original_coordinates)
+        new_chains = []
+        start_index = 0
+        original_coords = self.coordinates
+        if original_coords is None:
+            # Handle case with no coordinates - return a structure with chains having None coordinates
+            for chain in self.values():
+                new_chains.append(
+                    Chain(
+                        chain.id,
+                        chain.residues,
+                        chain.index,
+                        None,
+                        chain.secondary_structure,
+                    )
+                )
+            return Structure(new_chains, id=self.id)
 
-        if transformed_coordinates.shape[0] != original_coordinates.shape[0]:
+        transformed_coords = transformer_func(original_coords)
+
+        # Reintroduce check for shape change
+        if transformed_coords.shape[0] != original_coords.shape[0]:
             raise ValueError(
                 f"Transformer function changed coordinate array shape from "
-                f"{original_coordinates.shape} to {transformed_coordinates.shape}"
+                f"{original_coords.shape} to {transformed_coords.shape}"
             )
 
-        new_chains = []
-        start_idx = 0
         for chain in self.values():
-            num_coords = len(chain.coordinates)
-            end_idx = start_idx + num_coords
-            chain_coords_transformed = transformed_coordinates[start_idx:end_idx]
+            num_coords = len(chain.coordinates) if chain.coordinates is not None else 0
+            if num_coords > 0:
+                chain_transformed_coords = transformed_coords[
+                    start_index : start_index + num_coords
+                ]
+                new_chains.append(
+                    Chain(
+                        chain.id,
+                        chain.residues,
+                        chain.index,
+                        chain_transformed_coords,
+                        chain.secondary_structure,
+                    )
+                )
+                start_index += num_coords
+            else:
+                # Handle chains originally having no coordinates
+                new_chains.append(
+                    Chain(
+                        chain.id,
+                        chain.residues,
+                        chain.index,
+                        None,
+                        chain.secondary_structure,
+                    )
+                )
 
-            # Use the Chain's own transformation logic internally by creating
-            # a lambda that just returns the pre-transformed segment.
-            # This reuses the Chain's __init__ logic correctly.
-            # Alternatively, manually create the new Chain like below:
-            new_chain = Chain(
-                chain_id=chain.id,
-                residues=chain.residues,
-                index=chain.index,
-                coordinates=chain_coords_transformed,
-                secondary_structure=list(chain.secondary_structure),  # Pass copy
-            )
-            new_chains.append(new_chain)
-            start_idx = end_idx
-
-        return Structure(new_chains)
+        return Structure(new_chains, id=self.id)

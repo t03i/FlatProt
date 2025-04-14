@@ -39,7 +39,8 @@ def sample_structure(
     sample_chain_a: Chain, sample_chain_b_discontinuous: Chain
 ) -> Structure:
     """Provides a sample structure containing chain A and chain B."""
-    return Structure([sample_chain_a, sample_chain_b_discontinuous])
+    # Provide an explicit ID for testing
+    return Structure([sample_chain_a, sample_chain_b_discontinuous], id="test_struct")
 
 
 # --- Chain Tests ---
@@ -318,11 +319,12 @@ def test_structure_contains_coordinate(sample_structure: Structure) -> None:
 
 
 def test_structure_iteration(sample_structure: Structure) -> None:
-    """Test iterating over a Structure yields Chain objects."""
-    chains = list(sample_structure)
-    assert len(chains) == 2
-    assert all(isinstance(c, Chain) for c in chains)
-    assert set(c.id for c in chains) == {"A", "B"}
+    """Test iterating over a Structure yields chain ID, Chain object tuples."""
+    items = list(sample_structure)
+    assert len(items) == 2
+    assert all(isinstance(item[0], str) for item in items)
+    assert all(isinstance(item[1], Chain) for item in items)
+    assert set(item[0] for item in items) == {"A", "B"}
 
 
 def test_structure_items(sample_structure: Structure) -> None:
@@ -362,7 +364,8 @@ def test_structure_coordinates(sample_structure: Structure) -> None:
 
 def test_structure_str(sample_structure: Structure) -> None:
     """Test the string representation of a Structure."""
-    assert str(sample_structure) == "Structure with 2 chains"
+    # Update assertion to match new format including the ID
+    assert str(sample_structure) == "Structure(ID: test_struct, Chains: ['A', 'B'])"
 
 
 def test_structure_apply_vectorized_transformation(
