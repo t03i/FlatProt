@@ -72,7 +72,7 @@ class ResidueRange:
     start: int
     end: int
     coordinates_start_index: Optional[int] = None
-    secondary_structure: Optional[SecondaryStructureType] = None
+    secondary_structure_type: Optional[SecondaryStructureType] = None
 
     def to_set(self) -> "ResidueRangeSet":
         return ResidueRangeSet([self])
@@ -114,8 +114,8 @@ class ResidueRange:
         return ResidueRange(chain, start, end)
 
     def __str__(self) -> str:
-        if self.secondary_structure:
-            return f"{self.chain_id}:{self.start}-{self.end} ({self.secondary_structure.name})"
+        if self.secondary_structure_type:
+            return f"{self.chain_id}:{self.start}-{self.end} ({self.secondary_structure_type.name})"
         else:
             return f"{self.chain_id}:{self.start}-{self.end}"
 

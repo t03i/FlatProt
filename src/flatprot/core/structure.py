@@ -134,7 +134,7 @@ class Chain:
             # Only consider residues actually present in the chain for this element
             for idx in range(ss_element.start, ss_element.end + 1):
                 if idx in self.__chain_coordinates:
-                    defined_ss_map[idx] = ss_element.secondary_structure
+                    defined_ss_map[idx] = ss_element.secondary_structure_type
 
         complete_ss: List[ResidueRange] = []
         segment_start_idx = residue_indices[0]

@@ -107,7 +107,7 @@ def residue_range_b() -> ResidueRange:
         5,
         15,
         coordinates_start_index=50,
-        secondary_structure=SecondaryStructureType.HELIX,
+        secondary_structure_type=SecondaryStructureType.HELIX,
     )
 
 
@@ -117,7 +117,7 @@ def test_residue_range_creation(residue_range_a: ResidueRange) -> None:
     assert residue_range_a.start == 10
     assert residue_range_a.end == 20
     assert residue_range_a.coordinates_start_index is None
-    assert residue_range_a.secondary_structure is None
+    assert residue_range_a.secondary_structure_type is None
 
 
 def test_residue_range_creation_with_optional(residue_range_b: ResidueRange) -> None:
@@ -126,7 +126,7 @@ def test_residue_range_creation_with_optional(residue_range_b: ResidueRange) -> 
     assert residue_range_b.start == 5
     assert residue_range_b.end == 15
     assert residue_range_b.coordinates_start_index == 50
-    assert residue_range_b.secondary_structure == SecondaryStructureType.HELIX
+    assert residue_range_b.secondary_structure_type == SecondaryStructureType.HELIX
 
 
 def test_residue_range_invalid_creation() -> None:
