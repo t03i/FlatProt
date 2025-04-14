@@ -4,7 +4,7 @@
 """Utility functions for transforming and projecting Structure objects."""
 
 from pathlib import Path
-from typing import Optional, Callable
+from typing import Optional
 import numpy as np
 
 from flatprot.core import Structure, logger
@@ -24,6 +24,7 @@ from flatprot.transformation import (
     InertiaTransformationParameters,
     InertiaTransformationArguments,
     MatrixTransformer,
+    MatrixTransformParameters,
     TransformationMatrix,
     TransformationError,  # Assuming this specific error type exists
 )
@@ -104,21 +105,17 @@ def transform_structure_with_matrix(
 
     try:
         transformation_matrix = _load_transformation_matrix(matrix_path)
-        # Assuming MatrixTransformer is initialized with the matrix
-        # Check MatrixTransformer's __init__ signature
-        # If it expects the matrix in __init__:
-        transformer = MatrixTransformer(matrix=transformation_matrix)
-        # If it expects matrix in transform(): adjust the lambda below
+        # Correctly instantiate MatrixTransformer using its parameters class
+        transformer_params = MatrixTransformParameters(matrix=transformation_matrix)
+        transformer = MatrixTransformer(parameters=transformer_params)
 
         logger.info(
             f"Applying matrix transformation (source: {matrix_path or 'Identity'})..."
         )
 
-        # Wrap the transformer's transform method for apply_vectorized_transformation
-        # Assuming MatrixTransformer.transform takes only coordinates
-        transform_func: Callable[[np.ndarray], np.ndarray] = transformer.transform
-
-        new_structure = structure.apply_vectorized_transformation(transform_func)
+        new_structure = structure.apply_vectorized_transformation(
+            lambda coords: transformer.transform(coords, arguments=None)
+        )
         logger.info("Matrix transformation complete.")
         return new_structure
 
