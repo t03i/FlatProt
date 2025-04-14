@@ -90,9 +90,9 @@ def scene_with_structure_elements(scene_with_mock_structure: Scene) -> Scene:
     coil = CoilSceneElement(residue_range_set=ResidueRangeSet.from_string("A:1-6"))
     helix = HelixSceneElement(residue_range_set=ResidueRangeSet.from_string("A:7-17"))
     sheet = SheetSceneElement(residue_range_set=ResidueRangeSet.from_string("A:18-28"))
-    scene.add_node(coil)
-    scene.add_node(helix)
-    scene.add_node(sheet)
+    scene.add_element(coil)
+    scene.add_element(helix)
+    scene.add_element(sheet)
     # Pre-calculate coordinates for structure elements if needed for tests
     # This might raise errors if structure mock is insufficient, handle if necessary
     try:
@@ -167,7 +167,7 @@ def test_helix_coordinate_generation(scene_with_mock_structure: Scene):
     scene = scene_with_mock_structure
     helix_range = ResidueRangeSet.from_string("A:5-15")  # 11 residues
     helix = HelixSceneElement(residue_range_set=helix_range)
-    scene.add_node(helix)  # Add the *real* element
+    scene.add_element(helix)  # Add the *real* element
 
     coords = helix.get_coordinates(scene.structure)
     assert coords is not None
@@ -190,7 +190,7 @@ def test_coil_coordinate_generation(scene_with_mock_structure: Scene):
     # Use specific style for predictable smoothing
     coil_style = CoilStyle(smoothing_factor=0.5)
     coil = CoilSceneElement(residue_range_set=coil_range, style=coil_style)
-    scene.add_node(coil)
+    scene.add_element(coil)
 
     coords = coil.get_coordinates(scene.structure)
     assert coords is not None
@@ -209,7 +209,7 @@ def test_helix_short_helix_as_line(scene_with_mock_structure: Scene):
     # Default min_helix_length is 4
     helix_range = ResidueRangeSet.from_string("A:1-3")  # 3 residues < 4
     helix = HelixSceneElement(residue_range_set=helix_range)
-    scene.add_node(helix)
+    scene.add_element(helix)
 
     coords = helix.get_coordinates(scene.structure)
     assert coords is not None
@@ -224,7 +224,7 @@ def test_sheet_coordinate_generation(scene_with_mock_structure: Scene):
     scene = scene_with_mock_structure
     sheet_range = ResidueRangeSet.from_string("A:1-11")  # 11 residues
     sheet = SheetSceneElement(residue_range_set=sheet_range)
-    scene.add_node(sheet)
+    scene.add_element(sheet)
 
     coords = sheet.get_coordinates(scene.structure)
     assert coords is not None
@@ -288,7 +288,7 @@ def test_coord_error_on_missing_residue(
 
     element_range = ResidueRangeSet.from_string("A:5-15")  # Range includes residue 10
     element = ElementClass(residue_range_set=element_range)
-    scene.add_node(element)
+    scene.add_element(element)
 
     with pytest.raises(
         CoordinateCalculationError,
@@ -320,7 +320,7 @@ def test_coord_error_on_invalid_coord_index(
 
     element_range = ResidueRangeSet.from_string("A:5-15")  # Range includes residue 10
     element = ElementClass(residue_range_set=element_range)
-    scene.add_node(element)
+    scene.add_element(element)
 
     with pytest.raises(CoordinateCalculationError, match="index .* out of bounds"):
         element.get_coordinates(scene.structure)
@@ -336,7 +336,7 @@ def test_coord_error_on_missing_chain(
     scene = scene_with_mock_structure
     element_range = ResidueRangeSet.from_string("Z:5-15")  # Chain Z does not exist
     element = ElementClass(residue_range_set=element_range)
-    scene.add_node(element)
+    scene.add_element(element)
 
     with pytest.raises(
         CoordinateCalculationError,
@@ -354,7 +354,7 @@ def test_helix_error_zero_length_endpoints(scene_with_mock_structure: Scene):
 
     helix_range = ResidueRangeSet.from_string("A:5-15")
     helix = HelixSceneElement(residue_range_set=helix_range)
-    scene.add_node(helix)
+    scene.add_element(helix)
 
     # get_coordinates itself should raise the error when calculate_zigzag_points returns None
     with pytest.raises(
@@ -373,7 +373,7 @@ def test_helix_get_coord_at_residue(scene_with_mock_structure: Scene):
     structure = scene.structure
     helix_range = ResidueRangeSet.from_string("A:5-15")  # 11 residues (indices 4-14)
     helix = HelixSceneElement(residue_range_set=helix_range)
-    scene.add_node(helix)
+    scene.add_element(helix)
     # It's important to call get_coordinates first to populate internal cache if get_coordinate_at_residue relies on it
     helix.get_coordinates(structure)
 
@@ -442,7 +442,7 @@ def test_sheet_get_coord_at_residue(scene_with_mock_structure: Scene):
     structure = scene.structure
     sheet_range = ResidueRangeSet.from_string("A:1-11")  # 11 residues (indices 0-10)
     sheet = SheetSceneElement(residue_range_set=sheet_range)
-    scene.add_node(sheet)
+    scene.add_element(sheet)
     # Call get_coordinates if needed by implementation (assuming simple line doesn't cache like coil)
     sheet.get_coordinates(structure)
 
@@ -498,7 +498,7 @@ def test_coil_get_coord_at_residue(scene_with_mock_structure: Scene):
     # Smoothing factor 0.2 keeps 2 points: indices 0 and 10
     coil_style = CoilStyle(smoothing_factor=0.2)
     coil = CoilSceneElement(residue_range_set=coil_range, style=coil_style)
-    scene.add_node(coil)
+    scene.add_element(coil)
     # Call get_coordinates to populate cache
     smoothed_coords = coil.get_coordinates(structure)
     assert len(smoothed_coords) == 2  # Verify smoothing happened as expected
@@ -675,8 +675,8 @@ def test_scene_get_coords_multiple_covering_elements(
     )
 
     # Add coil first, then helix
-    scene.add_node(coil_also_covering)
-    scene.add_node(helix_covering)
+    scene.add_element(coil_also_covering)
+    scene.add_element(helix_covering)
 
     # Pre-calculate coordinates for testing
     try:
@@ -786,7 +786,7 @@ def test_scene_get_coords_missing_target_error(
     mock_point_no_target.parent = None  # Explicitly set parent to None
     # Add mock to registry - use try/except for DuplicateElementError if run multiple times
     try:
-        scene.add_node(mock_point_no_target)
+        scene.add_element(mock_point_no_target)
     except DuplicateElementError:
         pass  # Already added in a previous test variation
 
@@ -803,7 +803,7 @@ def test_scene_get_coords_missing_target_error(
     mock_area_no_target.residue_range_set = None
     mock_area_no_target.parent = None  # Explicitly set parent to None
     try:
-        scene.add_node(mock_area_no_target)
+        scene.add_element(mock_area_no_target)
     except DuplicateElementError:
         pass  # Already added
 

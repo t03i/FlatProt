@@ -87,7 +87,7 @@ class Scene:
         if element.id in self._element_registry:
             del self._element_registry[element.id]
 
-    def add_node(
+    def add_element(
         self, element: BaseSceneElement, parent_id: Optional[str] = None
     ) -> None:
         """Adds a SceneElement to the scene graph.
@@ -165,7 +165,7 @@ class Scene:
             raise e
         # No 'except Exception' needed here - let unexpected errors propagate
 
-    def remove_node(self, element_id: str) -> None:
+    def remove_element(self, element_id: str) -> None:
         """Removes a SceneElement and its descendants from the scene graph by ID.
 
         Args:
@@ -233,7 +233,9 @@ class Scene:
                 f"SceneGraph Inconsistency: Element '{element.id}' was registered but not found in the scene graph structure (neither parented nor top-level)."
             )
 
-    def move_node(self, element_id: str, new_parent_id: Optional[str] = None) -> None:
+    def move_element(
+        self, element_id: str, new_parent_id: Optional[str] = None
+    ) -> None:
         """Moves a SceneElement identified by its ID to a new parent.
 
         Args:

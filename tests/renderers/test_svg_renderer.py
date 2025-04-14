@@ -150,21 +150,21 @@ def sheet_element() -> SheetSceneElement:
 @pytest.fixture
 def scene_with_coil(empty_scene: Scene, coil_element: CoilSceneElement) -> Scene:
     """Provides a Scene containing the coil element."""
-    empty_scene.add_node(coil_element)
+    empty_scene.add_element(coil_element)
     return empty_scene
 
 
 @pytest.fixture
 def scene_with_helix(empty_scene: Scene, helix_element: HelixSceneElement) -> Scene:
     """Provides a Scene containing the helix element."""
-    empty_scene.add_node(helix_element)
+    empty_scene.add_element(helix_element)
     return empty_scene
 
 
 @pytest.fixture
 def scene_with_sheet(empty_scene: Scene, sheet_element: SheetSceneElement) -> Scene:
     """Provides a Scene containing the sheet element."""
-    empty_scene.add_node(sheet_element)
+    empty_scene.add_element(sheet_element)
     return empty_scene
 
 
@@ -295,7 +295,7 @@ def test_render_helix_with_custom_style(
     helix_element.style.stroke_width = custom_stroke_width
     helix_element.style.opacity = custom_opacity
 
-    empty_scene.add_node(helix_element)
+    empty_scene.add_element(helix_element)
     scene = empty_scene
 
     # Mocks applied in fixture
@@ -324,7 +324,7 @@ def test_render_invisible_element(
 ) -> None:
     """Tests that an element with visibility=False is not rendered."""
     coil_element.style.visibility = False
-    empty_scene.add_node(coil_element)
+    empty_scene.add_element(coil_element)
     scene = empty_scene
 
     renderer = SVGRenderer(scene=scene)
@@ -383,13 +383,13 @@ def test_render_custom_dimensions(empty_scene: Scene) -> None:
 def test_render_with_scenegroup(empty_scene: Scene) -> None:
     """Tests rendering an element nested within a SceneGroup."""
     group_id = "my_test_group"
-    empty_scene.add_node(SceneGroup(id=group_id))
+    empty_scene.add_element(SceneGroup(id=group_id))
 
     # Create coil element *locally* within the test
     coil_element = CoilSceneElement(
         residue_range_set=ResidueRangeSet.from_string("A:1-5")
     )
-    empty_scene.add_node(coil_element, parent_id=group_id)
+    empty_scene.add_element(coil_element, parent_id=group_id)
 
     # Add the locally created coil to the group
     scene = empty_scene
@@ -438,7 +438,7 @@ def test_render_structure_coord_error(empty_scene: Scene) -> None:
     bad_coil = CoilSceneElement(
         residue_range_set=ResidueRangeSet.from_string("A:11-15")
     )
-    empty_scene.add_node(bad_coil)
+    empty_scene.add_element(bad_coil)
     scene = empty_scene
 
     renderer = SVGRenderer(scene=scene)

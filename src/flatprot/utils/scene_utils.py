@@ -78,7 +78,7 @@ def create_scene_from_structure(
     if structure.coordinates is None or len(structure.coordinates) == 0:
         raise SceneCreationError(f"Structure '{structure.id}' has no coordinates.")
 
-    scene = Scene(id=f"scene_{structure.id}")
+    scene = Scene(structure=structure)
     styles = default_styles or {}
 
     for chain_id, chain in structure:

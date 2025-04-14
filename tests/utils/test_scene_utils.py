@@ -140,7 +140,7 @@ def test_create_scene_from_structure_success(mocker: MockerFixture) -> None:
 
     # 4. Assertions
     assert scene == mock_scene_instance
-    mock_scene_class.assert_called_once_with(id="scene_test_struct")
+    mock_scene_class.assert_called_once_with(structure=mock_struct)
 
     # Check group creation and addition
     mock_group_class.assert_called_once_with(id="test_struct_A")

@@ -181,7 +181,7 @@ def area_anno_A5_A7() -> AreaAnnotation:
 @pytest.fixture
 def scene_with_helix(empty_scene: Scene, helix_A_3_7: HelixSceneElement) -> Scene:
     """Scene containing only the helix A:3-7."""
-    empty_scene.add_node(helix_A_3_7)
+    empty_scene.add_element(helix_A_3_7)
     return empty_scene
 
 
@@ -190,7 +190,7 @@ def scene_with_helix_and_point(
     scene_with_helix: Scene, point_anno_A5: PointAnnotation
 ) -> Scene:
     """Scene with helix A:3-7 and a point annotation on A:5."""
-    scene_with_helix.add_node(point_anno_A5)
+    scene_with_helix.add_element(point_anno_A5)
     return scene_with_helix
 
 
@@ -199,7 +199,7 @@ def scene_with_helix_and_line(
     scene_with_helix: Scene, line_anno_A4_A6: LineAnnotation
 ) -> Scene:
     """Scene with helix A:3-7 and a line annotation from A:4 to A:6."""
-    scene_with_helix.add_node(line_anno_A4_A6)
+    scene_with_helix.add_element(line_anno_A4_A6)
     return scene_with_helix
 
 
@@ -208,7 +208,7 @@ def scene_with_helix_and_area(
     scene_with_helix: Scene, area_anno_A5_A7: AreaAnnotation
 ) -> Scene:
     """Scene with helix A:3-7 and an area annotation covering A:5-7."""
-    scene_with_helix.add_node(area_anno_A5_A7)
+    scene_with_helix.add_element(area_anno_A5_A7)
     return scene_with_helix
 
 
@@ -394,7 +394,7 @@ def test_render_point_with_custom_style(
     point_anno_A5.style.marker_radius = custom_radius
     point_anno_A5.style.offset = custom_offset
 
-    scene_with_helix.add_node(point_anno_A5)
+    scene_with_helix.add_element(point_anno_A5)
     scene = scene_with_helix
 
     renderer = SVGRenderer(scene=scene)
@@ -432,7 +432,7 @@ def test_render_annotation_with_label(
     point_anno_A5.style.label_color = custom_label_color
     point_anno_A5.style.label_font_size = custom_font_size
 
-    scene_with_helix.add_node(point_anno_A5)
+    scene_with_helix.add_element(point_anno_A5)
     scene = scene_with_helix
 
     renderer = SVGRenderer(scene=scene)
@@ -467,7 +467,7 @@ def test_render_invisible_annotation(
 ) -> None:
     """Tests that an annotation with visibility=False is not rendered."""
     point_anno_A5.style.visibility = False
-    scene_with_helix.add_node(point_anno_A5)
+    scene_with_helix.add_element(point_anno_A5)
     scene = scene_with_helix
 
     renderer = SVGRenderer(scene=scene)

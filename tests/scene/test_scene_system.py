@@ -111,7 +111,7 @@ def test_scene_initialization_wrong_type() -> None:
 def test_add_top_level_node(scene: Scene) -> None:
     """Test adding a single node to the top level."""
     element = create_mock_element("elem1")
-    scene.add_node(element)
+    scene.add_element(element)
 
     assert element in scene.top_level_nodes
     assert scene.get_element_by_id("elem1") is element
@@ -125,8 +125,8 @@ def test_add_child_node(scene: Scene) -> None:
     parent_group = create_mock_element("group1", is_group=True)
     child_element = create_mock_element("child1")
 
-    scene.add_node(parent_group)
-    scene.add_node(child_element, parent_id="group1")
+    scene.add_element(parent_group)
+    scene.add_element(child_element, parent_id="group1")
 
     assert child_element not in scene.top_level_nodes
     assert scene.get_element_by_id("child1") is child_element
@@ -141,12 +141,12 @@ def test_add_node_duplicate_id(scene: Scene) -> None:
     """Test adding a node with an ID that already exists."""
     element1 = create_mock_element("elem1")
     element2 = create_mock_element("elem1")  # Same ID
-    scene.add_node(element1)
+    scene.add_element(element1)
 
     with pytest.raises(
         DuplicateElementError, match="Element with ID 'elem1' already exists"
     ):
-        scene.add_node(element2)
+        scene.add_element(element2)
     assert len(scene) == 1
 
 
@@ -156,7 +156,7 @@ def test_add_node_parent_not_found(scene: Scene) -> None:
     with pytest.raises(
         ParentNotFoundError, match="Parent group with ID 'nonexistent' not found"
     ):
-        scene.add_node(element, parent_id="nonexistent")
+        scene.add_element(element, parent_id="nonexistent")
     assert len(scene) == 0
 
 
@@ -164,12 +164,12 @@ def test_add_node_parent_not_group(scene: Scene) -> None:
     """Test adding a node with a parent that is not a SceneGroup."""
     parent_element = create_mock_element("parent1", is_group=False)
     child_element = create_mock_element("child1")
-    scene.add_node(parent_element)
+    scene.add_element(parent_element)
 
     with pytest.raises(
         ElementTypeError, match="Specified parent 'parent1' is not a SceneGroup"
     ):
-        scene.add_node(child_element, parent_id="parent1")
+        scene.add_element(child_element, parent_id="parent1")
     assert len(scene) == 1
 
 
@@ -178,27 +178,29 @@ def test_add_node_invalid_type(scene: Scene) -> None:
     with pytest.raises(
         ElementTypeError, match="Object to add is not a BaseSceneElement subclass"
     ):
-        scene.add_node("not_an_element")  # type: ignore
+        scene.add_element("not_an_element")  # type: ignore
 
 
 def test_add_node_already_parented(scene: Scene) -> None:
     """Test adding a node that already exists raises DuplicateElementError first."""
     group = create_mock_element("group1", is_group=True)
     element = create_mock_element("elem1")
-    scene.add_node(group)
-    scene.add_node(element, parent_id="group1")  # elem1 is now child of group1
+    scene.add_element(group)
+    scene.add_element(element, parent_id="group1")  # elem1 is now child of group1
     assert element.parent is group  # Verify parenting worked
 
     # Try adding the same element object again - DuplicateElementError is raised first
     with pytest.raises(
         DuplicateElementError, match="Element with ID 'elem1' already exists"
     ):
-        scene.add_node(element)  # Try adding as top-level
+        scene.add_element(element)  # Try adding as top-level
 
     with pytest.raises(
         DuplicateElementError, match="Element with ID 'elem1' already exists"
     ):
-        scene.add_node(element, parent_id="group1")  # Try adding to same parent again
+        scene.add_element(
+            element, parent_id="group1"
+        )  # Try adding to same parent again
 
 
 # --------------------------
@@ -209,11 +211,11 @@ def test_add_node_already_parented(scene: Scene) -> None:
 def test_remove_top_level_node(scene: Scene) -> None:
     """Test removing a top-level node."""
     element = create_mock_element("elem1")
-    scene.add_node(element)
+    scene.add_element(element)
     assert scene.get_element_by_id("elem1") is element
     assert element.parent is None  # Verify initial state
 
-    scene.remove_node("elem1")
+    scene.remove_element("elem1")
 
     assert element not in scene.top_level_nodes
     assert scene.get_element_by_id("elem1") is None
@@ -232,11 +234,11 @@ def test_remove_child_node(scene: Scene) -> None:
     """Test removing a child node."""
     parent_group = create_mock_element("group1", is_group=True)
     child_element = create_mock_element("child1")
-    scene.add_node(parent_group)
-    scene.add_node(child_element, parent_id="group1")
+    scene.add_element(parent_group)
+    scene.add_element(child_element, parent_id="group1")
     assert child_element.parent is parent_group  # Verify initial state
 
-    scene.remove_node("child1")
+    scene.remove_element("child1")
 
     assert scene.get_element_by_id("child1") is None
     assert child_element not in parent_group.children
@@ -259,13 +261,13 @@ def test_remove_group_with_children(scene: Scene) -> None:
     sub_group = create_mock_element("subgroup", is_group=True)
     grandchild = create_mock_element("grandchild1")
 
-    scene.add_node(group)
-    scene.add_node(child1, parent_id="group1")
-    scene.add_node(sub_group, parent_id="group1")
-    scene.add_node(
+    scene.add_element(group)
+    scene.add_element(child1, parent_id="group1")
+    scene.add_element(sub_group, parent_id="group1")
+    scene.add_element(
         child2, parent_id="group1"
     )  # Add child2 after subgroup for ordering check if needed
-    scene.add_node(grandchild, parent_id="subgroup")
+    scene.add_element(grandchild, parent_id="subgroup")
 
     assert len(scene) == 5  # group1, child1, subgroup, child2, grandchild1
     assert grandchild.parent is sub_group
@@ -276,7 +278,7 @@ def test_remove_group_with_children(scene: Scene) -> None:
     # Store references before removal for later checks if needed
     # all_elements = [group, child1, sub_group, child2, grandchild]
 
-    scene.remove_node("group1")
+    scene.remove_element("group1")
 
     assert scene.get_element_by_id("group1") is None
     assert scene.get_element_by_id("child1") is None
@@ -296,7 +298,7 @@ def test_remove_node_not_found(scene: Scene) -> None:
     with pytest.raises(
         ElementNotFoundError, match="Element with ID 'nonexistent' not found"
     ):
-        scene.remove_node("nonexistent")
+        scene.remove_element("nonexistent")
 
 
 def test_remove_node_inconsistency_parent_mismatch(scene: Scene) -> None:
@@ -304,8 +306,8 @@ def test_remove_node_inconsistency_parent_mismatch(scene: Scene) -> None:
     parent_group = create_mock_element("group1", is_group=True)
     child_element = create_mock_element("child1")
 
-    scene.add_node(parent_group)
-    scene.add_node(child_element, parent_id="group1")
+    scene.add_element(parent_group)
+    scene.add_element(child_element, parent_id="group1")
     assert child_element.parent is parent_group  # Verify parent is set
 
     # Manually break consistency: remove child from parent's list but keep parent pointer
@@ -316,7 +318,7 @@ def test_remove_node_inconsistency_parent_mismatch(scene: Scene) -> None:
     # Removal attempt should trigger the `except ValueError` block in `remove_node`
     expected_error_msg = r"SceneGraph Inconsistency: Element 'child1' not found in supposed parent 'group1' children list during removal."
     with pytest.raises(SceneGraphInconsistencyError, match=expected_error_msg):
-        scene.remove_node("child1")
+        scene.remove_element("child1")
 
     # Check state after attempted removal
     assert scene.get_element_by_id("child1") is None  # Should still be unregistered
@@ -330,8 +332,8 @@ def test_remove_node_inconsistency_unregistered_parent(scene: Scene) -> None:
     parent_group = create_mock_element("group1", is_group=True)
     child_element = create_mock_element("child1")
 
-    scene.add_node(parent_group)
-    scene.add_node(child_element, parent_id="group1")
+    scene.add_element(parent_group)
+    scene.add_element(child_element, parent_id="group1")
     assert child_element.parent is parent_group
 
     # Manually break consistency: unregister the parent
@@ -340,7 +342,7 @@ def test_remove_node_inconsistency_unregistered_parent(scene: Scene) -> None:
     # Removal attempt should hit the inconsistency check for invalid parent
     expected_error_msg = r"SceneGraph Inconsistency: Parent 'group1' of element 'child1' is invalid or unregistered during removal."
     with pytest.raises(SceneGraphInconsistencyError, match=expected_error_msg):
-        scene.remove_node("child1")
+        scene.remove_element("child1")
 
     # Check state after attempted removal
     assert scene.get_element_by_id("child1") is None  # Child should be unregistered
@@ -352,7 +354,7 @@ def test_remove_node_inconsistency_orphaned_element(scene: Scene) -> None:
     """Test removing node that has no parent but isn't in top-level nodes."""
     element = create_mock_element("elem1")
 
-    scene.add_node(element)
+    scene.add_element(element)
     assert element in scene.top_level_nodes
     assert element.parent is None
 
@@ -362,7 +364,7 @@ def test_remove_node_inconsistency_orphaned_element(scene: Scene) -> None:
     # Removal attempt should hit the final inconsistency check
     expected_error_msg = r"SceneGraph Inconsistency: Element 'elem1' was registered but not found in the scene graph structure \(neither parented nor top-level\)."
     with pytest.raises(SceneGraphInconsistencyError, match=expected_error_msg):
-        scene.remove_node("elem1")
+        scene.remove_element("elem1")
 
     # Check state after attempted removal
     assert scene.get_element_by_id("elem1") is None  # Element should be unregistered
@@ -381,15 +383,15 @@ def test_move_node_to_new_parent(scene: Scene) -> None:
     group2 = create_mock_element("group2", is_group=True)
     element = create_mock_element("elem1")
 
-    scene.add_node(group1)
-    scene.add_node(group2)
-    scene.add_node(element, parent_id="group1")
+    scene.add_element(group1)
+    scene.add_element(group2)
+    scene.add_element(element, parent_id="group1")
 
     assert element.parent is group1  # Verify initial state
     assert element in group1.children
     assert element not in group2.children
 
-    scene.move_node("elem1", new_parent_id="group2")
+    scene.move_element("elem1", new_parent_id="group2")
 
     assert element.parent is group2  # Verify new parent
     assert element not in group1.children
@@ -409,11 +411,11 @@ def test_move_node_to_top_level(scene: Scene) -> None:
     group1 = create_mock_element("group1", is_group=True)
     element = create_mock_element("elem1")
 
-    scene.add_node(group1)
-    scene.add_node(element, parent_id="group1")
+    scene.add_element(group1)
+    scene.add_element(element, parent_id="group1")
     assert element.parent is group1  # Verify initial state
 
-    scene.move_node("elem1", new_parent_id=None)
+    scene.move_element("elem1", new_parent_id=None)
 
     assert element.parent is None  # Verify new parent (None)
     assert element not in group1.children
@@ -431,12 +433,12 @@ def test_move_top_level_node_to_parent(scene: Scene) -> None:
     group1 = create_mock_element("group1", is_group=True)
     element = create_mock_element("elem1")
 
-    scene.add_node(group1)
-    scene.add_node(element)  # Add as top-level
+    scene.add_element(group1)
+    scene.add_element(element)  # Add as top-level
     assert element.parent is None  # Verify initial state
     assert element in scene.top_level_nodes
 
-    scene.move_node("elem1", new_parent_id="group1")
+    scene.move_element("elem1", new_parent_id="group1")
 
     assert element.parent is group1  # Verify new parent
     assert element in group1.children
@@ -452,49 +454,49 @@ def test_move_top_level_node_to_parent(scene: Scene) -> None:
 def test_move_node_element_not_found(scene: Scene) -> None:
     """Test moving a non-existent node."""
     group1 = create_mock_element("group1", is_group=True)
-    scene.add_node(group1)
+    scene.add_element(group1)
     with pytest.raises(
         ElementNotFoundError, match="Element with ID 'nonexistent' not found"
     ):
-        scene.move_node("nonexistent", new_parent_id="group1")
+        scene.move_element("nonexistent", new_parent_id="group1")
 
 
 def test_move_node_parent_not_found(scene: Scene) -> None:
     """Test moving a node to a non-existent parent."""
     element = create_mock_element("elem1")
-    scene.add_node(element)
+    scene.add_element(element)
     with pytest.raises(
         ParentNotFoundError, match="New parent group with ID 'nonexistent' not found"
     ):
-        scene.move_node("elem1", new_parent_id="nonexistent")
+        scene.move_element("elem1", new_parent_id="nonexistent")
 
 
 def test_move_node_parent_not_group(scene: Scene) -> None:
     """Test moving a node to a parent that is not a SceneGroup."""
     parent_element = create_mock_element("parent1", is_group=False)
     element = create_mock_element("elem1")
-    scene.add_node(parent_element)
-    scene.add_node(element)
+    scene.add_element(parent_element)
+    scene.add_element(element)
 
     with pytest.raises(
         ElementTypeError, match="Target parent 'parent1' is not a SceneGroup"
     ):
-        scene.move_node("elem1", new_parent_id="parent1")
+        scene.move_element("elem1", new_parent_id="parent1")
 
 
 def test_move_node_circular_dependency(scene: Scene) -> None:
     """Test moving a node that would create a circular dependency."""
     group1 = create_mock_element("group1", is_group=True)
     group2 = create_mock_element("group2", is_group=True)
-    scene.add_node(group1)
-    scene.add_node(group2, parent_id="group1")  # group2 is child of group1
+    scene.add_element(group1)
+    scene.add_element(group2, parent_id="group1")  # group2 is child of group1
     assert group2.parent is group1  # Verify setup
 
     # Try moving group1 under group2 (its own descendant)
     with pytest.raises(
         CircularDependencyError, match="would create circular dependency"
     ):
-        scene.move_node("group1", new_parent_id="group2")
+        scene.move_element("group1", new_parent_id="group2")
 
     # Ensure state is unchanged
     assert group1.parent is None
@@ -516,8 +518,8 @@ def test_move_node_no_change(scene: Scene) -> None:
     group1_add_child_spy = MagicMock(side_effect=group1.add_child.side_effect)
     group1.add_child = group1_add_child_spy
 
-    scene.add_node(group1)
-    scene.add_node(element, parent_id="group1")
+    scene.add_element(group1)
+    scene.add_element(element, parent_id="group1")
     assert element.parent is group1  # Verify setup
     # Verify the initial add call
     element_set_parent_spy.assert_called_once_with(group1)
@@ -528,7 +530,7 @@ def test_move_node_no_change(scene: Scene) -> None:
     group1_add_child_spy.reset_mock()
 
     # Perform the move operation (which should do nothing)
-    scene.move_node("elem1", new_parent_id="group1")
+    scene.move_element("elem1", new_parent_id="group1")
 
     # Assert that the spies were NOT called during the move
     group1_remove_child_spy.assert_not_called()
@@ -543,9 +545,9 @@ def test_move_node_attach_and_rollback_failure(scene: Scene) -> None:
     group2 = create_mock_element("group2", is_group=True)
     element = create_mock_element("elem1")
 
-    scene.add_node(group1)
-    scene.add_node(group2)
-    scene.add_node(element, parent_id="group1")
+    scene.add_element(group1)
+    scene.add_element(group2)
+    scene.add_element(element, parent_id="group1")
     initial_set_parent_call_count = element._set_parent.call_count
 
     # Simulate attach failure
@@ -561,7 +563,7 @@ def test_move_node_attach_and_rollback_failure(scene: Scene) -> None:
     with pytest.raises(
         SceneGraphInconsistencyError, match=expected_error_msg
     ) as excinfo:
-        scene.move_node("elem1", new_parent_id="group2")
+        scene.move_element("elem1", new_parent_id="group2")
 
     # Check that the original attach error is chained
     assert excinfo.value.__cause__ is attach_error
@@ -598,11 +600,11 @@ def test_traverse_simple_hierarchy(scene: Scene) -> None:
     e3 = create_mock_element("e3")
 
     # Add in specific order for predictable traversal
-    scene.add_node(g1)
-    scene.add_node(g2)
-    scene.add_node(e1, parent_id="g1")
-    scene.add_node(e2, parent_id="g1")
-    scene.add_node(e3, parent_id="g2")
+    scene.add_element(g1)
+    scene.add_element(g2)
+    scene.add_element(e1, parent_id="g1")
+    scene.add_element(e2, parent_id="g1")
+    scene.add_element(e3, parent_id="g2")
 
     # Expected DFS order: g1, e1, e2, g2, e3 (based on add order of top-level)
     expected = [
@@ -628,12 +630,12 @@ def test_traverse_deeper_hierarchy(scene: Scene) -> None:
     gc2 = create_mock_element("grandchild2", is_group=True)
     ggc1 = create_mock_element("greatgrandchild1")
 
-    scene.add_node(r)
-    scene.add_node(c1, parent_id="root")
-    scene.add_node(c2, parent_id="root")
-    scene.add_node(gc1, parent_id="child1")
-    scene.add_node(gc2, parent_id="child1")
-    scene.add_node(ggc1, parent_id="grandchild2")
+    scene.add_element(r)
+    scene.add_element(c1, parent_id="root")
+    scene.add_element(c2, parent_id="root")
+    scene.add_element(gc1, parent_id="child1")
+    scene.add_element(gc2, parent_id="child1")
+    scene.add_element(ggc1, parent_id="grandchild2")
 
     # Expected DFS order: r, c1, gc1, gc2, ggc1, c2
     expected = [
@@ -668,9 +670,9 @@ def test_get_elements_at(scene: Scene) -> None:
     e2.residue_range_set = ResidueRangeSet.from_string("A:15-25, B:1-5")
     e3.residue_range_set = None  # Or empty: ResidueRangeSet()
 
-    scene.add_node(e1)
-    scene.add_node(e2)
-    scene.add_node(e3)
+    scene.add_element(e1)
+    scene.add_element(e2)
+    scene.add_element(e3)
 
     coord_a15 = ResidueCoordinate(chain_id="A", residue_index=15)
     coord_a22 = ResidueCoordinate(chain_id="A", residue_index=22)
@@ -702,11 +704,11 @@ def test_get_elements_overlapping(scene: Scene) -> None:
     e4.residue_range_set = ResidueRangeSet.from_string("A:30-40")
     e5.residue_range_set = None
 
-    scene.add_node(e1)
-    scene.add_node(e2)
-    scene.add_node(e3)
-    scene.add_node(e4)
-    scene.add_node(e5)
+    scene.add_element(e1)
+    scene.add_element(e2)
+    scene.add_element(e3)
+    scene.add_element(e4)
+    scene.add_element(e5)
 
     # Query ranges
     range_a18_22 = ResidueRange(chain_id="A", start=18, end=22)  # Overlaps e1, e2
@@ -739,7 +741,7 @@ def test_get_elements_overlapping(scene: Scene) -> None:
 def test_get_element_by_id_found(scene: Scene) -> None:
     """Test retrieving an element by its ID when it exists."""
     element = create_mock_element("elem1")
-    scene.add_node(element)
+    scene.add_element(element)
     found = scene.get_element_by_id("elem1")
     assert found is element
 
@@ -761,9 +763,9 @@ def test_scene_iteration(scene: Scene) -> None:
     g1 = create_mock_element("g1", is_group=True)
     e2 = create_mock_element("e2")  # Child
 
-    scene.add_node(e1)
-    scene.add_node(g1)
-    scene.add_node(e2, parent_id="g1")
+    scene.add_element(e1)
+    scene.add_element(g1)
+    scene.add_element(e2, parent_id="g1")
 
     top_level_nodes = list(scene)
     assert top_level_nodes == [e1, g1]  # Order matters based on addition
@@ -777,15 +779,15 @@ def test_scene_length(scene: Scene) -> None:
     e2 = create_mock_element("e2")
 
     assert len(scene) == 0
-    scene.add_node(e1)
+    scene.add_element(e1)
     assert len(scene) == 1
-    scene.add_node(g1)
+    scene.add_element(g1)
     assert len(scene) == 2
-    scene.add_node(e2, parent_id="g1")
+    scene.add_element(e2, parent_id="g1")
     assert len(scene) == 3
-    scene.remove_node("e1")
+    scene.remove_element("e1")
     assert len(scene) == 2
-    scene.remove_node("g1")  # Removes g1 and e2
+    scene.remove_element("g1")  # Removes g1 and e2
     assert len(scene) == 0
 
 
@@ -800,9 +802,9 @@ def test_get_all_elements(scene: Scene) -> None:
     g1 = create_mock_element("g1", is_group=True)
     e2 = create_mock_element("e2")
 
-    scene.add_node(e1)
-    scene.add_node(g1)
-    scene.add_node(e2, parent_id="g1")
+    scene.add_element(e1)
+    scene.add_element(g1)
+    scene.add_element(e2, parent_id="g1")
 
     all_elements = scene.get_all_elements()
     assert len(all_elements) == 3
@@ -814,7 +816,7 @@ def test_get_all_elements(scene: Scene) -> None:
     all_ids = sorted([el.id for el in all_elements])
     assert all_ids == ["e1", "e2", "g1"]
 
-    scene.remove_node("g1")  # Removes g1 and e2
+    scene.remove_element("g1")  # Removes g1 and e2
     all_elements_after_remove = scene.get_all_elements()
     assert len(all_elements_after_remove) == 1
     assert e1 in all_elements_after_remove

@@ -26,23 +26,23 @@ def test_deep_nesting_add_remove(scene: Scene):
 
     # Use try/except for DuplicateElementError if tests run in shared context
     try:
-        scene.add_node(root)
+        scene.add_element(root)
     except DuplicateElementError:
         pass
     try:
-        scene.add_node(g1, parent_id="root")
+        scene.add_element(g1, parent_id="root")
     except DuplicateElementError:
         pass
     try:
-        scene.add_node(g2, parent_id="g1")
+        scene.add_element(g2, parent_id="g1")
     except DuplicateElementError:
         pass
     try:
-        scene.add_node(g3, parent_id="g2")
+        scene.add_element(g3, parent_id="g2")
     except DuplicateElementError:
         pass
     try:
-        scene.add_node(element, parent_id="g3")
+        scene.add_element(element, parent_id="g3")
     except DuplicateElementError:
         pass
 
@@ -56,7 +56,7 @@ def test_deep_nesting_add_remove(scene: Scene):
     initial_len = len(scene)  # Store length after setup
 
     # Remove the middle group g2
-    scene.remove_node("g2")
+    scene.remove_element("g2")
 
     assert len(scene) == initial_len - 3  # Should remove g2, g3, element
     assert scene.get_element_by_id("g2") is None
@@ -85,23 +85,23 @@ def test_multiple_moves_reparenting(scene: Scene):
 
     # Use try/except for DuplicateElementError
     try:
-        scene.add_node(g1)
+        scene.add_element(g1)
     except DuplicateElementError:
         pass
     try:
-        scene.add_node(g2)
+        scene.add_element(g2)
     except DuplicateElementError:
         pass
     try:
-        scene.add_node(g3, parent_id=g2.id)
+        scene.add_element(g3, parent_id=g2.id)
     except DuplicateElementError:
         pass
     try:
-        scene.add_node(e1, parent_id=g1.id)
+        scene.add_element(e1, parent_id=g1.id)
     except DuplicateElementError:
         pass
     try:
-        scene.add_node(e2, parent_id=g1.id)
+        scene.add_element(e2, parent_id=g1.id)
     except DuplicateElementError:
         pass
 
@@ -112,7 +112,7 @@ def test_multiple_moves_reparenting(scene: Scene):
     initial_len = len(scene)
 
     # 1. Move e1 from g1 to g2
-    scene.move_node(e1.id, new_parent_id=g2.id)
+    scene.move_element(e1.id, new_parent_id=g2.id)
     assert e1.parent is g2
     assert e1 not in g1.children
     assert e1 in g2.children
@@ -120,21 +120,21 @@ def test_multiple_moves_reparenting(scene: Scene):
     assert g3.parent is g2
 
     # 2. Move g3 from g2 to g1
-    scene.move_node(g3.id, new_parent_id=g1.id)
+    scene.move_element(g3.id, new_parent_id=g1.id)
     assert g3.parent is g1
     assert g3 not in g2.children
     assert g3 in g1.children
     assert e1.parent is g2
 
     # 3. Move e2 from g1 to top level
-    scene.move_node(e2.id, new_parent_id=None)
+    scene.move_element(e2.id, new_parent_id=None)
     assert e2.parent is None
     assert e2 not in g1.children
     assert e2 in scene.top_level_nodes
     assert g3.parent is g1
 
     # 4. Move g2 from top level to g1
-    scene.move_node(g2.id, new_parent_id=g1.id)
+    scene.move_element(g2.id, new_parent_id=g1.id)
     assert g2.parent is g1
     assert g2 not in scene.top_level_nodes
     assert g2 in g1.children
@@ -170,23 +170,23 @@ def test_interleaved_add_move_remove(scene: Scene):
     # 1. Initial setup: r -> a -> b, c (top-level), d (top-level)
     # Use try/except for DuplicateElementError
     try:
-        scene.add_node(r)
+        scene.add_element(r)
     except DuplicateElementError:
         pass
     try:
-        scene.add_node(a, parent_id=r.id)
+        scene.add_element(a, parent_id=r.id)
     except DuplicateElementError:
         pass
     try:
-        scene.add_node(b, parent_id=a.id)
+        scene.add_element(b, parent_id=a.id)
     except DuplicateElementError:
         pass
     try:
-        scene.add_node(c)
+        scene.add_element(c)
     except DuplicateElementError:
         pass
     try:
-        scene.add_node(d)
+        scene.add_element(d)
     except DuplicateElementError:
         pass
 
@@ -194,20 +194,20 @@ def test_interleaved_add_move_remove(scene: Scene):
     _ = sorted([n.id for n in scene.top_level_nodes])
 
     # 2. Move c under a
-    scene.move_node(c.id, new_parent_id=a.id)
+    scene.move_element(c.id, new_parent_id=a.id)
     assert c.parent is a
     assert c not in scene.top_level_nodes
     assert sorted([child.id for child in a.children]) == [b.id, c.id]
 
     # 3. Remove b
-    scene.remove_node(b.id)
+    scene.remove_element(b.id)
     assert scene.get_element_by_id(b.id) is None
     assert b not in a.children
     assert len(a.children) == 1
     assert len(scene) == initial_len - 1
 
     # 4. Move a to top level
-    scene.move_node(a.id, new_parent_id=None)
+    scene.move_element(a.id, new_parent_id=None)
     assert a.parent is None
     assert a in scene.top_level_nodes
     assert a not in r.children
@@ -221,7 +221,7 @@ def test_interleaved_add_move_remove(scene: Scene):
     # 5. Add new element e under r
     e = create_mock_element("e_i")
     try:
-        scene.add_node(e, parent_id=r.id)
+        scene.add_element(e, parent_id=r.id)
     except DuplicateElementError:
         pass
 
@@ -230,7 +230,7 @@ def test_interleaved_add_move_remove(scene: Scene):
     assert len(scene) == initial_len  # (initial - removed b + added e)
 
     # 6. Remove r (should remove e too)
-    scene.remove_node(r.id)
+    scene.remove_element(r.id)
     assert scene.get_element_by_id(r.id) is None
     assert scene.get_element_by_id(e.id) is None
     assert len(scene) == initial_len - 2  # Removed r, e from state after step 5
