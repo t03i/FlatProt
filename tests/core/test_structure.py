@@ -274,7 +274,9 @@ def test_chain_apply_vectorized_transformation(sample_chain_a: Chain) -> None:
     )
     assert len(new_chain_transformed_again._Chain__secondary_structure) == 1
     assert (
-        new_chain_transformed_again._Chain__secondary_structure[0].secondary_structure
+        new_chain_transformed_again._Chain__secondary_structure[
+            0
+        ].secondary_structure_type
         == SecondaryStructureType.HELIX
     )
 

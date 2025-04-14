@@ -3,6 +3,7 @@
 
 from typing import Optional, Tuple, Callable
 import pytest
+from pytest_mock import MockerFixture
 
 
 import numpy as np
@@ -134,8 +135,8 @@ def coil_element() -> CoilSceneElement:
 
 @pytest.fixture
 def helix_element() -> HelixSceneElement:
-    """Provides a HelixSceneElement targeting Chain A, residues 3-7."""
-    return HelixSceneElement(residue_range_set=ResidueRangeSet.from_string("A:3-7"))
+    """Provides a HelixSceneElement targeting Chain A, residues 3-9."""
+    return HelixSceneElement(residue_range_set=ResidueRangeSet.from_string("A:3-9"))
 
 
 @pytest.fixture
@@ -208,7 +209,7 @@ def test_render_coil(scene_with_coil: Scene, coil_element: CoilSceneElement) -> 
     assert (
         path.attrib.get("d", "").upper().startswith("M")
     ), "Path data should start with M"
-    assert path.attrib.get("fill") == "none", "Coil path should not be filled"
+    assert path.attrib.get("fill") is None, "Coil path should have fill=None (not set)"
     assert path.attrib.get("stroke"), "Coil path missing 'stroke' attribute"
     assert (
         float(path.attrib.get("stroke-width", 0)) > 0
@@ -241,7 +242,9 @@ def test_render_helix(
     assert d_attr, "Helix path is missing 'd' attribute."
     assert d_attr.upper().startswith("M"), "Path data should start with M"
     assert d_attr.upper().endswith("Z"), "Helix path should be closed (end with Z)"
-    assert path.attrib.get("fill") != "none", "Helix path should be filled"
+    assert (
+        path.attrib.get("fill") is not None
+    ), "Helix path should have fill set (not None)"
     assert path.attrib.get("fill"), "Helix path missing 'fill' attribute"
     assert path.attrib.get("stroke"), "Helix path missing 'stroke' attribute"
 
@@ -272,9 +275,99 @@ def test_render_sheet(
     assert d_attr, "Sheet path is missing 'd' attribute."
     assert d_attr.upper().startswith("M"), "Path data should start with M"
     assert d_attr.upper().endswith("Z"), "Sheet path should be closed (end with Z)"
-    assert path.attrib.get("fill") != "none", "Sheet path should be filled"
+    assert (
+        path.attrib.get("fill") is not None
+    ), "Sheet path should have fill set (not None)"
     assert path.attrib.get("fill"), "Sheet path missing 'fill' attribute"
     assert path.attrib.get("stroke"), "Sheet path missing 'stroke' attribute"
+
+
+def test_render_short_helix_as_line(
+    empty_scene: Scene, helix_element: HelixSceneElement, mocker: MockerFixture
+) -> None:
+    """Tests if a HelixSceneElement with only 2 coords renders as a line."""
+    # Mock get_coordinates for THIS specific element instance to return 2 points
+    mock_coords = np.array([[5.0, 10.0, 0.0], [10.0, 10.0, 0.0]])
+    mocker.patch.object(helix_element, "get_coordinates", return_value=mock_coords)
+
+    empty_scene.add_element(helix_element)
+    renderer = SVGRenderer(scene=empty_scene)
+    svg_output = renderer.get_svg_string()
+    root = _parse_svg(svg_output)
+    ns = {"svg": "http://www.w3.org/2000/svg"}
+
+    expected_id = helix_element.id
+    helix_paths = root.findall(
+        f".//svg:path[@class='element helix'][@id='{expected_id}']", namespaces=ns
+    )
+    assert (
+        len(helix_paths) == 1
+    ), f"Expected 1 helix path (as line) with ID '{expected_id}', found {len(helix_paths)}"
+
+    path = helix_paths[0]
+    d_attr = path.attrib.get("d", "")
+    assert d_attr, "Short helix path is missing 'd' attribute."
+    assert d_attr.upper().startswith("M"), "Path data should start with M"
+    assert "L" in d_attr.upper(), "Path data should contain L"
+    assert not d_attr.upper().endswith(
+        "Z"
+    ), "Short helix path should NOT be closed (no Z)"
+    assert (
+        path.attrib.get("fill") is None
+    ), f"Short helix path should have fill=None (not set) but got {path.attrib.get('fill')}"
+    assert (
+        path.attrib.get("stroke") == helix_element.style.color.as_hex()
+    ), "Short helix stroke should match element color"
+    assert (
+        path.attrib.get("linecap") == "round"
+    ), "Short helix path should have linecap='round'"
+    assert (
+        float(path.attrib.get("stroke-width", 0)) == helix_element.style.stroke_width
+    ), "Short helix stroke-width mismatch"
+
+
+def test_render_short_sheet_as_line(
+    empty_scene: Scene, sheet_element: SheetSceneElement, mocker: MockerFixture
+) -> None:
+    """Tests if a SheetSceneElement with only 2 coords renders as a line."""
+    # Mock get_coordinates for THIS specific element instance
+    mock_coords = np.array([[15.0, 10.0, 0.0], [20.0, 10.0, 0.0]])
+    mocker.patch.object(sheet_element, "get_coordinates", return_value=mock_coords)
+
+    empty_scene.add_element(sheet_element)
+    renderer = SVGRenderer(scene=empty_scene)
+    svg_output = renderer.get_svg_string()
+    root = _parse_svg(svg_output)
+    ns = {"svg": "http://www.w3.org/2000/svg"}
+
+    expected_id = sheet_element.id
+    sheet_paths = root.findall(
+        f".//svg:path[@class='element sheet'][@id='{expected_id}']", namespaces=ns
+    )
+    assert (
+        len(sheet_paths) == 1
+    ), f"Expected 1 sheet path (as line) with ID '{expected_id}', found {len(sheet_paths)}"
+
+    path = sheet_paths[0]
+    d_attr = path.attrib.get("d", "")
+    assert d_attr, "Short sheet path is missing 'd' attribute."
+    assert d_attr.upper().startswith("M"), "Path data should start with M"
+    assert "L" in d_attr.upper(), "Path data should contain L"
+    assert not d_attr.upper().endswith(
+        "Z"
+    ), "Short sheet path should NOT be closed (no Z)"
+    assert (
+        path.attrib.get("fill") is None
+    ), "Short sheet path should have fill=None (not set)"
+    assert (
+        path.attrib.get("stroke") == sheet_element.style.color.as_hex()
+    ), "Short sheet stroke should match element color"
+    assert (
+        path.attrib.get("linecap") == "round"
+    ), "Short sheet path should have linecap='round'"
+    assert (
+        float(path.attrib.get("stroke-width", 0)) == sheet_element.style.stroke_width
+    ), "Short sheet stroke-width mismatch"
 
 
 # --- Phase 2 Tests ---
@@ -311,8 +404,14 @@ def test_render_helix_with_custom_style(
     assert len(helix_paths) == 1
 
     path = helix_paths[0]
-    assert path.attrib.get("fill").upper() == custom_fill.as_hex().upper()
-    assert path.attrib.get("stroke").upper() == custom_stroke.as_hex().upper()
+    fill_attr = path.get("fill")
+    assert fill_attr is not None, "Custom helix path missing 'fill' attribute"
+    assert fill_attr.upper() == custom_fill.as_hex().upper()
+
+    stroke_attr = path.attrib.get("stroke")
+    assert stroke_attr is not None, "Custom helix path missing 'stroke' attribute"
+    assert stroke_attr.upper() == custom_stroke.as_hex().upper()
+
     assert float(path.attrib.get("stroke-width")) == pytest.approx(custom_stroke_width)
     # fill-opacity and stroke-opacity are derived from main opacity in _draw_helix
     assert float(path.attrib.get("fill-opacity")) == pytest.approx(custom_opacity)

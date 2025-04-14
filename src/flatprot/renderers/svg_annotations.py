@@ -1,9 +1,9 @@
 # Copyright 2025 Tobias Olenyi.
 # SPDX-License-Identifier: Apache-2.0
 
-from typing import Optional, List, Any
+from typing import Optional
 import numpy as np
-from drawsvg import Circle, Text, Line, Path
+from drawsvg import Circle, Text, Line, Path, Group
 from flatprot.scene import (
     PointAnnotation,
     LineAnnotation,
@@ -40,8 +40,8 @@ def _create_annotation_label(
 
 def _draw_point_annotation(
     annotation: PointAnnotation, anchor_coords: np.ndarray
-) -> Optional[List[Any]]:
-    """Draws a PointAnnotation (marker + label)."""
+) -> Optional[Group]:
+    """Draws a PointAnnotation (marker + label) wrapped in a group."""
     if anchor_coords is None or len(anchor_coords) == 0:
         logger.warning(
             f"Skipping PointAnnotation {annotation.id}: No anchor coordinates."
@@ -55,7 +55,7 @@ def _draw_point_annotation(
         anchor_coords[0, 1] + style.offset[1],
     )
 
-    elements = []
+    group = Group(id=annotation.id, class_="annotation point-annotation")
     marker = Circle(
         cx=center_x,
         cy=center_y,
@@ -65,7 +65,7 @@ def _draw_point_annotation(
         class_="annotation point-marker",
         id=f"{annotation.id}-marker",
     )
-    elements.append(marker)
+    group.append(marker)
 
     # Use the helper function if label exists
     if annotation.label:
@@ -74,15 +74,15 @@ def _draw_point_annotation(
         label_element = _create_annotation_label(
             annotation, label_x, label_y, text_anchor="start"
         )
-        elements.append(label_element)
+        group.append(label_element)
 
-    return elements
+    return group
 
 
 def _draw_line_annotation(
     annotation: LineAnnotation, anchor_coords: np.ndarray
-) -> Optional[List[Any]]:
-    """Draws a LineAnnotation (line + connectors + label)."""
+) -> Optional[Group]:
+    """Draws a LineAnnotation (line + connectors + label) wrapped in a group."""
     if anchor_coords is None or len(anchor_coords) < 2:
         logger.warning(
             f"Skipping LineAnnotation {annotation.id}: Requires at least 2 anchor coordinates."
@@ -100,7 +100,7 @@ def _draw_line_annotation(
     )
     connector_radius = style.connector_radius
 
-    elements = []
+    group = Group(id=annotation.id, class_="annotation line-annotation")
     line = Line(
         sx=start_x,
         sy=start_y,
@@ -112,7 +112,7 @@ def _draw_line_annotation(
         class_="annotation line",
         id=f"{annotation.id}-line",
     )
-    elements.append(line)
+    group.append(line)
 
     # Connectors (optional, could be styled)
     marker_start = Circle(  # Renamed variable to avoid conflict
@@ -123,7 +123,7 @@ def _draw_line_annotation(
         class_="annotation connector",
         id=f"{annotation.id}-connector-start",
     )
-    elements.append(marker_start)
+    group.append(marker_start)
     marker_end = Circle(  # Renamed variable to avoid conflict
         cx=end_x,
         cy=end_y,
@@ -132,7 +132,7 @@ def _draw_line_annotation(
         class_="annotation connector",
         id=f"{annotation.id}-connector-end",
     )
-    elements.append(marker_end)
+    group.append(marker_end)
 
     # Use the helper function if label exists
     if annotation.label:
@@ -153,15 +153,15 @@ def _draw_line_annotation(
         label_element = _create_annotation_label(
             annotation, label_x, label_y, text_anchor="middle"
         )
-        elements.append(label_element)
+        group.append(label_element)
 
-    return elements
+    return group
 
 
 def _draw_area_annotation(
     annotation: AreaAnnotation, rendered_coords: np.ndarray
-) -> Optional[List[Any]]:
-    """Draws an AreaAnnotation (outline + label).
+) -> Optional[Group]:
+    """Draws an AreaAnnotation (outline + label) wrapped in a group.
 
     Receives the full set of rendered coordinates for the area.
     Draws an outline path connecting these points and places the label
@@ -174,7 +174,7 @@ def _draw_area_annotation(
         return None
 
     style = annotation.style
-    elements = []
+    group = Group(id=annotation.id, class_="annotation area-annotation")
 
     # 1. Draw the outline path (only if enough points)
     if len(rendered_coords) >= 3:
@@ -193,7 +193,7 @@ def _draw_area_annotation(
         for p in offset_coords[1:]:
             outline.L(p[0], p[1])
         outline.Z()  # Close the path
-        elements.append(outline)
+        group.append(outline)
     elif len(rendered_coords) == 2:  # Draw line if only 2 points
         offset_coords = rendered_coords[:, :2] + style.offset
         line = Line(
@@ -207,7 +207,7 @@ def _draw_area_annotation(
             class_="annotation area-line",
             id=f"{annotation.id}-line",
         )
-        elements.append(line)
+        group.append(line)
     # If only 1 point, maybe draw a marker? For now, just use it for label anchor.
 
     # 2. Position and draw the label
@@ -229,6 +229,6 @@ def _draw_area_annotation(
         label_element = _create_annotation_label(
             annotation, label_x, label_y, text_anchor="start"
         )
-        elements.append(label_element)
+        group.append(label_element)
 
-    return elements if elements else None
+    return group if group.children else None

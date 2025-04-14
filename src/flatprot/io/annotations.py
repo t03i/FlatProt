@@ -239,6 +239,7 @@ class AnnotationParser:
             MalformedAnnotationError: If the TOML file is malformed, missing required structure,
                                       contains invalid formats, or style validation fails.
             AnnotationError: For other general parsing issues.
+
         """
         try:
             # Parse TOML content
@@ -286,8 +287,19 @@ class AnnotationParser:
                         f"Unknown annotation 'type': '{anno_type}'. Must be one of {list(self._parsers.keys())}.",
                     )
 
-                # Generate ID
-                anno_id = f"annotation_{self.file_path.stem}_{i}_{anno_type}"
+                # Check for optional user-provided ID
+                provided_id = anno_data.get("id")
+                if provided_id is not None:
+                    if isinstance(provided_id, str):
+                        anno_id = provided_id
+                    else:
+                        raise MalformedAnnotationError(
+                            context,
+                            f"Optional 'id' field must be a string, got {type(provided_id).__name__}.",
+                        )
+                else:
+                    # Generate ID if not provided
+                    anno_id = f"annotation_{self.file_path.stem}_{i}_{anno_type}"
 
                 # Call the specific parser method
                 annotation_object = parser_func(anno_data, anno_id, context)
