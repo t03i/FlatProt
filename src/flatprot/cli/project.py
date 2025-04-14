@@ -6,7 +6,10 @@ from typing import Optional, Annotated
 
 from cyclopts import Parameter
 
-from flatprot.core import FlatProtError, logger
+from flatprot.core import (
+    FlatProtError,
+    logger,
+)
 from flatprot.io import (
     validate_structure_file,
     validate_optional_files,
@@ -106,14 +109,35 @@ def project_structure_svg(
 
         # Load structure
         structure_obj = GemmiStructureParser().parse_structure(structure, dssp)
+        if (
+            hasattr(structure_obj, "coordinates")
+            and structure_obj.coordinates is not None
+        ):
+            logger.debug(
+                f"Coordinates shape after load: {structure_obj.coordinates.shape}"
+            )
+        else:
+            logger.debug("Coordinates attribute not found or None after load.")
 
         # Apply transformations
         if matrix is not None:
+            logger.debug(f"Applying transform matrix: {matrix}")
             structure_obj = transform_structure_with_matrix(structure_obj, matrix)
         else:
+            logger.debug("Applying inertia transform")
             structure_obj = transform_structure_with_inertia(structure_obj)
+        if (
+            hasattr(structure_obj, "coordinates")
+            and structure_obj.coordinates is not None
+        ):
+            logger.debug(
+                f"Coordinates shape after transform: {structure_obj.coordinates.shape}"
+            )
+        else:
+            logger.debug("Coordinates attribute not found or None after transform.")
 
         # Project structure orthographically
+        logger.debug("Applying orthographic projection")
         structure_obj = project_structure_orthographically(
             structure_obj,
             canvas_width,
@@ -121,6 +145,15 @@ def project_structure_svg(
             maintain_aspect_ratio=True,
             center_projection=True,
         )
+        if (
+            hasattr(structure_obj, "coordinates")
+            and structure_obj.coordinates is not None
+        ):
+            logger.debug(
+                f"Coordinates shape after projection: {structure_obj.coordinates.shape}"
+            )
+        else:
+            logger.debug("Coordinates attribute not found or None after projection.")
 
         styles_dict = None
         if style is not None:
@@ -130,6 +163,19 @@ def project_structure_svg(
 
         if annotations is not None:
             add_annotations_to_scene(annotations, scene)
+
+        # Log coordinate shape from scene before rendering
+        if (
+            hasattr(scene.structure, "coordinates")
+            and scene.structure.coordinates is not None
+        ):
+            logger.debug(
+                f"Final coordinates shape in scene before render: {scene.structure.coordinates.shape}"
+            )
+        else:
+            logger.debug(
+                "Coordinates attribute not found or None in scene structure before render."
+            )
 
         renderer = SVGRenderer(
             scene, canvas_width, canvas_height, background_color=None
