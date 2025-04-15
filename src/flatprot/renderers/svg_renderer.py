@@ -3,8 +3,9 @@
 
 """Renders a FlatProt Scene object to an SVG image using the drawsvg library."""
 
-from typing import List, Optional, Tuple, Dict
+from typing import List, Optional, Tuple, Dict, Any
 from drawsvg import Drawing, Group, Rectangle
+import numpy as np
 
 from flatprot.scene import (
     Scene,
@@ -21,7 +22,15 @@ from flatprot.scene import (
 )
 from flatprot.core.logger import logger
 
-from .svg_structure import _draw_coil, _draw_helix, _draw_sheet
+from .svg_structure import (
+    _draw_coil,
+    _draw_helix,
+    _draw_sheet,
+    _calculate_coil_connection_points,
+    _calculate_helix_connection_points,
+    _calculate_sheet_connection_points,
+    _draw_connection,
+)
 from .svg_annotations import (
     _draw_point_annotation,
     _draw_line_annotation,
@@ -173,10 +182,91 @@ class SVGRenderer:
         for child in element.children:
             self._build_svg_hierarchy(child, current_svg_group, svg_group_map)
 
+    def _prepare_render_data(
+        self,
+    ) -> Tuple[
+        List[BaseStructureSceneElement],  # Ordered structure elements
+        Dict[str, np.ndarray],  # Element ID -> coords_2d
+        Dict[
+            str, Tuple[Optional[np.ndarray], Optional[np.ndarray]]
+        ],  # Element ID -> (start_conn, end_conn)
+    ]:
+        """Pre-calculates 2D coordinates and connection points for structure elements."""
+        # ordered_elements: List[BaseStructureSceneElement] = [] # Keep type hint
+        element_coords_cache: Dict[str, np.ndarray] = {}
+        connection_points_cache: Dict[
+            str, Tuple[Optional[np.ndarray], Optional[np.ndarray]]
+        ] = {}
+        structure = self.scene.structure
+
+        # --- Get Sequentially Ordered Structure Elements --- #
+        # Uses the new method in Scene to get elements sorted by chain and residue index
+        try:
+            ordered_elements = self.scene.get_sequential_structure_elements()
+            # Filter for visibility *after* getting the ordered list
+            ordered_elements = [el for el in ordered_elements if el.style.visibility]
+        except Exception as e:
+            logger.error(
+                f"Error getting sequential structure elements: {e}", exc_info=True
+            )
+            return [], {}, {}  # Return empty if fetching/sorting failed
+
+        # --- Calculate Coordinates and Connection Points --- #
+        for element in ordered_elements:
+            element_id = element.id
+            try:
+                # CRITICAL ASSUMPTION: get_coordinates returns *final projected* 2D/3D coords.
+                # If it returns raw 3D, projection needs to happen here.
+                coords = element.get_coordinates(structure)
+
+                if coords is None or coords.ndim != 2 or coords.shape[1] < 2:
+                    logger.warning(
+                        f"Element {element_id} provided invalid coordinates shape: {coords.shape if coords is not None else 'None'}. Skipping."
+                    )
+                    # Add placeholders to avoid key errors later if neighbors expect connections
+                    element_coords_cache[element_id] = np.empty((0, 2))
+                    connection_points_cache[element_id] = (None, None)
+                    continue
+
+                coords_2d = coords[:, :2]  # Ensure we only use X, Y
+                element_coords_cache[element_id] = coords_2d
+
+                # Calculate connection points using imported functions
+                start_conn, end_conn = None, None
+                if isinstance(element, CoilSceneElement):
+                    start_conn, end_conn = _calculate_coil_connection_points(coords_2d)
+                elif isinstance(element, HelixSceneElement):
+                    start_conn, end_conn = _calculate_helix_connection_points(coords_2d)
+                elif isinstance(element, SheetSceneElement):
+                    start_conn, end_conn = _calculate_sheet_connection_points(coords_2d)
+                else:
+                    # Fallback for unknown structure types? Or assume only these 3 exist.
+                    logger.warning(
+                        f"Unknown structure element type {type(element).__name__} encountered during connection point calculation."
+                    )
+                    start_conn, end_conn = _calculate_coil_connection_points(
+                        coords_2d
+                    )  # Default to coil logic
+
+                connection_points_cache[element_id] = (start_conn, end_conn)
+
+            except Exception as e:
+                logger.error(
+                    f"Error preparing render data for element {element_id}: {e}",
+                    exc_info=True,
+                )
+                # Add placeholders if preparation fails for an element
+                element_coords_cache[element_id] = np.empty((0, 2))
+                connection_points_cache[element_id] = (None, None)
+                continue
+
+        return ordered_elements, element_coords_cache, connection_points_cache
+
     def render(self) -> Drawing:
         """Renders the scene to a drawsvg.Drawing object."""
         drawing = Drawing(self.width, self.height, origin="center")
         svg_group_map: Dict[str, Group] = {}
+        connection_line_group = Group(id="flatprot-connections", class_="connections")
 
         # 1. Add Background
         if self.background_color:
@@ -196,44 +286,106 @@ class SVGRenderer:
         root_group = Group(id="flatprot-root")
         drawing.append(root_group)
         svg_group_map["flatprot-root"] = root_group  # Register root
+        root_group.append(connection_line_group)
 
         for top_level_node in self.scene.top_level_nodes:
             self._build_svg_hierarchy(top_level_node, root_group, svg_group_map)
 
-        # 3. Collect and Sort Renderable Elements
-        sorted_structures, sorted_annotations = self._collect_and_sort_renderables()
+        # 3. Prepare Render Data for Structure Elements
+        try:
+            (
+                ordered_structure_elements,
+                element_coords_cache,
+                connection_points_cache,
+            ) = self._prepare_render_data()
+        except Exception as e:
+            logger.error(f"Failed to prepare render data: {e}", exc_info=True)
+            ordered_structure_elements = []
+            connection_points_cache = {}
 
-        # 4. Draw Structure Elements into correct SVG groups
-        structure = self.scene.structure
-        for depth, element in sorted_structures:
+        # 4. Draw Structure Elements into correct SVG groups using prepared data
+        num_elements = len(ordered_structure_elements)
+        for i, element in enumerate(ordered_structure_elements):
+            element_id = element.id
             element_type = type(element)
-            draw_func = self.DRAW_MAP.get(element_type)
-            if not draw_func:
+
+            # Get cached coordinates for the current element
+            coords_2d = element_coords_cache.get(element_id)
+            if coords_2d is None or coords_2d.size == 0:
                 logger.warning(
-                    f"No drawing func for structure type: {element_type.__name__}"
+                    f"Skipping draw for {element_id}: No valid cached 2D coordinates found."
                 )
                 continue
 
-            svg_shape = draw_func(element, structure)
+            # Select and call the appropriate drawing function
+            svg_shape: Optional[Any] = None
+            try:
+                if isinstance(element, CoilSceneElement):
+                    svg_shape = _draw_coil(element, coords_2d)
+                elif isinstance(element, HelixSceneElement):
+                    svg_shape = _draw_helix(element, coords_2d)
+                elif isinstance(element, SheetSceneElement):
+                    svg_shape = _draw_sheet(element, coords_2d)
+                else:
+                    logger.warning(
+                        f"No specific draw function mapped for structure type: {element_type.__name__}. Skipping {element_id}."
+                    )
+                    continue
+            except Exception as e:
+                logger.error(
+                    f"Error calling draw function for {element_id}: {e}", exc_info=True
+                )
+                continue
+
+            # Append the generated shape to the correct SVG group
             if svg_shape:
-                # Find the parent SVG group
                 parent_group_id = (
                     element.parent.id if element.parent else "flatprot-root"
                 )
                 target_svg_group = svg_group_map.get(parent_group_id)
                 if target_svg_group:
-                    if isinstance(svg_shape, list):
-                        for item in svg_shape:
-                            target_svg_group.append(item)
-                    else:
-                        target_svg_group.append(svg_shape)
+                    target_svg_group.append(svg_shape)
                 else:
                     logger.error(
-                        f"Could not find target SVG group '{parent_group_id}' for element {element.id}"
+                        f"Could not find target SVG group '{parent_group_id}' for element {element_id}"
                     )
 
-        # 5. Draw Annotation Elements (typically added to root for visibility)
-        for depth, element in sorted_annotations:
+        # 5. Draw Connection Lines Between Adjacent Structure Elements
+        for i in range(num_elements - 1):
+            element_i = ordered_structure_elements[i]
+            element_i_plus_1 = ordered_structure_elements[i + 1]
+
+            if not element_i.is_adjacent_to(element_i_plus_1):
+                continue
+
+            # Get connection points from cache
+            conn_i_data = connection_points_cache.get(element_i.id)
+            conn_i_plus_1_data = connection_points_cache.get(element_i_plus_1.id)
+
+            if conn_i_data and conn_i_plus_1_data:
+                end_conn_i = conn_i_data[1]  # End point of element i
+                start_conn_i_plus_1 = conn_i_plus_1_data[
+                    0
+                ]  # Start point of element i+1
+
+                if end_conn_i is not None and start_conn_i_plus_1 is not None:
+                    # Check if points are too close to avoid zero-length lines
+                    if not np.allclose(end_conn_i, start_conn_i_plus_1, atol=1e-3):
+                        connection_line = _draw_connection(
+                            start_point=end_conn_i,
+                            end_point=start_conn_i_plus_1,
+                            style=None,
+                            id=f"connection-{element_i.id}-{element_i_plus_1.id}",
+                        )
+                        connection_line_group.append(connection_line)
+
+        # 6. Draw Annotation Elements (Retrieve separately, logic remains similar)
+        _, sorted_annotations = self._collect_and_sort_renderables()
+
+        for (
+            depth,
+            element,
+        ) in sorted_annotations:
             element_type = type(element)
             draw_func = self.ANNOTATION_DRAW_MAP.get(element_type)
             if not draw_func:
@@ -242,26 +394,26 @@ class SVGRenderer:
                 )
                 continue
 
-            # Get coordinates using the new Scene method
-            rendered_coords = self.scene.get_rendered_coordinates_for_annotation(
-                element
-            )
-            if rendered_coords is None:
-                # Scene method already logs warnings/errors
-                logger.debug(
-                    f"Skipping annotation {element.id} due to missing rendered coordinates."
+            try:
+                rendered_coords = self.scene.get_rendered_coordinates_for_annotation(
+                    element
+                )
+                if rendered_coords is None or rendered_coords.size == 0:
+                    logger.debug(
+                        f"Skipping annotation {element.id} due to missing/empty rendered coordinates."
+                    )
+                    continue
+
+                svg_shapes = draw_func(element, rendered_coords)
+                if svg_shapes:
+                    root_group.append(svg_shapes)
+
+            except Exception as e:
+                logger.error(
+                    f"Error processing or drawing annotation {element.id}: {e}",
+                    exc_info=True,
                 )
                 continue
-
-            # Call the specific annotation drawing function
-            svg_shapes = draw_func(element, rendered_coords)
-            if svg_shapes:
-                # Add annotations directly to the root group to ensure they are on top
-                if isinstance(svg_shapes, list):
-                    for item in svg_shapes:
-                        root_group.append(item)
-                else:
-                    root_group.append(svg_shapes)
 
         return drawing
 
