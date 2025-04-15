@@ -237,6 +237,96 @@ def sheet_element_single_a7(mocker) -> SheetSceneElement:
     return element
 
 
+# --- Fixtures for Multi-Chain Tests ---
+
+
+@pytest.fixture
+def mock_structure_two_chains(mocker) -> Structure:
+    """Provides a mock Structure with two chains, A and B."""
+    structure = mocker.MagicMock(spec=Structure)
+    structure.id = "mock_struct_two_chains"
+
+    # Chain A Coords (X increases, Y=10)
+    coords_a = np.zeros((10, 3))
+    coords_a[:, 0] = np.arange(10) * 5
+    coords_a[:, 1] = 10
+    # Chain B Coords (X increases, Y=30)
+    coords_b = np.zeros((10, 3))
+    coords_b[:, 0] = np.arange(10) * 5
+    coords_b[:, 1] = 30
+
+    structure.coordinates = np.vstack((coords_a, coords_b))
+
+    # Mock chains
+    mock_chain_a = mocker.MagicMock(name="ChainA")
+    chain_a_coord_map = {i: i - 1 for i in range(1, 11)}  # Indices 0-9
+    mock_chain_a.coordinate_index = mocker.MagicMock(
+        side_effect=lambda r: chain_a_coord_map[r]
+    )
+    mock_chain_a.__contains__ = mocker.MagicMock(
+        side_effect=lambda r: r in chain_a_coord_map
+    )
+    mock_chain_a.id = "A"
+
+    mock_chain_b = mocker.MagicMock(name="ChainB")
+    chain_b_coord_map = {i: i - 1 + 10 for i in range(1, 11)}  # Indices 10-19
+    mock_chain_b.coordinate_index = mocker.MagicMock(
+        side_effect=lambda r: chain_b_coord_map[r]
+    )
+    mock_chain_b.__contains__ = mocker.MagicMock(
+        side_effect=lambda r: r in chain_b_coord_map
+    )
+    mock_chain_b.id = "B"
+
+    structure.chains = {"A": mock_chain_a, "B": mock_chain_b}
+    structure.__getitem__ = mocker.MagicMock(
+        side_effect=lambda chain_id: structure.chains[chain_id]
+    )
+
+    # Mock other necessary methods (simplified)
+    structure.get_residues_in_range = mocker.MagicMock(
+        side_effect=lambda rrs: list(rrs.residues)
+    )
+
+    # Mock coordinate fetching (assuming it uses the main array based on index)
+    def get_res_coord_multi(res_coord: ResidueCoordinate, struct: Structure):
+        chain = struct[res_coord.chain_id]
+        idx = chain.coordinate_index(res_coord.residue_index)
+        if 0 <= idx < len(struct.coordinates):
+            return struct.coordinates[idx]
+        return None
+
+    structure.get_residue_coordinate = mocker.MagicMock(side_effect=get_res_coord_multi)
+
+    return structure
+
+
+@pytest.fixture
+def scene_two_chains(mock_structure_two_chains: Structure) -> Scene:
+    """Provides an empty Scene object based on the two-chain mock structure."""
+    return Scene(structure=mock_structure_two_chains)
+
+
+@pytest.fixture
+def coil_element_b1_5(mocker) -> CoilSceneElement:
+    """Provides a CoilSceneElement B:1-5 with mocked coordinates."""
+    element = CoilSceneElement(residue_range_set=ResidueRangeSet.from_string("B:1-5"))
+    # Coordinates consistent with mock_structure_two_chains (Y=30)
+    coords = np.array([[0, 30, 0], [5, 30, 0], [10, 30, 0], [15, 30, 0], [20, 30, 0]])
+    mocker.patch.object(element, "get_coordinates", return_value=coords)
+    return element
+
+
+@pytest.fixture
+def sheet_element_b6_10(mocker) -> SheetSceneElement:
+    """Provides a SheetSceneElement B:6-10 with mocked coordinates."""
+    element = SheetSceneElement(residue_range_set=ResidueRangeSet.from_string("B:6-10"))
+    # Arrow shape roughly from x=25, y=25/35 to x=45 tip at y=30
+    coords = np.array([[25, 25, 0], [35, 25, 0], [45, 30, 0], [35, 35, 0], [25, 35, 0]])
+    mocker.patch.object(element, "get_coordinates", return_value=coords)
+    return element
+
+
 # --- Tests ---
 
 
@@ -796,8 +886,49 @@ def test_render_single_residue_coil_bridge(
     ), f"Connection path end {points1[1]} doesn't match expected coil start {exp_single_coil_start}"
 
 
-# TODO: Add tests for coils at the start/end of a sequence/chain
-# TODO: Add tests with multiple chains to ensure connections don't cross chains
+def test_render_no_connection_between_chains(
+    scene_two_chains: Scene,
+    helix_element_a3_9: HelixSceneElement,
+    coil_element_single_a10: CoilSceneElement,
+    coil_element_b1_5: CoilSceneElement,
+    sheet_element_b6_10: SheetSceneElement,
+    mocker: MockerFixture,
+) -> None:
+    """Tests that connections are NOT drawn between elements of different chains."""
+    scene = scene_two_chains
+    # Add elements in an order that mixes chains but where connections should only be within chains
+    scene.add_element(helix_element_a3_9)  # A:3-9
+    scene.add_element(coil_element_single_a10)  # A:10-10 (Adjacent to previous)
+    scene.add_element(coil_element_b1_5)  # B:1-5  (NOT adjacent to previous)
+    scene.add_element(sheet_element_b6_10)  # B:6-10 (Adjacent to previous B coil)
+
+    # Mock adjacency: A9->A10 is adjacent, A10->B1 is NOT, B5->B6 is adjacent
+    mocker.patch.object(
+        helix_element_a3_9, "is_adjacent_to", return_value=True, autospec=True
+    )
+    mocker.patch.object(
+        coil_element_single_a10, "is_adjacent_to", return_value=False, autospec=True
+    )
+    mocker.patch.object(
+        coil_element_b1_5, "is_adjacent_to", return_value=True, autospec=True
+    )
+
+    renderer = SVGRenderer(scene=scene)
+    svg_output = renderer.get_svg_string()
+    root = _parse_svg(svg_output)
+    ns = {"svg": "http://www.w3.org/2000/svg"}
+
+    # Find connection paths
+    connection_group = root.find(".//svg:g[@id='flatprot-connections']", namespaces=ns)
+    assert connection_group is not None, "Connection group not found"
+    connection_paths = connection_group.findall(
+        "./svg:path[@class='connection']", namespaces=ns
+    )
+
+    # Assert exactly TWO connections were made (A9->A10 and B5->B6)
+    assert (
+        len(connection_paths) == 2
+    ), f"Expected 2 connection paths (within chains), found {len(connection_paths)}"
 
 
 # --- Connection Logic Tests ---
