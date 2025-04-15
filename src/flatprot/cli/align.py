@@ -168,11 +168,8 @@ def align_structure_rotation(
         logger.info("Alignment completed successfully")
         return 0
 
-    except FlatProtError as e:
-        logger.error(e.message)
-        return 1
     except NoSignificantAlignmentError as e:
-        logger.warning(str(e))
+        logger.error(str(e))
         logger.info("Try lowering the --min-probability threshold")
         return 1
     except DatabaseEntryNotFoundError as e:
@@ -187,6 +184,9 @@ def align_structure_rotation(
         return 1
     except subprocess.SubprocessError as e:
         logger.error(f"FoldSeek execution failed: {str(e)}")
+        return 1
+    except FlatProtError as e:
+        logger.error(e.message)
         return 1
     except Exception as e:
         logger.error(f"Unexpected error: {str(e)}")

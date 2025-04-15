@@ -54,12 +54,18 @@ class TransformationMatrix:
         Returns:
             TransformationMatrix instance
         """
+        if arr.shape != (4, 3):
+            raise ValueError(f"Input array must be 4x3, but got {arr.shape}")
+        # Original slicing for 4x3 array
         return cls(rotation=arr[0:3, :], translation=arr[3, :])
 
     @classmethod
     def from_string(cls, s: str) -> "TransformationMatrix":
-        """Create TransformationMatrix from string representation."""
-        arr = np.fromstring(s)
+        """Create TransformationMatrix from string representation (assuming 4x3 layout)."""
+        # Assuming the string represents a flattened 4x3 matrix
+        arr = np.fromstring(s, sep=" ")  # Adjust separator if needed
+        if arr.size != 12:
+            raise ValueError("String must represent 12 numbers for a 4x3 matrix")
         arr = arr.reshape(4, 3)
         return cls.from_array(arr)
 
