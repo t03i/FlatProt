@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 from dataclasses import dataclass
-from typing import List, Iterator, Optional
+from typing import List, Iterator, Optional, Union
 import re
 
 from .types import ResidueType, SecondaryStructureType
@@ -176,6 +176,53 @@ class ResidueRange:
                 and self.start <= other.residue_index <= self.end
             )
 
+    def is_adjacent_to(self, other: Union["ResidueRange", ResidueCoordinate]) -> bool:
+        """Check if this range is adjacent to another range or residue coordinate.
+
+        Two ranges are considered adjacent if they are in the same chain and
+        one range's end is exactly one residue before the other range's start.
+        For example, A:10-15 is adjacent to A:16-20, but not to A:15-20 (overlap)
+        or A:17-20 (gap).
+
+        A range and a residue coordinate are considered adjacent if they are in the
+        same chain and the coordinate is exactly one residue before the range's start
+        or exactly one residue after the range's end.
+
+        Args:
+            other: The other range or residue coordinate to check adjacency with.
+
+        Returns:
+            bool: True if the range is adjacent to the other object, False otherwise.
+
+        Raises:
+            TypeError: If other is not a ResidueRange or ResidueCoordinate.
+        """
+        if not isinstance(other, (ResidueRange, ResidueCoordinate)):
+            raise TypeError(f"Cannot check adjacency with {type(other)}")
+
+        # Must be in the same chain to be adjacent
+        if self.chain_id != other.chain_id:
+            return False
+
+        if isinstance(other, ResidueRange):
+            # Check if self's end is exactly one residue before other's start
+            if self.end + 1 == other.start:
+                return True
+
+            # Check if other's end is exactly one residue before self's start
+            if other.end + 1 == self.start:
+                return True
+        else:  # ResidueCoordinate
+            # Check if the coordinate is exactly one residue before the range's start
+            if other.residue_index + 1 == self.start:
+                return True
+
+            # Check if the coordinate is exactly one residue after the range's end
+            if self.end + 1 == other.residue_index:
+                return True
+
+        return False
+
 
 class ResidueRangeSet:
     """Represents multiple ranges of residues, potentially across different chains."""
@@ -273,3 +320,39 @@ class ResidueRangeSet:
             raise TypeError(f"Cannot compare ResidueRangeSet with {type(other)}")
 
         return sorted(self.ranges) == sorted(other.ranges)
+
+    def is_adjacent_to(
+        self, other: Union["ResidueRangeSet", ResidueRange, ResidueCoordinate]
+    ) -> bool:
+        """Check if this range set is adjacent to another range set, range, or coordinate.
+
+        Two range sets are considered adjacent if any range in one set is
+        adjacent to any range in the other set. Ranges are adjacent if they
+        are in the same chain and one range's end is exactly one residue
+        before the other range's start, or vice versa.
+
+        Args:
+            other: The other object to check adjacency with. Can be a ResidueRangeSet,
+                  ResidueRange, or ResidueCoordinate.
+
+        Returns:
+            bool: True if the range sets are adjacent, False otherwise.
+
+        Raises:
+            TypeError: If other is not a ResidueRangeSet, ResidueRange, or ResidueCoordinate.
+        """
+        if isinstance(other, ResidueRangeSet):
+            # Check each pair of ranges from both sets
+            for range1 in self.ranges:
+                for range2 in other.ranges:
+                    if range1.is_adjacent_to(range2):
+                        return True
+        elif isinstance(other, (ResidueRange, ResidueCoordinate)):
+            # Convert the single range to a set and check adjacency
+            for range1 in self.ranges:
+                if range1.is_adjacent_to(other):
+                    return True
+        else:
+            raise TypeError(f"Cannot check adjacency with {type(other)}")
+
+        return False

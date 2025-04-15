@@ -11,6 +11,7 @@ from flatprot.scene import (
     ElementTypeError,
     CircularDependencyError,
     SceneGraphInconsistencyError,
+    BaseStructureSceneElement,
 )
 from flatprot.core import Structure, ResidueCoordinate, ResidueRange, ResidueRangeSet
 
@@ -822,3 +823,107 @@ def test_get_all_elements(scene: Scene) -> None:
     assert e1 in all_elements_after_remove
     assert g1 not in all_elements_after_remove
     assert e2 not in all_elements_after_remove
+
+
+# -------------------------------------
+# 10. Sequential Element Retrieval Tests
+# -------------------------------------
+
+
+def test_get_sequential_structure_elements_empty(scene: Scene) -> None:
+    """Test retrieving sequential elements from an empty scene."""
+    assert scene.get_sequential_structure_elements() == []
+
+
+def test_get_sequential_structure_elements_single_chain(
+    scene: Scene, element_a10_20: Mock, element_a5_8: Mock
+) -> None:
+    """Test sorting elements on a single chain."""
+    scene.add_element(element_a10_20)  # Added out of order
+    scene.add_element(element_a5_8)
+    sorted_elements = scene.get_sequential_structure_elements()
+    assert [el.id for el in sorted_elements] == ["A_5_8", "A_10_20"]
+
+
+def test_get_sequential_structure_elements_multi_chain(
+    scene: Scene, element_a10_20: Mock, element_a5_8: Mock, element_b1_5: Mock
+) -> None:
+    """Test sorting elements across multiple chains."""
+    scene.add_element(element_b1_5)  # Added out of order
+    scene.add_element(element_a10_20)
+    scene.add_element(element_a5_8)
+    sorted_elements = scene.get_sequential_structure_elements()
+    assert [el.id for el in sorted_elements] == ["A_5_8", "A_10_20", "B_1_5"]
+
+
+def test_get_sequential_structure_elements_with_no_range(
+    scene: Scene, element_a5_8: Mock, element_no_range: Mock, element_empty_range: Mock
+) -> None:
+    """Test sorting includes elements with no/empty ranges (sorted last)."""
+    scene.add_element(element_no_range)
+    scene.add_element(element_a5_8)
+    scene.add_element(element_empty_range)
+
+    sorted_elements = scene.get_sequential_structure_elements()
+    # Elements without range should sort after those with ranges
+    # Their relative order might depend on internal dict iteration order, but they come last.
+    sorted_ids = [el.id for el in sorted_elements]
+    assert sorted_ids[0] == "A_5_8"
+    assert set(sorted_ids[1:]) == {"no_range", "empty_range"}
+
+
+def test_get_sequential_structure_elements_only_structure_elements(
+    scene: Scene, element_a5_8: Mock
+) -> None:
+    """Test that only structure elements are included, not groups or others."""
+    group = create_mock_element("group1", is_group=True)
+    scene.add_element(element_a5_8)
+    scene.add_element(group)
+
+    sorted_elements = scene.get_sequential_structure_elements()
+    assert len(sorted_elements) == 1
+    assert sorted_elements[0] is element_a5_8
+
+
+# --- Fixtures for Sorting Tests ---
+
+
+@pytest.fixture
+def element_a10_20() -> Mock:
+    el = create_mock_element("A_10_20", is_group=False)
+    el.residue_range_set = ResidueRangeSet.from_string("A:10-20")
+    # Ensure it's recognized as a structure element for sorting
+    el.__class__ = BaseStructureSceneElement
+    return el
+
+
+@pytest.fixture
+def element_a5_8() -> Mock:
+    el = create_mock_element("A_5_8", is_group=False)
+    el.residue_range_set = ResidueRangeSet.from_string("A:5-8")
+    el.__class__ = BaseStructureSceneElement
+    return el
+
+
+@pytest.fixture
+def element_b1_5() -> Mock:
+    el = create_mock_element("B_1_5", is_group=False)
+    el.residue_range_set = ResidueRangeSet.from_string("B:1-5")
+    el.__class__ = BaseStructureSceneElement
+    return el
+
+
+@pytest.fixture
+def element_no_range() -> Mock:
+    el = create_mock_element("no_range", is_group=False)
+    el.residue_range_set = None
+    el.__class__ = BaseStructureSceneElement
+    return el
+
+
+@pytest.fixture
+def element_empty_range() -> Mock:
+    el = create_mock_element("empty_range", is_group=False)
+    el.residue_range_set = ResidueRangeSet([])  # Empty set
+    el.__class__ = BaseStructureSceneElement
+    return el

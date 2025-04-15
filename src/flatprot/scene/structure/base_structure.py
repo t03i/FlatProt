@@ -230,3 +230,17 @@ class BaseStructureSceneElement(
             return None
 
         return float(np.mean(depths))
+
+    def is_adjacent_to(self, other: "BaseStructureSceneElement") -> bool:
+        """Check if this element is adjacent to another element.
+
+        Args:
+            other: The other element to check adjacency with.
+
+        Returns:
+            True if the elements are adjacent, False otherwise.
+        """
+        if not isinstance(other, BaseStructureSceneElement):
+            raise TypeError(f"Cannot check adjacency with {type(other)}")
+
+        return self.residue_range_set.is_adjacent_to(other.residue_range_set)

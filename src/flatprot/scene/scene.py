@@ -535,6 +535,10 @@ class Scene:
             ) from e
 
         # If we reach here, the list must contain valid coordinates
+        if not rendered_coords_list:
+            raise CoordinateCalculationError(
+                f"No valid rendered coordinates could be calculated for annotation '{annotation.id}'"
+            )
         return np.array(rendered_coords_list)
 
     def get_all_elements(self) -> List[BaseSceneElement]:
@@ -544,6 +548,55 @@ class Scene:
             A list containing all BaseSceneElement objects registered in the scene.
         """
         return list(self._element_registry.values())
+
+    def get_sequential_structure_elements(self) -> List[BaseStructureSceneElement]:
+        """
+        Returns a list of all BaseStructureSceneElement instances in the scene,
+        sorted sequentially by chain ID and then by starting residue index.
+
+        Assumes each BaseStructureSceneElement primarily represents a single
+        contiguous range for sorting purposes.
+
+        Returns:
+            List[BaseStructureSceneElement]: Sorted list of structure elements.
+        """
+        structure_elements: List[BaseStructureSceneElement] = []
+        for element in self._element_registry.values():
+            if isinstance(element, BaseStructureSceneElement):
+                structure_elements.append(element)
+
+        def sort_key(element: BaseStructureSceneElement) -> Tuple[str, int]:
+            primary_chain = "~"  # Use ~ to sort after standard chain IDs
+            start_residue = float("inf")  # Sort elements without range last
+
+            if element.residue_range_set and element.residue_range_set.ranges:
+                # Use the first range (min start residue) for sorting key
+                try:
+                    first_range = min(
+                        element.residue_range_set.ranges,
+                        key=lambda r: (r.chain_id, r.start),
+                    )
+                    primary_chain = first_range.chain_id
+                    start_residue = first_range.start
+                except (ValueError, TypeError) as e:
+                    logger.warning(
+                        f"Could not determine sort key for element {element.id} due to range issue: {e}"
+                    )
+            else:
+                logger.debug(
+                    f"Structure element {element.id} has no residue range for sorting."
+                )
+
+            # Return a tuple for multi-level sorting
+            return (primary_chain, start_residue)
+
+        try:
+            structure_elements.sort(key=sort_key)
+        except Exception as e:
+            logger.error(f"Error sorting structure elements: {e}", exc_info=True)
+            # Return unsorted list in case of unexpected sorting error
+
+        return structure_elements
 
     def __iter__(self) -> Iterator[BaseSceneElement]:
         """Iterate over the top-level nodes of the scene graph."""

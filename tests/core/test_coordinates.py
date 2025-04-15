@@ -262,6 +262,88 @@ def test_residue_range_to_set(residue_range_a: ResidueRange) -> None:
     assert range_set.ranges[0] == residue_range_a
 
 
+# --- Tests for ResidueRange.is_adjacent_to ---
+
+
+def test_residue_range_is_adjacent_true() -> None:
+    """Test that adjacent ranges return True."""
+    r1 = ResidueRange.from_string("A:10-15")
+    r2 = ResidueRange.from_string("A:16-20")
+    assert r1.is_adjacent_to(r2)
+    assert r2.is_adjacent_to(r1)
+
+
+def test_residue_range_is_adjacent_false_gap() -> None:
+    """Test that non-adjacent ranges with a gap return False."""
+    r1 = ResidueRange.from_string("A:10-15")
+    r2 = ResidueRange.from_string("A:17-20")  # Gap at 16
+    assert not r1.is_adjacent_to(r2)
+    assert not r2.is_adjacent_to(r1)
+
+
+def test_residue_range_is_adjacent_false_overlap() -> None:
+    """Test that overlapping ranges return False."""
+    r1 = ResidueRange.from_string("A:10-15")
+    r2 = ResidueRange.from_string("A:14-20")  # Overlap at 14, 15
+    assert not r1.is_adjacent_to(r2)
+    assert not r2.is_adjacent_to(r1)
+
+
+def test_residue_range_is_adjacent_false_touching() -> None:
+    """Test that touching ranges (end == start) return False."""
+    r1 = ResidueRange.from_string("A:10-15")
+    r2 = ResidueRange.from_string("A:15-20")  # Touching at 15
+    assert not r1.is_adjacent_to(r2)
+    assert not r2.is_adjacent_to(r1)
+
+
+def test_residue_range_is_adjacent_false_different_chain() -> None:
+    """Test that ranges in different chains return False."""
+    r1 = ResidueRange.from_string("A:10-15")
+    r2 = ResidueRange.from_string("B:16-20")  # Different chains
+    assert not r1.is_adjacent_to(r2)
+    assert not r2.is_adjacent_to(r1)
+
+
+def test_residue_range_is_adjacent_type_error() -> None:
+    """Test that comparing with a non-ResidueRange raises TypeError."""
+    r1 = ResidueRange.from_string("A:10-15")
+    with pytest.raises(TypeError):
+        r1.is_adjacent_to("A:16-20")  # type: ignore
+
+
+def test_residue_range_is_adjacent_to_coordinate_true() -> None:
+    """Test adjacent range and coordinate."""
+    r1 = ResidueRange.from_string("A:10-15")
+    coord_before = ResidueCoordinate.from_string("A:9")
+    coord_after = ResidueCoordinate.from_string("A:16")
+    assert r1.is_adjacent_to(coord_before)
+    assert r1.is_adjacent_to(coord_after)
+    # Symmetry is not defined for range/coordinate, but test implementation
+    # assert coord_before.is_adjacent_to(r1) # Requires Coordinate.is_adjacent_to
+    # assert coord_after.is_adjacent_to(r1) # Requires Coordinate.is_adjacent_to
+
+
+def test_residue_range_is_adjacent_to_coordinate_false() -> None:
+    """Test non-adjacent range and coordinate."""
+    r1 = ResidueRange.from_string("A:10-15")
+    coord_inside = ResidueCoordinate.from_string("A:12")
+    coord_touch_start = ResidueCoordinate.from_string("A:10")
+    coord_touch_end = ResidueCoordinate.from_string("A:15")
+    coord_gap_before = ResidueCoordinate.from_string("A:8")
+    coord_gap_after = ResidueCoordinate.from_string("A:17")
+    coord_diff_chain = ResidueCoordinate.from_string("B:9")
+    coord_diff_chain_adj = ResidueCoordinate.from_string("B:16")
+
+    assert not r1.is_adjacent_to(coord_inside)
+    assert not r1.is_adjacent_to(coord_touch_start)
+    assert not r1.is_adjacent_to(coord_touch_end)
+    assert not r1.is_adjacent_to(coord_gap_before)
+    assert not r1.is_adjacent_to(coord_gap_after)
+    assert not r1.is_adjacent_to(coord_diff_chain)
+    assert not r1.is_adjacent_to(coord_diff_chain_adj)
+
+
 # --- Tests for ResidueRangeSet ---
 
 
@@ -402,3 +484,110 @@ def test_empty_residue_range_set() -> None:
     assert str(empty_set) == ""
     assert ResidueCoordinate("A", 1) not in empty_set
     assert ResidueRange("A", 1, 5) not in empty_set
+
+
+# --- Tests for ResidueRangeSet.is_adjacent_to ---
+
+
+def test_residue_range_set_adjacent_simple() -> None:
+    """Test simple adjacent ranges in the same chain."""
+    set1 = ResidueRangeSet.from_string("A:10-15")
+    set2 = ResidueRangeSet.from_string("A:16-20")
+    assert set1.is_adjacent_to(set2)
+    assert set2.is_adjacent_to(set1)
+
+
+def test_residue_range_set_adjacent_multiple_ranges() -> None:
+    """Test adjacency when sets have multiple ranges, one pair adjacent."""
+    set1 = ResidueRangeSet.from_string("A:10-15, B:1-5")
+    set2 = ResidueRangeSet.from_string("C:1-10, A:16-20")
+    set3 = ResidueRangeSet.from_string("B:6-10, D:1-5")
+    assert set1.is_adjacent_to(set2)  # A:15 adjacent to A:16
+    assert set2.is_adjacent_to(set1)
+    assert set1.is_adjacent_to(set3)  # B:5 adjacent to B:6
+    assert set3.is_adjacent_to(set1)
+    assert not set2.is_adjacent_to(set3)  # No adjacent pairs
+
+
+def test_residue_range_set_not_adjacent_gap() -> None:
+    """Test non-adjacent ranges with a gap."""
+    set1 = ResidueRangeSet.from_string("A:10-15")
+    set2 = ResidueRangeSet.from_string("A:17-20")  # Gap of 1 residue (16)
+    assert not set1.is_adjacent_to(set2)
+    assert not set2.is_adjacent_to(set1)
+
+
+def test_residue_range_set_not_adjacent_overlap() -> None:
+    """Test non-adjacent overlapping ranges."""
+    set1 = ResidueRangeSet.from_string("A:10-15")
+    set2 = ResidueRangeSet.from_string("A:14-20")  # Overlap
+    assert not set1.is_adjacent_to(set2)
+    assert not set2.is_adjacent_to(set1)
+
+
+def test_residue_range_set_not_adjacent_touching() -> None:
+    """Test non-adjacent touching ranges (end == start)."""
+    set1 = ResidueRangeSet.from_string("A:10-15")
+    set2 = ResidueRangeSet.from_string("A:15-20")  # Touching, not adjacent
+    assert not set1.is_adjacent_to(set2)
+    assert not set2.is_adjacent_to(set1)
+
+
+def test_residue_range_set_not_adjacent_different_chains() -> None:
+    """Test non-adjacent ranges in different chains."""
+    set1 = ResidueRangeSet.from_string("A:10-15")
+    set2 = ResidueRangeSet.from_string("B:16-20")  # Different chains
+    assert not set1.is_adjacent_to(set2)
+    assert not set2.is_adjacent_to(set1)
+
+
+def test_residue_range_set_adjacent_with_empty() -> None:
+    """Test adjacency check with an empty set."""
+    set1 = ResidueRangeSet.from_string("A:10-15")
+    empty_set = ResidueRangeSet([])
+    assert not set1.is_adjacent_to(empty_set)
+    assert not empty_set.is_adjacent_to(set1)
+    assert not empty_set.is_adjacent_to(empty_set)
+
+
+def test_residue_range_set_adjacent_type_error() -> None:
+    """Test that comparing with a non-ResidueRangeSet raises TypeError."""
+    set1 = ResidueRangeSet.from_string("A:10-15")
+    with pytest.raises(TypeError):
+        set1.is_adjacent_to("A:16-20")  # type: ignore
+
+
+def test_residue_range_set_adjacent_to_range() -> None:
+    """Test adjacency between a set and a single range."""
+    set1 = ResidueRangeSet.from_string("A:10-15, B:1-5")
+    range_adj_a = ResidueRange.from_string("A:16-20")
+    range_adj_b = ResidueRange.from_string("B:6-10")
+    range_non_adj = ResidueRange.from_string("C:1-10")
+    range_gap_a = ResidueRange.from_string("A:17-20")
+
+    assert set1.is_adjacent_to(range_adj_a)
+    assert set1.is_adjacent_to(range_adj_b)
+    assert not set1.is_adjacent_to(range_non_adj)
+    assert not set1.is_adjacent_to(range_gap_a)
+
+
+def test_residue_range_set_adjacent_to_coordinate() -> None:
+    """Test adjacency between a set and a single coordinate."""
+    set1 = ResidueRangeSet.from_string("A:10-15, B:1-5")
+    coord_adj_a_before = ResidueCoordinate.from_string("A:9")
+    coord_adj_a_after = ResidueCoordinate.from_string("A:16")
+    coord_adj_b_before = ResidueCoordinate.from_string(
+        "B:0"
+    )  # Assuming 0 is valid index if it occurs
+    coord_adj_b_after = ResidueCoordinate.from_string("B:6")
+    coord_non_adj_gap = ResidueCoordinate.from_string("A:17")
+    coord_non_adj_inside = ResidueCoordinate.from_string("B:3")
+    coord_non_adj_chain = ResidueCoordinate.from_string("C:10")
+
+    assert set1.is_adjacent_to(coord_adj_a_before)
+    assert set1.is_adjacent_to(coord_adj_a_after)
+    assert set1.is_adjacent_to(coord_adj_b_before)
+    assert set1.is_adjacent_to(coord_adj_b_after)
+    assert not set1.is_adjacent_to(coord_non_adj_gap)
+    assert not set1.is_adjacent_to(coord_non_adj_inside)
+    assert not set1.is_adjacent_to(coord_non_adj_chain)
