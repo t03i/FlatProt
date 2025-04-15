@@ -394,26 +394,20 @@ class SVGRenderer:
                 )
                 continue
 
-            try:
-                rendered_coords = self.scene.get_rendered_coordinates_for_annotation(
-                    element
-                )
-                if rendered_coords is None or rendered_coords.size == 0:
-                    logger.debug(
-                        f"Skipping annotation {element.id} due to missing/empty rendered coordinates."
-                    )
-                    continue
-
-                svg_shapes = draw_func(element, rendered_coords)
-                if svg_shapes:
-                    root_group.append(svg_shapes)
-
-            except Exception as e:
-                logger.error(
-                    f"Error processing or drawing annotation {element.id}: {e}",
-                    exc_info=True,
+            # Removed the broad try...except block here
+            # Errors during annotation processing should propagate
+            rendered_coords = self.scene.get_rendered_coordinates_for_annotation(
+                element
+            )
+            if rendered_coords is None or rendered_coords.size == 0:
+                logger.debug(
+                    f"Skipping annotation {element.id} due to missing/empty rendered coordinates."
                 )
                 continue
+
+            svg_shapes = draw_func(element, rendered_coords)
+            if svg_shapes:
+                root_group.append(svg_shapes)
 
         return drawing
 

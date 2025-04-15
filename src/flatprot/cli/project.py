@@ -181,10 +181,16 @@ def project_structure_svg(
             scene, canvas_width, canvas_height, background_color=None
         )
 
-        if output is not None:
-            renderer.save_svg(output)
-        else:
-            print(renderer.get_svg_string())
+        # Wrap rendering/saving in try...except
+        try:
+            if output is not None:
+                renderer.save_svg(output)
+            else:
+                print(renderer.get_svg_string())
+        except Exception as render_error:
+            logger.error(f"Error during SVG rendering/saving: {render_error}")
+            logger.exception(render_error)
+            raise FlatProtError(f"Rendering failed: {render_error}") from render_error
 
         # Print success message using the success method (which uses INFO level)
         print_success_summary(structure, output, matrix, style, annotations, dssp)
