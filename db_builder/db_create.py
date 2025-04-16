@@ -41,9 +41,6 @@ from flatprot.transformation.inertia_transformation import (
 )
 from flatprot.alignment.db import AlignmentDBEntry, AlignmentDatabase
 from flatprot.core.types import ResidueType
-from flatprot.transformation.inertia_transformation import (
-    InertiaTransformationParameters,
-)
 
 # Configure logging
 logging.basicConfig(
@@ -65,10 +62,6 @@ def calculate_inertia_matrix_from_pdb(pdb_file: Path) -> Optional[Transformation
         Optional[TransformationMatrix]: The inertia transformation matrix or None if calculation fails
     """
     try:
-        # Get default residue weights
-        default_params = InertiaTransformationParameters.default()
-        residue_weights = default_params.residue_weights
-
         # Read the structure with gemmi
         structure_gemmi = gemmi.read_structure(str(pdb_file))
 
@@ -98,10 +91,6 @@ def calculate_inertia_matrix_from_pdb(pdb_file: Path) -> Optional[Transformation
 
         # Generate weights array based on residue types
         weights = np.ones(len(ca_coords))  # Default weight is 1.0
-
-        for i, res_type in enumerate(residue_types):
-            if res_type is not None and res_type in residue_weights:
-                weights[i] = residue_weights[res_type]
 
         # Calculate inertia transformation with weights
         transformation = calculate_inertia_transformation_matrix(
