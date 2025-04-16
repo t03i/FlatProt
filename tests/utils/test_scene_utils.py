@@ -16,6 +16,7 @@ from flatprot.core import (
     ResidueRange,
     ResidueRangeSet,
     SecondaryStructureType,
+    CoordinateCalculationError,
 )
 from flatprot.scene import (
     Scene,
@@ -23,7 +24,6 @@ from flatprot.scene import (
     HelixSceneElement,
     SheetSceneElement,
     BaseAnnotationElement,
-    CoordinateCalculationError,
     SceneCreationError,
 )
 

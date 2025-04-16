@@ -29,13 +29,33 @@ def _convex_hull(points):
 
     lower = []
     for p in points:
-        while len(lower) >= 2 and np.cross(lower[-1] - lower[-2], p - lower[-1]) <= 0:
+        # Use cross product to check orientation
+        # while len(lower) >= 2 and np.cross(lower[-1] - lower[-2], p - lower[-1]) <= 0:
+        # Use explicit 2D cross product calculation to avoid deprecation warning
+        while (
+            len(lower) >= 2
+            and (
+                (lower[-1][0] - lower[-2][0]) * (p[1] - lower[-1][1])
+                - (lower[-1][1] - lower[-2][1]) * (p[0] - lower[-1][0])
+            )
+            <= 0
+        ):
             lower.pop()
         lower.append(p)
 
     upper = []
+    # Iterate in reverse for the upper hull
     for p in points[::-1]:
-        while len(upper) >= 2 and np.cross(upper[-1] - upper[-2], p - upper[-1]) <= 0:
+        # while len(upper) >= 2 and np.cross(upper[-1] - upper[-2], p - upper[-1]) <= 0:
+        # Use explicit 2D cross product calculation
+        while (
+            len(upper) >= 2
+            and (
+                (upper[-1][0] - upper[-2][0]) * (p[1] - upper[-1][1])
+                - (upper[-1][1] - upper[-2][1]) * (p[0] - upper[-1][0])
+            )
+            <= 0
+        ):
             upper.pop()
         upper.append(p)
 

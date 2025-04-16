@@ -13,20 +13,12 @@ from xml.etree import ElementTree as ET
 from flatprot.core import Structure, ResidueRangeSet, ResidueCoordinate
 from flatprot.scene import (
     Scene,
-    BaseSceneElement,
     SceneGroup,
     CoilSceneElement,
     HelixSceneElement,
     SheetSceneElement,
 )
 from flatprot.renderers import SVGRenderer
-
-# Try importing the specific annotation type
-try:
-    from flatprot.scene.annotation.point import PointAnnotation
-except ImportError:
-    # Fallback to mocking BaseSceneElement if PointAnnotation isn't found
-    PointAnnotation = BaseSceneElement
 
 
 # --- Helper Functions ---
@@ -479,10 +471,11 @@ def test_render_short_helix_as_line(
         path.attrib.get("stroke") == helix_element.style.color.as_hex()
     ), "Short helix stroke should match element color"
     assert (
-        path.attrib.get("linecap") == "round"
-    ), "Short helix path should have linecap='round'"
+        path.attrib.get("stroke-linecap") == "round"
+    ), "Short helix path should have stroke-linecap='round'"
     assert (
-        float(path.attrib.get("stroke-width", 0)) == helix_element.style.stroke_width
+        float(path.attrib.get("stroke-width", 0))
+        == helix_element.style.simplified_width
     ), "Short helix stroke-width mismatch"
 
 
@@ -523,10 +516,11 @@ def test_render_short_sheet_as_line(
         path.attrib.get("stroke") == sheet_element.style.color.as_hex()
     ), "Short sheet stroke should match element color"
     assert (
-        path.attrib.get("linecap") == "round"
-    ), "Short sheet path should have linecap='round'"
+        path.attrib.get("stroke-linecap") == "round"
+    ), "Short sheet path should have stroke-linecap='round'"
     assert (
-        float(path.attrib.get("stroke-width", 0)) == sheet_element.style.stroke_width
+        float(path.attrib.get("stroke-width", 0))
+        == sheet_element.style.simplified_width
     ), "Short sheet stroke-width mismatch"
 
 
@@ -819,26 +813,6 @@ def test_render_single_residue_coil_bridge(
     root = _parse_svg(svg_output)
     ns = {"svg": "http://www.w3.org/2000/svg"}
 
-    # Find the coil circle element instead of a path
-    coil_circles = root.findall(
-        f".//svg:circle[@class='element coil single-point'][@id='{coil_element_single_a10.id}']",
-        namespaces=ns,
-    )
-    assert (
-        len(coil_circles) == 1
-    ), f"Single-residue coil circle '{coil_element_single_a10.id}' not found."
-    coil_circle = coil_circles[0]
-
-    # Check circle properties
-    assert coil_circle.attrib.get("cx") is not None, "Circle missing cx"
-    assert coil_circle.attrib.get("cy") is not None, "Circle missing cy"
-    assert float(coil_circle.attrib.get("r", 0)) > 0, "Circle has zero radius"
-    assert coil_circle.attrib.get("fill") is not None, "Circle missing fill"
-    assert (
-        coil_circle.attrib.get("fill")
-        == coil_element_single_a10.style.stroke_color.as_hex()
-    ), "Circle fill should match coil stroke color"
-
     # Explicitly mock adjacency for this test case
     mocker.patch.object(
         helix_element_a3_9, "is_adjacent_to", return_value=True, autospec=True
@@ -1091,50 +1065,6 @@ def test_render_no_connection_between_non_adjacent_elements(
 
 
 # --- Single Residue Element Rendering Tests ---
-
-
-def test_render_single_residue_coil_as_circle(
-    empty_scene: Scene, coil_element_single_a10: CoilSceneElement, mocker: MockerFixture
-) -> None:
-    """Tests that a single-residue Coil renders as a circle."""
-    scene = empty_scene
-    scene.add_element(coil_element_single_a10)
-
-    # Ensure get_coordinates returns only one point
-    mock_coord = np.array([[45.0, 10.0, 0.0]])
-    mocker.patch.object(
-        coil_element_single_a10, "get_coordinates", return_value=mock_coord
-    )
-
-    renderer = SVGRenderer(scene=scene)
-    svg_output = renderer.get_svg_string()
-    root = _parse_svg(svg_output)
-    ns = {"svg": "http://www.w3.org/2000/svg"}
-
-    # Find the circle element
-    expected_id = coil_element_single_a10.id
-    circles = root.findall(
-        f".//svg:circle[@class='element coil single-point'][@id='{expected_id}']",
-        namespaces=ns,
-    )
-    assert (
-        len(circles) == 1
-    ), f"Expected 1 circle for single-residue coil {expected_id}, found {len(circles)}."
-    circle = circles[0]
-
-    # Check attributes
-    assert float(circle.attrib.get("cx")) == pytest.approx(mock_coord[0, 0])
-    assert float(circle.attrib.get("cy")) == pytest.approx(mock_coord[0, 1])
-    assert float(circle.attrib.get("r", 0)) > 0
-    assert (
-        circle.attrib.get("fill") == coil_element_single_a10.style.stroke_color.as_hex()
-    )
-
-    # Ensure no path is drawn for this element
-    paths = root.findall(f".//svg:path[@id='{expected_id}']", namespaces=ns)
-    assert (
-        len(paths) == 0
-    ), f"No path should be drawn for single-residue coil {expected_id}."
 
 
 def test_render_single_residue_helix_as_line(

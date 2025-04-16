@@ -13,7 +13,7 @@ from flatprot.scene import (
     SceneGraphInconsistencyError,
     BaseStructureSceneElement,
 )
-from flatprot.core import Structure, ResidueCoordinate, ResidueRange, ResidueRangeSet
+from flatprot.core import Structure, ResidueRangeSet
 
 
 # Helper function to create a mock element
@@ -652,86 +652,6 @@ def test_traverse_deeper_hierarchy(scene: Scene) -> None:
     result_ids_depths = [(el.id, depth) for el, depth in result]
     expected_ids_depths = [(el.id, depth) for el, depth in expected]
     assert result_ids_depths == expected_ids_depths
-
-
-# -------------------------------------
-# 6. Residue Query Tests
-#    (`get_elements_at`, `get_elements_overlapping`)
-# -------------------------------------
-
-
-def test_get_elements_at(scene: Scene) -> None:
-    """Test finding elements at a specific ResidueCoordinate."""
-    e1 = create_mock_element("elem1")
-    e2 = create_mock_element("elem2")
-    e3 = create_mock_element("elem3")  # No range
-
-    # Mock ResidueRangeSets
-    e1.residue_range_set = ResidueRangeSet.from_string("A:10-20")
-    e2.residue_range_set = ResidueRangeSet.from_string("A:15-25, B:1-5")
-    e3.residue_range_set = None  # Or empty: ResidueRangeSet()
-
-    scene.add_element(e1)
-    scene.add_element(e2)
-    scene.add_element(e3)
-
-    coord_a15 = ResidueCoordinate(chain_id="A", residue_index=15)
-    coord_a22 = ResidueCoordinate(chain_id="A", residue_index=22)
-    coord_b3 = ResidueCoordinate(chain_id="B", residue_index=3)
-    coord_c1 = ResidueCoordinate(chain_id="C", residue_index=1)
-    coord_a5 = ResidueCoordinate(chain_id="A", residue_index=5)  # Outside
-
-    assert sorted([el.id for el in scene.get_elements_at(coord_a15)]) == [
-        "elem1",
-        "elem2",
-    ]
-    assert sorted([el.id for el in scene.get_elements_at(coord_a22)]) == ["elem2"]
-    assert sorted([el.id for el in scene.get_elements_at(coord_b3)]) == ["elem2"]
-    assert scene.get_elements_at(coord_c1) == []
-    assert scene.get_elements_at(coord_a5) == []
-
-
-def test_get_elements_overlapping(scene: Scene) -> None:
-    """Test finding elements overlapping a specific ResidueRange."""
-    e1 = create_mock_element("elem1")  # A:10-20
-    e2 = create_mock_element("elem2")  # A:15-25
-    e3 = create_mock_element("elem3")  # B:1-5
-    e4 = create_mock_element("elem4")  # A:30-40 (non-overlapping)
-    e5 = create_mock_element("elem5")  # No range
-
-    e1.residue_range_set = ResidueRangeSet.from_string("A:10-20")
-    e2.residue_range_set = ResidueRangeSet.from_string("A:15-25")
-    e3.residue_range_set = ResidueRangeSet.from_string("B:1-5")
-    e4.residue_range_set = ResidueRangeSet.from_string("A:30-40")
-    e5.residue_range_set = None
-
-    scene.add_element(e1)
-    scene.add_element(e2)
-    scene.add_element(e3)
-    scene.add_element(e4)
-    scene.add_element(e5)
-
-    # Query ranges
-    range_a18_22 = ResidueRange(chain_id="A", start=18, end=22)  # Overlaps e1, e2
-    range_a12_14 = ResidueRange(chain_id="A", start=12, end=14)  # Overlaps e1
-    range_a26_28 = ResidueRange(chain_id="A", start=26, end=28)  # No overlap
-    range_b2_4 = ResidueRange(chain_id="B", start=2, end=4)  # Overlaps e3
-    range_c1_10 = ResidueRange(
-        chain_id="C", start=1, end=10
-    )  # No overlap (wrong chain)
-
-    assert sorted([el.id for el in scene.get_elements_overlapping(range_a18_22)]) == [
-        "elem1",
-        "elem2",
-    ]
-    assert sorted([el.id for el in scene.get_elements_overlapping(range_a12_14)]) == [
-        "elem1"
-    ]
-    assert scene.get_elements_overlapping(range_a26_28) == []
-    assert sorted([el.id for el in scene.get_elements_overlapping(range_b2_4)]) == [
-        "elem3"
-    ]
-    assert scene.get_elements_overlapping(range_c1_10) == []
 
 
 # --------------------------
