@@ -51,14 +51,14 @@ class CoilStyle(BaseStructureStyle):
 
     # Override inherited defaults
     color: Color = Field(
-        default=Color((0.8, 0.8, 0.8)),
+        default=Color("#5b5859"),
         description="Default color for coil (light grey).",
     )
-    stroke_width: float = Field(default=2.0, description="Line width for coil.")
+    stroke_width: float = Field(default=1.0, description="Line width for coil.")
 
     # Coil-specific attribute
     smoothing_factor: float = Field(
-        default=0.2,
+        default=0.1,
         ge=0.0,
         le=1.0,
         description="Fraction of points to keep during smoothing (0.0 to 1.0)."
@@ -140,19 +140,21 @@ class CoilSceneElement(BaseStructureSceneElement[CoilStyle]):
 
         # 1. Get the original (pre-projected) coordinates slice for this element
         original_coords = self._get_original_coords_slice(structure)
-        if original_coords is None or len(original_coords) < 2:
-            self._cached_smoothed_coords = (
-                None  # Ensure cache reflects inability to calculate
-            )
+        if original_coords is None:
+            self._cached_smoothed_coords = None
             self._original_indices = None
-            self._original_coords_len = (
-                0 if original_coords is None else len(original_coords)
-            )
-            return None  # Cannot smooth less than 2 points
+            self._original_coords_len = 0
+            return None
 
         self._original_coords_len = len(original_coords)
 
-        # 2. Apply smoothing based on style
+        # Handle single-point coils separately
+        if self._original_coords_len == 1:
+            self._cached_smoothed_coords = original_coords
+            self._original_indices = np.array([0])  # Index of the single point
+            return self._cached_smoothed_coords
+
+        # 2. Apply smoothing based on style (only if >= 2 points)
         smoothing_factor = self.style.smoothing_factor
         smoothed_coords, used_indices = smooth_coordinates(
             original_coords, smoothing_factor
@@ -187,11 +189,7 @@ class CoilSceneElement(BaseStructureSceneElement[CoilStyle]):
         # 1. Ensure smoothed coordinates are calculated and cached
         # This call populates self._cached_smoothed_coords, self._original_coords_len, etc.
         smoothed_coords = self.get_coordinates(structure)
-        if (
-            smoothed_coords is None
-            or self._original_coords_len is None
-            or self._original_coords_len < 2
-        ):
+        if smoothed_coords is None or self._original_coords_len is None:
             return None  # Cannot determine coordinate if smoothing failed
 
         # 2. Check if residue is within the element's range

@@ -255,7 +255,7 @@ def test_sheet_coordinate_generation(scene_with_mock_structure: Scene):
     ), f"Dot product should be close to 0, but was {dot_product}"
 
     # 4. Verify Base Width (optional but good)
-    expected_base_width = sheet.style.stroke_width * sheet.style.arrow_width_factor
+    expected_base_width = sheet.style.stroke_width * sheet.style.arrow_width
     actual_base_width = np.linalg.norm(base_vector_xy)
     assert np.isclose(actual_base_width, expected_base_width)
 

@@ -4,6 +4,7 @@
 from typing import Optional, List, Tuple
 
 from pydantic import Field
+from pydantic_extra_types.color import Color
 
 from flatprot.core import ResidueCoordinate
 
@@ -23,8 +24,16 @@ class LineAnnotationStyle(BaseAnnotationStyle):
         default=1.0, ge=0, description="Width of the annotation line."
     )
     line_style: Tuple[float, ...] = Field(
-        default=(),
+        default=(5, 5),
         description="Dash pattern for the line (e.g., (5, 5) for dashed). Empty tuple means solid.",
+    )
+    connector_color: Color = Field(
+        default=Color("#000000"),
+        description="Color of the connector circles at the start and end of the line.",
+    )
+    line_color: Color = Field(
+        default=Color("#000000"),
+        description="Color of the line.",
     )
     arrowhead_start: bool = Field(
         default=False,

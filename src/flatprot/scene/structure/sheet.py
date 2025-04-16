@@ -25,15 +25,18 @@ class SheetStyle(BaseStructureStyle):
 
     # Override inherited defaults
     color: Color = Field(
-        default=Color((0.0, 0.0, 1.0)), description="Default color for sheet (blue)."
+        default=Color("#0000ff"), description="Default color for sheet (blue)."
     )
     stroke_width: float = Field(
-        default=3.0, description="Base width of the sheet arrow."
+        default=1.0, description="Base width of the sheet arrow."
     )
-
+    simplified_width: float = Field(
+        default=2,
+        description="Width to use for simplified sheet rendering (line only).",
+    )
     # Sheet-specific attributes
-    arrow_width_factor: float = Field(
-        default=1.5,
+    arrow_width: float = Field(
+        default=8.0,
         description="Factor to multiply linewidth by for the arrowhead base width.",
     )
     min_sheet_length: int = Field(
@@ -152,9 +155,7 @@ class SheetSceneElement(BaseStructureSceneElement[SheetStyle]):
 
         # Calculate perpendicular vector in 2D
         perp = np.array([-direction[1], direction[0]])
-        arrow_base_half_width = (
-            self.style.stroke_width * self.style.arrow_width_factor
-        ) / 2.0
+        arrow_base_half_width = self.style.arrow_width / 2.0
 
         # Calculate arrow base points (X, Y)
         left_point_xy = start_point_xy + perp * arrow_base_half_width

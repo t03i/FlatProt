@@ -97,23 +97,26 @@ class HelixStyle(BaseStructureStyle):
 
     # Override inherited defaults
     color: Color = Field(
-        default=Color((1.0, 0.0, 0.0)), description="Default color for helix (red)."
+        default=Color("#ff0000"), description="Default color for helix (red)."
     )
     stroke_width: float = Field(
-        default=3.0, description="Reference width for calculating helix dimensions."
+        default=1, description="Reference width for calculating helix dimensions."
     )
-
+    simplified_width: float = Field(
+        default=2,
+        description="Width to use for simplified helix rendering (line only).",
+    )
     # Helix-specific attributes
-    ribbon_thickness_factor: float = Field(
-        default=0.8,
+    ribbon_thickness: float = Field(
+        default=8,
         description="Factor to multiply linewidth by for the ribbon thickness.",
     )
     wavelength: float = Field(
-        default=3.0,
+        default=10.0,
         description="Factor to multiply linewidth by for the zigzag wavelength.",
     )
     amplitude: float = Field(
-        default=1.0,
+        default=3.0,
         description="Factor to multiply linewidth by for the zigzag amplitude.",
     )
     min_helix_length: int = Field(
@@ -222,9 +225,9 @@ class HelixSceneElement(BaseStructureSceneElement[HelixStyle]):
         zigzag_coords = calculate_zigzag_points(
             start_point_3d,
             end_point_3d,
-            self.style.stroke_width * self.style.ribbon_thickness_factor,
-            self.style.stroke_width * self.style.wavelength,
-            self.style.stroke_width * self.style.amplitude,
+            self.style.ribbon_thickness,
+            self.style.wavelength,
+            self.style.amplitude,
         )
 
         if (

@@ -106,8 +106,13 @@ def _draw_line_annotation(
         sy=start_y,
         ex=end_x,
         ey=end_y,
-        stroke=style.color.as_hex(),
-        stroke_width=1,  # Example, make configurable?
+        stroke_linecap="round",
+        stroke_linejoin="round",
+        stroke_dasharray=",".join(str(x) for x in style.line_style)
+        if style.line_style and len(style.line_style) > 0
+        else None,
+        stroke=style.line_color.as_hex(),
+        stroke_width=style.stroke_width,
         opacity=style.opacity,
         class_="annotation line",
         id=f"{annotation.id}-line",

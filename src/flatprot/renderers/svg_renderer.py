@@ -264,7 +264,7 @@ class SVGRenderer:
 
     def render(self) -> Drawing:
         """Renders the scene to a drawsvg.Drawing object."""
-        drawing = Drawing(self.width, self.height, origin="center")
+        drawing = Drawing(self.width, self.height)
         svg_group_map: Dict[str, Group] = {}
         connection_line_group = Group(id="flatprot-connections", class_="connections")
 
@@ -272,8 +272,8 @@ class SVGRenderer:
         if self.background_color:
             drawing.append(
                 Rectangle(
-                    -self.width / 2,
-                    -self.height / 2,
+                    0,
+                    0,
                     self.width,
                     self.height,
                     fill=self.background_color,

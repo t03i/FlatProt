@@ -163,7 +163,7 @@ class TestStyleParsing:
         assert sheet_style.stroke_color.as_hex() == Color("#000000").as_hex()  # 'black'
         assert sheet_style.stroke_width == 2.5
         assert sheet_style.min_sheet_length == 3
-        assert sheet_style.arrow_width_factor == 1.2
+        assert sheet_style.arrow_width == 1.2
 
     def test_parse_partial_styles(self, partial_style_file: Path) -> None:
         """Test parsing a file with only a subset of known sections."""

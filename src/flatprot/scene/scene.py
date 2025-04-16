@@ -382,8 +382,12 @@ class Scene:
             A list of matching SceneElements.
         """
         matching_elements: List[BaseSceneElement] = []
-        for element, _ in self.traverse():  # Depth doesn't matter here
-            if element.residue_range_set and coord in element.residue_range_set:
+        for element, _ in self.traverse():
+            if (
+                isinstance(element, BaseStructureSceneElement)
+                and element.residue_range_set
+                and coord in element.residue_range_set
+            ):
                 matching_elements.append(element)
         return matching_elements
 

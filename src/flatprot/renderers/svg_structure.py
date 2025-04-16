@@ -26,19 +26,10 @@ def _draw_coil(
         logger.warning(f"Skipping Coil {element.id}: No coordinates.")
         return None
     elif len(coords_2d) == 1:
-        logger.debug(f"Drawing Coil {element.id} as a circle: Single coordinate.")
-        point = coords_2d[0]
-        radius = max(0.5, style.stroke_width / 2.0)
-        return Circle(
-            cx=point[0],
-            cy=point[1],
-            r=radius,
-            fill=style.stroke_color.as_hex(),  # Use stroke color for fill
-            fill_opacity=style.opacity,
-            class_="element coil single-point",
-            id=element.id,
+        logger.debug(
+            f"Skipping 1 residue Coil {element.id}. Rendered through connections"
         )
-
+        return None
     # Build the path string directly from coordinates
     d_parts = [f"M {coords_2d[0, 0]},{coords_2d[0, 1]}"]
     for point in coords_2d[1:]:
@@ -49,13 +40,14 @@ def _draw_coil(
     # Create Path object
     path = Path(
         d=d_string,
-        stroke=style.stroke_color.as_hex(),
+        stroke=style.color.as_hex(),
         stroke_width=style.stroke_width,
         fill="none",
+        stroke_linecap="round",
+        stroke_linejoin="round",
         stroke_opacity=style.opacity,
         class_="element coil",
         id=element.id,
-        linecap="round",
     )
     return path
 
@@ -72,6 +64,8 @@ def _draw_helix(element: HelixSceneElement, coords_2d: np.ndarray) -> Optional[P
     kwargs = {
         "stroke_width": style.stroke_width,
         "stroke_opacity": style.opacity,
+        "stroke_linecap": "round",
+        "stroke_linejoin": "round",
         "class_": "element helix",
         "id": element.id,
     }
@@ -84,7 +78,8 @@ def _draw_helix(element: HelixSceneElement, coords_2d: np.ndarray) -> Optional[P
         # Line style
         kwargs["fill"] = "none"
         kwargs["stroke"] = style.color.as_hex()
-        kwargs["linecap"] = "round"
+        kwargs["stroke_width"] = style.simplified_width
+        kwargs["stroke_opacity"] = style.opacity
         d_string = f"M {coords_2d[0, 0]},{coords_2d[0, 1]} L {coords_2d[1, 0]},{coords_2d[1, 1]}"
     else:  # len(coords_2d) >= 3
         # Filled polygon style
@@ -112,6 +107,8 @@ def _draw_sheet(element: SheetSceneElement, coords_2d: np.ndarray) -> Optional[P
     kwargs = {
         "stroke_width": style.stroke_width,
         "stroke_opacity": style.opacity,
+        "stroke_linecap": "round",
+        "stroke_linejoin": "round",
         "class_": "element sheet",
         "id": element.id,
     }
@@ -123,7 +120,8 @@ def _draw_sheet(element: SheetSceneElement, coords_2d: np.ndarray) -> Optional[P
         )
         kwargs["fill"] = "none"
         kwargs["stroke"] = style.color.as_hex()
-        kwargs["linecap"] = "round"
+        kwargs["stroke_width"] = style.simplified_width
+        kwargs["stroke_opacity"] = style.opacity
         d_string = f"M {coords_2d[0, 0]},{coords_2d[0, 1]} L {coords_2d[1, 0]},{coords_2d[1, 1]}"
     else:  # len(coords_2d) >= 3
         kwargs["fill"] = style.color.as_hex()
@@ -178,8 +176,8 @@ def _calculate_helix_connection_points(
     mid_idx = len(coords_2d) // 2
     if len(coords_2d) % 2 == 0:  # Even number of points
         end_conn = (coords_2d[mid_idx - 1, :2] + coords_2d[mid_idx, :2]) / 2
-    else:  # Odd number of points
-        end_conn = (coords_2d[mid_idx - 1, :2] + coords_2d[mid_idx, :2]) / 2
+    else:
+        raise ValueError(f"Odd number of points for SVG helix {len(coords_2d)}")
 
     return start_conn, end_conn
 
@@ -198,10 +196,7 @@ def _calculate_sheet_connection_points(
 
     # Start connection: midpoint of the first edge (vertices 0 and 1)
     start_conn = (coords_2d[0, :2] + coords_2d[1, :2]) / 2
-
-    # End connection: midpoint of the last edge (vertices -2 and -1)
-    # This assumes the polygon vertices close the shape reasonably for an arrow
-    end_conn = (coords_2d[-2, :2] + coords_2d[-1, :2]) / 2
+    end_conn = coords_2d[-1, :2]
     return start_conn, end_conn
 
 
@@ -227,10 +222,11 @@ def _draw_connection(
         # Use the class attribute directly
         default_coil_style = CoilStyle()
         style = {
-            "stroke": default_coil_style.stroke_color.as_hex(),
             "stroke_width": default_coil_style.stroke_width,
             "stroke_opacity": default_coil_style.opacity,
-            "linecap": "round",
+            "stroke_linecap": "round",
+            "stroke_linejoin": "round",
+            "stroke": default_coil_style.color.as_hex(),
         }
 
     # Create a Line object, not a Path

@@ -34,15 +34,17 @@ class AreaAnnotationStyle(BaseAnnotationStyle):
         description="Dash pattern for the outline (e.g., (5, 5) for dashed). Empty tuple means solid.",
     )
     padding: float = Field(
-        default=5.0, ge=0, description="Padding pixels added outside the convex hull."
+        default=200000.0,
+        ge=0,
+        description="Padding pixels added outside the convex hull.",
     )
     interpolation_points: int = Field(
-        default=50,
+        default=3,
         ge=3,
         description="Number of points to generate along the hull outline before smoothing.",
     )
     smoothing_window: int = Field(
-        default=5,
+        default=1,
         ge=1,
         description="Window size for rolling average smoothing (odd number recommended).",
     )
@@ -95,152 +97,78 @@ class AreaAnnotation(BaseAnnotationElement[AreaAnnotationStyle]):
         return AreaAnnotationStyle()
 
     def get_coordinates(self, structure: Structure) -> Optional[np.ndarray]:
-        """Calculate the smoothed outline coordinates for the area annotation.
-
-        Determines the target residues, fetches their pre-projected 2D+Depth
-        coordinates, calculates a smoothed convex hull around the 2D points,
-        and returns the outline coordinates with an averaged depth.
+        """Calculate the padded convex hull outline coordinates for the area annotation.
 
         Args:
             structure: The core Structure object containing pre-projected data.
 
         Returns:
             A NumPy array of 2D + Depth coordinates (shape [N, 3]) representing
-            the smoothed outline of the area (X, Y, AvgDepth), or None if
+            the padded convex hull outline of the area (X, Y, AvgDepth), or None if
             insufficient points are found.
         """
+        print(f"Calculating padded convex hull outline for area annotation '{self.id}'")
         if self._cached_outline_coords is not None:
             return self._cached_outline_coords
 
-        target_coords_3d = []
-        struct_id = getattr(structure, "id", "N/A")
-
         # 1. Collect all target 2D+Depth coordinates
-        target_residues: List[ResidueCoordinate] = []
-        if self.targets_specific_coordinates:
-            target_residues = self._target_coordinates
-        else:  # Use residue_range_set
-            if self.residue_range_set:
-                # Iterate through all individual coordinates defined by the set
-                target_residues = list(
-                    self.residue_range_set
-                )  # __iter__ yields ResidueCoordinate
-
-        if not target_residues:
-            raise CoordinateCalculationError(
-                f"No target residues found for AreaAnnotation '{self.id}'."
-            )
-
-        # Fetch coordinates for all target residues
-        try:
-            for res_coord in target_residues:
-                chain = structure[res_coord.chain_id]
-                if res_coord.residue_index in chain:
-                    coord_index = chain.coordinate_index(res_coord.residue_index)
-                    if 0 <= coord_index < len(structure.coordinates):
-                        target_coords_3d.append(structure.coordinates[coord_index])
-                    else:
-                        raise CoordinateCalculationError(
-                            f"Coordinate index {coord_index} out of bounds for {res_coord} in structure '{struct_id}' (AreaAnnotation '{self.id}'). Skipping point."
-                        )
-                # else: # Silently skip residues not found in chain map
-        except (KeyError, IndexError, AttributeError) as e:
-            raise CoordinateCalculationError(
-                f"Error retrieving coordinates for AreaAnnotation '{self.id}' in structure '{struct_id}': {e}"
-            ) from e
-            # Continue if possible, maybe some points were gathered
-
+        target_coords_3d = self._get_target_coordinates(structure)
         if len(target_coords_3d) < 3:
             raise CoordinateCalculationError(
                 f"Need at least 3 valid points to calculate area for annotation '{self.id}', found {len(target_coords_3d)}."
             )
 
-        target_coords_3d = np.array(target_coords_3d)
         target_coords_2d = target_coords_3d[:, :2]  # Use only XY for shape calculation
         avg_depth = float(np.mean(target_coords_3d[:, 2]))  # Calculate average depth
 
-        # 2. Find the convex hull of the 2D points
-        # Using simple angle-sort hull algorithm (might replace with scipy.spatial.ConvexHull if available/needed)
-        centroid = np.mean(target_coords_2d, axis=0)
-        angles = np.arctan2(
-            target_coords_2d[:, 1] - centroid[1], target_coords_2d[:, 0] - centroid[0]
-        )
-        # Need to handle potential duplicate points which could break hull logic
-        unique_points, unique_indices = np.unique(
-            target_coords_2d, axis=0, return_index=True
-        )
-        unique_angles = angles[unique_indices]
-        hull_indices = unique_indices[np.argsort(unique_angles)]
-        hull_points_2d = target_coords_2d[hull_indices]
+        # 2. Compute the convex hull using Andrew's monotone chain algorithm
+        def convex_hull(points):
+            """Compute the convex hull of a set of 2D points using Andrew's monotone chain algorithm."""
+            points = np.array(sorted(points, key=lambda p: (p[0], p[1])))
+            if len(points) <= 3:
+                return points
+            lower = []
+            for p in points:
+                while (
+                    len(lower) >= 2
+                    and np.cross(lower[-1] - lower[-2], p - lower[-2]) <= 0
+                ):
+                    lower.pop()
+                lower.append(p)
+            upper = []
+            for p in reversed(points):
+                while (
+                    len(upper) >= 2
+                    and np.cross(upper[-1] - upper[-2], p - upper[-2]) <= 0
+                ):
+                    upper.pop()
+                upper.append(p)
+            return np.array(lower[:-1] + upper[:-1])
 
-        # Ensure the hull is closed
-        if not np.allclose(hull_points_2d[0], hull_points_2d[-1]):
-            hull_points_2d = np.vstack([hull_points_2d, hull_points_2d[0]])
+        hull_points_2d = convex_hull(target_coords_2d)
 
-        # 3. Add padding by expanding points outward from centroid
+        # 3. Apply padding by offsetting the vertices of the convex hull
         padding = self.style.padding
         if padding > 0:
-            hull_vectors = hull_points_2d - centroid
-            norms = np.linalg.norm(hull_vectors, axis=1)
-            # Avoid division by zero for points at the centroid (though unlikely for hull)
-            norms[norms < 1e-9] = 1.0
-            normalized_vectors = hull_vectors / norms[:, np.newaxis]
-            hull_points_2d = hull_points_2d + normalized_vectors * padding
+            # Calculate the centroid of the convex hull
+            centroid = np.mean(hull_points_2d, axis=0)
 
-        # 4. Generate more points through linear interpolation along the hull edges
-        num_segments = len(hull_points_2d) - 1
-        if num_segments == 0:  # Should not happen if len >= 3 and hull closed
-            raise CoordinateCalculationError(
-                f"Hull calculation resulted in zero segments for AreaAnnotation '{self.id}'."
+            # Offset each vertex outward from the centroid by the padding distance
+            offset_vectors = hull_points_2d - centroid
+            offset_vectors = offset_vectors / np.linalg.norm(
+                offset_vectors, axis=1, keepdims=True
             )
+            padded_points_2d = hull_points_2d + offset_vectors * padding
 
-        points_per_segment = max(1, self.style.interpolation_points // num_segments)
-        interpolated_points_list = []
-        for i in range(num_segments):
-            start_pt = hull_points_2d[i]
-            end_pt = hull_points_2d[i + 1]
-            # Exclude endpoint (t=1) except for the very last segment to avoid duplication
-            num_interp = (
-                points_per_segment if i < num_segments - 1 else points_per_segment + 1
-            )
-            t = np.linspace(0, 1, num_interp, endpoint=(i == num_segments - 1))[
-                :, np.newaxis
-            ]
-            segment = (1 - t) * start_pt + t * end_pt
-            interpolated_points_list.append(segment)
-
-        interp_points_2d = np.vstack(interpolated_points_list)
-
-        # 5. Apply rolling average to smooth the curve (if enough points and window > 1)
-        window_size = self.style.smoothing_window
-        if len(interp_points_2d) > window_size and window_size > 1:
-            # Ensure odd window size for centered average
-            if window_size % 2 == 0:
-                window_size += 1
-            half_window = window_size // 2
-            kernel = np.ones(window_size) / window_size
-
-            # Pad the points array for periodic boundary conditions (closed loop)
-            padded_points = np.vstack(
-                [
-                    interp_points_2d[-half_window:],
-                    interp_points_2d,
-                    interp_points_2d[:half_window],
-                ]
-            )
-
-            # Apply convolution separately for x and y coordinates
-            smoothed_x = np.convolve(padded_points[:, 0], kernel, mode="valid")
-            smoothed_y = np.convolve(padded_points[:, 1], kernel, mode="valid")
-            smoothed_outline_2d = np.column_stack([smoothed_x, smoothed_y])
+            # Recompute the convex hull of the padded points
+            padded_points_2d = convex_hull(padded_points_2d)
         else:
-            # Not enough points or no smoothing requested
-            smoothed_outline_2d = interp_points_2d
+            padded_points_2d = hull_points_2d
 
-        # 6. Combine smoothed XY with the calculated average depth
-        num_outline_points = len(smoothed_outline_2d)
+        # 4. Combine XY with the calculated average depth
+        num_outline_points = len(padded_points_2d)
         depth_column = np.full((num_outline_points, 1), avg_depth)
-        outline_coords_3d = np.hstack((smoothed_outline_2d, depth_column))
+        outline_coords_3d = np.hstack((padded_points_2d, depth_column))
 
         self._cached_outline_coords = outline_coords_3d
         return self._cached_outline_coords
