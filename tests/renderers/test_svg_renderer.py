@@ -568,8 +568,7 @@ def test_render_helix_with_custom_style(
 
     assert float(path.attrib.get("stroke-width")) == pytest.approx(custom_stroke_width)
     # fill-opacity and stroke-opacity are derived from main opacity in _draw_helix
-    assert float(path.attrib.get("fill-opacity")) == pytest.approx(custom_opacity)
-    assert float(path.attrib.get("stroke-opacity")) == pytest.approx(custom_opacity)
+    assert float(path.attrib.get("opacity")) == pytest.approx(custom_opacity)
 
 
 def test_render_invisible_element(
