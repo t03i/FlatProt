@@ -431,9 +431,7 @@ rule create_alignment_foldseek_db:
 rule determine_valid_superfamilies:
     input:
         superfamilies = SUPERFAMILIES,
-        # Depend on the flag file produced by the checkpoint.
-        # This ensures the checkpoint has completed before this rule runs.
-        pdb_flag = checkpoints.download_all_pdbs.output.flag
+        pdb_flag = PDB_FLAG
     output:
         valid_list_file = VALID_SF_LIST
     params:
