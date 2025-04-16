@@ -431,8 +431,9 @@ rule create_alignment_foldseek_db:
 rule determine_valid_superfamilies:
     input:
         superfamilies = SUPERFAMILIES,
-        # Depend on the checkpoint itself. Snakemake knows this means waiting for it.
-        checkpoint_completion = checkpoints.download_all_pdbs
+        # Depend on the flag file produced by the checkpoint.
+        # This ensures the checkpoint has completed before this rule runs.
+        pdb_flag = checkpoints.download_all_pdbs.output.flag
     output:
         valid_list_file = VALID_SF_LIST
     params:
