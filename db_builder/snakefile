@@ -442,38 +442,38 @@ rule determine_valid_superfamilies:
     log:
         f"{LOG_DIR}/determine_valid_superfamilies.log"
     run:
-        try:
-            df = pl.read_csv(input.superfamilies, separator="\t")
-            initial_sf_ids = set(df["sf_id"].unique().to_list())
-            valid_sf_ids = set()
 
-            # Check status files for successful downloads
-            for sf_id in initial_sf_ids:
-                sf_df = df.filter(pl.col("sf_id") == sf_id)
-                for pdb_id in sf_df["pdb_id"].unique():
-                    status_file = f"{params.pdb_dir}/{pdb_id}.status"
-                    if os.path.exists(status_file):
-                        try:
-                            with open(status_file, 'r') as f:
-                                status_data = json.load(f)
-                            if status_data.get("success", False):
-                                valid_sf_ids.add(sf_id)
-                                break # Found one success for this sf_id
-                        except (json.JSONDecodeError, IOError) as e:
-                            shell(f"echo 'Warning: Could not read status for {pdb_id}: {e}' >> {log[0]}")
-                            continue
+        df = pl.read_csv(input.superfamilies, separator="\t")
+        initial_sf_ids = set(df["sf_id"].unique().to_list())
+        valid_sf_ids = set()
 
-            valid_list = sorted(list(valid_sf_ids))
+        # Check status files for successful downloads
+        for sf_id in initial_sf_ids:
+            sf_df = df.filter(pl.col("sf_id") == sf_id)
+            for pdb_id in sf_df["pdb_id"].unique():
+                status_file = f"{params.pdb_dir}/{pdb_id}.status"
+                if os.path.exists(status_file):
+                    try:
+                        with open(status_file, 'r') as f:
+                            status_data = json.load(f)
+                        if status_data.get("success", False):
+                            valid_sf_ids.add(sf_id)
+                            break # Found one success for this sf_id
+                    except (json.JSONDecodeError, IOError) as e:
+                        shell(f"echo 'Warning: Could not read status for {pdb_id}: {e}' >> {log[0]}")
+                        continue
 
-            # Apply test mode filtering if needed
-            if params.test_mode and len(valid_list) > params.num_families:
-                 random.seed(params.random_seed)
-                 final_list = random.sample(valid_list, params.num_families)
-                 shell(f"echo 'Applying TEST_MODE: selecting {len(final_list)} random superfamilies.' >> {log[0]}")
-            else:
-                 final_list = valid_list
+        valid_list = sorted(list(valid_sf_ids))
 
-            # Write the final list to the output file
-            with open(output.valid_list_file, 'w') as f:
-                for sf_id in final_list:
-                    f.write(f"{sf_id}\n")
+        # Apply test mode filtering if needed
+        if params.test_mode and len(valid_list) > params.num_families:
+                random.seed(params.random_seed)
+                final_list = random.sample(valid_list, params.num_families)
+                shell(f"echo 'Applying TEST_MODE: selecting {len(final_list)} random superfamilies.' >> {log[0]}")
+        else:
+                final_list = valid_list
+
+        # Write the final list to the output file
+        with open(output.valid_list_file, 'w') as f:
+            for sf_id in final_list:
+                f.write(f"{sf_id}\n")
