@@ -56,6 +56,7 @@ def download_pdb_file(
     status_file: str,
     retry_count: int = 3,
     timeout: int = 30,
+    proxy_url: str | None = None,
 ) -> Dict[str, Any]:
     """
     Download a structure file (CIF or PDB) with retry logic using httpx and RetryTransport.
@@ -66,6 +67,7 @@ def download_pdb_file(
         status_file: Path to save the status (success/failure)
         retry_count: Number of retry attempts for failed downloads
         timeout: Timeout for HTTP requests in seconds
+        proxy_url: Optional proxy URL (e.g., "http://user:pass@host:port")
 
     Returns:
         Dict with status information for Snakemake reporting
@@ -74,6 +76,9 @@ def download_pdb_file(
     logger.info(f"Output file: {output_file}")
     logger.info(f"Status file: {status_file}")
     logger.info(f"Retry count: {retry_count}, Timeout: {timeout}")
+    logger.info(
+        f"Proxy URL from config: {proxy_url if proxy_url else 'None (using environment)'}"
+    )
 
     pdb_id = pdb_id.lower()
     middle_chars = get_middle_chars(pdb_id)
@@ -98,10 +103,19 @@ def download_pdb_file(
 
             # Create a new client for each request with the retry transport
             transport = RetryTransport(retry=retry)
+
+            # Prepare proxy configuration if provided
+            proxies_dict = None
+            if proxy_url:
+                proxies_dict = {
+                    "http://": proxy_url,
+                    "https://": proxy_url,
+                }
+
             with httpx.Client(
                 transport=transport,
                 timeout=timeout,
-                proxy="http://proxy.cit.tum.de:8080/",
+                proxies=proxies_dict,
             ) as client:
                 # Download compressed file
                 response = client.get(formatted_url)
@@ -178,6 +192,7 @@ def main() -> None:
     # Get configuration parameters
     retry_count = snakemake.params.get("retry_count", 3)
     timeout = snakemake.params.get("timeout", 30)
+    proxy_url = snakemake.config.get("proxy_url", None)
 
     # Download the PDB file
     download_pdb_file(
@@ -186,6 +201,7 @@ def main() -> None:
         status_file=status_file,
         retry_count=retry_count,
         timeout=timeout,
+        proxy_url=proxy_url,
     )
 
 

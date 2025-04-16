@@ -447,11 +447,6 @@ rule determine_valid_superfamilies:
             initial_sf_ids = set(df["sf_id"].unique().to_list())
             valid_sf_ids = set()
 
-            # Access checkpoint output directory within the run block if needed
-            # (Not strictly needed here as we use params.pdb_dir, but shows the pattern)
-            # pdb_flag_path = checkpoints.download_all_pdbs.get(wildcards=wildcards).output.flag
-
-            shell("echo 'Checking PDB download status files...' > {log}")
             # Check status files for successful downloads
             for sf_id in initial_sf_ids:
                 sf_df = df.filter(pl.col("sf_id") == sf_id)
@@ -465,17 +460,16 @@ rule determine_valid_superfamilies:
                                 valid_sf_ids.add(sf_id)
                                 break # Found one success for this sf_id
                         except (json.JSONDecodeError, IOError) as e:
-                            shell("echo 'Warning: Could not read status for {pdb_id}: {e}' >> {log}")
+                            shell(f"echo 'Warning: Could not read status for {pdb_id}: {e}' >> {log[0]}")
                             continue
 
             valid_list = sorted(list(valid_sf_ids))
-            shell("echo 'Found {count} superfamilies with successful downloads.' >> {log}".format(count=len(valid_list)))
 
             # Apply test mode filtering if needed
             if params.test_mode and len(valid_list) > params.num_families:
                  random.seed(params.random_seed)
                  final_list = random.sample(valid_list, params.num_families)
-                 shell("echo 'Applying TEST_MODE: selecting {count} random superfamilies.' >> {log}".format(count=len(final_list)))
+                 shell(f"echo 'Applying TEST_MODE: selecting {len(final_list)} random superfamilies.' >> {log[0]}")
             else:
                  final_list = valid_list
 
@@ -483,10 +477,3 @@ rule determine_valid_superfamilies:
             with open(output.valid_list_file, 'w') as f:
                 for sf_id in final_list:
                     f.write(f"{sf_id}\n")
-            shell("echo 'Successfully wrote valid superfamily list to {output.valid_list_file}' >> {log}")
-
-        except Exception as e:
-            shell("echo 'Error in determine_valid_superfamilies: {e}' >> {log}")
-            # Create empty file on error? Or let Snakemake handle failure?
-            # For now, let it fail if something goes wrong here.
-            raise e

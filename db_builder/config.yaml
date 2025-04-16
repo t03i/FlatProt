@@ -18,3 +18,5 @@ foldseek_path: "foldseek"
 # Resource settings
 foldseek_small_threads: 4
 foldseek_large_threads: 10
+
+proxy_url: "http://proxy.cit.tum.de:8080/" # Optional proxy URL (e.g., "http://user:pass@host:port")
