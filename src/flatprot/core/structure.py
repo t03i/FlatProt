@@ -303,6 +303,11 @@ class Structure:
         """
         self.__chains = {chain.id: chain for chain in chains}
         self.id = id or "unknown_structure"  # Assign ID or a default
+        # Pre-calculate total coordinates for validation if needed
+        self._total_coordinates = sum(
+            len(chain.coordinates) if chain.coordinates is not None else 0
+            for chain in self.values()
+        )
 
     def __getitem__(self, chain_id: str) -> Chain:
         """Get a chain by its ID."""
@@ -375,54 +380,74 @@ class Structure:
         original_coords = self.coordinates
         if original_coords is None:
             # Handle case with no coordinates - return a structure with chains having None coordinates
-            for chain in self.values():
+            # Recreate chains with None coords, ensuring topology is preserved
+            for _, chain in self.items():
+                # Create new chain with None coords
                 new_chains.append(
                     Chain(
-                        chain.id,
-                        chain.residues,
-                        chain.index,
-                        None,
-                        chain.secondary_structure,
+                        chain_id=chain.id,
+                        residues=chain.residues,  # Use property to get list
+                        index=chain.index,  # Use original index
+                        coordinates=None,  # Explicitly None
+                        # Pass a copy of the original secondary structure list
+                        secondary_structure=list(chain._Chain__secondary_structure),
                     )
                 )
             return Structure(new_chains, id=self.id)
 
         transformed_coords = transformer_func(original_coords)
 
-        # Reintroduce check for shape change
-        if transformed_coords.shape[0] != original_coords.shape[0]:
+        # Check for shape change after transformation
+        if transformed_coords.shape != original_coords.shape:
             raise ValueError(
                 f"Transformer function changed coordinate array shape from "
                 f"{original_coords.shape} to {transformed_coords.shape}"
             )
 
-        for chain in self.values():
-            num_coords = len(chain.coordinates) if chain.coordinates is not None else 0
-            if num_coords > 0:
+        for (
+            _,
+            chain,
+        ) in (
+            self.items()
+        ):  # Iterate in insertion order (Python 3.7+) or sorted order if needed
+            num_coords_in_chain = (
+                len(chain.coordinates) if chain.coordinates is not None else 0
+            )
+            if num_coords_in_chain > 0:
+                # Slice the transformed coordinates for the current chain
                 chain_transformed_coords = transformed_coords[
-                    start_index : start_index + num_coords
+                    start_index : start_index + num_coords_in_chain
                 ]
+                # Create the new chain with the sliced coordinates
                 new_chains.append(
                     Chain(
-                        chain.id,
-                        chain.residues,
-                        chain.index,
-                        chain_transformed_coords,
-                        chain.secondary_structure,
+                        chain_id=chain.id,
+                        residues=chain.residues,
+                        index=chain.index,
+                        coordinates=chain_transformed_coords,
+                        # Pass a copy of the original secondary structure list
+                        secondary_structure=list(chain._Chain__secondary_structure),
                     )
                 )
-                start_index += num_coords
+                start_index += num_coords_in_chain
             else:
                 # Handle chains originally having no coordinates
                 new_chains.append(
                     Chain(
-                        chain.id,
-                        chain.residues,
-                        chain.index,
-                        None,
-                        chain.secondary_structure,
+                        chain_id=chain.id,
+                        residues=chain.residues,
+                        index=chain.index,
+                        coordinates=None,  # Keep coordinates as None
+                        secondary_structure=list(chain._Chain__secondary_structure),
                     )
                 )
+
+        # Ensure all coordinates were assigned
+        if start_index != transformed_coords.shape[0]:
+            raise ValueError(
+                f"Coordinate slicing error: processed {start_index} coordinates, "
+                f"but expected {transformed_coords.shape[0]}."
+            )
 
         return Structure(new_chains, id=self.id)
 
@@ -455,3 +480,78 @@ class Structure:
 
         # Residue index not found in chain or coordinate index invalid
         return None
+
+    def with_coordinates(self, coordinates: np.ndarray) -> "Structure":
+        """Create a new Structure with the given coordinates, preserving topology.
+
+        Args:
+            coordinates: A NumPy array of shape (N, 3) containing the new coordinates,
+                         ordered consistently with the original structure's concatenated coordinates.
+
+        Returns:
+            A new Structure instance with the provided coordinates.
+
+        Raises:
+            ValueError: If the shape or total number of input coordinates does not match
+                        the original structure's coordinate count.
+        """
+        if not isinstance(coordinates, np.ndarray):
+            raise TypeError("Input coordinates must be a numpy array.")
+        if coordinates.ndim != 2 or coordinates.shape[1] != 3:
+            raise ValueError(
+                f"Input coordinates must have shape (N, 3), got {coordinates.shape}"
+            )
+
+        # Validate that the number of provided coordinates matches the original structure
+        if coordinates.shape[0] != self._total_coordinates:
+            raise ValueError(
+                f"Input coordinates count ({coordinates.shape[0]}) does not match "
+                f"the original structure's total coordinates ({self._total_coordinates})."
+            )
+
+        new_chains = []
+        start_index = 0
+        for (
+            _,
+            chain,
+        ) in self.items():  # Iterate through original chains to maintain order
+            num_coords_in_chain = (
+                len(chain.coordinates) if chain.coordinates is not None else 0
+            )
+            if num_coords_in_chain > 0:
+                # Slice the *new* coordinates array for the current chain
+                new_chain_coords = coordinates[
+                    start_index : start_index + num_coords_in_chain
+                ]
+                # Create the new chain with the sliced coordinates
+                new_chains.append(
+                    Chain(
+                        chain_id=chain.id,
+                        residues=chain.residues,
+                        index=chain.index,
+                        coordinates=new_chain_coords,
+                        # Pass a copy of the original secondary structure list
+                        secondary_structure=list(chain._Chain__secondary_structure),
+                    )
+                )
+                start_index += num_coords_in_chain
+            else:
+                # Handle chains originally having no coordinates
+                new_chains.append(
+                    Chain(
+                        chain_id=chain.id,
+                        residues=chain.residues,
+                        index=chain.index,
+                        coordinates=None,  # Keep coordinates as None
+                        secondary_structure=list(chain._Chain__secondary_structure),
+                    )
+                )
+
+        # Final check to ensure all provided coordinates were used
+        if start_index != coordinates.shape[0]:
+            raise ValueError(  # Should not happen if initial count check passes, but good sanity check
+                f"Coordinate assignment error during 'with_coordinates': processed {start_index} coordinates, "
+                f"but input had {coordinates.shape[0]}."
+            )
+
+        return Structure(new_chains, id=self.id)
