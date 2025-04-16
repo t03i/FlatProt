@@ -98,7 +98,11 @@ def download_pdb_file(
 
             # Create a new client for each request with the retry transport
             transport = RetryTransport(retry=retry)
-            with httpx.Client(transport=transport, timeout=timeout) as client:
+            with httpx.Client(
+                transport=transport,
+                timeout=timeout,
+                proxy="http://proxy.cit.tum.de:8080/",
+            ) as client:
                 # Download compressed file
                 response = client.get(formatted_url)
                 response.raise_for_status()
