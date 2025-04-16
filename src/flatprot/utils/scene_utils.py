@@ -78,7 +78,6 @@ def create_scene_from_structure(
     """
     if structure.coordinates is None or len(structure.coordinates) == 0:
         raise SceneCreationError(f"Structure '{structure.id}' has no coordinates.")
-
     scene = Scene(structure=structure)
     styles = default_styles or {}
 
@@ -106,9 +105,8 @@ def create_scene_from_structure(
             )
 
             # Determine the style: Use provided default or element's default
-            element_type_key = ss_type.value.lower()
+            element_type_key = ss_type.name.lower()
             style_instance = styles.get(element_type_key, None)
-
             try:
                 viz_element = ElementClass(
                     residue_range_set=ss_range_set,

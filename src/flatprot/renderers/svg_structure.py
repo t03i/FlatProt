@@ -45,7 +45,7 @@ def _draw_coil(
         fill="none",
         stroke_linecap="round",
         stroke_linejoin="round",
-        stroke_opacity=style.opacity,
+        opacity=style.opacity,
         class_="element coil",
         id=element.id,
     )
@@ -79,12 +79,12 @@ def _draw_helix(element: HelixSceneElement, coords_2d: np.ndarray) -> Optional[P
         kwargs["fill"] = "none"
         kwargs["stroke"] = style.color.as_hex()
         kwargs["stroke_width"] = style.simplified_width
-        kwargs["stroke_opacity"] = style.opacity
+        kwargs["opacity"] = style.opacity
         d_string = f"M {coords_2d[0, 0]},{coords_2d[0, 1]} L {coords_2d[1, 0]},{coords_2d[1, 1]}"
     else:  # len(coords_2d) >= 3
         # Filled polygon style
         kwargs["fill"] = style.color.as_hex()
-        kwargs["fill_opacity"] = style.opacity
+        kwargs["opacity"] = style.opacity
         kwargs["stroke"] = style.stroke_color.as_hex()
         d_parts = [f"M {coords_2d[0, 0]},{coords_2d[0, 1]}"]
         for point in coords_2d[1:]:
@@ -121,11 +121,12 @@ def _draw_sheet(element: SheetSceneElement, coords_2d: np.ndarray) -> Optional[P
         kwargs["fill"] = "none"
         kwargs["stroke"] = style.color.as_hex()
         kwargs["stroke_width"] = style.simplified_width
-        kwargs["stroke_opacity"] = style.opacity
+        kwargs["opacity"] = style.opacity
         d_string = f"M {coords_2d[0, 0]},{coords_2d[0, 1]} L {coords_2d[1, 0]},{coords_2d[1, 1]}"
     else:  # len(coords_2d) >= 3
         kwargs["fill"] = style.color.as_hex()
-        kwargs["fill_opacity"] = style.opacity
+        kwargs["opacity"] = style.opacity
+
         kwargs["stroke"] = style.stroke_color.as_hex()
         d_parts = [f"M {coords_2d[0, 0]},{coords_2d[0, 1]}"]
         for point in coords_2d[1:]:
@@ -223,7 +224,7 @@ def _draw_connection(
         default_coil_style = CoilStyle()
         style = {
             "stroke_width": default_coil_style.stroke_width,
-            "stroke_opacity": default_coil_style.opacity,
+            "opacity": default_coil_style.opacity,
             "stroke_linecap": "round",
             "stroke_linejoin": "round",
             "stroke": default_coil_style.color.as_hex(),
