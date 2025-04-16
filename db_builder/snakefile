@@ -427,10 +427,12 @@ rule create_alignment_foldseek_db:
         fi
         """
 
+# New rule to determine valid superfamilies *after* downloads
 rule determine_valid_superfamilies:
     input:
         superfamilies = SUPERFAMILIES,
-        pdb_flag = checkpoints.download_all_pdbs.get().output.flag
+        # Depend on the checkpoint itself. Snakemake knows this means waiting for it.
+        checkpoint_completion = checkpoints.download_all_pdbs
     output:
         valid_list_file = VALID_SF_LIST
     params:
@@ -445,6 +447,10 @@ rule determine_valid_superfamilies:
             df = pl.read_csv(input.superfamilies, separator="\t")
             initial_sf_ids = set(df["sf_id"].unique().to_list())
             valid_sf_ids = set()
+
+            # Access checkpoint output directory within the run block if needed
+            # (Not strictly needed here as we use params.pdb_dir, but shows the pattern)
+            # pdb_flag_path = checkpoints.download_all_pdbs.get(wildcards=wildcards).output.flag
 
             shell("echo 'Checking PDB download status files...' > {log}")
             # Check status files for successful downloads
