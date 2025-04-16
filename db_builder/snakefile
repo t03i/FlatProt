@@ -41,6 +41,7 @@ TMP_DIR = Path(tempfile.mkdtemp())
 TMP_FOLDSEEK_DB = f"{TMP_DIR}/foldseek/{{sf_id}}/db"
 PDB_FLAG = f"{TMP_DIR}/download_all_pdbs.flag"
 REPRESENTATIVE_FLAG = f"{TMP_DIR}/representatives.flag"
+VALID_SF_LIST = f"{WORK_DIR}/valid_superfamilies.txt"
 
 # Add log directory
 LOG_DIR = f"{WORK_DIR}/logs"
@@ -78,49 +79,18 @@ def get_all_superfamily_ids():
         # Return empty list if file doesn't exist yet (during DAG construction)
         return []
 
-def get_valid_superfamily_ids():
-    """
-    Get list of superfamily IDs with at least one successfully downloaded PDB.
-
-    This function should only be called *after* the download_all_pdbs checkpoint
-    has completed, as it relies on the .status files.
-    """
+def get_valid_superfamily_ids_from_file():
+    """Reads the list of valid superfamily IDs from the intermediate file."""
     try:
-        checkpoints.download_all_pdbs.get() # Ensure downloads attempted
-        df = pl.read_csv(SUPERFAMILIES, separator="\t")
-        initial_sf_ids = set(df["sf_id"].unique().to_list())
-        valid_sf_ids = set()
-
-        # Check status files for successful downloads
-        for sf_id in initial_sf_ids:
-            sf_df = df.filter(pl.col("sf_id") == sf_id)
-            for pdb_id in sf_df["pdb_id"].unique():
-                status_file = f"{PDB_FILES}/{pdb_id}.status"
-                if os.path.exists(status_file):
-                    try:
-                        with open(status_file, 'r') as f:
-                            status_data = json.load(f)
-                        if status_data.get("success", False):
-                            valid_sf_ids.add(sf_id)
-                            break # Found one success for this sf_id, no need to check others
-                    except (json.JSONDecodeError, IOError) as e:
-                        # Log error or handle as needed, assume failure for this PDB
-                        print(f"Warning: Could not read status for {pdb_id}: {e}")
-                        continue
-
-        valid_list = sorted(list(valid_sf_ids))
-
-        if TEST_MODE and len(valid_list) > NUM_FAMILIES:
-             random.seed(RANDOM_SEED)
-             return random.sample(valid_list, NUM_FAMILIES)
-        return valid_list
-
+        with open(VALID_SF_LIST, 'r') as f:
+            ids = [int(line.strip()) for line in f if line.strip()]
+        return ids
     except FileNotFoundError:
-        # Return empty list if SUPERFAMILIES doesn't exist (shouldn't happen after checkpoint)
+        # Expected during initial DAG construction before VALID_SF_LIST is created
         return []
     except Exception as e:
-        # Log error or handle unexpected issues
-        print(f"Error determining valid superfamilies: {e}")
+        print(f"Error reading valid superfamilies file {VALID_SF_LIST}: {e}")
+        # Depending on desired strictness, could raise error or return empty
         return []
 
 def get_all_structure_ids():
@@ -296,7 +266,8 @@ rule extract_all_domains_for_superfamily:
 rule domain_extraction_report:
     input:
         superfamilies = SUPERFAMILIES,
-        flags = expand(f"{DOMAIN_FLAG}", sf_id=get_valid_superfamily_ids()),
+        valid_sf_file = VALID_SF_LIST,
+        flags = expand(f"{DOMAIN_FLAG}", sf_id=get_valid_superfamily_ids_from_file()),
         pdb_dir = PDB_FILES,
         domain_dir = DOMAIN_FILES
     output:
@@ -384,9 +355,10 @@ rule get_representative_domain:
 rule aggregate_representatives:
     input:
         superfamilies = SUPERFAMILIES,
+        valid_sf_file = VALID_SF_LIST,
         representative_domains = expand(
             f"{REPRESENTATIVE_DOMAINS}/{{sf_id}}.cif",
-            sf_id=get_valid_superfamily_ids()
+            sf_id=get_valid_superfamily_ids_from_file()
         )
     output:
         flag = temp(f"{REPRESENTATIVE_FLAG}")
@@ -401,9 +373,10 @@ rule aggregate_representatives:
 rule create_alignment_database:
     input:
         flag = f"{REPRESENTATIVE_FLAG}",
+        valid_sf_file = VALID_SF_LIST,
         representative_domains = lambda wc: expand(
             f"{REPRESENTATIVE_DOMAINS}/{{sf_id}}.cif",
-            sf_id=get_valid_superfamily_ids()
+            sf_id=get_valid_superfamily_ids_from_file()
         ),
         scop_file = SCOP_FILE
     output:
@@ -421,11 +394,12 @@ rule create_alignment_database:
 rule create_alignment_foldseek_db:
     input:
         flag = f"{REPRESENTATIVE_FLAG}",
+        valid_sf_file = VALID_SF_LIST,
         representative_domains_folder = REPRESENTATIVE_DOMAINS,
         scop_file = SCOP_FILE,
         representative_files = lambda wc: expand(
             f"{REPRESENTATIVE_DOMAINS}/{{sf_id}}.cif",
-            sf_id=get_valid_superfamily_ids()
+            sf_id=get_valid_superfamily_ids_from_file()
         )
     output:
         FOLDSEEK_DB
@@ -452,3 +426,62 @@ rule create_alignment_foldseek_db:
             touch {output}_h # Add other necessary empty files if createdb makes them
         fi
         """
+
+rule determine_valid_superfamilies:
+    input:
+        superfamilies = SUPERFAMILIES,
+        pdb_flag = checkpoints.download_all_pdbs.get().output.flag
+    output:
+        valid_list_file = VALID_SF_LIST
+    params:
+        pdb_dir = PDB_FILES,
+        test_mode = TEST_MODE,
+        num_families = NUM_FAMILIES,
+        random_seed = RANDOM_SEED
+    log:
+        f"{LOG_DIR}/determine_valid_superfamilies.log"
+    run:
+        try:
+            df = pl.read_csv(input.superfamilies, separator="\t")
+            initial_sf_ids = set(df["sf_id"].unique().to_list())
+            valid_sf_ids = set()
+
+            shell("echo 'Checking PDB download status files...' > {log}")
+            # Check status files for successful downloads
+            for sf_id in initial_sf_ids:
+                sf_df = df.filter(pl.col("sf_id") == sf_id)
+                for pdb_id in sf_df["pdb_id"].unique():
+                    status_file = f"{params.pdb_dir}/{pdb_id}.status"
+                    if os.path.exists(status_file):
+                        try:
+                            with open(status_file, 'r') as f:
+                                status_data = json.load(f)
+                            if status_data.get("success", False):
+                                valid_sf_ids.add(sf_id)
+                                break # Found one success for this sf_id
+                        except (json.JSONDecodeError, IOError) as e:
+                            shell("echo 'Warning: Could not read status for {pdb_id}: {e}' >> {log}")
+                            continue
+
+            valid_list = sorted(list(valid_sf_ids))
+            shell("echo 'Found {count} superfamilies with successful downloads.' >> {log}".format(count=len(valid_list)))
+
+            # Apply test mode filtering if needed
+            if params.test_mode and len(valid_list) > params.num_families:
+                 random.seed(params.random_seed)
+                 final_list = random.sample(valid_list, params.num_families)
+                 shell("echo 'Applying TEST_MODE: selecting {count} random superfamilies.' >> {log}".format(count=len(final_list)))
+            else:
+                 final_list = valid_list
+
+            # Write the final list to the output file
+            with open(output.valid_list_file, 'w') as f:
+                for sf_id in final_list:
+                    f.write(f"{sf_id}\n")
+            shell("echo 'Successfully wrote valid superfamily list to {output.valid_list_file}' >> {log}")
+
+        except Exception as e:
+            shell("echo 'Error in determine_valid_superfamilies: {e}' >> {log}")
+            # Create empty file on error? Or let Snakemake handle failure?
+            # For now, let it fail if something goes wrong here.
+            raise e
