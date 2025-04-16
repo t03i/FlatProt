@@ -20,10 +20,8 @@ from flatprot.scene.structure import (
 from flatprot.scene.annotation import (
     PointAnnotation,
     LineAnnotation,
-    AreaAnnotation,
-    BaseAnnotationElement,  # Import BaseAnnotationElement for mocking
+    AreaAnnotation,  # Import BaseAnnotationElement for mocking
 )
-from flatprot.scene.errors import SceneError  # Import SceneError for testing
 
 # --- Fixtures ---
 
@@ -405,130 +403,5 @@ def test_coil_get_coord_at_residue(scene_with_mock_structure: Scene):
     np.testing.assert_array_almost_equal(coord_mid, expected_mid)
 
 
-# --- Scene.get_rendered_coordinates_for_annotation Tests (Revised) ---
-
-
-def test_scene_get_coords_delegation_success(scene_with_mock_structure: Scene, mocker):
-    """Test Scene successfully delegates to annotation.get_coordinates."""
-    scene = scene_with_mock_structure
-    mock_annotation = mocker.MagicMock(spec=BaseAnnotationElement)
-    mock_annotation.id = "anno-mock"
-    expected_coords = np.array([[1.0, 1.0, 1.0], [2.0, 2.0, 2.0]])
-    mock_annotation.get_coordinates.return_value = expected_coords
-
-    # Call the Scene method
-    rendered_coords = scene.get_rendered_coordinates_for_annotation(mock_annotation)
-
-    # Assert delegation happened
-    mock_annotation.get_coordinates.assert_called_once_with(scene.structure)
-    # Assert result is correct
-    assert rendered_coords is not None
-    np.testing.assert_array_equal(rendered_coords, expected_coords)
-
-
-def test_scene_get_coords_handles_annotation_none_return(
-    scene_with_mock_structure: Scene, mocker
-):
-    """Test Scene raises CoordinateCalculationError if annotation returns None."""
-    scene = scene_with_mock_structure
-    mock_annotation = mocker.MagicMock(spec=BaseAnnotationElement)
-    mock_annotation.id = "anno-none"
-    mock_annotation.get_coordinates.return_value = None
-
-    with pytest.raises(
-        CoordinateCalculationError,
-        # Error is now invalid shape because None doesn't pass shape check
-        match="Annotation 'anno-none' returned invalid coordinate array shape.",
-    ):
-        scene.get_rendered_coordinates_for_annotation(mock_annotation)
-
-    mock_annotation.get_coordinates.assert_called_once_with(scene.structure)
-
-
-def test_scene_get_coords_handles_annotation_empty_array(
-    scene_with_mock_structure: Scene, mocker
-):
-    """Test Scene raises CoordinateCalculationError if annotation returns empty array."""
-    scene = scene_with_mock_structure
-    mock_annotation = mocker.MagicMock(spec=BaseAnnotationElement)
-    mock_annotation.id = "anno-empty"
-    mock_annotation.get_coordinates.return_value = np.array([])
-
-    with pytest.raises(
-        CoordinateCalculationError,
-        # Error is now invalid shape because ndim is 1, not 2
-        match="Annotation 'anno-empty' returned invalid coordinate array shape.",
-    ):
-        scene.get_rendered_coordinates_for_annotation(mock_annotation)
-
-    mock_annotation.get_coordinates.assert_called_once_with(scene.structure)
-
-
-@pytest.mark.parametrize(
-    "invalid_shape_coords",
-    [
-        np.array([1.0, 1.0, 1.0]),  # Wrong ndim (1D)
-        np.array([[1.0, 1.0]]),  # Wrong shape[1] (2D)
-        np.array([[1.0, 1.0, 1.0, 1.0]]),  # Wrong shape[1] (4D)
-    ],
-)
-def test_scene_get_coords_handles_invalid_shape(
-    scene_with_mock_structure: Scene, mocker, invalid_shape_coords: np.ndarray
-):
-    """Test Scene raises CoordinateCalculationError if annotation returns invalid shape."""
-    scene = scene_with_mock_structure
-    mock_annotation = mocker.MagicMock(spec=BaseAnnotationElement)
-    mock_annotation.id = "anno-shape"
-    mock_annotation.get_coordinates.return_value = invalid_shape_coords
-
-    with pytest.raises(
-        CoordinateCalculationError, match="returned invalid coordinate array shape"
-    ):
-        scene.get_rendered_coordinates_for_annotation(mock_annotation)
-
-    mock_annotation.get_coordinates.assert_called_once_with(scene.structure)
-
-
-def test_scene_get_coords_propagates_coord_calc_error(
-    scene_with_mock_structure: Scene, mocker
-):
-    """Test Scene propagates CoordinateCalculationError from annotation."""
-    scene = scene_with_mock_structure
-    mock_annotation = mocker.MagicMock(spec=BaseAnnotationElement)
-    mock_annotation.id = "anno-calc-err"
-    error_message = "Annotation failed calculation!"
-    mock_annotation.get_coordinates.side_effect = CoordinateCalculationError(
-        error_message
-    )
-
-    with pytest.raises(CoordinateCalculationError, match=error_message) as excinfo:
-        scene.get_rendered_coordinates_for_annotation(mock_annotation)
-
-    # Check that the original error is chained
-    assert isinstance(excinfo.value.__cause__, CoordinateCalculationError)
-    mock_annotation.get_coordinates.assert_called_once_with(scene.structure)
-
-
-def test_scene_get_coords_wraps_unexpected_error(
-    scene_with_mock_structure: Scene, mocker
-):
-    """Test Scene wraps unexpected errors from annotation in SceneError."""
-    scene = scene_with_mock_structure
-    mock_annotation = mocker.MagicMock(spec=BaseAnnotationElement)
-    mock_annotation.id = "anno-unexpected-err"
-    error_message = "Something else went wrong!"
-    original_error = ValueError(error_message)
-    mock_annotation.get_coordinates.side_effect = original_error
-
-    with pytest.raises(
-        SceneError, match="Unexpected error getting coordinates"
-    ) as excinfo:
-        scene.get_rendered_coordinates_for_annotation(mock_annotation)
-
-    # Check that the original error is chained
-    assert excinfo.value.__cause__ is original_error
-    mock_annotation.get_coordinates.assert_called_once_with(scene.structure)
-
-
-# Removed test_scene_get_coords_multiple_covering_elements as it's no longer relevant
-# to Scene's logic. The responsibility lies with the annotation's get_coordinates now.
+# Remove tests for Scene.get_rendered_coordinates_for_annotation
+# as this logic is now handled by the CoordinateResolver and the annotations themselves.

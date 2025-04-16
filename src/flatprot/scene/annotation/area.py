@@ -9,13 +9,14 @@ from pydantic import Field
 from flatprot.core import (
     ResidueRangeSet,
     ResidueCoordinate,
-    Structure,
     CoordinateCalculationError,
     logger,
 )
 
 from .base_annotation import BaseAnnotationElement, BaseAnnotationStyle
 from ..base_element import SceneGroupType
+from ..resolver import CoordinateResolver
+from ..errors import TargetResidueNotFoundError
 
 
 def _convex_hull(points):
@@ -165,51 +166,47 @@ class AreaAnnotation(BaseAnnotationElement[AreaAnnotationStyle]):
         """Provides the default style for AreaAnnotation elements."""
         return AreaAnnotationStyle()
 
-    def get_coordinates(self, structure: Structure) -> Optional[np.ndarray]:
+    def get_coordinates(self, resolver: CoordinateResolver) -> np.ndarray:
         """Calculate the padded convex hull outline coordinates for the area annotation.
 
         Fetches coordinates for all residues defined in the residue_range_set
-        that exist in the structure. Calculates the convex hull if at least 3
+        using the CoordinateResolver. Calculates the convex hull if at least 3
         points are found.
 
         Args:
-            structure: The core Structure object containing coordinate data.
+            resolver: The CoordinateResolver instance for the scene.
 
         Returns:
             A NumPy array of 2D + Depth coordinates (shape [N, 3]) representing
-            the padded convex hull outline of the area (X, Y, AvgDepth), or None if
-            the calculation fails (e.g., fewer than 3 points found).
+            the padded convex hull outline of the area (X, Y, AvgDepth).
 
         Raises:
             CoordinateCalculationError: If fewer than 3 valid coordinates are found
-                                        for the specified residue range set.
+                                        for the specified residue range set, or if
+                                        hull/padding calculation fails.
         """
-        logger.debug(f"Calculating area coordinates for '{self.id}'")
-        if self._cached_outline_coords is not None:
-            return self._cached_outline_coords
+        logger.debug(f"Calculating area coordinates for '{self.id}' using resolver")
 
         if self.residue_range_set is None:
-            # This case should ideally be prevented by the __init__ validation
-            # but good to handle defensively.
-            logger.error(f"AreaAnnotation '{self.id}' has no residue_range_set.")
-            return None
+            raise ValueError(
+                f"AreaAnnotation '{self.id}' has no residue_range_set defined."
+            )
 
-        # 1. Collect all available target 3D coordinates from the structure
+        # 1. Collect all available target 3D coordinates using the resolver
         target_coords_3d_list: List[np.ndarray] = []
-        # Iterate through all individual ResidueCoordinate objects defined by the ranges
         for res_coord in self.residue_range_set:
-            point = structure.get_coordinate_at_residue(res_coord)
-            if point is not None:
+            try:
+                point = resolver.resolve(res_coord)
                 target_coords_3d_list.append(point)
-            else:
-                logger.debug(
-                    f"Residue {res_coord} not found in structure for AreaAnnotation '{self.id}', silently skipping."
+            except (CoordinateCalculationError, TargetResidueNotFoundError) as e:
+                logger.warning(
+                    f"Could not resolve coordinate for {res_coord} in AreaAnnotation '{self.id}': {e}. Skipping point."
                 )
+            # Let unexpected errors propagate
 
         if len(target_coords_3d_list) < 3:
-            # Raise specific error if not enough points were found
             raise CoordinateCalculationError(
-                f"Need at least 3 valid points to calculate area for annotation '{self.id}', found {len(target_coords_3d_list)} within its range set."
+                f"Need at least 3 resolvable points to calculate area for annotation '{self.id}', found {len(target_coords_3d_list)} within its range set."
             )
 
         # Convert list to numpy array for calculations
@@ -239,5 +236,6 @@ class AreaAnnotation(BaseAnnotationElement[AreaAnnotationStyle]):
         depth_column = np.full((num_outline_points, 1), avg_depth)
         outline_coords_3d = np.hstack((padded_points_2d, depth_column))
 
-        self._cached_outline_coords = outline_coords_3d
-        return self._cached_outline_coords
+        # self._cached_outline_coords = outline_coords_3d # Removed caching
+        logger.debug(f"Successfully calculated area coordinates for '{self.id}'")
+        return outline_coords_3d

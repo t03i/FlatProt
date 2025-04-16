@@ -25,6 +25,7 @@ from .annotation import (
     AreaAnnotationStyle,
 )
 from .errors import (
+    SceneError,
     SceneCreationError,
     SceneAnnotationError,
     ElementNotFoundError,
@@ -34,9 +35,13 @@ from .errors import (
     CircularDependencyError,
     SceneGraphInconsistencyError,
     InvalidSceneOperationError,
+    TargetResidueNotFoundError,
 )
 
+from .resolver import CoordinateResolver
+
 __all__ = [
+    "CoordinateResolver",
     "Scene",
     "SceneGroup",
     "BaseSceneElement",
@@ -57,7 +62,7 @@ __all__ = [
     "LineAnnotationStyle",
     "AreaAnnotation",
     "AreaAnnotationStyle",
-    "CoordinateCalculationError",
+    "SceneError",
     "SceneCreationError",
     "SceneAnnotationError",
     "ElementNotFoundError",
@@ -67,4 +72,5 @@ __all__ = [
     "CircularDependencyError",
     "SceneGraphInconsistencyError",
     "InvalidSceneOperationError",
+    "TargetResidueNotFoundError",
 ]

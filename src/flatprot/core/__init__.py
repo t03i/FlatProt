@@ -20,7 +20,6 @@ from .structure import (
 from .errors import (
     FlatProtError,
     CoordinateError,
-    TargetResidueNotFoundError,
     CoordinateCalculationError,
 )
 
@@ -29,7 +28,6 @@ from .logger import logger
 __all__ = [
     "FlatProtError",
     "CoordinateError",
-    "TargetResidueNotFoundError",
     "CoordinateCalculationError",
     "ResidueType",
     "ResidueCoordinate",

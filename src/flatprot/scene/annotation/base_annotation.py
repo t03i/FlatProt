@@ -14,6 +14,9 @@ from flatprot.core.structure import Structure
 # Assuming base_element.py is the correct name now
 from ..base_element import BaseSceneElement, BaseSceneStyle, SceneGroupType
 
+# Import CoordinateResolver for type hint
+from ..resolver import CoordinateResolver
+
 # Generic Type Variable for the specific Annotation Style
 AnnotationStyleType = TypeVar("AnnotationStyleType", bound="BaseAnnotationStyle")
 
@@ -130,21 +133,24 @@ class BaseAnnotationElement(
         return self._target_coordinates is not None
 
     @abstractmethod
-    def get_coordinates(self, structure: Structure) -> Optional[np.ndarray]:
-        """Return the anchor coordinates for this annotation.
+    def get_coordinates(self, resolver: CoordinateResolver) -> np.ndarray:
+        """Calculate the renderable coordinates for this annotation.
 
-        Annotations derive their position from other elements or specific
-        coordinates. This method, in the base class, does not provide
-        renderable coordinates itself. The renderer should use target information
-        to determine anchor points.
+        Uses the provided CoordinateResolver to find the correct coordinates for
+        its target residues in the context of the scene elements.
 
         Args:
-            structure: The core Structure object (unused in this base implementation).
+            resolver: The CoordinateResolver instance for the scene.
 
         Returns:
-            None, as annotations don't have intrinsic renderable coordinates.
+            A NumPy array of coordinates (shape [N, 3], X, Y, Z) suitable for rendering.
+
+        Raises:
+            CoordinateCalculationError: If coordinates cannot be resolved.
+            TargetResidueNotFoundError: If a target residue is not found.
+            # Other specific exceptions possible depending on implementation
         """
-        return None
+        raise NotImplementedError
 
     # Concrete subclasses (Marker, Line, Area) MUST implement default_style
     @property

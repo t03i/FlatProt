@@ -1,7 +1,7 @@
 # Copyright 2025 Tobias Olenyi.
 # SPDX-License-Identifier: Apache-2.0
 
-from flatprot.core import FlatProtError
+from flatprot.core import FlatProtError, Structure, ResidueCoordinate
 
 
 class SceneError(FlatProtError):
@@ -62,3 +62,11 @@ class SceneCreationError(SceneError):
     """Raised when creation of a scene fails."""
 
     pass
+
+
+class TargetResidueNotFoundError(SceneError):
+    """Error raised when a target residue is not found in the structure."""
+
+    def __init__(self, structure: Structure, residue: ResidueCoordinate):
+        message = f"Residue {residue} not found in structure {structure}"
+        super().__init__(message)

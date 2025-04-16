@@ -2,19 +2,17 @@
 # SPDX-License-Identifier: Apache-2.0
 
 from typing import List, Optional, Iterator, Generator, Set, Tuple, Dict
-import numpy as np
 
 from flatprot.core import (
     Structure,
     logger,
-    CoordinateCalculationError,
 )
 
 from .base_element import BaseSceneElement
-from .annotation import BaseAnnotationElement
 from .structure import BaseStructureSceneElement
 
 from .group import SceneGroup
+from .resolver import CoordinateResolver
 
 # Import custom errors
 from .errors import (
@@ -53,6 +51,8 @@ class Scene:
         self._nodes: List[BaseSceneElement] = []
         # For quick lookups by ID
         self._element_registry: Dict[str, BaseSceneElement] = {}
+        # Create the coordinate resolver instance
+        self._resolver: Optional[CoordinateResolver] = None  # Initialize as None
 
     @property
     def structure(self) -> Structure:
@@ -88,6 +88,8 @@ class Scene:
         """Internal method to remove an element from the ID registry."""
         if element.id in self._element_registry:
             del self._element_registry[element.id]
+        # Invalidate resolver cache if element affecting it is removed
+        self._resolver = None
 
     def add_element(
         self, element: BaseSceneElement, parent_id: Optional[str] = None
@@ -160,12 +162,15 @@ class Scene:
                 self._nodes.append(element)
         except (ValueError, TypeError, SceneError) as e:
             # Catch potential errors from add_child or _set_parent
-            self._unregister_element(element)  # Rollback registration
+            self._unregister_element(
+                element
+            )  # Rollback registration (also invalidates resolver)
             if parent is None and element in self._nodes:
                 self._nodes.remove(element)  # Rollback adding to top-level
             # Re-raise the original specific error, don't wrap
             raise e
-        # No 'except Exception' needed here - let unexpected errors propagate
+        # Invalidate resolver cache if element affecting it is added
+        self._resolver = None
 
     def remove_element(self, element_id: str) -> None:
         """Removes a SceneElement and its descendants from the scene graph by ID.
@@ -234,6 +239,8 @@ class Scene:
             raise SceneGraphInconsistencyError(
                 f"SceneGraph Inconsistency: Element '{element.id}' was registered but not found in the scene graph structure (neither parented nor top-level)."
             )
+        # Invalidate resolver cache since elements were removed
+        self._resolver = None
 
     def move_element(
         self, element_id: str, new_parent_id: Optional[str] = None
@@ -339,6 +346,8 @@ class Scene:
                 ) from e  # Raise inconsistency, chaining original error
 
             raise InvalidSceneOperationError(rollback_msg) from e
+        # Invalidate resolver cache since element position changed
+        self._resolver = None
 
     def traverse(self) -> Generator[Tuple[BaseSceneElement, int], None, None]:
         """Performs a depth-first traversal of the scene graph.
@@ -371,69 +380,6 @@ class Scene:
                     if child.id in self._element_registry
                 ]
                 nodes_to_visit.extend(children_to_add)
-
-    def get_rendered_coordinates_for_annotation(
-        self, annotation: BaseAnnotationElement
-    ) -> np.ndarray:
-        """Get the renderable coordinates for an annotation by delegating to it.
-
-        Calls the annotation's own `get_coordinates` method.
-
-        Args:
-            annotation: The annotation element.
-
-        Returns:
-            A numpy array of coordinates [N, 3] (X, Y, Z) suitable for rendering.
-
-        Raises:
-            CoordinateCalculationError: If the annotation fails to calculate its coordinates
-                                        (e.g., target residues not found, insufficient points).
-            Exception: Can re-raise other exceptions from the annotation's method.
-        """
-        try:
-            # Delegate coordinate calculation directly to the annotation object
-            rendered_coords = annotation.get_coordinates(self.structure)
-
-            if (
-                not isinstance(rendered_coords, np.ndarray)
-                or rendered_coords.ndim != 2
-                or rendered_coords.shape[1] != 3
-            ):
-                logger.error(
-                    f"Annotation '{annotation.id}' returned invalid coordinate array shape: {rendered_coords.shape if isinstance(rendered_coords, np.ndarray) else type(rendered_coords)}"
-                )
-                raise CoordinateCalculationError(
-                    f"Annotation '{annotation.id}' returned invalid coordinate array shape."
-                )
-
-            if rendered_coords.size == 0:
-                logger.warning(
-                    f"Annotation '{annotation.id}' returned empty coordinate array."
-                )
-                raise CoordinateCalculationError(
-                    f"Annotation '{annotation.id}' returned empty coordinate array."
-                )
-
-            return rendered_coords
-
-        except CoordinateCalculationError as e:
-            # Re-raise the specific error from the annotation
-            logger.error(
-                f"Error calculating coordinates for annotation '{annotation.id}': {e}",
-                exc_info=True,
-            )
-            raise CoordinateCalculationError(
-                f"Failed to get coordinates for annotation '{annotation.id}': {e}"
-            ) from e
-        except Exception as e:
-            # Catch any other unexpected errors from the annotation's method
-            logger.error(
-                f"Unexpected error in get_coordinates for annotation '{annotation.id}': {e}",
-                exc_info=True,
-            )
-            raise SceneError(
-                f"Unexpected error getting coordinates for annotation '{annotation.id}': {e}"
-            ) from e  # Wrap in a generic SceneError or re-raise
 
     def get_all_elements(self) -> List[BaseSceneElement]:
         """Returns a flat list of all elements in the scene graph.
@@ -507,3 +453,12 @@ class Scene:
             f"<Scene structure_id='{structure_id}' "
             f"top_level_nodes={len(self._nodes)} total_elements={len(self)}>"
         )
+
+    # Lazily create resolver only when needed to avoid issues during Scene init
+    @property
+    def resolver(self) -> CoordinateResolver:
+        """Get the CoordinateResolver instance for this scene."""
+        if self._resolver is None:
+            # Pass the current element registry
+            self._resolver = CoordinateResolver(self._structure, self._element_registry)
+        return self._resolver

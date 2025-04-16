@@ -1,7 +1,3 @@
-from .coordinates import ResidueCoordinate
-from .structure import Structure
-
-
 class FlatProtError(Exception):
     """Base exception class for FlatProt CLI errors.
 
@@ -25,12 +21,4 @@ class CoordinateCalculationError(CoordinateError):
     """Error raised when calculation of display coordinates fails (e.g., insufficient points)."""
 
     def __init__(self, message: str):
-        super().__init__(message)
-
-
-class TargetResidueNotFoundError(CoordinateError):
-    """Error raised when a target residue is not found in the structure."""
-
-    def __init__(self, structure: Structure, residue: ResidueCoordinate):
-        message = f"Residue {residue} not found in structure {structure}"
         super().__init__(message)

@@ -15,12 +15,14 @@ from flatprot.scene import (
     HelixSceneElement,
     SheetSceneElement,
     PointAnnotation,
+    SceneError,
     LineAnnotation,
     AreaAnnotation,
     BaseAnnotationElement,
     BaseStructureSceneElement,
+    TargetResidueNotFoundError,
 )
-from flatprot.core.logger import logger
+from flatprot.core import logger, CoordinateCalculationError
 
 from .svg_structure import (
     _draw_coil,
@@ -381,6 +383,8 @@ class SVGRenderer:
 
         # 6. Draw Annotation Elements (Retrieve separately, logic remains similar)
         _, sorted_annotations = self._collect_and_sort_renderables()
+        # Get the resolver instance from the scene
+        resolver = self.scene.resolver
 
         for (
             depth,
@@ -394,20 +398,47 @@ class SVGRenderer:
                 )
                 continue
 
-            # Removed the broad try...except block here
-            # Errors during annotation processing should propagate
-            rendered_coords = self.scene.get_rendered_coordinates_for_annotation(
-                element
-            )
+            try:
+                # Calculate coordinates using the annotation's own method + resolver
+                rendered_coords = element.get_coordinates(resolver)
+            except (
+                CoordinateCalculationError,
+                SceneError,
+                ValueError,
+                TargetResidueNotFoundError,
+            ) as e:
+                # Catch expected errors during coordinate resolution/calculation
+                logger.error(
+                    f"Could not get coordinates for annotation '{element.id}': {e}"
+                )
+                logger.exception(e)
+                continue  # Skip rendering this annotation
+            except Exception as e:
+                # Catch unexpected errors
+                logger.error(
+                    f"Unexpected error getting coordinates for annotation '{element.id}': {e}",
+                    exc_info=True,
+                )
+                logger.exception(e)
+                continue  # Skip rendering this annotation
+
+            # Basic validation (redundant with Scene checks, but safe)
             if rendered_coords is None or rendered_coords.size == 0:
                 logger.debug(
-                    f"Skipping annotation {element.id} due to missing/empty rendered coordinates."
+                    f"Skipping annotation {element.id} due to missing/empty resolved coordinates."
                 )
                 continue
 
-            svg_shapes = draw_func(element, rendered_coords)
-            if svg_shapes:
-                root_group.append(svg_shapes)
+            # Call the drawing function with the resolved coordinates
+            try:
+                svg_shapes = draw_func(element, rendered_coords)
+                if svg_shapes:
+                    root_group.append(svg_shapes)
+            except Exception as e:
+                logger.error(
+                    f"Error drawing annotation '{element.id}' (type {element_type.__name__}): {e}",
+                    exc_info=True,
+                )
 
         return drawing
 

@@ -253,10 +253,16 @@ def test_render_point_annotation(
     root = _parse_svg(svg_output)
     ns = {"svg": "http://www.w3.org/2000/svg"}
 
-    # Expected coordinates for A:5 (index 4)
-    expected_coords = mock_structure_coords[4]  # Should be [20., 10., 0.]
-    expected_cx = expected_coords[0] + point_anno_A5.style.offset[0]
-    expected_cy = expected_coords[1] + point_anno_A5.style.offset[1]
+    # --- Get the ACTUAL base coordinate from the element via resolver --- #
+    # This represents the point where the annotation should anchor
+    # We use the resolver directly here to simulate what the renderer does internally
+    resolver = scene.resolver
+    base_coords = resolver.resolve(point_anno_A5.target_coordinate)
+    assert base_coords is not None
+
+    # --- Calculate expected SVG position based on resolved coord and style --- #
+    expected_cx = base_coords[0] + point_anno_A5.style.offset[0]
+    expected_cy = base_coords[1] + point_anno_A5.style.offset[1]
 
     # Find the corresponding circle marker
     marker_id = f"{point_anno_A5.id}-marker"
@@ -293,14 +299,18 @@ def test_render_line_annotation(
     root = _parse_svg(svg_output)
     ns = {"svg": "http://www.w3.org/2000/svg"}
 
-    # Expected coordinates for A:4 (index 3) and A:6 (index 5)
-    coord_A4 = mock_structure_coords[3]  # [15., 10., 0.]
-    coord_A6 = mock_structure_coords[5]  # [25., 10., 0.]
+    # --- Get ACTUAL base coordinates from element via resolver --- #
+    resolver = scene.resolver
+    base_coord_A4 = resolver.resolve(line_anno_A4_A6.start_coordinate)
+    base_coord_A6 = resolver.resolve(line_anno_A4_A6.end_coordinate)
+    assert base_coord_A4 is not None
+    assert base_coord_A6 is not None
 
-    expected_x1 = coord_A4[0] + line_anno_A4_A6.style.offset[0]
-    expected_y1 = coord_A4[1] + line_anno_A4_A6.style.offset[1]
-    expected_x2 = coord_A6[0] + line_anno_A4_A6.style.offset[0]
-    expected_y2 = coord_A6[1] + line_anno_A4_A6.style.offset[1]
+    # --- Calculate expected SVG positions --- #
+    expected_x1 = base_coord_A4[0] + line_anno_A4_A6.style.offset[0]
+    expected_y1 = base_coord_A4[1] + line_anno_A4_A6.style.offset[1]
+    expected_x2 = base_coord_A6[0] + line_anno_A4_A6.style.offset[0]
+    expected_y2 = base_coord_A6[1] + line_anno_A4_A6.style.offset[1]
 
     # Construct expected path data: "M x1,y1 L x2,y2"
     expected_d = (
@@ -356,15 +366,10 @@ def test_render_area_annotation(
     root = _parse_svg(svg_output)
     ns = {"svg": "http://www.w3.org/2000/svg"}
 
-    # Expected coordinates for A:5, A:6, A:7 (indices 4, 5, 6)
-    # coord_A5 = mock_structure_coords[4]  # [20., 10., 0.]
-    # coord_A6 = mock_structure_coords[5]  # [25., 10.1, 0.]
-    # coord_A7 = mock_structure_coords[6]  # [30., 10., 0.]
-    # expected_raw_coords = np.array([coord_A5, coord_A6, coord_A7])
-
     # --- Get the ACTUAL coordinates the renderer will use --- #
     # These are the coordinates AFTER processing by AreaAnnotation.get_coordinates
-    processed_coords_3d = area_anno_A5_A7.get_coordinates(scene.structure)
+    # Pass the resolver to the annotation's get_coordinates method
+    processed_coords_3d = area_anno_A5_A7.get_coordinates(scene.resolver)
     assert processed_coords_3d is not None, "Annotation failed to calculate coordinates"
     assert (
         len(processed_coords_3d) >= 3
@@ -439,10 +444,14 @@ def test_render_point_with_custom_style(
     root = _parse_svg(svg_output)
     ns = {"svg": "http://www.w3.org/2000/svg"}
 
-    # Expected base coordinates for A:5 (index 4)
-    expected_coords = mock_structure_coords[4]  # [20., 10., 0.]
-    expected_cx = expected_coords[0] + custom_offset[0]
-    expected_cy = expected_coords[1] + custom_offset[1]
+    # --- Get ACTUAL base coordinate from element via resolver --- #
+    resolver = scene.resolver
+    base_coords = resolver.resolve(point_anno_A5.target_coordinate)
+    assert base_coords is not None
+
+    # --- Calculate expected SVG position based on resolved coord and style --- #
+    expected_cx = base_coords[0] + custom_offset[0]
+    expected_cy = base_coords[1] + custom_offset[1]
 
     marker_id = f"{point_anno_A5.id}-marker"
     circles = root.findall(f".//svg:circle[@id='{marker_id}']", namespaces=ns)

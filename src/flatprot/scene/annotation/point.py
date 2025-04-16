@@ -6,7 +6,9 @@ from typing import Optional, Literal
 import numpy as np
 from pydantic import Field
 
-from flatprot.core import ResidueCoordinate, Structure, TargetResidueNotFoundError
+from flatprot.core import (
+    ResidueCoordinate,
+)
 
 # Import base classes from the same directory
 from .base_annotation import (
@@ -14,6 +16,9 @@ from .base_annotation import (
     BaseAnnotationStyle,
 )
 from ..base_element import SceneGroupType
+
+# Import CoordinateResolver
+from ..resolver import CoordinateResolver
 
 
 # --- Point Annotation Specific Style ---
@@ -78,22 +83,24 @@ class PointAnnotation(BaseAnnotationElement[PointAnnotationStyle]):
         """Provides the default style for PointAnnotation elements."""
         return PointAnnotationStyle()
 
-    def get_coordinates(self, structure: Structure) -> Optional[np.ndarray]:
+    def get_coordinates(self, resolver: CoordinateResolver) -> np.ndarray:
         """Calculate the coordinates for the point annotation marker.
 
-        Retrieves the 3D coordinates of the target residue from the provided structure.
+        Uses the CoordinateResolver to find the rendered coordinate of the target residue.
 
         Args:
-            structure: The core Structure object containing coordinate data.
+            resolver: The CoordinateResolver instance for the scene.
 
         Returns:
             A NumPy array of shape [1, 3] containing the (X, Y, Z) coordinates
-            of the target point, or None if the coordinate cannot be resolved.
+            of the target point.
+
+        Raises:
+            CoordinateCalculationError: If the coordinate cannot be resolved.
+            TargetResidueNotFoundError: If the target residue is not found.
         """
         target_res = self.target_coordinate
-        point = structure.get_coordinate_at_residue(target_res)
-
-        if point is None:
-            raise TargetResidueNotFoundError(structure, target_res)
-
+        # Delegate resolution to the resolver
+        point = resolver.resolve(target_res)
+        # Resolver handles errors, so point should be valid if no exception was raised
         return np.array([point])

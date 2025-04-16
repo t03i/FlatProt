@@ -7,14 +7,15 @@ import numpy as np
 from pydantic import Field
 from pydantic_extra_types.color import Color
 
-from flatprot.core import ResidueCoordinate, Structure, TargetResidueNotFoundError
+from flatprot.core import ResidueCoordinate
 
 # Import base classes from the same directory
 from .base_annotation import (
     BaseAnnotationElement,
     BaseAnnotationStyle,
 )
-from ..base_element import SceneGroupType  # Need SceneGroupType for parent hint
+from ..base_element import SceneGroupType
+from ..resolver import CoordinateResolver
 
 
 # --- Line Annotation Specific Style ---
@@ -114,28 +115,27 @@ class LineAnnotation(BaseAnnotationElement[LineAnnotationStyle]):
         """Provides the default style for LineAnnotation elements."""
         return LineAnnotationStyle()
 
-    def get_coordinates(self, structure: Structure) -> Optional[np.ndarray]:
+    def get_coordinates(self, resolver: CoordinateResolver) -> np.ndarray:
         """Calculate the start and end coordinates for the line annotation.
 
-        Retrieves the 3D coordinates of the two target residues from the provided structure.
+        Uses the CoordinateResolver to find the rendered coordinates of the two target residues.
 
         Args:
-            structure: The core Structure object containing coordinate data.
+            resolver: The CoordinateResolver instance for the scene.
 
         Returns:
             A NumPy array of shape [2, 3] containing the (X, Y, Z) coordinates
-            of the start and end points, or None if either coordinate cannot be resolved.
+            of the start and end points.
+
+        Raises:
+            CoordinateCalculationError: If coordinates cannot be resolved.
+            TargetResidueNotFoundError: If a target residue is not found.
         """
         start_res = self.start_coordinate
         end_res = self.end_coordinate
 
-        start_point = structure.get_coordinate_at_residue(start_res)
-        end_point = structure.get_coordinate_at_residue(end_res)
-
-        if start_point is None:
-            raise TargetResidueNotFoundError(structure, start_res)
-        if end_point is None:
-            raise TargetResidueNotFoundError(structure, end_res)
+        start_point = resolver.resolve(start_res)
+        end_point = resolver.resolve(end_res)
 
         # Return as a [2, 3] array
         return np.array([start_point, end_point])
