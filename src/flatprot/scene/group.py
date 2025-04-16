@@ -1,9 +1,54 @@
 # Copyright 2025 Tobias Olenyi.
 # SPDX-License-Identifier: Apache-2.0
 
-from typing import List, Optional, Dict, Any
+from typing import List, Optional, Tuple
+from pydantic import BaseModel
 from flatprot.core import ResidueRangeSet, ResidueRange, Structure
 from .base_element import BaseSceneElement, BaseSceneStyle
+
+
+class GroupTransform(BaseModel):
+    """Transform specific to SceneGroup elements."""
+
+    translate: Optional[Tuple[float, Optional[float]]] = None
+    scale: Optional[Tuple[float, Optional[float]]] = None
+    rotate: Optional[Tuple[float, Optional[Tuple[float, float]]]] = None
+    skewX: Optional[float] = None
+    skewY: Optional[float] = None
+
+    def __str__(self) -> str:
+        """Return a string representation of the transform for SVG.
+
+        Returns:
+            A string with all non-None transforms concatenated.
+        """
+        parts = []
+
+        if self.translate is not None:
+            x = self.translate[0]
+            y_part = f" {self.translate[1]}" if self.translate[1] is not None else ""
+            parts.append(f"translate({x} {y_part})")
+
+        if self.scale is not None:
+            x = self.scale[0]
+            y_part = f" {self.scale[1]}" if self.scale[1] is not None else ""
+            parts.append(f"scale({x} {y_part})")
+
+        if self.rotate is not None:
+            angle = self.rotate[0]
+            if self.rotate[1] is not None:  # Check if center point is provided
+                cx, cy = self.rotate[1]
+                parts.append(f"rotate({angle} {cx} {cy})")
+            else:
+                parts.append(f"rotate({angle})")
+
+        if self.skewX is not None:
+            parts.append(f"skewX({self.skewX})")
+
+        if self.skewY is not None:
+            parts.append(f"skewY({self.skewY})")
+
+        return " ".join(parts)
 
 
 class GroupStyle(BaseSceneStyle):
@@ -26,7 +71,7 @@ class SceneGroup(BaseSceneElement[GroupStyle]):
         self,
         id: str,
         children: Optional[List[BaseSceneElement]] = None,
-        transforms: Optional[Dict[str, Any]] = None,
+        transforms: Optional[GroupTransform] = None,
         style: Optional[GroupStyle] = None,
         parent: Optional["SceneGroup"] = None,  # Type hint refers to its own class
     ):
@@ -41,7 +86,7 @@ class SceneGroup(BaseSceneElement[GroupStyle]):
             parent: The parent SceneGroup in the scene graph, if any.
         """
         self._children: List[BaseSceneElement] = []
-        self.transforms: Dict[str, Any] = transforms or {}
+        self.transforms: GroupTransform = transforms or GroupTransform()
 
         # Initialize BaseSceneElement with an empty or calculated range set
         # The range set will be updated as children are added/removed.

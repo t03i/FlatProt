@@ -170,12 +170,7 @@ class SVGRenderer:
         if not isinstance(element, SceneGroup):
             return  # Only process groups
 
-        # Create corresponding SVG group
-        # TODO: Map SceneGroup transforms to SVG transforms (e.g., 'translate(x,y)')
-        # This requires defining how transforms are stored in SceneGroup. Assuming a dict for now.
-        svg_transform_str = " ".join(
-            [f"{k}({v})" for k, v in element.transforms.items()]
-        )
+        svg_transform_str = str(element.transforms)
         current_svg_group = Group(id=element.id, transform=svg_transform_str)
         svg_group_map[element.id] = current_svg_group
         parent_svg_group.append(current_svg_group)
