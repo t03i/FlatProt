@@ -16,49 +16,63 @@ from flatprot.core.types import ResidueType
 
 
 def calculate_inertia_transformation_matrix(
-    coordinates: np.ndarray, weights: np.ndarray, use_lsq: bool = True
+    coordinates: np.ndarray, weights: np.ndarray
 ) -> TransformationMatrix:
-    """Calculate transformation matrix for optimal molecular orientation.
+    """
+    Calculate transformation matrix for optimal molecular orientation,
+    returning components compatible with standard (R @ X) + T application.
 
-    Implements the X-PLOR/CNS orient command algorithm:
-    1. Translates geometric center/center of mass to origin
-    2. Determines rotation either via Kabsch algorithm
-
-    The transformation follows r' = R*r + T where:
-    - r' is the oriented coordinate set
-    - R is the rotation matrix
-    - r is the original coordinates
-    - T is the translation vector
+    The transformation aligns the principal axes with the coordinate axes
+    and moves the center of mass/geometry C to the origin.
+    This function calculates R_inertia and C, then returns R_standard = R_inertia
+    and T_standard = -(R_inertia @ C).
 
     Args:
         coordinates: Nx3 array of atomic coordinates
         weights: N-length array of weights for each coordinate
+
+    Returns:
+        TransformationMatrix with rotation = R_inertia and translation = -(R_inertia @ C)
     """
-    # Calculate center (weighted or geometric)
+    # Calculate center (weighted or geometric) C
     if np.allclose(weights, weights[0]):  # All weights equal -> geometric center
-        translation = np.mean(coordinates, axis=0)
+        center_C = np.mean(coordinates, axis=0)
     else:  # Weighted center of mass
         total_weight = np.sum(weights)
-        translation = (
-            np.sum(coordinates * weights[:, np.newaxis], axis=0) / total_weight
-        )
+        if total_weight == 0:
+            center_C = np.mean(coordinates, axis=0)  # Fallback for zero weights
+        else:
+            center_C = (
+                np.sum(coordinates * weights[:, np.newaxis], axis=0) / total_weight
+            )
 
-    # Center coordinates
-    centered = coordinates - translation
+    # Center coordinates for inertia tensor calculation
+    centered_coords = coordinates - center_C
 
     # Principal axis method using inertia tensor
     inertia_tensor = np.zeros((3, 3))
-    for coord, weight in zip(centered, weights):
+    for coord, weight in zip(centered_coords, weights):
         r_squared = np.sum(coord * coord)
         inertia_tensor += weight * (r_squared * np.eye(3) - np.outer(coord, coord))
 
-    eigenvalues, eigenvectors = np.linalg.eigh(inertia_tensor)
-    rotation = eigenvectors
+    _, eigenvectors = np.linalg.eigh(inertia_tensor)
+    # Rotation matrix (R_inertia) is composed of the eigenvectors
+    rotation_R_inertia = eigenvectors
 
-    if np.linalg.det(rotation) < 0:
-        rotation[:, 2] *= -1
+    # Ensure a right-handed coordinate system
+    if np.linalg.det(rotation_R_inertia) < 0:
+        rotation_R_inertia[:, 2] *= -1
 
-    return TransformationMatrix(rotation=rotation, translation=translation)
+    # Calculate the standard translation T = -(R_inertia @ C)
+    # Ensure C is treated as a column vector for matmul
+    center_C_col = center_C.reshape(-1, 1)
+    translation_T_standard_col = -(rotation_R_inertia @ center_C_col)
+    translation_T_standard = translation_T_standard_col.flatten()  # Back to (3,)
+
+    # Return the matrix with components for standard application
+    return TransformationMatrix(
+        rotation=rotation_R_inertia, translation=translation_T_standard
+    )
 
 
 @dataclass
@@ -66,7 +80,7 @@ class InertiaTransformationParameters(BaseTransformationParameters):
     """Parameters for inertia-based projection calculation."""
 
     residue_weights: dict[ResidueType, float]  # Maps residue type to weight
-    use_weights: bool = True
+    use_weights: bool = False
 
     @classmethod
     def default(cls) -> "InertiaTransformationParameters":

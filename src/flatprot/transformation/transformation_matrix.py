@@ -20,9 +20,7 @@ class TransformationMatrix:
         if self.translation.shape != (3,):
             raise ValueError("Translation vector must have shape (3,)")
 
-    def combined_rotation(
-        self, other: "TransformationMatrix"
-    ) -> "TransformationMatrix":
+    def before(self, other: "TransformationMatrix") -> "TransformationMatrix":
         """Combine two transformation matrices by first applying self, then other.
 
         The combined transformation T = T2 ∘ T1 is:
@@ -32,6 +30,18 @@ class TransformationMatrix:
         return TransformationMatrix(
             rotation=other.rotation @ self.rotation,
             translation=other.rotation @ self.translation + other.translation,
+        )
+
+    def after(self, other: "TransformationMatrix") -> "TransformationMatrix":
+        """Combine two transformation matrices by first applying other, then self.
+
+        The combined transformation T = T1 ∘ T2 is:
+        rotation = R1 @ R2
+        translation = R1 @ t2 + t1
+        """
+        return TransformationMatrix(
+            rotation=self.rotation @ other.rotation,
+            translation=self.rotation @ other.translation + self.translation,
         )
 
     def to_array(self) -> np.ndarray:
@@ -70,20 +80,25 @@ class TransformationMatrix:
         return cls.from_array(arr)
 
     def apply(self, coordinates: np.ndarray) -> np.ndarray:
-        """Apply transformation matrix to coordinates.
+        """
+        Apply the transformation matrix using the standard (R @ X) + T convention.
 
         Args:
-            coordinates: Array of shape (N, 3) containing 3D coordinates
-            transformation: TransformationMatrix co ntaining rotation and translation
+            coordinates: Array of shape (N, 3) containing 3D coordinates.
 
         Returns:
-            Array of shape (N, 3) containing transformed coordinates
+            Array of shape (N, 3) containing transformed coordinates.
         """
+        if not isinstance(coordinates, np.ndarray):
+            raise TypeError("Input coordinates must be a numpy array.")
+        if coordinates.ndim != 2 or coordinates.shape[1] != 3:
+            raise ValueError(
+                f"Input coordinates must have shape (N, 3), got {coordinates.shape}"
+            )
+        if coordinates.size == 0:
+            return coordinates  # Return empty array if input is empty
 
-        assert coordinates.shape[1] == 3, "Coordinates must have shape (N, 3)"
-
-        # First center by subtracting translation
-        centered = coordinates - self.translation
-        # Then apply rotation
-        rotated = (self.rotation @ centered.T).T
-        return rotated
+        # Standard application: Rotate around origin, then translate
+        rotated = (self.rotation @ coordinates.T).T
+        transformed = rotated + self.translation
+        return transformed

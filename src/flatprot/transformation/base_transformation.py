@@ -79,7 +79,7 @@ class BaseTransformation(ABC, Generic[P, A]):
         self,
         coordinates: np.ndarray,
     ) -> np.ndarray:
-        """Apply cached transformation to coordinates."""
+        """Applies the standard transformation: (R @ X) + T."""
         return self._cached_transformation.apply(coordinates)
 
     def save(self, path: Path) -> None:

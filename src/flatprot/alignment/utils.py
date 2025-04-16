@@ -52,9 +52,9 @@ def get_aligned_rotation_database(
 
         db_entry = db.get_by_entry_id(db_id)
 
-    return alignment.rotation_matrix.combined_rotation(
-        db_entry.rotation_matrix
-    ), db_entry
+    alignment_rotation = alignment.rotation_matrix
+    db_rotation = db_entry.rotation_matrix
+    return alignment_rotation.before(db_rotation), db_entry
 
 
 def align_structure_database(

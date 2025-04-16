@@ -23,7 +23,10 @@ def sample_coordinates() -> np.ndarray:
 
 @pytest.fixture
 def sample_transformation() -> Tuple[TransformationMatrix, np.ndarray]:
-    """Provide a sample transformation matrix and expected transformed coordinates."""
+    """
+    Provide a sample transformation matrix and expected transformed coordinates
+    using the standard (R @ X) + T convention.
+    """
     rotation = np.array(
         [
             [0, -1, 0],  # 90-degree rotation around z-axis
@@ -36,25 +39,26 @@ def sample_transformation() -> Tuple[TransformationMatrix, np.ndarray]:
         rotation=rotation, translation=translation
     )
 
-    # Expected results after transformation using r' = R @ (r - T)
-    # R = [[0, -1, 0], [1, 0, 0], [0, 0, 1]]
-    # T = [1, 2, 3]
-    # coords = [[1,0,0], [0,1,0], [1,1,1]]
+    # Original coordinates:
+    # X = [[1, 0, 0],
+    #      [0, 1, 0],
+    #      [1, 1, 1]]
 
+    # Expected results after standard transformation: (R @ X.T).T + T
     # Point 1: r = [1, 0, 0]
-    #   r - T = [1-1, 0-2, 0-3] = [0, -2, -3]
-    #   R @ (r - T) = [2, 0, -3]
+    #   R @ r = [0, 1, 0]
+    #   (R @ r) + T = [0+1, 1+2, 0+3] = [1, 3, 3]
     # Point 2: r = [0, 1, 0]
-    #   r - T = [0-1, 1-2, 0-3] = [-1, -1, -3]
-    #   R @ (r - T) = [1, -1, -3]
+    #   R @ r = [-1, 0, 0]
+    #   (R @ r) + T = [-1+1, 0+2, 0+3] = [0, 2, 3]
     # Point 3: r = [1, 1, 1]
-    #   r - T = [1-1, 1-2, 1-3] = [0, -1, -2]
-    #   R @ (r - T) = [1, 0, -2]
+    #   R @ r = [-1, 1, 1]
+    #   (R @ r) + T = [-1+1, 1+2, 1+3] = [0, 3, 4]
     expected_coords = np.array(
         [
-            [2.0, 0.0, -3.0],
-            [1.0, -1.0, -3.0],
-            [1.0, 0.0, -2.0],
+            [1.0, 3.0, 3.0],
+            [0.0, 2.0, 3.0],
+            [0.0, 3.0, 4.0],
         ]
     )
 
