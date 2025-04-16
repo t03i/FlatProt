@@ -3,10 +3,11 @@
 
 from typing import Optional, List, Tuple
 
+import numpy as np
 from pydantic import Field
 from pydantic_extra_types.color import Color
 
-from flatprot.core import ResidueCoordinate
+from flatprot.core import ResidueCoordinate, Structure, TargetResidueNotFoundError
 
 # Import base classes from the same directory
 from .base_annotation import (
@@ -112,3 +113,29 @@ class LineAnnotation(BaseAnnotationElement[LineAnnotationStyle]):
     def default_style(self) -> LineAnnotationStyle:
         """Provides the default style for LineAnnotation elements."""
         return LineAnnotationStyle()
+
+    def get_coordinates(self, structure: Structure) -> Optional[np.ndarray]:
+        """Calculate the start and end coordinates for the line annotation.
+
+        Retrieves the 3D coordinates of the two target residues from the provided structure.
+
+        Args:
+            structure: The core Structure object containing coordinate data.
+
+        Returns:
+            A NumPy array of shape [2, 3] containing the (X, Y, Z) coordinates
+            of the start and end points, or None if either coordinate cannot be resolved.
+        """
+        start_res = self.start_coordinate
+        end_res = self.end_coordinate
+
+        start_point = structure.get_coordinate_at_residue(start_res)
+        end_point = structure.get_coordinate_at_residue(end_res)
+
+        if start_point is None:
+            raise TargetResidueNotFoundError(structure, start_res)
+        if end_point is None:
+            raise TargetResidueNotFoundError(structure, end_res)
+
+        # Return as a [2, 3] array
+        return np.array([start_point, end_point])

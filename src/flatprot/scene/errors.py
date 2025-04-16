@@ -58,12 +58,6 @@ class InvalidSceneOperationError(SceneError, ValueError):  # Inherit ValueError
     pass
 
 
-class CoordinateCalculationError(SceneError):
-    """Raised when calculation of display coordinates fails (e.g., insufficient points)."""
-
-    pass
-
-
 class SceneCreationError(SceneError):
     """Raised when creation of a scene fails."""
 

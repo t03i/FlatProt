@@ -10,9 +10,10 @@ from flatprot.core import (
     ResidueRangeSet,
     SecondaryStructureType,
     logger,
+    CoordinateCalculationError,
 )
 from flatprot.scene import Scene, SceneGroup
-from flatprot.scene import CoordinateCalculationError, SceneCreationError
+from flatprot.scene import SceneCreationError
 
 # Import specific annotation types
 from flatprot.scene import (

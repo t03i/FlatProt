@@ -9,7 +9,7 @@ import subprocess
 
 from cyclopts import Parameter, validators
 
-from flatprot.core.error import FlatProtError
+from flatprot.core.errors import FlatProtError
 from flatprot.cli.errors import error_handler
 
 from flatprot.io import validate_structure_file

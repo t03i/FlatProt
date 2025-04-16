@@ -7,13 +7,17 @@ import numpy as np
 from pydantic import Field
 from pydantic_extra_types.color import Color
 
-from flatprot.core import ResidueRangeSet, ResidueCoordinate, Structure
+from flatprot.core import (
+    ResidueRangeSet,
+    ResidueCoordinate,
+    Structure,
+    CoordinateCalculationError,
+)
 from ..base_element import SceneGroupType
 from .base_structure import (
     BaseStructureSceneElement,
     BaseStructureStyle,
 )
-from ..errors import CoordinateCalculationError
 
 
 # --- Sheet Specific Style ---

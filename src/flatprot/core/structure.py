@@ -425,3 +425,33 @@ class Structure:
                 )
 
         return Structure(new_chains, id=self.id)
+
+    def get_coordinate_at_residue(
+        self, residue: ResidueCoordinate
+    ) -> Optional[np.ndarray]:
+        """Get the 3D coordinate for a specific residue.
+
+        Args:
+            residue: The residue coordinate to query.
+
+        Returns:
+            A NumPy array of coordinates (shape [3]) representing the residue's
+            position (X, Y, Z), or None if the residue is not found.
+        """
+        chain = self.__chains.get(residue.chain_id)
+        if chain is None:
+            return None
+
+        # Use the Chain's __contains__ and __getitem__ for residue lookup
+        if residue.residue_index in chain:
+            target_residue_coord = chain[residue.residue_index]
+            # Access the coordinates using the coordinate_index stored in ResidueCoordinate
+            # Ensure the chain has coordinates and the index is valid
+            if (
+                chain.coordinates is not None
+                and 0 <= target_residue_coord.coordinate_index < len(chain.coordinates)
+            ):
+                return chain.coordinates[target_residue_coord.coordinate_index]
+
+        # Residue index not found in chain or coordinate index invalid
+        return None

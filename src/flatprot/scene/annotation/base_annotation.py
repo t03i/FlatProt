@@ -129,6 +129,7 @@ class BaseAnnotationElement(
         """Check if this annotation targets specific coordinates rather than a range set."""
         return self._target_coordinates is not None
 
+    @abstractmethod
     def get_coordinates(self, structure: Structure) -> Optional[np.ndarray]:
         """Return the anchor coordinates for this annotation.
 

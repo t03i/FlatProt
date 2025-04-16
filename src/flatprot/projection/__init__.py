@@ -3,7 +3,7 @@
 
 from .orthographic import OrthographicProjection, OrthographicProjectionParameters
 from .base import BaseProjection, BaseProjectionParameters
-from flatprot.core.error import FlatProtError
+from flatprot.core.errors import FlatProtError
 
 __all__ = [
     "OrthographicProjection",

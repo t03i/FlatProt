@@ -4,8 +4,11 @@
 from typing import List, Optional, Iterator, Generator, Set, Tuple, Dict
 import numpy as np
 
-from flatprot.core import Structure, ResidueCoordinate, ResidueRange
-from flatprot.core.logger import logger
+from flatprot.core import (
+    Structure,
+    logger,
+    CoordinateCalculationError,
+)
 
 from .base_element import BaseSceneElement
 from .annotation import BaseAnnotationElement
@@ -23,7 +26,6 @@ from .errors import (
     CircularDependencyError,
     SceneGraphInconsistencyError,
     InvalidSceneOperationError,
-    CoordinateCalculationError,
 )
 
 
@@ -370,180 +372,68 @@ class Scene:
                 ]
                 nodes_to_visit.extend(children_to_add)
 
-    def get_elements_at(self, coord: ResidueCoordinate) -> List[BaseSceneElement]:
-        """Find all scene elements that contain the given ResidueCoordinate.
-
-        Traverses the scene graph and checks the residue range set of each element.
-
-        Args:
-            coord: The ResidueCoordinate to query.
-
-        Returns:
-            A list of matching SceneElements.
-        """
-        matching_elements: List[BaseSceneElement] = []
-        for element, _ in self.traverse():
-            if (
-                isinstance(element, BaseStructureSceneElement)
-                and element.residue_range_set
-                and coord in element.residue_range_set
-            ):
-                matching_elements.append(element)
-        return matching_elements
-
-    def get_elements_overlapping(
-        self, query_range: ResidueRange
-    ) -> List[BaseSceneElement]:
-        """Find all scene elements whose residue range overlaps with the given range.
-
-        Traverses the scene graph and checks for overlap between the element's
-        residue range set and the query range.
-
-        Args:
-            query_range: The ResidueRange to query for overlap.
-
-        Returns:
-            A list of matching SceneElements.
-        """
-        matching_elements: List[BaseSceneElement] = []
-        for element, _ in self.traverse():  # Depth doesn't matter here
-            if not element.residue_range_set:
-                continue
-
-            # Check for overlap: element's range set must contain at least one
-            # range that overlaps with the query_range on the same chain.
-            for element_range in element.residue_range_set.ranges:
-                if element_range.chain_id == query_range.chain_id:
-                    # Check for overlap condition (standard interval overlap check)
-                    if not (
-                        element_range.end < query_range.start
-                        or element_range.start > query_range.end
-                    ):
-                        matching_elements.append(element)
-                        break  # Found overlap for this element, no need to check its other ranges
-        return matching_elements
-
     def get_rendered_coordinates_for_annotation(
         self, annotation: BaseAnnotationElement
     ) -> np.ndarray:
-        """Calculate the rendered 2D+Depth coordinates for an annotation's targets.
+        """Get the renderable coordinates for an annotation by delegating to it.
 
-        Finds the structure elements containing the annotation's target residue(s)
-        and asks those elements for the specific projected 2D+Depth coordinates.
+        Calls the annotation's own `get_coordinates` method.
 
         Args:
             annotation: The annotation element.
 
         Returns:
-            A numpy array of coordinates [N, 3] (X, Y, Depth).
+            A numpy array of coordinates [N, 3] (X, Y, Z) suitable for rendering.
 
         Raises:
-            ValueError: If the annotation lacks necessary target information
-                        (e.g., no coordinates or no range set when expected).
-            CoordinateCalculationError: If rendered coordinates cannot be determined
-                                        for one or more target residues, or if no
-                                        structure elements cover the targets.
-            Exception: Can re-raise exceptions from underlying element methods.
+            CoordinateCalculationError: If the annotation fails to calculate its coordinates
+                                        (e.g., target residues not found, insufficient points).
+            Exception: Can re-raise other exceptions from the annotation's method.
         """
-        rendered_coords_list = []
-
         try:
-            if annotation.targets_specific_coordinates:
-                if annotation.target_coordinates is None:
-                    # Raise ValueError if essential info is missing
-                    raise ValueError(
-                        f"Annotation '{annotation.id}' targets specific coordinates but has none provided."
-                    )
-                target_residues = annotation.target_coordinates
+            # Delegate coordinate calculation directly to the annotation object
+            rendered_coords = annotation.get_coordinates(self.structure)
 
-                for res_coord in target_residues:
-                    containing_elements = self.get_elements_at(res_coord)
-                    structure_element: Optional[BaseStructureSceneElement] = None
-                    for elem in containing_elements:
-                        if isinstance(elem, BaseStructureSceneElement):
-                            structure_element = elem
-                            break
+            if (
+                not isinstance(rendered_coords, np.ndarray)
+                or rendered_coords.ndim != 2
+                or rendered_coords.shape[1] != 3
+            ):
+                logger.error(
+                    f"Annotation '{annotation.id}' returned invalid coordinate array shape: {rendered_coords.shape if isinstance(rendered_coords, np.ndarray) else type(rendered_coords)}"
+                )
+                raise CoordinateCalculationError(
+                    f"Annotation '{annotation.id}' returned invalid coordinate array shape."
+                )
 
-                    if structure_element:
-                        rendered_coord = structure_element.get_coordinate_at_residue(
-                            res_coord, self.structure
-                        )
-                        if rendered_coord is not None:
-                            # For Point/Line annotations, *every* target coordinate must resolve.
-                            if rendered_coord is None:
-                                raise CoordinateCalculationError(
-                                    f"Could not resolve specific target coordinate {res_coord} "
-                                    f"using element '{structure_element.id}' for annotation '{annotation.id}'."
-                                )
-                            rendered_coords_list.append(rendered_coord)
-                        else:
-                            # Raise specific error if coordinate could not be calculated by the element
-                            raise CoordinateCalculationError(
-                                f"Could not get rendered coord for {res_coord} "
-                                f"from element '{structure_element.id}' for annotation '{annotation.id}'"
-                            )
-                    else:
-                        # Raise specific error if no structure covers this target
-                        raise CoordinateCalculationError(
-                            f"No structure element found containing target residue {res_coord} "
-                            f"for annotation '{annotation.id}'"
-                        )
+            if rendered_coords.size == 0:
+                logger.warning(
+                    f"Annotation '{annotation.id}' returned empty coordinate array."
+                )
+                raise CoordinateCalculationError(
+                    f"Annotation '{annotation.id}' returned empty coordinate array."
+                )
 
-            else:  # Targets a ResidueRangeSet
-                if annotation.residue_range_set is None:
-                    # Raise ValueError if essential info is missing
-                    raise ValueError(
-                        f"Annotation '{annotation.id}' targets ranges but has no range set provided."
-                    )
+            return rendered_coords
 
-                found_any_coord = False
-                for res_coord in annotation.residue_range_set:
-                    containing_elements = self.get_elements_at(res_coord)
-                    structure_element: Optional[BaseStructureSceneElement] = None
-                    for elem in containing_elements:
-                        if isinstance(elem, BaseStructureSceneElement):
-                            structure_element = elem
-                            break
-
-                    if structure_element:
-                        rendered_coord = structure_element.get_coordinate_at_residue(
-                            res_coord, self.structure
-                        )
-                        if rendered_coord is not None:
-                            rendered_coords_list.append(rendered_coord)
-                            found_any_coord = True
-                        else:
-                            raise CoordinateCalculationError(
-                                f"Could not get rendered coord for {res_coord} "
-                                f"from element '{structure_element.id}' for annotation '{annotation.id}'"
-                            )
-                    else:
-                        logger.debug(
-                            f"No structure element found containing {res_coord} "
-                            f"for range annotation '{annotation.id}' (skipping point)."
-                        )
-
-                if not found_any_coord:
-                    # Raise error only if *no* coordinates could be found for the entire range
-                    raise CoordinateCalculationError(
-                        f"No rendered coordinates found for any residue in the range set "
-                        f"of annotation '{annotation.id}'."
-                    )
-
-        except (ValueError, CoordinateCalculationError):
-            raise  # Re-raise specific known errors directly
-        except Exception as e:
-            # Wrap unexpected exceptions
-            raise CoordinateCalculationError(
-                f"Unexpected error calculating rendered coords for annotation '{annotation.id}': {e}"
-            ) from e
-
-        # If we reach here, the list must contain valid coordinates
-        if not rendered_coords_list:
-            raise CoordinateCalculationError(
-                f"No valid rendered coordinates could be calculated for annotation '{annotation.id}'"
+        except CoordinateCalculationError as e:
+            # Re-raise the specific error from the annotation
+            logger.error(
+                f"Error calculating coordinates for annotation '{annotation.id}': {e}",
+                exc_info=True,
             )
-        return np.array(rendered_coords_list)
+            raise CoordinateCalculationError(
+                f"Failed to get coordinates for annotation '{annotation.id}': {e}"
+            ) from e
+        except Exception as e:
+            # Catch any other unexpected errors from the annotation's method
+            logger.error(
+                f"Unexpected error in get_coordinates for annotation '{annotation.id}': {e}",
+                exc_info=True,
+            )
+            raise SceneError(
+                f"Unexpected error getting coordinates for annotation '{annotation.id}': {e}"
+            ) from e  # Wrap in a generic SceneError or re-raise
 
     def get_all_elements(self) -> List[BaseSceneElement]:
         """Returns a flat list of all elements in the scene graph.

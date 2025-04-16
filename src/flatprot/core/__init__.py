@@ -1,7 +1,6 @@
 # Copyright 2024 Rostlab.
 # SPDX-License-Identifier: Apache-2.0
 
-from .error import FlatProtError, CoordinateError
 from .types import (
     ResidueType,
     SecondaryStructureType,
@@ -18,11 +17,18 @@ from .structure import (
     Structure,
 )
 
+from .errors import (
+    FlatProtError,
+    CoordinateError,
+    TargetResidueNotFoundError,
+)
+
 from .logger import logger
 
 __all__ = [
     "FlatProtError",
     "CoordinateError",
+    "TargetResidueNotFoundError",
     "ResidueType",
     "ResidueCoordinate",
     "ResidueRange",

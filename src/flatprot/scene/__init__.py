@@ -25,7 +25,6 @@ from .annotation import (
     AreaAnnotationStyle,
 )
 from .errors import (
-    CoordinateCalculationError,
     SceneCreationError,
     SceneAnnotationError,
     ElementNotFoundError,

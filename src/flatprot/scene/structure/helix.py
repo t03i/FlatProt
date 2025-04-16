@@ -7,8 +7,12 @@ import numpy as np
 from pydantic import Field
 from pydantic_extra_types.color import Color
 
-from flatprot.core import ResidueRangeSet, ResidueCoordinate, Structure
-from ..errors import CoordinateCalculationError
+from flatprot.core import (
+    ResidueRangeSet,
+    ResidueCoordinate,
+    Structure,
+    CoordinateCalculationError,
+)
 from ..base_element import SceneGroupType
 
 # Assuming base_structure lives directly in scene/structure now

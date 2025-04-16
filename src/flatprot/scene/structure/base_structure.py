@@ -8,10 +8,13 @@ import numpy as np
 from pydantic import Field
 from pydantic_extra_types.color import Color
 
-from flatprot.core.coordinates import ResidueRangeSet, ResidueCoordinate
-from flatprot.core.structure import Structure
-from flatprot.core.logger import logger
-from ..errors import CoordinateCalculationError
+from flatprot.core import (
+    ResidueRangeSet,
+    ResidueCoordinate,
+    Structure,
+    CoordinateCalculationError,
+    logger,
+)
 
 # Note: Adjusted import path assuming base.py is in the same directory or parent
 from ..base_element import BaseSceneElement, BaseSceneStyle, SceneGroupType
