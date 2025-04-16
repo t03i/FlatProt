@@ -70,6 +70,11 @@ def download_pdb_file(
     Returns:
         Dict with status information for Snakemake reporting
     """
+    logger.info(f"Attempting download for PDB ID: {pdb_id}")
+    logger.info(f"Output file: {output_file}")
+    logger.info(f"Status file: {status_file}")
+    logger.info(f"Retry count: {retry_count}, Timeout: {timeout}")
+
     pdb_id = pdb_id.lower()
     middle_chars = get_middle_chars(pdb_id)
     output_path = Path(output_file)
@@ -89,6 +94,7 @@ def download_pdb_file(
         try:
             # Format URL with PDB ID and middle characters
             formatted_url = url.format(pdb_id=pdb_id, middle_chars=middle_chars)
+            logger.info(f"Trying URL ({format}): {formatted_url}")
 
             # Create a new client for each request with the retry transport
             transport = RetryTransport(retry=retry)
@@ -110,24 +116,31 @@ def download_pdb_file(
             if os.path.exists(tmp_file):
                 os.unlink(tmp_file)
 
+            logger.info(
+                f"Successfully downloaded and decompressed from {formatted_url}"
+            )
             downloaded_format = format
             success = True
-            logging.info(f"Successfully downloaded {format} file for {pdb_id}")
             break  # Success, exit the loop
 
         except (httpx.HTTPError, IOError, Exception) as e:
+            logger.warning(f"Attempt failed for URL: {formatted_url}")
             error_msg = f"{type(e).__name__}: {str(e)}"
             error_message = (
                 f"Error downloading {format} file {pdb_id} from {url}: {error_msg}"
             )
-            logging.error(error_message)
+            logger.warning(
+                error_message
+            )  # Log as warning for individual attempt failure
             # Continue to the next URL if available
 
     # If all URLs failed, create an empty file to satisfy Snakemake
     if not success:
+        logger.error(
+            f"All download attempts failed for PDB ID {pdb_id}. Last error: {error_message}"
+        )
         with open(output_file, "w") as f:
             f.write(f"# Failed to download structure for {pdb_id}\n")
-        logging.error(f"All download attempts failed for structure {pdb_id}")
 
     # Write status file with format information as JSON
     status_data = {
