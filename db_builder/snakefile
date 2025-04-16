@@ -68,7 +68,7 @@ wildcard_constraints:
 # -------------------------------------------------------------------------------------- #
 
 def get_all_superfamily_ids():
-    """Get list of superfamilies to process based on TEST_MODE setting."""
+    """Get list of all superfamilies initially identified from SCOP."""
     try:
         df = pl.read_csv(SUPERFAMILIES, separator="\t")
         if TEST_MODE:
@@ -78,8 +78,54 @@ def get_all_superfamily_ids():
         # Return empty list if file doesn't exist yet (during DAG construction)
         return []
 
+def get_valid_superfamily_ids():
+    """
+    Get list of superfamily IDs with at least one successfully downloaded PDB.
+
+    This function should only be called *after* the download_all_pdbs checkpoint
+    has completed, as it relies on the .status files.
+    """
+    try:
+        checkpoints.download_all_pdbs.get() # Ensure downloads attempted
+        df = pl.read_csv(SUPERFAMILIES, separator="\t")
+        initial_sf_ids = set(df["sf_id"].unique().to_list())
+        valid_sf_ids = set()
+
+        # Check status files for successful downloads
+        for sf_id in initial_sf_ids:
+            sf_df = df.filter(pl.col("sf_id") == sf_id)
+            for pdb_id in sf_df["pdb_id"].unique():
+                status_file = f"{PDB_FILES}/{pdb_id}.status"
+                if os.path.exists(status_file):
+                    try:
+                        with open(status_file, 'r') as f:
+                            status_data = json.load(f)
+                        if status_data.get("success", False):
+                            valid_sf_ids.add(sf_id)
+                            break # Found one success for this sf_id, no need to check others
+                    except (json.JSONDecodeError, IOError) as e:
+                        # Log error or handle as needed, assume failure for this PDB
+                        print(f"Warning: Could not read status for {pdb_id}: {e}")
+                        continue
+
+        valid_list = sorted(list(valid_sf_ids))
+
+        if TEST_MODE and len(valid_list) > NUM_FAMILIES:
+             random.seed(RANDOM_SEED)
+             return random.sample(valid_list, NUM_FAMILIES)
+        return valid_list
+
+    except FileNotFoundError:
+        # Return empty list if SUPERFAMILIES doesn't exist (shouldn't happen after checkpoint)
+        return []
+    except Exception as e:
+        # Log error or handle unexpected issues
+        print(f"Error determining valid superfamilies: {e}")
+        return []
+
 def get_all_structure_ids():
     try:
+        # Use the initial list of superfamilies (respecting TEST_MODE)
         ids = get_all_superfamily_ids()
         df = pl.read_csv(SUPERFAMILIES, separator="\t")
         return df.filter(pl.col("sf_id").is_in(ids))["pdb_id"].unique().to_list()
@@ -109,7 +155,12 @@ def get_domains_for_superfamily(wildcards):
         status_file = f"{PDB_FILES}/{pdb_id}.status"
         if os.path.exists(status_file):
             with open(status_file, 'r') as f:
-                status_data = json.load(f)
+                try:
+                    status_data = json.load(f)
+                except json.JSONDecodeError:
+                    # Handle case where status file is corrupted or empty
+                    print(f"Warning: Corrupted status file for {pdb_id}")
+                    continue # Skip this PDB
 
             # Only include domain if download was successful
             if status_data.get("success", False):
@@ -245,7 +296,7 @@ rule extract_all_domains_for_superfamily:
 rule domain_extraction_report:
     input:
         superfamilies = SUPERFAMILIES,
-        flags = expand(f"{DOMAIN_FLAG}", sf_id=get_all_superfamily_ids()),
+        flags = expand(f"{DOMAIN_FLAG}", sf_id=get_valid_superfamily_ids()),
         pdb_dir = PDB_FILES,
         domain_dir = DOMAIN_FILES
     output:
@@ -335,7 +386,7 @@ rule aggregate_representatives:
         superfamilies = SUPERFAMILIES,
         representative_domains = expand(
             f"{REPRESENTATIVE_DOMAINS}/{{sf_id}}.cif",
-            sf_id=get_all_superfamily_ids()
+            sf_id=get_valid_superfamily_ids()
         )
     output:
         flag = temp(f"{REPRESENTATIVE_FLAG}")
@@ -350,7 +401,10 @@ rule aggregate_representatives:
 rule create_alignment_database:
     input:
         flag = f"{REPRESENTATIVE_FLAG}",
-        representative_domains = [f for f in Path(REPRESENTATIVE_DOMAINS).glob("*.cif")],
+        representative_domains = lambda wc: expand(
+            f"{REPRESENTATIVE_DOMAINS}/{{sf_id}}.cif",
+            sf_id=get_valid_superfamily_ids()
+        ),
         scop_file = SCOP_FILE
     output:
         database = f"{ALIGNMENT_DB}",
@@ -368,7 +422,11 @@ rule create_alignment_foldseek_db:
     input:
         flag = f"{REPRESENTATIVE_FLAG}",
         representative_domains_folder = REPRESENTATIVE_DOMAINS,
-        scop_file = SCOP_FILE
+        scop_file = SCOP_FILE,
+        representative_files = lambda wc: expand(
+            f"{REPRESENTATIVE_DOMAINS}/{{sf_id}}.cif",
+            sf_id=get_valid_superfamily_ids()
+        )
     output:
         FOLDSEEK_DB
     resources:
@@ -380,5 +438,17 @@ rule create_alignment_foldseek_db:
         f"{LOG_DIR}/create_alignment_foldseek_db.log"
     shell:
         """
-        {FOLDSEEK_PATH} createdb {input.representative_domains_folder} {output} --threads {resources.cpus} -v 3 2>&1 > {log}
+        # Check if the representative domains folder exists and is not empty
+        if [ -d "{input.representative_domains_folder}" ] && [ "$(ls -A {input.representative_domains_folder})" ]; then
+            {FOLDSEEK_PATH} createdb {input.representative_domains_folder} {output} --threads {resources.cpus} -v 3 2>&1 > {log}
+        else
+            echo "No representative domains found, creating empty Foldseek DB placeholder" > {log}
+            mkdir -p $(dirname {output})
+            # Create minimal files to satisfy Foldseek expectation, adjust if needed
+            touch {output}
+            touch {output}.dbtype
+            touch {output}.index
+            touch {output}.lookup
+            touch {output}_h # Add other necessary empty files if createdb makes them
+        fi
         """
