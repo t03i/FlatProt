@@ -108,14 +108,14 @@ def download_pdb_file(
             proxies_dict = None
             if proxy_url:
                 proxies_dict = {
-                    "http://": proxy_url,
-                    "https://": proxy_url,
+                    "http://": httpx.HTTPTransport(proxy=proxy_url),
+                    "https://": httpx.HTTPTransport(proxy=proxy_url),
                 }
 
             with httpx.Client(
                 transport=transport,
                 timeout=timeout,
-                proxies=proxies_dict,
+                mounts=proxies_dict,
             ) as client:
                 # Download compressed file
                 response = client.get(formatted_url)
