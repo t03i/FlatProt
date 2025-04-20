@@ -6,6 +6,7 @@ from pathlib import Path
 import shutil
 import logging
 from typing import Optional, Tuple
+import sys  # Import sys module
 
 from snakemake.script import snakemake
 
@@ -104,22 +105,44 @@ def main() -> None:
     # Read the single alignment file
     alignment = read_alignment(alignment_file)
 
+    # Handle potentially empty alignment file
+    if alignment.is_empty():
+        logger.warning(
+            f"Alignment file {alignment_file} is empty or failed to read. Cannot select representative."
+        )
+        # Optionally create an empty output file to satisfy Snakemake
+        # output_file.touch()
+        # Exit gracefully or let Snakemake handle the missing output
+        # Depending on pipeline design, exiting might be better
+        # For now, we log and proceed, db_create will handle missing files
+        return  # Exit the function
+
     # Find the best representative
     best_domain = find_best_representative(alignment)
 
     if best_domain:
         domain_name, score = best_domain
+        # Correctly reference the domain file using the full name from alignment
+        # Assuming domain_name in alignment file is like 'pdbid_chain_start_end'
         source_file = domain_dir / f"{domain_name}.cif"
         if source_file.exists():
             # Copy the best domain file to the output location
             shutil.copy(source_file, output_file)
             logging.info(
-                f"Selected {domain_name} as representative domain (score: {score})"
+                f"Selected {domain_name}.cif as representative domain (score: {score:.4f})"
             )
         else:
-            logging.error(f"Best domain file {domain_name} not found in {domain_dir}")
+            logging.error(
+                f"Best domain file {source_file} not found in {domain_dir}. This indicates an upstream issue."
+            )
+            # Exit with an error code so Snakemake knows this step failed
+            sys.exit(1)
     else:
-        logging.warning("No valid domains found in alignment")
+        logging.warning(
+            f"No best representative domain found in {alignment_file}. No output generated."
+        )
+        # Decide if an empty output should be touched or if the rule should fail.
+        # Let's let it fail by not creating the output if no representative is found.
 
 
 if __name__ == "__main__":
