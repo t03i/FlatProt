@@ -252,17 +252,13 @@ def create_alignment_database(
                         failed_entries += 1
                         continue
 
-                    # Get metadata for this specific SF ID, if available
-                    specific_sf_meta = sf_metadata.get(
-                        sf_id, {}
-                    )  # Returns empty dict if not found
+                    logger.info(f"Adding entry for SF ID {sf_id} to database")
 
                     # Create and add entry
                     entry = AlignmentDBEntry(
                         rotation_matrix=transformation,
                         entry_id=entry_id,
                         structure_name=structure_name,
-                        metadata=specific_sf_meta,  # Add the loaded metadata here
                     )
 
                     try:
