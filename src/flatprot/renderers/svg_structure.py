@@ -1,7 +1,7 @@
 # Copyright 2025 Tobias Olenyi.
 # SPDX-License-Identifier: Apache-2.0
 
-from typing import Optional, Dict, Any
+from typing import Optional
 import numpy as np  # Added for type hints
 from drawsvg import Path, Line, Circle
 
@@ -11,7 +11,7 @@ from flatprot.scene import (
     CoilSceneElement,
 )
 
-from flatprot.scene.structure.coil import CoilStyle
+from flatprot.scene.connection import ConnectionStyle
 from flatprot.core.logger import logger
 
 
@@ -138,43 +138,58 @@ def _draw_sheet(element: SheetSceneElement, coords_2d: np.ndarray) -> Optional[P
     return path
 
 
-def _draw_connection(
+def _draw_connection_line(
     start_point: np.ndarray,
     end_point: np.ndarray,
+    style: ConnectionStyle,
     id: Optional[str] = None,
-    style: Optional[Dict[str, Any]] = None,
 ) -> Line:
-    """Creates a drawsvg.Line object for connecting structure elements.
+    """Creates a drawsvg.Line object based on a ConnectionStyle.
 
     Args:
         start_point: The (x, y) coordinates of the line start.
         end_point: The (x, y) coordinates of the line end.
-        style: Optional dictionary of drawsvg style attributes.
-               Defaults derived from CoilStyle will be used if None.
+        style: The ConnectionStyle object defining visual attributes.
+        id: Optional SVG ID for the line.
 
     Returns:
         A drawsvg.Line object.
     """
-    # If no specific style is provided, derive defaults from CoilStyle
-    if style is None:
-        # Use the class attribute directly
-        default_coil_style = CoilStyle()
-        style = {
-            "stroke_width": default_coil_style.stroke_width,
-            "opacity": default_coil_style.opacity,
-            "stroke_linecap": "round",
-            "stroke_linejoin": "round",
-            "stroke": default_coil_style.color.as_hex(),
-        }
+    # Check if points are too close to avoid zero-length lines
+    if np.allclose(start_point, end_point, atol=1e-3):
+        logger.debug(
+            f"Skipping connection line {id}: start and end points are identical."
+        )
+        # Return an empty line or handle as needed, maybe return None? For now, creating zero length.
+        # Returning None might be better if the caller handles it.
+        return Line(
+            sx=start_point[0],
+            sy=start_point[1],
+            ex=start_point[0],
+            ey=start_point[1],
+            stroke="none",
+            stroke_width=0,
+            opacity=0,
+            stroke_linecap="round",
+            stroke_linejoin="round",
+            id=id,
+            class_="connection",
+        )
 
-    # Create a Line object, not a Path
+    dasharray = style.stroke_dasharray
+
     connection_line = Line(
         sx=start_point[0],
         sy=start_point[1],
         ex=end_point[0],
         ey=end_point[1],
+        stroke=style.stroke.as_hex(),
+        stroke_width=style.stroke_width,
+        stroke_dasharray=dasharray,  # Use the dasharray string directly
+        opacity=style.opacity,
+        stroke_linecap="round",  # Consistent styling
+        stroke_linejoin="round",  # Consistent styling
         id=id,
-        **style,
-        class_="connection",
+        class_="connection",  # Add class for potential CSS styling
     )
     return connection_line

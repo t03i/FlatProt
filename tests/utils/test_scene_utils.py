@@ -166,12 +166,12 @@ def test_create_scene_from_structure_success(mocker: MockerFixture) -> None:
 
     # Check elements were added to the scene *with the group as parent*
     add_calls = mock_scene_instance.add_element.call_args_list
-    assert len(add_calls) == 3
+    assert len(add_calls) == 4  # 3 elements + 1 connection
     assert add_calls[0] == mocker.call(mock_group_instance)
-    assert add_calls[1] == mocker.call(
+    assert add_calls[2] == mocker.call(
         mock_sheet_element, parent_id=mock_group_instance.id
     )  # Sheet (10.0) added first
-    assert add_calls[2] == mocker.call(
+    assert add_calls[3] == mocker.call(
         mock_helix_element, parent_id=mock_group_instance.id
     )  # Helix (5.0) added second
 

@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 from .scene import Scene
+from .connection import Connection, ConnectionStyle
 from .base_element import BaseSceneElement, BaseSceneStyle
 from .group import SceneGroup, GroupTransform, GroupStyle
 from .structure import (
@@ -42,6 +43,8 @@ from .resolver import CoordinateResolver
 
 __all__ = [
     "CoordinateResolver",
+    "Connection",
+    "ConnectionStyle",
     "Scene",
     "SceneGroup",
     "GroupTransform",

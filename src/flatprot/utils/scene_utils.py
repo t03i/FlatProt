@@ -14,6 +14,7 @@ from flatprot.core import (
 )
 from flatprot.scene import Scene, SceneGroup
 from flatprot.scene import SceneCreationError
+from flatprot.scene.connection import Connection
 
 # Import specific annotation types
 from flatprot.scene import (
@@ -87,7 +88,7 @@ def create_scene_from_structure(
         logger.debug(f"\t>Adding chain group {chain_group.id} to scene")
 
         elements_with_depth = []
-
+        chain_elements_in_order: List[BaseStructureSceneElement] = []
         for ss_element in chain.secondary_structure:
             ss_type = ss_element.secondary_structure_type
             element_info = STRUCTURE_ELEMENT_MAP.get(ss_type)
@@ -122,6 +123,9 @@ def create_scene_from_structure(
                     )
 
                 elements_with_depth.append((viz_element, depth))
+                chain_elements_in_order.append(
+                    viz_element
+                )  # <-- Add element to ordered list
 
             except CoordinateCalculationError as e:
                 # Log or handle coordinate/depth errors
@@ -137,6 +141,17 @@ def create_scene_from_structure(
 
         # Sort elements by depth (farthest first)
         elements_with_depth.sort(key=lambda x: x[1], reverse=True)
+
+        # Add Connections between adjacent elements in the original structural order
+        for i in range(len(chain_elements_in_order) - 1):
+            element_i = chain_elements_in_order[i]
+            element_i_plus_1 = chain_elements_in_order[i + 1]
+            if element_i.is_adjacent_to(element_i_plus_1):
+                conn = Connection(start_element=element_i, end_element=element_i_plus_1)
+                logger.debug(
+                    f"\t>Adding connection {conn.id} to chain group {chain_group.id}"
+                )
+                scene.add_element(conn, parent_id=chain_group.id)
 
         # Add sorted elements to the chain group
         for element, _ in elements_with_depth:

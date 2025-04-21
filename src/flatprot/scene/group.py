@@ -5,6 +5,7 @@ from typing import List, Optional, Tuple
 from pydantic import BaseModel
 from flatprot.core import ResidueRangeSet, ResidueRange, Structure
 from .base_element import BaseSceneElement, BaseSceneStyle
+from .connection import Connection  # Local import to avoid circularity at module level
 
 
 class GroupTransform(BaseModel):
@@ -91,7 +92,10 @@ class SceneGroup(BaseSceneElement[GroupStyle]):
         # Initialize BaseSceneElement with an empty or calculated range set
         # The range set will be updated as children are added/removed.
         initial_range_set = self._calculate_combined_range_set(children or [])
-        super().__init__(id, initial_range_set, style, parent)
+        # Call BaseSceneElement init: id, style, parent
+        super().__init__(id=id, style=style, parent=parent)
+        # Store the residue range set specific to SceneGroup
+        self.residue_range_set: ResidueRangeSet = initial_range_set
 
         # Add initial children after super().__init__ has run
         if children:
@@ -110,7 +114,12 @@ class SceneGroup(BaseSceneElement[GroupStyle]):
         """Calculates the union of residue ranges from a list of elements."""
         all_ranges: List[ResidueRange] = []
         for element in elements:
-            if element.residue_range_set:
+            # Check if element has residue_range_set and is not a Connection
+            if (
+                hasattr(element, "residue_range_set")
+                and element.residue_range_set
+                and not isinstance(element, Connection)
+            ):
                 all_ranges.extend(element.residue_range_set.ranges)
 
         # Creating a new ResidueRangeSet handles sorting and potentially merging/simplifying ranges

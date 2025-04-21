@@ -19,6 +19,7 @@ from flatprot.scene import (
 )
 from flatprot.utils.scene_utils import STRUCTURE_ELEMENT_MAP
 from flatprot.core import CoordinateCalculationError
+from flatprot.scene.connection import Connection
 
 
 @dataclass
@@ -276,6 +277,32 @@ def create_domain_aware_scene(
     print(
         f"Assigned {elements_added_count} elements to domain groups, skipped {elements_skipped_count}."
     )
+
+    # --- Add Connections Between Structurally Adjacent Elements (Post-Grouping) ---
+    # Connections are added at the top level as they might span groups
+    print("Adding connections between adjacent structure elements...")
+    all_structure_elements = scene.get_sequential_structure_elements()
+    connections_added_count = 0
+    for i in range(len(all_structure_elements) - 1):
+        element_i = all_structure_elements[i]
+        element_i_plus_1 = all_structure_elements[i + 1]
+
+        # Ensure both elements are actually in the scene (might have been skipped)
+        if scene.get_element_by_id(element_i.id) and scene.get_element_by_id(
+            element_i_plus_1.id
+        ):
+            if element_i.is_adjacent_to(element_i_plus_1):
+                try:
+                    conn = Connection(
+                        start_element=element_i, end_element=element_i_plus_1
+                    )
+                    scene.add_element(conn)  # Add connection at the top level
+                    connections_added_count += 1
+                except Exception as e:
+                    print(
+                        f"Failed to add connection between {element_i.id} and {element_i_plus_1.id}: {e}"
+                    )
+    print(f"Added {connections_added_count} connections.")
 
     # --- 3. Calculate Bounding Boxes and Translations ---
     # This part requires the Scene and its Resolver to get coordinates of elements *within* groups

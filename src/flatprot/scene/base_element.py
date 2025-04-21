@@ -131,10 +131,13 @@ class BaseSceneElement(ABC, Generic[StyleType]):
         """Provide a string representation of the scene element."""
         parent_id = f"'{self._parent.id}'" if self._parent else None
         style_source = "default" if self._style is None else "instance"
-        # Ensure residue_range_set is converted to string for representation
-        range_repr = str(self.residue_range_set)
+        # Safely get range representation, default to 'N/A' if not present
+        range_repr = str(getattr(self, "residue_range_set", "N/A"))
+        range_str = f" range='{range_repr}'" if range_repr != "N/A" else ""
+        target_repr = str(getattr(self, "target", "N/A"))
+        target_str = f" target='{target_repr}'" if target_repr != "N/A" else ""
+
         return (
-            f"<{self.__class__.__name__} id='{self.id}' "
-            f"range='{range_repr}' "
+            f"<{self.__class__.__name__} id='{self.id}'{range_str}{target_str} "
             f"parent={parent_id} style_source={style_source}>"
         )

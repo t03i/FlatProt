@@ -75,7 +75,7 @@ class PointAnnotation(BaseAnnotationElement[PointAnnotationStyle]):
     def target_coordinate(self) -> ResidueCoordinate:
         """Get the specific target coordinate for this point annotation."""
         # target_coordinates is guaranteed to be a list with one element by __init__
-        return self._target_coordinates[0]
+        return self.target
 
     @property
     def default_style(self) -> PointAnnotationStyle:

@@ -21,17 +21,15 @@ from flatprot.scene import (
     BaseAnnotationElement,
     BaseStructureSceneElement,
     TargetResidueNotFoundError,
+    Connection,
 )
-from flatprot.core import logger, CoordinateCalculationError
+from flatprot.core import logger, CoordinateCalculationError, Structure
 
 from .svg_structure import (
     _draw_coil,
     _draw_helix,
     _draw_sheet,
-    _calculate_coil_connection_points,
-    _calculate_helix_connection_points,
-    _calculate_sheet_connection_points,
-    _draw_connection,
+    _draw_connection_line,
 )
 from .svg_annotations import (
     _draw_point_annotation,
@@ -46,6 +44,40 @@ from .svg_annotations import (
 
 
 # --- Renderer Class --- #
+
+
+def _draw_connection_element(
+    element: Connection,
+    structure: Structure,
+) -> Optional[Any]:
+    """Retrieves connection points and calls the line drawing function."""
+    try:
+        start_element = element.start_element
+        end_element = element.end_element
+
+        # Get end point of the first element and start point of the second
+        start_point_2d = start_element.get_end_connection_point(structure)
+        end_point_2d = end_element.get_start_connection_point(structure)
+
+        if start_point_2d is not None and end_point_2d is not None:
+            # Call the drawing function from svg_structure
+            return _draw_connection_line(
+                start_point=start_point_2d,
+                end_point=end_point_2d,
+                style=element.style,
+                id=element.id,
+            )
+        else:
+            logger.warning(
+                f"Could not get connection points for Connection {element.id}. "
+                f"Start: {start_point_2d is not None}, End: {end_point_2d is not None}"
+            )
+            return None
+    except Exception as e:
+        logger.error(
+            f"Error drawing Connection element {element.id}: {e}", exc_info=True
+        )
+        return None
 
 
 class SVGRenderer:
@@ -111,10 +143,12 @@ class SVGRenderer:
     ) -> Tuple[
         List[Tuple[float, BaseStructureSceneElement]],
         List[Tuple[float, BaseAnnotationElement]],
+        List[Tuple[float, Connection]],
     ]:
         """Traverses scene, collects renderable leaf nodes, sorts them by Z-depth."""
         structure_elements: List[Tuple[float, BaseStructureSceneElement]] = []
         annotation_elements: List[Tuple[float, BaseAnnotationElement]] = []
+        connection_elements: List[Tuple[float, Connection]] = []
         structure = self.scene.structure  # Get structure once
 
         logger.debug("--- Starting _collect_and_sort_renderables ---")  # DEBUG
@@ -150,6 +184,9 @@ class SVGRenderer:
                 # Depth is inf, but store it for consistency (sorting won't change)
                 logger.debug(f"Collecting Annotation Element: {element.id}")  # DEBUG
                 annotation_elements.append((render_depth, element))
+            elif isinstance(element, Connection):
+                logger.debug(f"Collecting Connection Element: {element.id}")  # DEBUG
+                connection_elements.append((render_depth, element))
             # else: Ignore other potential non-group, non-renderable types
         logger.debug("--- Finished _collect_and_sort_renderables ---")  # DEBUG
 
@@ -157,8 +194,10 @@ class SVGRenderer:
         structure_elements.sort(key=lambda item: item[0])
         # Annotations are naturally last due to depth=inf, but explicit sort doesn't hurt
         annotation_elements.sort(key=lambda item: item[0])
+        # Sort connections by depth (ascending) - based on average of connected elements
+        connection_elements.sort(key=lambda item: item[0])
 
-        return structure_elements, annotation_elements
+        return structure_elements, annotation_elements, connection_elements
 
     def _build_svg_hierarchy(
         self,
@@ -184,16 +223,10 @@ class SVGRenderer:
     ) -> Tuple[
         List[BaseStructureSceneElement],  # Ordered structure elements
         Dict[str, np.ndarray],  # Element ID -> coords_2d
-        Dict[
-            str, Tuple[Optional[np.ndarray], Optional[np.ndarray]]
-        ],  # Element ID -> (start_conn, end_conn)
     ]:
         """Pre-calculates 2D coordinates and connection points for structure elements."""
         # ordered_elements: List[BaseStructureSceneElement] = [] # Keep type hint
         element_coords_cache: Dict[str, np.ndarray] = {}
-        connection_points_cache: Dict[
-            str, Tuple[Optional[np.ndarray], Optional[np.ndarray]]
-        ] = {}
         structure = self.scene.structure
 
         # --- Get Sequentially Ordered Structure Elements --- #
@@ -206,7 +239,7 @@ class SVGRenderer:
             logger.error(
                 f"Error getting sequential structure elements: {e}", exc_info=True
             )
-            return [], {}, {}  # Return empty if fetching/sorting failed
+            return [], {}  # Return empty if fetching/sorting failed
 
         # --- Calculate Coordinates and Connection Points --- #
         for element in ordered_elements:
@@ -222,30 +255,10 @@ class SVGRenderer:
                     )
                     # Add placeholders to avoid key errors later if neighbors expect connections
                     element_coords_cache[element_id] = np.empty((0, 2))
-                    connection_points_cache[element_id] = (None, None)
                     continue
 
                 coords_2d = coords[:, :2]  # Ensure we only use X, Y
                 element_coords_cache[element_id] = coords_2d
-
-                # Calculate connection points using imported functions
-                start_conn, end_conn = None, None
-                if isinstance(element, CoilSceneElement):
-                    start_conn, end_conn = _calculate_coil_connection_points(coords_2d)
-                elif isinstance(element, HelixSceneElement):
-                    start_conn, end_conn = _calculate_helix_connection_points(coords_2d)
-                elif isinstance(element, SheetSceneElement):
-                    start_conn, end_conn = _calculate_sheet_connection_points(coords_2d)
-                else:
-                    # Fallback for unknown structure types? Or assume only these 3 exist.
-                    logger.warning(
-                        f"Unknown structure element type {type(element).__name__} encountered during connection point calculation."
-                    )
-                    start_conn, end_conn = _calculate_coil_connection_points(
-                        coords_2d
-                    )  # Default to coil logic
-
-                connection_points_cache[element_id] = (start_conn, end_conn)
 
             except Exception as e:
                 logger.error(
@@ -254,10 +267,9 @@ class SVGRenderer:
                 )
                 # Add placeholders if preparation fails for an element
                 element_coords_cache[element_id] = np.empty((0, 2))
-                connection_points_cache[element_id] = (None, None)
                 continue
 
-        return ordered_elements, element_coords_cache, connection_points_cache
+        return ordered_elements, element_coords_cache
 
     def render(self) -> Drawing:
         """Renders the scene to a drawsvg.Drawing object."""
@@ -291,18 +303,26 @@ class SVGRenderer:
         # 3. Prepare Render Data for Structure Elements
         try:
             (
-                ordered_structure_elements,
+                _,
                 element_coords_cache,
-                connection_points_cache,
             ) = self._prepare_render_data()
         except Exception as e:
             logger.error(f"Failed to prepare render data: {e}", exc_info=True)
-            ordered_structure_elements = []
-            connection_points_cache = {}
+            return drawing
 
-        # 4. Draw Structure Elements into correct SVG groups using prepared data
-        num_elements = len(ordered_structure_elements)
-        for i, element in enumerate(ordered_structure_elements):
+        # 3.5 Collect and Sort All Renderable Elements
+        try:
+            (
+                sorted_structure_elements,
+                sorted_annotations,
+                sorted_connections,
+            ) = self._collect_and_sort_renderables()
+        except Exception as e:
+            logger.error(f"Failed to collect/sort renderables: {e}", exc_info=True)
+            return drawing
+
+        # 4. Draw Structure Elements (sorted by depth)
+        for depth, element in sorted_structure_elements:
             element_id = element.id
             element_type = type(element)
 
@@ -347,44 +367,17 @@ class SVGRenderer:
                         f"Could not find target SVG group '{parent_group_id}' for element {element_id}"
                     )
 
-        # 5. Draw Connection Lines Between Adjacent Structure Elements
-        for i in range(num_elements - 1):
-            element_i = ordered_structure_elements[i]
-            element_i_plus_1 = ordered_structure_elements[i + 1]
+        # 5. Draw Connection Elements (sorted by depth)
+        for _, element in sorted_connections:
+            connection_line_svg = _draw_connection_element(
+                element, self.scene.structure
+            )
+            if connection_line_svg:
+                # Connections have their own dedicated group added under root
+                connection_line_group.append(connection_line_svg)
 
-            if not element_i.is_adjacent_to(element_i_plus_1):
-                continue
-
-            # Get connection points from cache
-            conn_i_data = connection_points_cache.get(element_i.id)
-            conn_i_plus_1_data = connection_points_cache.get(element_i_plus_1.id)
-
-            if conn_i_data and conn_i_plus_1_data:
-                end_conn_i = conn_i_data[1]  # End point of element i
-                start_conn_i_plus_1 = conn_i_plus_1_data[
-                    0
-                ]  # Start point of element i+1
-
-                if end_conn_i is not None and start_conn_i_plus_1 is not None:
-                    # Check if points are too close to avoid zero-length lines
-                    if not np.allclose(end_conn_i, start_conn_i_plus_1, atol=1e-3):
-                        connection_line = _draw_connection(
-                            start_point=end_conn_i,
-                            end_point=start_conn_i_plus_1,
-                            style=None,
-                            id=f"connection-{element_i.id}-{element_i_plus_1.id}",
-                        )
-                        connection_line_group.append(connection_line)
-
-        # 6. Draw Annotation Elements (Retrieve separately, logic remains similar)
-        _, sorted_annotations = self._collect_and_sort_renderables()
-        # Get the resolver instance from the scene
-        resolver = self.scene.resolver
-
-        for (
-            depth,
-            element,
-        ) in sorted_annotations:
+        # 6. Draw Annotation Elements (sorted by depth - effectively always last)
+        for _, element in sorted_annotations:
             element_type = type(element)
             draw_func = self.ANNOTATION_DRAW_MAP.get(element_type)
             if not draw_func:
@@ -395,7 +388,7 @@ class SVGRenderer:
 
             try:
                 # Calculate coordinates using the annotation's own method + resolver
-                rendered_coords = element.get_coordinates(resolver)
+                rendered_coords = element.get_coordinates(self.scene.resolver)
             except (
                 CoordinateCalculationError,
                 SceneError,

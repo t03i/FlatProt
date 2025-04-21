@@ -2,17 +2,16 @@
 # SPDX-License-Identifier: Apache-2.0
 from typing import Optional
 
-from pydantic import BaseModel, Field
+from pydantic import Field
 from pydantic_extra_types.color import Color
 
 from flatprot.core.structure import Structure
 
 from .structure.base_structure import BaseStructureSceneElement
-from .base_element import BaseSceneElement
-from .group import SceneGroupType
+from .base_element import BaseSceneElement, SceneGroupType, BaseSceneStyle
 
 
-class ConnectionStyle(BaseModel):
+class ConnectionStyle(BaseSceneStyle):
     """Defines the visual style for a connection between residues."""
 
     stroke: Color = Field(default=Color("black"), description="Connection line color.")
@@ -25,13 +24,9 @@ class ConnectionStyle(BaseModel):
     opacity: float = Field(
         default=0.8, ge=0.0, le=1.0, description="Connection line opacity."
     )
-    z_index: int = Field(
-        default=-1,
-        description="Relative Z-index for rendering order (lower is further back).",
-    )
 
 
-class Connection(BaseSceneElement):
+class Connection(BaseSceneElement[ConnectionStyle]):
     """Represents a connection (e.g., disulfide bond, crosslink) between two residues."""
 
     start_element: BaseStructureSceneElement
@@ -44,6 +39,8 @@ class Connection(BaseSceneElement):
         style: Optional[ConnectionStyle] = None,
         parent: Optional[SceneGroupType] = None,
     ):
+        self.start_element = start_element
+        self.end_element = end_element
         super().__init__(
             id=f"connection_{start_element.id}_{end_element.id}",
             style=style,
@@ -61,3 +58,7 @@ class Connection(BaseSceneElement):
 
     def __repr__(self) -> str:
         return f"Connection(start_element={self.start_element!r}, end_element={self.end_element!r}, type='{self.type}', style={self.style!r})"
+
+    @property
+    def default_style(self) -> ConnectionStyle:
+        return ConnectionStyle()

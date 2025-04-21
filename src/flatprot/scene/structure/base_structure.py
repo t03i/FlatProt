@@ -200,34 +200,17 @@ class BaseStructureSceneElement(
         Returns:
             The mean depth as a float, or None if no coordinates are found.
         """
-        depths = []
-        if not self.residue_range_set or not self.residue_range_set.ranges:
+        # Get coordinates directly from the element's get_coordinates method
+        # which handles different element types appropriately
+        coords = self.get_coordinates(structure)
+
+        if coords is None or len(coords) == 0:
             return None
 
-        try:
-            for res_coord in self.residue_range_set:
-                chain = structure[res_coord.chain_id]
-                if res_coord.residue_index in chain:
-                    coord_index = chain.coordinate_index(res_coord.residue_index)
-                    if 0 <= coord_index < len(structure.coordinates):
-                        depths.append(structure.coordinates[coord_index, 2])
-                    else:
-                        struct_id = getattr(structure, "id", "N/A")
-                        raise CoordinateCalculationError(
-                            f"Coordinate index {coord_index} out of bounds for residue {res_coord} in structure '{struct_id}' (element '{self.id}')."
-                        )
-                # else: Silently skip residues in range but not in chain map
-        except KeyError:
-            logger.debug(
-                f"Residue {res_coord} not in chain {chain} for element '{self.id}'"
-            )
-        except (IndexError, AttributeError) as e:
-            struct_id = getattr(structure, "id", "N/A")
-            raise CoordinateCalculationError(
-                f"Error retrieving depth for element '{self.id}' in structure '{struct_id}': {e}"
-            ) from e
+        # Extract depth values (Z-coordinate) from the coordinates
+        depths = coords[:, 2]
 
-        if not depths:
+        if len(depths) == 0:
             return None
 
         return float(np.mean(depths))
@@ -248,24 +231,30 @@ class BaseStructureSceneElement(
 
     @abstractmethod
     def get_start_connection_point(self, structure: Structure) -> Optional[np.ndarray]:
-        """Calculate the 2D coordinate for the start connection point.
+        """Get the 2D coordinate (X, Y) of the start connection point.
+
+        This is typically the coordinate corresponding to the first residue
+        in the element's range, projected onto the 2D canvas.
 
         Args:
-            structure: The core Structure object containing projected coordinates.
+            structure: The core Structure object with pre-projected coordinates.
 
         Returns:
-            A NumPy array [X, Y] or None if calculation fails.
+            A NumPy array [X, Y] or None if not applicable/determinable.
         """
         raise NotImplementedError
 
     @abstractmethod
     def get_end_connection_point(self, structure: Structure) -> Optional[np.ndarray]:
-        """Calculate the 2D coordinate for the end connection point.
+        """Get the 2D coordinate (X, Y) of the end connection point.
+
+        This is typically the coordinate corresponding to the last residue
+        in the element's range, projected onto the 2D canvas.
 
         Args:
-            structure: The core Structure object containing projected coordinates.
+            structure: The core Structure object with pre-projected coordinates.
 
         Returns:
-            A NumPy array [X, Y] or None if calculation fails.
+            A NumPy array [X, Y] or None if not applicable/determinable.
         """
         raise NotImplementedError

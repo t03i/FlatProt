@@ -174,9 +174,7 @@ def helix_A_3_7(
 @pytest.fixture
 def point_anno_A5() -> PointAnnotation:
     """Provides a PointAnnotation targeting residue A:5."""
-    return PointAnnotation(
-        id="point_on_A5", target_coordinate=ResidueCoordinate("A", 5)
-    )
+    return PointAnnotation(id="point_on_A5", target=ResidueCoordinate("A", 5))
 
 
 @pytest.fixture
@@ -184,10 +182,8 @@ def line_anno_A4_A6() -> LineAnnotation:
     """Provides a LineAnnotation targeting residues A:4 and A:6."""
     return LineAnnotation(
         id="line_A4_A6",
-        target_coordinates=[
-            ResidueCoordinate("A", 4),
-            ResidueCoordinate("A", 6),
-        ],
+        start_coordinate=ResidueCoordinate("A", 4),
+        end_coordinate=ResidueCoordinate("A", 6),
     )
 
 

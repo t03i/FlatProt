@@ -17,6 +17,7 @@ from flatprot.scene import (
     CoilSceneElement,
     HelixSceneElement,
     SheetSceneElement,
+    Connection,
 )
 from flatprot.renderers import SVGRenderer
 
@@ -170,7 +171,7 @@ def helix_element_a3_9(mocker) -> HelixSceneElement:
     element = HelixSceneElement(residue_range_set=ResidueRangeSet.from_string("A:3-9"))
     # Mock get_coordinates to return plausible *projected* 2D shape vertices
     # Shape: Roughly a rectangle from x=10 to x=40, y=5 to y=15
-    coords = np.array([[10, 5], [10, 15], [40, 15], [40, 5]])
+    coords = np.array([[10, 5, 0.0], [10, 15, 0.0], [40, 15, 0.0], [40, 5, 0.0]])
     mocker.patch.object(element, "get_coordinates", return_value=coords)
     return element
 
@@ -181,7 +182,7 @@ def coil_element_a10_12(mocker) -> CoilSceneElement:
     element = CoilSceneElement(residue_range_set=ResidueRangeSet.from_string("A:10-12"))
     # Mock get_coordinates to return plausible *projected* 2D line points
     # Goes from roughly x=40,y=10 to x=50,y=10 to x=60,y=15
-    coords = np.array([[40, 10], [50, 10], [60, 15]])
+    coords = np.array([[40, 10, 0.0], [50, 10, 0.0], [60, 15, 0.0]])
     mocker.patch.object(element, "get_coordinates", return_value=coords)
     return element
 
@@ -194,7 +195,9 @@ def sheet_element_a13_18(mocker) -> SheetSceneElement:
     )
     # Mock get_coordinates to return plausible *projected* 2D arrow vertices
     # Arrow shape roughly from x=60,y=10/20 to x=90 tip at y=15
-    coords = np.array([[60, 10], [80, 10], [90, 15], [80, 20], [60, 20]])
+    coords = np.array(
+        [[60, 10, 0.0], [80, 10, 0.0], [90, 15, 0.0], [80, 20, 0.0], [60, 20, 0.0]]
+    )
     mocker.patch.object(element, "get_coordinates", return_value=coords)
     return element
 
@@ -204,7 +207,7 @@ def coil_element_single_a10(mocker) -> CoilSceneElement:
     """Provides a single-residue Coil A:10."""
     element = CoilSceneElement(residue_range_set=ResidueRangeSet.from_string("A:10-10"))
     # A single point for its *own* coordinates
-    coords = np.array([[45, 10]])  # Example point
+    coords = np.array([[45, 10, 0.0]])  # Example point
     mocker.patch.object(element, "get_coordinates", return_value=coords)
     return element
 
@@ -214,7 +217,7 @@ def helix_element_single_a5(mocker) -> HelixSceneElement:
     """Provides a single-residue Helix A:5."""
     element = HelixSceneElement(residue_range_set=ResidueRangeSet.from_string("A:5-5"))
     # A single point for its *own* coordinates
-    coords = np.array([[25, 10, 0]])  # Example point
+    coords = np.array([[25, 10, 0.0]])  # Example point
     mocker.patch.object(element, "get_coordinates", return_value=coords)
     return element
 
@@ -224,7 +227,7 @@ def sheet_element_single_a7(mocker) -> SheetSceneElement:
     """Provides a single-residue Sheet A:7."""
     element = SheetSceneElement(residue_range_set=ResidueRangeSet.from_string("A:7-7"))
     # A single point for its *own* coordinates
-    coords = np.array([[35, 10, 0]])  # Example point
+    coords = np.array([[35, 10, 0.0]])  # Example point
     mocker.patch.object(element, "get_coordinates", return_value=coords)
     return element
 
@@ -304,7 +307,9 @@ def coil_element_b1_5(mocker) -> CoilSceneElement:
     """Provides a CoilSceneElement B:1-5 with mocked coordinates."""
     element = CoilSceneElement(residue_range_set=ResidueRangeSet.from_string("B:1-5"))
     # Coordinates consistent with mock_structure_two_chains (Y=30)
-    coords = np.array([[0, 30, 0], [5, 30, 0], [10, 30, 0], [15, 30, 0], [20, 30, 0]])
+    coords = np.array(
+        [[0, 30, 0.0], [5, 30, 0.0], [10, 30, 0.0], [15, 30, 0.0], [20, 30, 0.0]]
+    )
     mocker.patch.object(element, "get_coordinates", return_value=coords)
     return element
 
@@ -314,7 +319,9 @@ def sheet_element_b6_10(mocker) -> SheetSceneElement:
     """Provides a SheetSceneElement B:6-10 with mocked coordinates."""
     element = SheetSceneElement(residue_range_set=ResidueRangeSet.from_string("B:6-10"))
     # Arrow shape roughly from x=25, y=25/35 to x=45 tip at y=30
-    coords = np.array([[25, 25, 0], [35, 25, 0], [45, 30, 0], [35, 35, 0], [25, 35, 0]])
+    coords = np.array(
+        [[25, 25, 0.0], [35, 25, 0.0], [45, 30, 0.0], [35, 35, 0.0], [25, 35, 0.0]]
+    )
     mocker.patch.object(element, "get_coordinates", return_value=coords)
     return element
 
@@ -807,21 +814,17 @@ def test_render_single_residue_coil_bridge(
         sheet_element_a13_18
     )  # Start index mismatch (11,12 missing), but testing connection logic
 
+    # Explicitly add the expected connection
+    conn1 = Connection(
+        start_element=helix_element_a3_9, end_element=coil_element_single_a10
+    )
+    scene.add_element(conn1)
+    # No connection should exist between coil_element_single_a10 and sheet_element_a13_18
+
     renderer = SVGRenderer(scene=scene)
     svg_output = renderer.get_svg_string()
     root = _parse_svg(svg_output)
     ns = {"svg": "http://www.w3.org/2000/svg"}
-
-    # Explicitly mock adjacency for this test case
-    mocker.patch.object(
-        helix_element_a3_9, "is_adjacent_to", return_value=True, autospec=True
-    )
-    mocker.patch.object(
-        coil_element_single_a10,
-        "is_adjacent_to",
-        return_value=False,  # Coil(10) is NOT adjacent to Sheet(13)
-        autospec=True,
-    )
 
     # Check that the connection lines are still drawn correctly
     connection_group = root.find(".//svg:g[@id='flatprot-connections']", namespaces=ns)
@@ -836,27 +839,26 @@ def test_render_single_residue_coil_bridge(
         len(connection_paths) == 1
     ), f"Expected 1 connection path, found {len(connection_paths)}"
 
-    # Expected connection points (based on mocks and _calculate_* logic)
-    helix_coords = helix_element_a3_9.get_coordinates(scene.structure)
-    expected_helix_end = (helix_coords[1, :2] + helix_coords[2, :2]) / 2
-
-    # Coil connection points are just its single coordinate: [45, 10]
-    coil_coords = coil_element_single_a10.get_coordinates(scene.structure)
-    exp_single_coil_start = coil_coords[0, :2]
-
-    # Line 1: Helix End to Coil Start
-    # Parse the path's d attribute
+    # Connections render as paths, extract points from 'd' attribute
     path1 = connection_paths[0]
     points1 = extract_path_points(path1.attrib.get("d"))
     assert len(points1) == 2, "Connection path should have exactly 2 points (M, L)"
+    p1_start = points1[0]
+    p1_end = points1[1]
 
     # Check start and end points from path data
+    helix_coords = helix_element_a3_9.get_coordinates(scene.structure)
+    expected_helix_end = (helix_coords[1, :2] + helix_coords[2, :2]) / 2
+    exp_single_coil_start = coil_element_single_a10.get_coordinates(scene.structure)[
+        0, :2
+    ]
+
     assert np.allclose(
-        points1[0], expected_helix_end, atol=1e-5
-    ), f"Connection path start {points1[0]} doesn't match expected helix end {expected_helix_end}"
+        p1_start, expected_helix_end, atol=1e-5
+    ), f"Connection path start {p1_start} doesn't match expected helix end {expected_helix_end}"
     assert np.allclose(
-        points1[1], exp_single_coil_start, atol=1e-5
-    ), f"Connection path end {points1[1]} doesn't match expected coil start {exp_single_coil_start}"
+        p1_end, exp_single_coil_start, atol=1e-5
+    ), f"Connection path end {p1_end} doesn't match expected coil start {exp_single_coil_start}"
 
 
 def test_render_no_connection_between_chains(
@@ -875,16 +877,15 @@ def test_render_no_connection_between_chains(
     scene.add_element(coil_element_b1_5)  # B:1-5  (NOT adjacent to previous)
     scene.add_element(sheet_element_b6_10)  # B:6-10 (Adjacent to previous B coil)
 
-    # Mock adjacency: A9->A10 is adjacent, A10->B1 is NOT, B5->B6 is adjacent
-    mocker.patch.object(
-        helix_element_a3_9, "is_adjacent_to", return_value=True, autospec=True
+    # Explicitly add the expected connections
+    conn_a = Connection(
+        start_element=helix_element_a3_9, end_element=coil_element_single_a10
     )
-    mocker.patch.object(
-        coil_element_single_a10, "is_adjacent_to", return_value=False, autospec=True
+    conn_b = Connection(
+        start_element=coil_element_b1_5, end_element=sheet_element_b6_10
     )
-    mocker.patch.object(
-        coil_element_b1_5, "is_adjacent_to", return_value=True, autospec=True
-    )
+    scene.add_element(conn_a)
+    scene.add_element(conn_b)
 
     renderer = SVGRenderer(scene=scene)
     svg_output = renderer.get_svg_string()
@@ -925,6 +926,16 @@ def test_render_connections_between_adjacent_elements(
     scene.add_element(coil_element_a10_12)
     scene.add_element(sheet_element_a13_18)
 
+    # Explicitly add the expected connections
+    conn1 = Connection(
+        start_element=helix_element_a3_9, end_element=coil_element_a10_12
+    )
+    conn2 = Connection(
+        start_element=coil_element_a10_12, end_element=sheet_element_a13_18
+    )
+    scene.add_element(conn1)
+    scene.add_element(conn2)
+
     # --- Define Mock Data ---
     # Use coordinates defined in fixtures
     helix_coords = helix_element_a3_9.get_coordinates(scene.structure)
@@ -943,21 +954,12 @@ def test_render_connections_between_adjacent_elements(
     # --- Mock the Method ---
     renderer = SVGRenderer(scene=scene)
 
-    # Mock is_adjacent_to directly on the elements added to the scene
-    # Ensure these mocks target the instances used by the renderer's internal loop
-    mocker.patch.object(
-        helix_element_a3_9, "is_adjacent_to", return_value=True, autospec=True
-    )
-    mocker.patch.object(
-        coil_element_a10_12, "is_adjacent_to", return_value=True, autospec=True
-    )
-
     # --- Render and Parse ---
     svg_output = renderer.get_svg_string()
     root = _parse_svg(svg_output)
     ns = {"svg": "http://www.w3.org/2000/svg"}
 
-    # --- Find Connection Lines ---
+    # --- Find Connection Paths ---
     connection_group = root.find(".//svg:g[@id='flatprot-connections']", namespaces=ns)
     assert (
         connection_group is not None
@@ -972,27 +974,33 @@ def test_render_connections_between_adjacent_elements(
         len(connection_paths) == 2
     ), f"Expected 2 connection paths, found {len(connection_paths)}."
 
-    # Line 1: Helix End to Coil Start
+    # Path 1: Helix End to Coil Start
     path1 = connection_paths[0]
     points1 = extract_path_points(path1.attrib.get("d"))
     assert len(points1) == 2, "Path 1 should have 2 points (M, L)"
-    assert np.allclose(
-        points1[0], exp_helix_end, atol=1e-5
-    ), f"Path 1 start {points1[0]} != expected helix end {exp_helix_end}"
-    assert np.allclose(
-        points1[1], exp_coil_start, atol=1e-5
-    ), f"Path 1 end {points1[1]} != expected coil start {exp_coil_start}"
+    p1_start = points1[0]
+    p1_end = points1[1]
 
-    # Line 2: Coil End to Sheet Start
+    assert np.allclose(
+        p1_start, exp_helix_end, atol=1e-5
+    ), f"Path 1 start {p1_start} != expected helix end {exp_helix_end}"
+    assert np.allclose(
+        p1_end, exp_coil_start, atol=1e-5
+    ), f"Path 1 end {p1_end} != expected coil start {exp_coil_start}"
+
+    # Path 2: Coil End to Sheet Start
     path2 = connection_paths[1]
     points2 = extract_path_points(path2.attrib.get("d"))
     assert len(points2) == 2, "Path 2 should have 2 points (M, L)"
+    p2_start = points2[0]
+    p2_end = points2[1]
+
     assert np.allclose(
-        points2[0], exp_coil_end, atol=1e-5
-    ), f"Path 2 start {points2[0]} != expected coil end {exp_coil_end}"
+        p2_start, exp_coil_end, atol=1e-5
+    ), f"Path 2 start {p2_start} != expected coil end {exp_coil_end}"
     assert np.allclose(
-        points2[1], exp_sheet_start, atol=1e-5
-    ), f"Path 2 end {points2[1]} != expected sheet start {exp_sheet_start}"
+        p2_end, exp_sheet_start, atol=1e-5
+    ), f"Path 2 end {p2_end} != expected sheet start {exp_sheet_start}"
 
 
 def test_render_no_connection_between_non_adjacent_elements(
@@ -1050,17 +1058,19 @@ def test_render_no_connection_between_non_adjacent_elements(
     root = _parse_svg(svg_output)
     ns = {"svg": "http://www.w3.org/2000/svg"}
 
-    # --- Find Connection Lines ---
+    # --- Find Connection Paths ---
     connection_group = root.find(".//svg:g[@id='flatprot-connections']", namespaces=ns)
     assert (
         connection_group is not None
     ), "Connection group 'flatprot-connections' not found."
-    connection_lines = connection_group.findall("./svg:line", namespaces=ns)
+    connection_paths = connection_group.findall(
+        "./svg:path[@class='connection']", namespaces=ns
+    )
 
     # --- Assertions ---
     assert (
-        len(connection_lines) == 0
-    ), "Expected 0 connection lines between non-adjacent elements."
+        len(connection_paths) == 0
+    ), "Expected 0 connection paths between non-adjacent elements."
 
 
 # --- Single Residue Element Rendering Tests ---
