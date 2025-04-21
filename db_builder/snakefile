@@ -251,7 +251,6 @@ rule extract_domain:
 
 rule extract_all_domains_for_superfamily:
     input:
-        # Use the helper function which now uses config paths
         domain_files = get_domains_for_superfamily
     output:
         # Use config pattern, touch creates the file
@@ -407,8 +406,9 @@ checkpoint collect_representatives:
         flag = touch(format_path("representative_flag_pattern"))
     log:
         format_path("log_dir") + "/collect_representatives.log"
-    shell:
-        "echo 'Collected {len(input.representatives)} representative domains.' > {log}"
+    run:
+        num_representatives = len(input.representatives)
+        print(f"Collected {num_representatives} representative domains.")
 
 
 rule create_foldseek_database:
