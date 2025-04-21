@@ -20,7 +20,7 @@ def _foldseek_id_to_db_id(foldseek_id: str) -> str:
     Args:
         foldseek_id: FoldSeek ID
     """
-    return f"sf_{foldseek_id}"
+    return f"{foldseek_id}".upper()
 
 
 def get_aligned_rotation_database(
@@ -45,6 +45,7 @@ def get_aligned_rotation_database(
     """
     with db:
         db_id = id_transform(alignment.db_id)
+        print(f"db_id: {db_id}")
         if not db.contains_entry_id(db_id):
             raise DatabaseEntryNotFoundError(
                 f"Database entry {alignment.db_id} not found"

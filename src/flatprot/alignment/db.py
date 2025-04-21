@@ -94,7 +94,6 @@ class AlignmentDatabase:
         """Returns alignment entry for given entry_id or default if not found. O(1) lookup."""
         if self._file is None:
             raise RuntimeError("Database not opened")
-
         if entry_id not in self._file:
             return default
 
