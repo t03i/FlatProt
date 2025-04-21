@@ -260,6 +260,8 @@ class SheetSceneElement(BaseStructureSceneElement[SheetStyle]):
         coords_2d = self.get_coordinates(structure)[:, :2]
         if coords_2d is None:
             return None
+        if len(coords_2d) < 3:
+            return coords_2d[0, :2]
 
         return (coords_2d[0, :2] + coords_2d[1, :2]) / 2
 

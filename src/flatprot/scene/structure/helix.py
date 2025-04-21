@@ -360,7 +360,7 @@ class HelixSceneElement(BaseStructureSceneElement[HelixStyle]):
         if coords_2d is None:
             return None
         if len(coords_2d) < 3:
-            return coords_2d[0, :2]
+            return coords_2d[-1, :2]
 
         # The end connection is the midpoint between the middle vertices
         mid_idx = len(coords_2d) // 2
