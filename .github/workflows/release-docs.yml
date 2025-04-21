@@ -13,7 +13,7 @@ jobs:
     docs:
         runs-on: ubuntu-latest
         environment:
-            name: documentation
+            name: github-pages
         env:
             UV_TOOL_DIR: /tmp/.uv-tools
         permissions:

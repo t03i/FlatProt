@@ -38,6 +38,7 @@ dev = [
     "pytest-mock>=3.14.0",
     "pytest>=8.3.4",
     "jupytext>=1.17.0",
+    "mkdocstrings[python]>=0.29.1",
 ]
 db-builder = [
     "httpx-retries>=0.3.0",
