@@ -457,6 +457,7 @@ db-builder = [
 ]
 dev = [
     { name = "jupyterlab" },
+    { name = "jupytext" },
     { name = "mkdocs" },
     { name = "pytest" },
     { name = "pytest-mock" },
@@ -484,6 +485,7 @@ db-builder = [
 ]
 dev = [
     { name = "jupyterlab", specifier = ">=4.3.2" },
+    { name = "jupytext", specifier = ">=1.17.0" },
     { name = "mkdocs", specifier = ">=1.6.1" },
     { name = "pytest", specifier = ">=8.3.4" },
     { name = "pytest-mock", specifier = ">=3.14.0" },
@@ -987,6 +989,22 @@ wheels = [
 ]
 
 [[package]]
+name = "jupytext"
+version = "1.17.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "markdown-it-py" },
+    { name = "mdit-py-plugins" },
+    { name = "nbformat" },
+    { name = "packaging" },
+    { name = "pyyaml" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/17/b5/b04008ae2f3b37f0a955d9232c729589bcf40819732cd08a54bce08feb83/jupytext-1.17.0.tar.gz", hash = "sha256:c74adf6d205a778f481189e986b6066af79bdeb69099f4138d933cc15c398fb6", size = 3746613 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/dc/46/c2fb92e01eb0423bae7fe91c3bf2ca994069f299a6455919f4a9a12960ed/jupytext-1.17.0-py3-none-any.whl", hash = "sha256:d75b7cd198b3640a12f9cdf4d610bb80c9f27a8c3318b00372f90d21466d40e1", size = 164106 },
+]
+
+[[package]]
 name = "markdown"
 version = "3.7"
 source = { registry = "https://pypi.org/simple" }
@@ -1065,6 +1083,18 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/99/5b/a36a337438a14116b16480db471ad061c36c3694df7c2084a0da7ba538b7/matplotlib_inline-0.1.7.tar.gz", hash = "sha256:8423b23ec666be3d16e16b60bdd8ac4e86e840ebd1dd11a30b9f117f2fa0ab90", size = 8159 }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/8f/8e/9ad090d3553c280a8060fbf6e24dc1c0c29704ee7d1c372f0c174aa59285/matplotlib_inline-0.1.7-py3-none-any.whl", hash = "sha256:df192d39a4ff8f21b1895d72e6a13f5fcc5099f00fa84384e0ea28c2cc0653ca", size = 9899 },
+]
+
+[[package]]
+name = "mdit-py-plugins"
+version = "0.4.2"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "markdown-it-py" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/19/03/a2ecab526543b152300717cf232bb4bb8605b6edb946c845016fa9c9c9fd/mdit_py_plugins-0.4.2.tar.gz", hash = "sha256:5f2cd1fdb606ddf152d37ec30e46101a60512bc0e5fa1a7002c36647b09e26b5", size = 43542 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/a7/f7/7782a043553ee469c1ff49cfa1cdace2d6bf99a1f333cf38676b3ddf30da/mdit_py_plugins-0.4.2-py3-none-any.whl", hash = "sha256:0c673c3f889399a33b95e88d2f0d111b4447bdfea7f237dab2d488f459835636", size = 55316 },
 ]
 
 [[package]]
