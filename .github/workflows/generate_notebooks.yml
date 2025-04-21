@@ -1,0 +1,52 @@
+name: Generate Example Notebooks
+
+on:
+    push:
+        branches:
+            - main # Or your default branch
+        paths:
+            - "examples/**.py"
+            - "scripts/create-notebooks.sh"
+            - ".github/workflows/generate_notebooks.yml"
+
+jobs:
+    generate-notebooks:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v4
+
+            - name: Install uv
+              uses: astral-sh/setup-uv@v5
+              with:
+                  enable-cache: true
+                  cache-dependency-glob: "uv.lock"
+
+            - name: Install the project
+              run: uv sync --all-extras --dev --locked
+
+            - name: Generate Notebooks
+              id: generate
+              run: scripts/create-notebooks.sh
+
+            - name: Create Pull Request
+              uses: peter-evans/create-pull-request@v6
+              with:
+                  token: ${{ secrets.GITHUB_TOKEN }} # Use default GitHub token
+                  commit-message: "chore: Generate example notebooks"
+                  committer: GitHub <noreply@github.com> # Use default committer
+                  author: ${{ github.actor }} <${{ github.actor }}@users.noreply.github.com>
+                  signoff: false
+                  branch: chore/generate-notebooks # Name of the branch to create the PR from
+                  delete-branch: true # Delete the branch after merging/closing PR
+                  title: "chore: Generate example notebooks"
+                  body: |
+                      Automated generation of Jupyter notebooks from example Python scripts.
+                      Changes detected in `examples/*.py`.
+                  labels: |
+                      automated
+                      chore
+                  assignees: ${{ github.actor }}
+                  reviewers: ${{ github.actor }}
+                  add-paths: |
+                      examples/*.ipynb
