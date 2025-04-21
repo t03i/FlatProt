@@ -195,9 +195,9 @@ def create_cystine_bridge_annotations(
             ],  # Format: CHAIN:RESID
             # Optional styling (add more as needed)
             "style": {
-                "stroke": "#FFD700",  # Gold color for visibility
+                "color": "#FFD700",  # Gold color for visibility
                 "stroke_width": 1.5,
-                "stroke_dasharray": "4 2",  # Dashed line
+                "line_style": (4, 2),  # Dashed line
             },
         }
         annotations.append(annotation)
@@ -248,7 +248,7 @@ print("\n[STEP 5] Generating FlatProt projection with annotations...")
 # Check if annotation file was created successfully before proceeding
 if cobra_annotation.exists() and ipython:
     # Construct the command
-    project_cmd = f"uv run flatprot project {cobra_file} -o {cobra_svg} --annotations {cobra_annotation} --quiet"
+    project_cmd = f"uv run flatprot project {cobra_file} -o {cobra_svg} --annotations {cobra_annotation} --quiet --canvas-width 300 --canvas-height 300"
 
     # Run the command using pybash magic via run_cell_magic
     print(f"  Running command: {project_cmd}")

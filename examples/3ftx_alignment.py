@@ -134,18 +134,19 @@ print("[INFO] Alignments complete. Matrices and info files generated.")
 print("\n[STEP 3] Running FlatProt Projections...")
 if ipython:  # Ensure we are in an IPython environment
     # Project Cobra
+    canvas_args = "--canvas-width 100 --canvas-height 300"
     print("Projecting Cobra...")
-    cobra_project_cmd = f"uv run flatprot project {cobra_path} -o {cobra_out} --matrix {cobra_matrix} --quiet"
+    cobra_project_cmd = f"uv run flatprot project {cobra_path} -o {cobra_out} --matrix {cobra_matrix} --quiet {canvas_args}"
     ipython.run_cell_magic("pybash", "", cobra_project_cmd)
 
     # Project Krait
     print("Projecting Krait...")
-    krait_project_cmd = f"uv run flatprot project {krait_path} -o {krait_out} --matrix {krait_matrix} --quiet"
+    krait_project_cmd = f"uv run flatprot project {krait_path} -o {krait_out} --matrix {krait_matrix} --quiet {canvas_args}"
     ipython.run_cell_magic("pybash", "", krait_project_cmd)
 
     # Project Snake
     print("Projecting Snake...")
-    snake_project_cmd = f"uv run flatprot project {snake_path} -o {snake_out} --matrix {snake_matrix} --quiet"
+    snake_project_cmd = f"uv run flatprot project {snake_path} -o {snake_out} --matrix {snake_matrix} --quiet {canvas_args}"
     ipython.run_cell_magic("pybash", "", snake_project_cmd)
 else:
     print("[WARN] Not in IPython. Skipping projection commands.")
