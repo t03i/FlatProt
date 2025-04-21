@@ -78,14 +78,17 @@ class FoldseekAligner:
                 "t",
                 "lddtfull",
             ],
+            dtypes={
+                "query": pl.Utf8,
+                "target": pl.Utf8,
+            },
         )
-
         if len(results) == 0:
             return None
 
         # Get best match (or fixed family if specified)
         if fixed_alignment_id:
-            match = results[results["target"] == fixed_alignment_id]
+            match = results.filter(pl.col("target") == fixed_alignment_id)
         else:
             match = results.sort("prob", descending=True)
             if match[0, "prob"] < min_probability:

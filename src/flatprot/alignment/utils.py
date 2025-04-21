@@ -3,7 +3,7 @@
 
 
 from pathlib import Path
-from typing import Callable
+from typing import Callable, Optional
 
 from flatprot.transformation import TransformationMatrix
 from .db import AlignmentDatabase, AlignmentDBEntry
@@ -45,7 +45,6 @@ def get_aligned_rotation_database(
     """
     with db:
         db_id = id_transform(alignment.db_id)
-        print(f"db_id: {db_id}")
         if not db.contains_entry_id(db_id):
             raise DatabaseEntryNotFoundError(
                 f"Database entry {alignment.db_id} not found"
@@ -55,6 +54,7 @@ def get_aligned_rotation_database(
 
     alignment_rotation = alignment.rotation_matrix
     db_rotation = db_entry.rotation_matrix
+
     return alignment_rotation.before(db_rotation), db_entry
 
 
@@ -63,6 +63,7 @@ def align_structure_database(
     foldseek_db_path: Path,
     foldseek_command: str = "foldseek",
     min_probability: float = 0.5,
+    target_db_id: Optional[str] = None,
 ) -> AlignmentResult:
     """Calculate the alignment result for structural alignment using FoldSeek.
 
@@ -71,6 +72,7 @@ def align_structure_database(
         foldseek_db_path: Path to FoldSeek-specific database.
         foldseek_command: FoldSeek executable name/path.
         min_probability: Minimum alignment probability threshold.
+        target_db_id: If provided, force alignment to this specific FoldSeek target ID.
 
     Returns:
         AlignmentResult: Result containing alignment details and rotation matrix.
@@ -84,7 +86,9 @@ def align_structure_database(
     )
 
     alignment_result = aligner.align_structure(
-        structure_path=structure_file, min_probability=min_probability
+        structure_path=structure_file,
+        min_probability=min_probability,
+        fixed_alignment_id=target_db_id,
     )
 
     if alignment_result is None:

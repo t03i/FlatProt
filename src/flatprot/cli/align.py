@@ -58,6 +58,7 @@ def align_structure_rotation(
         ),
     ] = 0.5,
     download_db: bool = False,
+    target_db_id: Annotated[Optional[str], Parameter(name=["--target-db-id"])] = None,
     *,
     common: CommonParameters | None = None,
 ) -> int:
@@ -101,6 +102,10 @@ def align_structure_rotation(
         download_db: Force database download even if it already exists.
             When set, the alignment database will be redownloaded regardless of
             whether it already exists locally.
+
+        target_db_id: Align specifically to this database entry ID.
+            If provided, alignment will be forced against this specific target ID
+            from the Foldseek database, bypassing the probability-based selection.
 
     Returns:
         int: 0 for success, 1 for errors.
@@ -148,6 +153,7 @@ def align_structure_rotation(
             foldseek_db_path=foldseek_db_path,
             foldseek_command=foldseek_path,
             min_probability=min_probability,
+            target_db_id=target_db_id,
         )
 
         # Matrix combination
