@@ -252,13 +252,17 @@ def create_alignment_database(
                         failed_entries += 1
                         continue
 
-                    logger.info(f"Adding entry for SF ID {sf_id} to database")
+                    # Get metadata for this specific SF ID, if available
+                    specific_sf_meta = sf_metadata.get(
+                        sf_id, {}
+                    )  # Returns empty dict if not found
 
                     # Create and add entry
                     entry = AlignmentDBEntry(
                         rotation_matrix=transformation,
                         entry_id=entry_id,
                         structure_name=structure_name,
+                        metadata=specific_sf_meta,  # Add the loaded metadata here
                     )
 
                     try:
@@ -288,7 +292,6 @@ def create_alignment_database(
 
     # Create database info file (always, even if DB is empty)
     database_info: Dict[str, Any] = {
-        "database_path": str(output_database.resolve()),
         "creation_date": datetime.now().isoformat(),
         "entry_count": successful_entries,  # Number of entries successfully added
         "total_representatives_processed": total_representatives,  # Total number of files passed as input
