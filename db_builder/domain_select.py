@@ -131,6 +131,7 @@ def main() -> None:
             logging.info(
                 f"Selected {domain_name}.cif as representative domain (score: {score:.4f})"
             )
+            logger.info(f"Copied {source_file} to {output_file}")
         else:
             logging.error(
                 f"Best domain file {source_file} not found in {domain_dir}. This indicates an upstream issue."
