@@ -401,7 +401,7 @@ checkpoint collect_representatives:
         representatives = expand(
             format_path("representative_domain_pattern", sf_id="{sf_id}"),
             sf_id=get_valid_superfamily_ids_from_file()
-        )
+        ),
         valid_list = format_path("valid_sf_list")
     output:
         flag = touch(format_path("representative_flag_pattern"))
