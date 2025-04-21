@@ -5,6 +5,7 @@ site_name: FlatProt
 nav:
   - Home: index.md
   - Installation: installation.md
+  - Examples: examples.md
   - Commands:
       - Project: commands/project.md
       - Align: commands/align.md

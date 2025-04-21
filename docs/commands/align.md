@@ -1,94 +1,108 @@
 # Align Command
 
-The align command finds the best matching protein superfamily for a given structure and returns the optimal transformation matrix for standardized visualization.
+The `align` command finds the best matching protein superfamily for a given structure using Foldseek and retrieves the corresponding pre-calculated transformation matrix for standardized visualization.
 
 ## Usage
 
 ```bash
-flatprot align STRUCTURE_FILE [options]
+flatprot align STRUCTURE_FILE [OPTIONS]
 ```
 
 ## Arguments
 
--   `structure_file`: Path to input protein structure (PDB/mmCIF format)
+-   `STRUCTURE_FILE`: Path to the input protein structure file (PDB or mmCIF format). The file must exist and be readable.
 
 ## Options
 
--   `-m, --matrix MATRIX_OUT_PATH`: Path to save the transformation matrix (default: "alignment_matrix.npy")
--   `-i, --info INFO_OUT_PATH`: Path to save additional alignment information as JSON (optional)
--   `-f, --foldseek FOLDSEEK_PATH`: Path to FoldSeek executable (default: "foldseek")
--   `-d, --database DATABASE_PATH`: Path to custom alignment database directory
--   `-n, --database-file-name NAME`: Name of the alignment database file (default: "alignments.h5")
--   `-b, --foldseek-db FOLDSEEK_DB_PATH`: Path to custom Foldseek database
--   `-p, --min-probability THRESHOLD`: Minimum alignment probability threshold (default: 0.5)
--   `--download-db`: Force download of the latest database
--   `--quiet`: Suppress all output except errors
--   `--verbose`: Print additional information
+| Option                 | Short | Type    | Default                | Description                                                                                                  |
+| ---------------------- | ----- | ------- | ---------------------- | ------------------------------------------------------------------------------------------------------------ |
+| `--matrix`             | `-m`  | Path    | `alignment_matrix.npy` | Path to save the output transformation matrix (NumPy format).                                                |
+| `--info`               | `-i`  | Path    | _None_                 | Optional path to save detailed alignment information as JSON. If omitted, info is printed to stdout.         |
+| `--foldseek`           | `-f`  | String  | `"foldseek"`           | Path to the FoldSeek executable. Assumes it's in PATH if not specified.                                      |
+| `--foldseek-db`        | `-b`  | Path    | _Default_              | Path to a custom Foldseek database. Defaults to the database bundled with FlatProt or previously downloaded. |
+| `--database`           | `-d`  | Path    | _Default_              | Path to the directory containing the custom FlatProt alignment database (HDF5 file and supporting files).    |
+| `--database-file-name` | `-n`  | String  | `"alignments.h5"`      | Name of the alignment database file within the `--database` directory.                                       |
+| `--min-probability`    | `-p`  | Float   | `0.5`                  | Minimum Foldseek alignment probability threshold (0.0 to 1.0).                                               |
+| `--target-db-id`       |       | String  | _None_                 | Force alignment against a specific target ID from the Foldseek database, bypassing probability checks.       |
+| `--download-db`        |       | Boolean | `false`                | Force download/update of the default database even if it exists locally.                                     |
+| `--quiet`              |       | Boolean | `false`                | Suppress all informational output except errors.                                                             |
+| `--verbose`            |       | Boolean | `false`                | Print additional debug information during execution.                                                         |
 
-### Examples
+## Examples
 
-Basic alignment:
+**Basic Alignment:** (Saves matrix to `alignment_matrix.npy`)
 
 ```bash
 flatprot align protein.pdb
 ```
 
-Custom output paths:
+**Specify Output Paths:**
 
 ```bash
-flatprot align protein.pdb -m rotation.npy -i alignment_info.json
+flatprot align protein.cif -m rotation.npy -i alignment_info.json
 ```
 
-Using custom database:
+**Use Custom Foldseek Executable and Database:**
 
 ```bash
-flatprot align protein.pdb --database /path/to/custom/db
+flatprot align protein.pdb -f /path/to/foldseek -b /path/to/foldseek_db
 ```
 
-Adjusting probability threshold:
+**Adjust Probability Threshold:**
 
 ```bash
 flatprot align protein.pdb --min-probability 0.7
 ```
 
-## Output
+**Force Alignment to a Specific Target:**
 
-The command produces two main outputs:
+```bash
+flatprot align protein.pdb --target-db-id "3000114"
+```
 
-1. **Transformation Matrix** (NumPy format)
+## Output Files
 
-    - A rotation matrix that aligns the input structure to its matched superfamily
-    - Used for standardized visualization
-    - Saved to the path specified by `--matrix` (default: "alignment_matrix.npy")
+1.  **Transformation Matrix (`--matrix`):**
 
-2. **Alignment Information** (Optional JSON)
+    -   A 4x4 NumPy array (`.npy` file) representing the rotation matrix that aligns the input structure to the coordinate system of its matched superfamily reference.
+    -   This matrix is intended for use with the `flatprot project` command.
 
-    - Contains detailed alignment results including:
+2.  **Alignment Information (`--info`, Optional JSON):**
+
+    -   If a path is provided via `--info`, a JSON file containing detailed alignment results is saved. The exact content may vary, but typically includes:
 
         ```json
         {
-            "structure_file": "path/to/input.pdb",
-            "matched_family": "sf_1234",
-            "probability": 0.85,
-            "aligned_region": {
-                "start": 1,
-                "end": 100
+            "structure_file": "path/to/protein.pdb",
+            "foldseek_db_path": "/path/to/foldseek_db",
+            "min_probability": 0.5,
+            "target_db_id": null,
+            "best_hit": {
+                "query_id": "protein",
+                "target_id": "T1084-D1",
+                "probability": 0.995,
+                "e_value": 8.74e-15,
+                "tm_score": 0.789
             },
-            "message": "Successfully aligned to superfamily sf_1234 with 85% probability"
+            "db_entry": {
+                "id": 123,
+                "foldseek_id": "T1084-D1",
+                "cath_id": "3.30.930.10",
+                "description": "Example Superfamily"
+            },
+            "matrix_file": "rotation.npy"
         }
         ```
 
-    - Only saved if `--info` path is specified
-
 ## Error Handling
 
-The command handles several types of errors:
+The command includes robust error handling:
 
--   Invalid structure files
--   Missing FoldSeek executable
--   No significant alignments found (suggests lowering probability threshold)
--   Database-related issues (suggests using `--download-db`)
--   Output file writing errors
--   FoldSeek execution failures
+-   **Input Errors:** Checks for invalid or non-existent structure files (`InvalidStructureError`, `FileNotFoundError`).
+-   **FoldSeek Errors:** Verifies the FoldSeek executable path. Catches errors during FoldSeek execution (`RuntimeError`, `subprocess.SubprocessError`).
+-   **Database Errors:** Handles issues finding or accessing the alignment database (`DatabaseEntryNotFoundError`). Suggests using `--download-db` if corruption is suspected.
+-   **Alignment Quality:** If no alignment meets the `--min-probability` threshold, it reports `NoSignificantAlignmentError` and suggests lowering the threshold.
+-   **Output Errors:** Catches errors writing the matrix or info files (`OutputFileError`).
+-   **General Errors:** Catches other `FlatProtError` types and unexpected exceptions.
 
-If no significant alignment is found, try lowering the `--min-probability` threshold. For database issues, using `--download-db` can help ensure you have the latest version.
+Exit codes are `0` for success and `1` for any error.
