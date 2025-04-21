@@ -25,6 +25,9 @@
 # to run shell commands within the Python script, substituting Python variables.
 
 # %%
+import collections
+import csv
+import xml.etree.ElementTree as ET
 from pathlib import Path
 import os
 import zipfile
@@ -32,7 +35,17 @@ from typing import Union
 from IPython import get_ipython
 from IPython.core.magic import register_cell_magic
 from IPython.display import SVG, display
-import drawsvg as draw
+import numpy as np  # For opacity calculation
+
+# FlatProt Core Imports
+from flatprot.io import GemmiStructureParser, StyleParser
+from flatprot.utils.structure_utils import (
+    transform_structure_with_matrix,
+    project_structure_uniformly,
+)
+from flatprot.utils.scene_utils import create_scene_from_structure
+from flatprot.renderers import SVGRenderer
+from flatprot.core import logger
 
 ipython = get_ipython()
 
@@ -118,7 +131,65 @@ structures_dir.mkdir(exist_ok=True)
 extract_klk_folder(data_archive, structures_dir)
 
 # %% [markdown]
-# ## Align Structures
+# ## Cluster Structures using Foldseek
+#
+# Use `foldseek easy-cluster` to group similar structures. We will identify
+# representative structures for clusters containing more than one member
+# and proceed with only these representatives for alignment and projection.
+
+# %%
+
+# Define directories and paths for clustering
+cluster_output_prefix = tmp_dir / "klk_cluster"
+clustering_tmp_dir = tmp_dir / "clustering_tmp"
+clustering_tmp_dir.mkdir(exist_ok=True)
+
+# Convert paths to strings for the command line
+structures_dir_str = str(structures_dir)
+cluster_output_prefix_str = str(cluster_output_prefix)
+clustering_tmp_dir_str = str(clustering_tmp_dir)
+
+# Run foldseek easy-cluster
+ipython.run_cell_magic(
+    "pybash",
+    "",
+    "foldseek easy-cluster {structures_dir_str} {cluster_output_prefix_str} {clustering_tmp_dir_str} --min-seq-id 0.8 --threads 4 -v 0 | cat",
+)
+
+# Parse the cluster results
+cluster_file = Path(f"{cluster_output_prefix_str}_cluster.tsv")
+clusters = collections.defaultdict(list)
+representatives = set()
+all_cluster_members = set()
+
+if cluster_file.exists():
+    with open(cluster_file, "r") as f:
+        reader = csv.reader(f, delimiter="\\t")
+        for row in reader:
+            if len(row) == 2:
+                representative, member = row
+                # Foldseek output might lack the .cif extension, add it back
+                representative_fn = f"{Path(representative).stem}.cif"
+                member_fn = f"{Path(member).stem}.cif"
+                clusters[representative_fn].append(member_fn)
+                representatives.add(representative_fn)
+                all_cluster_members.add(member_fn)
+            else:
+                print(f"Skipping malformed row: {row}")
+else:
+    print(f"Error: Cluster file not found at {cluster_file}")
+
+# Filter for clusters with more than one member
+large_clusters = {rep: members for rep, members in clusters.items() if len(members) > 1}
+representative_files = [structures_dir / rep for rep in large_clusters.keys()]
+
+print(f"Found {len(representatives)} total clusters.")
+print(f"Found {len(large_clusters)} clusters with size > 1.")
+print(f"Proceeding with {len(representative_files)} representative structures.")
+
+
+# %% [markdown]
+# ## Align Representative Structures
 #
 # Create directories for alignment outputs (matrices and info files).
 # Define the path to the alignment database (adjust if necessary).
@@ -131,13 +202,12 @@ info_dir.mkdir(exist_ok=True)
 
 # Adjust this path to your actual Foldseek database location
 alignment_db_path = "../out/alignment_db"
-min_probability = 0.5  # Example minimum probability threshold
 
 # %% [markdown]
-# Run `flatprot align` for each structure against the database.
+# Run `flatprot align` for each representative structure against the database.
 
 # %%
-for file in structures_dir.glob("*.cif"):
+for file in representative_files:
     matrix_path = matrix_dir / f"{file.stem}_matrix.npy"
     info_path = info_dir / f"{file.stem}_info.json"
 
@@ -150,107 +220,295 @@ for file in structures_dir.glob("*.cif"):
         "pybash",
         "",
         "uv run flatprot align {file_str} {matrix_path_str} {info_path_str} "
-        "-d {alignment_db_path} --min-probability {min_probability} "
-        "--target-db-id 3000114 --quiet",
+        "-d {alignment_db_path} --target-db-id 3000114 --quiet",
     )
 
 
 # %% [markdown]
-# ## Generate Projections
+# ## Generate Projections using Python API (Store Data)
 #
-# Create a directory for the SVG outputs and define a simple style
-# configuration for the FlatProt projections.
+# Define styles and uniform scaling. Loop through representatives, apply
+# transformations and projection, then store the projected coordinates and
+# the renderable Scene object in memory for later processing.
 
 # %%
 svg_dir = tmp_dir / "svg"
 svg_dir.mkdir(exist_ok=True)
 
-style = """
+style_config = """
 [helix]
 color = "#FF7D7D"
-opacity = 0.1
-
+opacity = 0.8 # Base opacity for elements
 
 [sheet]
 color = "#7D7DFF"
-opacity = 0.1
+opacity = 0.8 # Base opacity for elements
 
 [coil]
-color = "#777777"
-opacity = 0.1
+color = "#AAAAAA"
+opacity = 0.5 # Base opacity for elements
+
+[line]
+stroke_width = 3
 
 """
 
 style_file = tmp_dir / "style.toml"
-style_file.write_text(style)
+style_file.write_text(style_config)
+
+# Define Uniform Scale Factor (adjust as needed)
+UNIFORM_SCALE = 50.0
+
+# Define Canvas size for intermediate rendering (large enough)
+CANVAS_WIDTH = 2000
+CANVAS_HEIGHT = 2000
+
+# Instantiate parsers and renderer outside the loop
+structure_parser = GemmiStructureParser()
+style_parser = StyleParser(style_file)
+styles_dict = style_parser.parse()
+
+# Store cluster counts for opacity calculation
+cluster_counts = {rep: len(members) for rep, members in large_clusters.items()}
+
+
+def calculate_opacity(cluster_counts, min_opacity=0.05, max_opacity=1.0):
+    """Calculates opacity for each representative based on its cluster size."""
+    opacities = {}
+    if not cluster_counts:
+        return opacities
+
+    counts = list(cluster_counts.values())
+    min_count = min(counts) if counts else 1
+    max_count = max(counts) if counts else 1
+
+    for representative, count in cluster_counts.items():
+        if max_count == min_count:
+            normalized_count = 1.0
+        else:
+            normalized_count = (count - min_count) / (max_count - min_count)
+        opacity = min_opacity + normalized_count * (max_opacity - min_opacity)
+        opacities[representative] = opacity
+    return opacities
+
+
+# Calculate opacities for the representatives we are processing
+representative_opacities = calculate_opacity(cluster_counts)
+
+# Data storage for overlay generation
+projected_coordinates_map = {}  # rep_base_name -> np.ndarray (N, 3)
+scene_map = {}  # rep_base_name -> Scene object
 
 # %% [markdown]
-# Loop through the extracted `.cif` files, generate an SVG projection for each
-# using the `flatprot project` command, **applying the alignment matrix**.
-# The alignment ensures all structures are oriented according to the target superfamily (3000114).
+# Loop through the representative `.cif` files, apply transformations,
+# perform uniform projection, and store results.
 
 # %%
-for file in structures_dir.glob("*.cif"):
-    matrix_path = matrix_dir / f"{file.stem}_matrix.npy"
-    svg_path = svg_dir / f"{file.stem}.svg"
-
-    # Convert paths to strings for the command line
-    file_str = str(file)
-    matrix_path_str = str(matrix_path)
-    svg_path_str = str(svg_path)
-    style_file_str = str(style_file)
-
-    # Use pybash magic to run the command, now including the matrix
-    ipython.run_cell_magic(
-        "pybash",
-        "",
-        "uv run flatprot project {file_str} {svg_path_str} "
-        "--matrix {matrix_path_str} --quiet --style {style_file_str}",
-    )
-
-
-# %% [markdown]
-# ## Create and Display Overlay
-#
-# Use the `drawsvg` library to create an overlay of all generated SVGs.
-
-# %%
-
-# Create a new drawing for the overlay
-overlay = draw.Drawing(800, 600)
-
-# Add each SVG to the overlay
-for svg_file in svg_dir.glob("*.svg"):
-    # Read the SVG content
-    svg_content = svg_file.read_text()
-
-    # Extract the SVG elements (skip the first line which is the XML declaration)
-    svg_elements = (
-        svg_content.split("\n", 1)[1] if "<?xml" in svg_content else svg_content
-    )
-
-    # Add the SVG content as a group to the overlay
-    # We use a foreignObject to embed the SVG content directly
-    group = draw.Raw(svg_elements)
-    overlay.append(group)
-
-# Save the overlay SVG
-overlay_path = tmp_dir / "overlay.svg"
-overlay.save_svg(str(overlay_path))
-
 print(
-    f"Created overlay of {len(list(svg_dir.glob('*.svg')))} SVG files at {overlay_path}"
+    f"Processing {len(representative_files)} structures for uniform projection (scale: {UNIFORM_SCALE})..."
 )
+
+for file in representative_files:
+    matrix_path = matrix_dir / f"{file.stem}_matrix.npy"
+    # svg_path = svg_dir / f"{file.stem}.svg" # No longer needed here
+    rep_base_name = file.stem  # Used as key
+
+    # print(f"Processing: {file.name}") # Optional: Verbose logging
+
+    try:
+        # 1. Load Structure
+        structure_obj = structure_parser.parse_structure(file)
+
+        # 2. Apply Alignment Matrix Transformation
+        transformed_structure = transform_structure_with_matrix(
+            structure_obj, matrix_path
+        )
+
+        # 3. Apply Uniform Projection
+        projected_structure = project_structure_uniformly(
+            transformed_structure, scale_factor=UNIFORM_SCALE, center=True
+        )
+
+        # --- Store results ---
+        if (
+            hasattr(projected_structure, "coordinates")
+            and projected_structure.coordinates is not None
+        ):
+            projected_coordinates_map[rep_base_name] = projected_structure.coordinates
+            # Create scene now, using the structure with projected coords
+            scene = create_scene_from_structure(projected_structure, styles_dict)
+            scene_map[rep_base_name] = scene
+        else:
+            print(f"  -> WARNING: No coordinates found after projecting {file.name}")
+
+    except Exception as e:
+        print(f"  -> ERROR processing {file.name}: {e}")
+        logger.error(f"Failed processing {file.name}", exc_info=True)
+
+print("Structure processing finished.")
+
+
+# %% [markdown]
+# ## Calculate Bounds and Create Overlay from Stored Data
+#
+# Calculate the overall bounding box from the stored projected coordinates.
+# Then, assemble the final SVG by rendering each stored scene, extracting
+# its content, and merging it into a new SVG with scaled opacity and the dynamic viewbox.
+
+# %%
+# --- Bounds Calculation ---
+
+all_coords_list = list(projected_coordinates_map.values())
+final_svg_path = None  # Initialize variable
+
+if not all_coords_list:
+    print("Error: No projected coordinates were stored. Cannot create overlay.")
+else:
+    # Concatenate all coordinate arrays (only need X and Y, columns 0 and 1)
+    all_coords_np = np.concatenate(
+        [
+            coords[:, :2]
+            for coords in all_coords_list
+            if coords.size > 0 and coords.shape[1] >= 2
+        ],
+        axis=0,
+    )
+
+    if all_coords_np.size == 0:
+        print("Error: Combined coordinate array is empty. Cannot determine viewbox.")
+        viewbox_str = "0 0 100 100"  # Default fallback
+    else:
+        min_x, min_y = np.min(all_coords_np, axis=0)
+        max_x, max_y = np.max(all_coords_np, axis=0)
+
+        padding = 50  # Keep padding consistent
+        viewbox_x = min_x - padding
+        viewbox_y = min_y - padding
+        viewbox_width = (max_x - min_x) + 2 * padding
+        viewbox_height = (max_y - min_y) + 2 * padding
+        # Ensure width/height are positive
+        viewbox_width = max(viewbox_width, 1)
+        viewbox_height = max(viewbox_height, 1)
+
+        viewbox_str = (
+            f"{viewbox_x:.2f} {viewbox_y:.2f} {viewbox_width:.2f} {viewbox_height:.2f}"
+        )
+        print(f"Calculated ViewBox from coordinates: {viewbox_str}")
+
+    # --- SVG Assembly --- Only proceed if viewbox calculation was successful
+
+    ET.register_namespace("", "http://www.w3.org/2000/svg")
+    combined_svg_root = ET.Element(
+        "svg",
+        {
+            "xmlns": "http://www.w3.org/2000/svg",
+            "viewBox": viewbox_str,
+            "width": str(int(viewbox_width)),  # Use calculated width/height
+            "height": str(int(viewbox_height)),
+        },
+    )
+    combined_defs = ET.SubElement(combined_svg_root, "defs")
+    unique_defs_ids = set()  # Track defs IDs to avoid duplicates
+
+    print(f"Assembling final SVG from {len(scene_map)} scenes...")
+    processed_count = 0
+
+    # Iterate through the scenes we stored
+    for rep_base_name, scene in scene_map.items():
+        opacity = representative_opacities.get(rep_base_name, 1.0)
+
+        try:
+            # Render the scene to an SVG string
+            # Use the pre-defined canvas size, the final viewbox handles the overall display
+            # Make background transparent for overlay
+            renderer = SVGRenderer(
+                scene, CANVAS_WIDTH, CANVAS_HEIGHT, background_color=None
+            )
+            svg_string = renderer.get_svg_string()
+
+            # Parse this individual SVG string
+            # Use a parser that recovers from potential minor errors if needed
+            parser = ET.XMLParser(encoding="utf-8", recover=True)
+            individual_root = ET.fromstring(svg_string.encode("utf-8"), parser=parser)
+            namespaces = {"svg": "http://www.w3.org/2000/svg"}  # Define SVG namespace
+
+            # --- Merge Defs --- Might need refinement for complex defs/ID clashes
+            defs_element = individual_root.find("svg:defs", namespaces)
+            if defs_element is not None:
+                for elem in list(defs_element):
+                    elem_id = elem.get("id")
+                    if elem_id:
+                        if elem_id not in unique_defs_ids:
+                            combined_defs.append(elem)
+                            unique_defs_ids.add(elem_id)
+                    else:
+                        combined_defs.append(elem)
+
+            # --- Create Group and Copy Content ---
+            svg_group = ET.SubElement(
+                combined_svg_root,
+                "g",
+                {
+                    "opacity": f"{opacity:.3f}",
+                    "id": f"group_{rep_base_name}",  # Optional ID for the group
+                },
+            )
+
+            # Copy graphical content
+            for element in individual_root:
+                if element.tag == "{http://www.w3.org/2000/svg}defs":
+                    continue
+                # Skip potential background rect if renderer added one despite None background
+                if (
+                    element.tag == "{http://www.w3.org/2000/svg}rect"
+                    and element.get("id") == "background"
+                ):
+                    continue
+                svg_group.append(element)
+
+            processed_count += 1
+
+        except ET.ParseError as pe:
+            print(
+                f"  -> WARNING: Could not parse rendered SVG string for {rep_base_name}: {pe}"
+            )
+        except Exception as e:
+            print(
+                f"  -> WARNING: Error processing scene for {rep_base_name} during assembly: {e}"
+            )
+            logger.error(f"Error processing scene {rep_base_name}", exc_info=True)
+
+    # --- Save Final SVG ---
+    final_svg_path = tmp_dir / "overlay_direct_coords.svg"  # New name
+    tree = ET.ElementTree(combined_svg_root)
+    try:
+        tree.write(
+            str(final_svg_path),
+            encoding="unicode",
+            xml_declaration=True,
+            default_namespace="http://www.w3.org/2000/svg",
+        )
+        print(f"Created overlay of {processed_count} structures at {final_svg_path}")
+    except TypeError:
+        tree.write(str(final_svg_path), encoding="unicode", xml_declaration=True)
+        print(
+            f"Created overlay of {processed_count} structures at {final_svg_path} (with potential ns0 prefix)"
+        )
+    except IOError as e:
+        print(f"Error writing final overlay SVG: {e}")
+        final_svg_path = None  # Mark as failed
 
 # %% [markdown]
 # Display the final overlay SVG.
-# The overlay now shows structures aligned to SCOP Superfamily 3000114.
+# The overlay now shows representative structures aligned to SCOP Superfamily 3000114,
+# with dynamically calculated viewbox and opacity scaled by cluster size.
 
 # %%
 # Display the overlay SVG in the notebook
-
-# Load and display the overlay SVG
-display(SVG(str(overlay_path)))
-
-# You can also add a title before displaying the SVG
-print("Overlay of aligned protein structures:")
+if final_svg_path and final_svg_path.exists():
+    display(SVG(filename=str(final_svg_path)))
+    print(
+        "Overlay of aligned representative protein structures (direct coords, scaled opacity):"
+    )
+else:
+    print("Final overlay SVG generation failed or was skipped.")

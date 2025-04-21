@@ -9,15 +9,15 @@ import numpy as np
 
 from flatprot.core import Structure, logger
 
-# Assuming ResidueType might be needed indirectly via InertiaTransformationParameters defaults
 from flatprot.io import MatrixLoader
 
-# Assuming these specific error types exist in flatprot.io.errors
 from flatprot.io import MatrixFileNotFoundError, MatrixFileError
 from flatprot.projection import (
     OrthographicProjection,
     OrthographicProjectionParameters,
-    ProjectionError,  # Assuming this specific error type exists
+    ProjectionError,
+    UniformProjection,
+    UniformProjectionParameters,
 )
 from flatprot.transformation import (
     InertiaTransformer,
@@ -26,7 +26,7 @@ from flatprot.transformation import (
     MatrixTransformer,
     MatrixTransformParameters,
     TransformationMatrix,
-    TransformationError,  # Assuming this specific error type exists
+    TransformationError,
 )
 
 
@@ -285,3 +285,82 @@ def project_structure_orthographically(
         if isinstance(e, (ProjectionError, ValueError)):
             raise
         raise ProjectionError(f"Orthographic projection failed: {str(e)}") from e
+
+
+def project_structure_uniformly(
+    structure: Structure,
+    scale_factor: float,
+    view_direction: Optional[np.ndarray] = None,
+    up_vector: Optional[np.ndarray] = None,
+    center: bool = True,
+) -> Structure:
+    """Projects the coordinates of a Structure uniformly using UniformProjection.
+
+    This performs an orthographic-style projection based on view/up vectors
+    but applies a fixed, uniform scale factor instead of scaling to fit a canvas.
+    This preserves the relative size of structures when projecting multiple structures
+    with the same scale factor, useful for overlays.
+
+    Assumes the input structure's coordinates are already appropriately transformed.
+    The coordinates of the returned Structure will be the projected (X, Y, Depth) values.
+
+    Args:
+        structure: The Structure object whose coordinates are to be projected.
+        scale_factor: The uniform scaling factor to apply.
+        view_direction: Optional (3,) numpy array for the view direction. Defaults to [0, 0, 1].
+        up_vector: Optional (3,) numpy array for the initial up vector. Defaults to [0, 1, 0].
+        center: Whether to center the coordinates before scaling. Defaults to True.
+
+    Returns:
+        A new Structure object with uniformly projected coordinates.
+
+    Raises:
+        ProjectionError: If the projection process fails.
+        ValueError: If the structure lacks coordinates or if vector inputs are invalid.
+    """
+    if not hasattr(structure, "coordinates") or structure.coordinates is None:
+        raise ValueError("Structure has no coordinates to project.")
+
+    coords_to_project = structure.coordinates
+    if coords_to_project.size == 0:
+        logger.warning("Structure coordinates are empty. Returning original structure.")
+        return structure
+
+    try:
+        # Instantiate the specific projector
+        projector = UniformProjection()
+
+        # Construct parameters, letting defaults handle None inputs
+        param_kwargs = {
+            "scale_factor": scale_factor,
+            "center": center,
+        }
+        if view_direction is not None:
+            param_kwargs["view_direction"] = view_direction
+        if up_vector is not None:
+            param_kwargs["up_vector"] = up_vector
+
+        projection_params = UniformProjectionParameters(**param_kwargs)
+
+        # Define the transformation function using the projector instance
+        def projection_func(coords: np.ndarray) -> np.ndarray:
+            # This function will be called by apply_vectorized_transformation
+            # possibly with chunks of the original coordinates.
+            if coords.size == 0:
+                return np.empty((0, 3), dtype=np.float32)
+            projected = projector.project(coords, projection_params)
+            return projected.astype(np.float32)  # Ensure consistent type
+
+        logger.info(
+            f"Applying uniform projection transformation (scale: {scale_factor})..."
+        )
+        projected_structure = structure.apply_vectorized_transformation(projection_func)
+        logger.info("Uniform projection transformation applied.")
+
+        return projected_structure
+
+    except Exception as e:
+        logger.error(f"Error during uniform projection: {str(e)}", exc_info=True)
+        if isinstance(e, (ProjectionError, ValueError)):
+            raise
+        raise ProjectionError(f"Uniform projection failed: {str(e)}") from e
