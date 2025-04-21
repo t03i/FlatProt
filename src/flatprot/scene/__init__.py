@@ -3,7 +3,7 @@
 
 from .scene import Scene
 from .base_element import BaseSceneElement, BaseSceneStyle
-from .group import SceneGroup
+from .group import SceneGroup, GroupTransform, GroupStyle
 from .structure import (
     HelixSceneElement,
     HelixStyle,
@@ -44,6 +44,8 @@ __all__ = [
     "CoordinateResolver",
     "Scene",
     "SceneGroup",
+    "GroupTransform",
+    "GroupStyle",
     "BaseSceneElement",
     "BaseSceneStyle",
     "BaseStructureSceneElement",
