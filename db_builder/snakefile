@@ -427,7 +427,6 @@ rule create_foldseek_database:
         foldseek_bin = FOLDSEEK_PATH,
         # Pass the directory containing the representative CIF files
         representative_dir = format_path("representative_domains_dir"),
-        db_version = config.get("db_version", "1.0")
     threads:
         FOLDSEEK_LARGE_THREADS
     log:
@@ -455,7 +454,8 @@ rule create_alignment_database:
         database_info = format_path("database_info")
     params:
         # Pass the directory containing representatives to the script
-        representative_dir = format_path("representative_domains_dir")
+        representative_dir = format_path("representative_domains_dir"),
+        db_version = config.get("db_version", "1.0")
     log:
         format_path("log_dir") + "/create_alignment_database.log"
     script:
