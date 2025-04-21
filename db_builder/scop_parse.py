@@ -203,19 +203,43 @@ def main() -> None:
     # Parse SCOP file
     df = get_sf_proteins_domains_region(scop_file)
 
+    # --- Filtering for Invalid/Complex Regions ---
+    initial_rows = df.height
+    logger.info(f"Initial rows parsed from SCOP file: {initial_rows}")
+
+    # Filter out rows with commas in PDB region (discontinuous domains)
+    df_no_comma = df.filter(~pl.col("SF_PDBREG").str.contains(","))
+    comma_dropped_rows = initial_rows - df_no_comma.height
+    if comma_dropped_rows > 0:
+        logger.info(
+            f"Dropped {comma_dropped_rows} rows due to commas in SF_PDBREG (discontinuous domains)."
+        )
+
+    # Filter out entries with null start/end values AFTER basic extraction
+    # (These might occur even without commas due to parsing errors or bad input)
+    df_filtered = df_no_comma.filter(
+        (pl.col("start_res").is_not_null()) & (pl.col("end_res").is_not_null())
+    )
+    null_dropped_rows = df_no_comma.height - df_filtered.height
+    if null_dropped_rows > 0:
+        logger.info(
+            f"Dropped {null_dropped_rows} additional rows due to null start/end residue after extraction."
+        )
+
+    total_dropped = initial_rows - df_filtered.height
+    logger.info(
+        f"Total rows dropped: {total_dropped}. Final rows for output: {df_filtered.height}"
+    )
+
     # Generate RST report before filtering
     generate_rst_report(df, df.get_column("pdb_id").unique().to_list(), report_output)
 
-    # Filter out entries with null values and log the count
-    total_rows = df.height
-    df_filtered = df.filter(
-        (pl.col("start_res").is_not_null()) & (pl.col("end_res").is_not_null())
-    )
-    dropped_rows = total_rows - df_filtered.height
-    logger.info(f"Dropped {dropped_rows} rows with invalid residue ranges")
-
     # Save filtered superfamilies information
-    df_filtered.write_csv(superfamilies_output, separator="\t")
+    # Ensure only the essential columns are saved
+    df_to_save = df_filtered.select(
+        ["sf_id", "pdb_id", "chain", "start_res", "end_res"]
+    )
+    df_to_save.write_csv(superfamilies_output, separator="\t")
     logger.info(f"Saved superfamily information to {superfamilies_output}")
 
 
