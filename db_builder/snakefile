@@ -259,18 +259,28 @@ rule extract_all_domains_for_superfamily:
     log:
         format_path("log_dir") + "/extract_all_domains_{sf_id}.log"
     run:
+        # Use python logging/print directly instead of shell echo
+        log_file_path = log[0]
         # Check if any domain files expected by get_domains_for_superfamily were actually generated
         if not input.domain_files:
-            shell("echo 'Warning: No domain files were expected for superfamily {wildcards.sf_id} based on SCOP data.' > {log}")
+            # Log using print (Snakemake redirects to log file)
+            print(f"Warning: No domain files were expected for superfamily {wildcards.sf_id} based on SCOP data.")
         else:
             # Check how many of the expected files actually exist after extract_domain rules ran
-            existing_files = [f for f in input.domain_files if os.path.exists(f)]
-            num_expected = len(input.domain_files)
-            num_existing = len(existing_files)
-            if num_existing == 0:
-                shell("echo 'Warning: No domain files were successfully extracted for superfamily {wildcards.sf_id}. Flag created, but directory may be empty.' >> {log}")
-            else:
-                shell("echo 'Completed domain extraction checks for superfamily {wildcards.sf_id}. {num_existing}/{num_expected} expected files present.' >> {log}")
+            try:
+                existing_files = [f for f in input.domain_files if os.path.exists(f)]
+                num_expected = len(input.domain_files)
+                num_existing = len(existing_files)
+                if num_existing == 0:
+                    print(f"Warning: No domain files were successfully extracted for superfamily {wildcards.sf_id}. Flag will be created, but directory may be empty.")
+                else:
+                    print(f"Completed domain extraction checks for superfamily {wildcards.sf_id}. {num_existing}/{num_expected} expected files present.")
+            except Exception as e:
+                 # Log potential errors during os.path.exists (e.g., permissions, long paths)
+                 print(f"Error checking existence of domain files for superfamily {wildcards.sf_id}: {e}")
+                 # Re-raise to make the job fail clearly
+                 raise
+        # Flag file is touched by Snakemake on successful completion of the run block
 
 # -------------------------------------------------------------------------------------- #
 #                         Identify Valid Superfamilies                                   #
