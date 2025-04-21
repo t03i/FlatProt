@@ -299,7 +299,7 @@ def create_alignment_database(
         "failed_representatives": failed_entries,
         "superfamily_metadata_included": bool(sf_metadata),
         "superfamily_count_from_metadata": len(sf_metadata) if sf_metadata else 0,
-        "format_version": AlignmentDatabase.DB_FORMAT_VERSION,  # Use version from class
+        "format_version": snakemake.params.db_version,
         "transformation_type": "inertia",
     }
 

@@ -13,7 +13,7 @@ concurrent_downloads: 10
 # External tools
 foldseek_path: "foldseek"
 
-# Network settings
+db_version: "1.0"
 
 # Resource settings
 foldseek_small_threads: 4

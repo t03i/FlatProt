@@ -426,7 +426,8 @@ rule create_foldseek_database:
     params:
         foldseek_bin = FOLDSEEK_PATH,
         # Pass the directory containing the representative CIF files
-        representative_dir = format_path("representative_domains_dir")
+        representative_dir = format_path("representative_domains_dir"),
+        db_version = config.get("db_version", "1.0")
     threads:
         FOLDSEEK_LARGE_THREADS
     log:
