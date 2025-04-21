@@ -8,7 +8,6 @@ from pydantic import Field
 
 from flatprot.core import (
     ResidueRangeSet,
-    ResidueCoordinate,
     CoordinateCalculationError,
     logger,
 )
@@ -131,7 +130,6 @@ class AreaAnnotation(BaseAnnotationElement[AreaAnnotationStyle]):
         style: Optional[AreaAnnotationStyle] = None,
         label: Optional[str] = None,
         residue_range_set: Optional[ResidueRangeSet] = None,
-        target_coordinates: Optional[List[ResidueCoordinate]] = None,
         parent: Optional[SceneGroupType] = None,
     ):
         """Initializes an AreaAnnotation.
@@ -144,7 +142,6 @@ class AreaAnnotation(BaseAnnotationElement[AreaAnnotationStyle]):
             style: The specific style instance for this area annotation.
             label: Optional text label for the annotation.
             residue_range_set: The set of residue ranges this annotation targets.
-            target_coordinates: A list of specific residue coordinates this annotation targets.
             parent: The parent SceneGroup in the scene graph, if any.
 
         Raises:
@@ -153,8 +150,7 @@ class AreaAnnotation(BaseAnnotationElement[AreaAnnotationStyle]):
         # Metadata argument removed, using label directly
         super().__init__(
             id=id,
-            residue_range_set=residue_range_set,
-            target_coordinates=target_coordinates,
+            target=residue_range_set,
             style=style,
             label=label,
             parent=parent,
@@ -187,14 +183,12 @@ class AreaAnnotation(BaseAnnotationElement[AreaAnnotationStyle]):
         """
         logger.debug(f"Calculating area coordinates for '{self.id}' using resolver")
 
-        if self.residue_range_set is None:
-            raise ValueError(
-                f"AreaAnnotation '{self.id}' has no residue_range_set defined."
-            )
+        if self.target is None:
+            raise ValueError(f"AreaAnnotation '{self.id}' has no target defined.")
 
         # 1. Collect all available target 3D coordinates using the resolver
         target_coords_3d_list: List[np.ndarray] = []
-        for res_coord in self.residue_range_set:
+        for res_coord in self.target:
             try:
                 point = resolver.resolve(res_coord)
                 target_coords_3d_list.append(point)

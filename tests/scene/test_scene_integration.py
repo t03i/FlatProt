@@ -119,7 +119,7 @@ def scene_with_structure_elements(scene_with_mock_structure: Scene) -> Scene:
 @pytest.fixture
 def point_anno() -> PointAnnotation:
     """Basic point annotation."""
-    return PointAnnotation(id="p1", target_coordinate=ResidueCoordinate("A", 10))
+    return PointAnnotation(id="p1", target=ResidueCoordinate("A", 10))
 
 
 @pytest.fixture

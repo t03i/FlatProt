@@ -1,7 +1,7 @@
 # Copyright 2025 Tobias Olenyi.
 # SPDX-License-Identifier: Apache-2.0
 
-from typing import Optional, Tuple, Dict, Any
+from typing import Optional, Dict, Any
 import numpy as np  # Added for type hints
 from drawsvg import Path, Line, Circle
 
@@ -136,69 +136,6 @@ def _draw_sheet(element: SheetSceneElement, coords_2d: np.ndarray) -> Optional[P
 
     path = Path(d=d_string, **kwargs)
     return path
-
-
-def _calculate_coil_connection_points(
-    coords_2d: np.ndarray,
-) -> Tuple[Optional[np.ndarray], Optional[np.ndarray]]:
-    """Calculate start/end connection points for a coil."""
-    if coords_2d is None or len(coords_2d) == 0:
-        return None, None
-    start_conn = coords_2d[0, :2]  # Use only X, Y
-    end_conn = coords_2d[-1, :2]  # Use only X, Y
-    return start_conn, end_conn
-
-
-def _calculate_helix_connection_points(
-    coords_2d: np.ndarray,
-) -> Tuple[Optional[np.ndarray], Optional[np.ndarray]]:
-    """Calculate start/end connection points for a helix polygon.
-
-    For a helix, the path wraps around and closes at the beginning.
-    The start connection is the midpoint between the first and last vertices,
-    and the end connection is the midpoint between the middle vertices.
-
-    Args:
-        coords_2d: Array of 2D coordinates representing the helix polygon vertices.
-
-    Returns:
-        Tuple of start and end connection points as numpy arrays, or None if invalid.
-    """
-    if coords_2d is None or len(coords_2d) < 3:  # Need at least 3 for polygon edges
-        return _calculate_coil_connection_points(coords_2d)  # Fallback for line case
-
-    # For a helix that wraps around, the start connection is the midpoint between
-    # the first and last vertices (which are at the same end of the helix)
-    start_conn = (coords_2d[0, :2] + coords_2d[-1, :2]) / 2
-
-    # The end connection is the midpoint between the middle vertices
-    # For even number of points, average the two middle points
-    # For odd number of points, use the middle point and the one before it
-    mid_idx = len(coords_2d) // 2
-    if len(coords_2d) % 2 == 0:  # Even number of points
-        end_conn = (coords_2d[mid_idx - 1, :2] + coords_2d[mid_idx, :2]) / 2
-    else:
-        raise ValueError(f"Odd number of points for SVG helix {len(coords_2d)}")
-
-    return start_conn, end_conn
-
-
-def _calculate_sheet_connection_points(
-    coords_2d: np.ndarray,
-) -> Tuple[Optional[np.ndarray], Optional[np.ndarray]]:
-    """Calculate start/end connection points for a sheet arrow.
-
-    Start connection: midpoint of the base edge (vertices 0 and 1).
-    End connection: midpoint of the tip edge (vertices -2 and -1).
-    Falls back to coil logic if fewer than 3 points.
-    """
-    if coords_2d is None or len(coords_2d) < 3:  # Need at least 3 for polygon edges
-        return _calculate_coil_connection_points(coords_2d)  # Fallback for line case
-
-    # Start connection: midpoint of the first edge (vertices 0 and 1)
-    start_conn = (coords_2d[0, :2] + coords_2d[1, :2]) / 2
-    end_conn = coords_2d[-1, :2]
-    return start_conn, end_conn
 
 
 def _draw_connection(

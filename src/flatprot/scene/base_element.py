@@ -4,10 +4,8 @@
 from abc import ABC, abstractmethod
 from typing import Generic, TypeVar, Optional
 
-import numpy as np
 from pydantic import BaseModel, Field
 
-from flatprot.core.coordinates import ResidueRangeSet
 from flatprot.core.structure import Structure
 
 # Forward declaration for type hinting cycle
@@ -42,7 +40,6 @@ class BaseSceneElement(ABC, Generic[StyleType]):
     def __init__(
         self,
         id: str,
-        residue_range_set: ResidueRangeSet,
         style: Optional[StyleType] = None,
         parent: Optional[SceneGroupType] = None,
     ):
@@ -50,17 +47,13 @@ class BaseSceneElement(ABC, Generic[StyleType]):
 
         Args:
             id: A unique identifier for this scene element.
-            residue_range_set: The set of residue ranges this element represents.
             style: A style instance for this element.
             parent: The parent SceneGroup in the scene graph, if any.
         """
         if not isinstance(id, str) or not id:
             raise ValueError("SceneElement ID must be a non-empty string.")
-        if not isinstance(residue_range_set, ResidueRangeSet):
-            raise TypeError("residue_range_set must be a ResidueRangeSet instance.")
 
         self.id: str = id
-        self.residue_range_set: ResidueRangeSet = residue_range_set
         self._style: Optional[StyleType] = style or self.default_style
         self._parent: Optional[SceneGroupType] = parent
 
@@ -115,28 +108,6 @@ class BaseSceneElement(ABC, Generic[StyleType]):
                 f"got {type(new_style).__name__}."
             )
         self._style = new_style
-
-    @abstractmethod
-    def get_coordinates(self, structure: Structure) -> Optional[np.ndarray]:
-        """Retrieve the final 2D + Depth coordinates for rendering this element.
-
-        Implementations should use the element's `residue_range_set` to query
-        the provided `structure` object (which is assumed to already contain
-        projected 2D + Depth coordinates) and return the relevant slice.
-        Any calculations here should relate to selecting/processing these
-        pre-projected coordinates, not performing the projection itself.
-
-        Args:
-            structure: The core Structure object containing pre-projected
-                       2D + Depth coordinate data.
-
-        Returns:
-            A NumPy array of 2D + Depth coordinates (shape [N, 3]) suitable for
-            rendering, where columns are typically (X, Y, Depth).
-            Returns None if the element itself doesn't have direct renderable
-            coordinates (e.g., a SceneGroup).
-        """
-        raise NotImplementedError
 
     @abstractmethod
     def get_depth(self, structure: Structure) -> Optional[float]:

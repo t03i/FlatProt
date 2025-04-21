@@ -1,11 +1,15 @@
 # Copyright 2025 Tobias Olenyi.
 # SPDX-License-Identifier: Apache-2.0
-from typing import Optional, Dict, Any
+from typing import Optional
 
 from pydantic import BaseModel, Field
 from pydantic_extra_types.color import Color
 
-from .base_structure import BaseStructureSceneElement
+from flatprot.core.structure import Structure
+
+from .structure.base_structure import BaseStructureSceneElement
+from .base_element import BaseSceneElement
+from .group import SceneGroupType
 
 
 class ConnectionStyle(BaseModel):
@@ -27,17 +31,30 @@ class ConnectionStyle(BaseModel):
     )
 
 
-class Connection(BaseModel):
+class Connection(BaseSceneElement):
     """Represents a connection (e.g., disulfide bond, crosslink) between two residues."""
 
     start_element: BaseStructureSceneElement
     end_element: BaseStructureSceneElement
-    type: str = Field(
-        default="custom",
-        description="Type of connection (e.g., 'disulfide', 'salt_bridge', 'custom').",
-    )
-    style: ConnectionStyle = Field(default_factory=ConnectionStyle)
-    metadata: Dict[str, Any] = Field(default_factory=dict)
+
+    def __init__(
+        self,
+        start_element: BaseStructureSceneElement,
+        end_element: BaseStructureSceneElement,
+        style: Optional[ConnectionStyle] = None,
+        parent: Optional[SceneGroupType] = None,
+    ):
+        super().__init__(
+            id=f"connection_{start_element.id}_{end_element.id}",
+            style=style,
+            parent=parent,
+        )
+
+    def get_depth(self, structure: Structure) -> float | None:
+        return (
+            self.start_element.get_depth(structure)
+            + self.end_element.get_depth(structure) / 2
+        )
 
     def __str__(self) -> str:
         return f"Connection({self.type}: {self.start_element} <-> {self.end_element})"

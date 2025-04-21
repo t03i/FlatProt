@@ -330,3 +330,41 @@ class HelixSceneElement(BaseStructureSceneElement[HelixStyle]):
 
         # Return the midpoint between the interpolated top and bottom points
         return (interp_top + interp_bottom) / 2.0
+
+    def get_start_connection_point(self, structure: Structure) -> Optional[np.ndarray]:
+        """Calculate the 2D coordinate for the start connection point.
+
+        Args:
+            structure: The core Structure object containing projected coordinates.
+
+        Returns:
+            A NumPy array [X, Y] or None if calculation fails.
+        """
+        coords_2d = self.get_coordinates(structure)[:, :2]
+        if coords_2d is None:
+            return None
+        if len(coords_2d) < 3:
+            return coords_2d[0, :2]
+        return (coords_2d[0, :2] + coords_2d[-1, :2]) / 2
+
+    def get_end_connection_point(self, structure: Structure) -> Optional[np.ndarray]:
+        """Calculate the 2D coordinate for the end connection point.
+
+        Args:
+            structure: The core Structure object containing projected coordinates.
+
+        Returns:
+            A NumPy array [X, Y] or None if calculation fails.
+        """
+        coords_2d = self.get_coordinates(structure)[:, :2]
+        if coords_2d is None:
+            return None
+        if len(coords_2d) < 3:
+            return coords_2d[0, :2]
+
+        # The end connection is the midpoint between the middle vertices
+        mid_idx = len(coords_2d) // 2
+        if len(coords_2d) % 2 == 0:  # Even number of points
+            return (coords_2d[mid_idx - 1, :2] + coords_2d[mid_idx, :2]) / 2
+        else:
+            return coords_2d[mid_idx, :2]

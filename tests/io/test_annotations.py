@@ -180,7 +180,7 @@ class TestAnnotationParsing:
         anno0 = annotations[0]
         assert isinstance(anno0, PointAnnotation)
         assert anno0.label == "Catalytic Site"
-        assert anno0.target_coordinate == ResidueCoordinate("A", 42)
+        assert anno0.target == ResidueCoordinate("A", 42)
         assert anno0.id.startswith(f"annotation_{valid_annotations_file.stem}_0_point")
         assert isinstance(anno0.style, PointAnnotationStyle)
         assert anno0.style.color == Color("red")
@@ -190,7 +190,7 @@ class TestAnnotationParsing:
         anno1 = annotations[1]
         assert isinstance(anno1, LineAnnotation)
         assert anno1.label == "Binding Pair"
-        assert anno1.target_coordinates == [
+        assert anno1.target == [
             ResidueCoordinate("B", 10),
             ResidueCoordinate("B", 15),
         ]
@@ -203,7 +203,7 @@ class TestAnnotationParsing:
         anno2 = annotations[2]
         assert isinstance(anno2, AreaAnnotation)
         assert anno2.label == "Alpha Helix"
-        assert anno2.residue_range_set == ResidueRangeSet([ResidueRange("A", 100, 115)])
+        assert anno2.target == ResidueRangeSet([ResidueRange("A", 100, 115)])
         assert anno2.id.startswith(f"annotation_{valid_annotations_file.stem}_2_area")
         assert isinstance(anno2.style, AreaAnnotationStyle)
         assert anno2.style.color == Color("blue")
@@ -213,7 +213,7 @@ class TestAnnotationParsing:
         anno3 = annotations[3]
         assert isinstance(anno3, PointAnnotation)
         assert anno3.label == "Another Point"
-        assert anno3.target_coordinate == ResidueCoordinate("C", 1)
+        assert anno3.target == ResidueCoordinate("C", 1)
         assert anno3.id.startswith(f"annotation_{valid_annotations_file.stem}_3_point")
         assert (
             isinstance(anno3.style, PointAnnotationStyle)
@@ -240,7 +240,7 @@ class TestAnnotationParsing:
             assert len(annotations) == 1
             assert isinstance(annotations[0], PointAnnotation)
             assert annotations[0].label is None  # Label should be None
-            assert annotations[0].target_coordinate == ResidueCoordinate("A", 10)
+            assert annotations[0].target == ResidueCoordinate("A", 10)
         finally:
             os.unlink(temp_file_path)
 

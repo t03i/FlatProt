@@ -78,7 +78,7 @@ class FoldseekAligner:
                 "t",
                 "lddtfull",
             ],
-            dtypes={
+            schema_overrides={
                 "query": pl.Utf8,
                 "target": pl.Utf8,
             },

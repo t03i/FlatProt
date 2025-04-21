@@ -247,3 +247,32 @@ class SheetSceneElement(BaseStructureSceneElement[SheetStyle]):
         interpolated_coord = base_midpoint * (1 - frac) + tip_point * frac
 
         return interpolated_coord
+
+    def get_start_connection_point(self, structure: Structure) -> Optional[np.ndarray]:
+        """Calculate the 2D coordinate for the start connection point.
+
+        Args:
+            structure: The core Structure object containing projected coordinates.
+
+        Returns:
+            A NumPy array [X, Y] or None if calculation fails.
+        """
+        coords_2d = self.get_coordinates(structure)[:, :2]
+        if coords_2d is None:
+            return None
+
+        return (coords_2d[0, :2] + coords_2d[1, :2]) / 2
+
+    def get_end_connection_point(self, structure: Structure) -> Optional[np.ndarray]:
+        """Calculate the 2D coordinate for the end connection point.
+
+        Args:
+            structure: The core Structure object containing projected coordinates.
+
+        Returns:
+            A NumPy array [X, Y] or None if calculation fails.
+        """
+        coords_2d = self.get_coordinates(structure)[:, :2]
+        if coords_2d is None:
+            return None
+        return coords_2d[-1, :2]

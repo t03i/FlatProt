@@ -43,7 +43,7 @@ class PointAnnotation(BaseAnnotationElement[PointAnnotationStyle]):
     def __init__(
         self,
         id: str,
-        target_coordinate: ResidueCoordinate,  # Expects a single coordinate
+        target: ResidueCoordinate,  # Expects a single coordinate
         label: Optional[str] = None,
         style: Optional[PointAnnotationStyle] = None,
         parent: Optional[SceneGroupType] = None,
@@ -57,7 +57,7 @@ class PointAnnotation(BaseAnnotationElement[PointAnnotationStyle]):
             metadata: Optional dictionary for storing arbitrary metadata.
             parent: The parent SceneGroup in the scene graph, if any.
         """
-        if not isinstance(target_coordinate, ResidueCoordinate):
+        if not isinstance(target, ResidueCoordinate):
             raise TypeError(
                 "target_coordinate must be a single ResidueCoordinate instance."
             )
@@ -65,8 +65,7 @@ class PointAnnotation(BaseAnnotationElement[PointAnnotationStyle]):
         # Call superclass init, passing the single coordinate in a list
         super().__init__(
             id=id,
-            target_coordinates=[target_coordinate],  # Base class expects a list
-            residue_range_set=None,  # Explicitly None, targeting is via coordinate
+            target=target,  # Base class expects a list
             style=style,
             label=label,
             parent=parent,

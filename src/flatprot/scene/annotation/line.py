@@ -1,7 +1,7 @@
 # Copyright 2025 Tobias Olenyi.
 # SPDX-License-Identifier: Apache-2.0
 
-from typing import Optional, List, Tuple
+from typing import Optional, Tuple
 
 import numpy as np
 from pydantic import Field
@@ -59,7 +59,8 @@ class LineAnnotation(BaseAnnotationElement[LineAnnotationStyle]):
     def __init__(
         self,
         id: str,
-        target_coordinates: List[ResidueCoordinate],  # Expects exactly two coordinates
+        start_coordinate: ResidueCoordinate,
+        end_coordinate: ResidueCoordinate,
         style: Optional[LineAnnotationStyle] = None,
         label: Optional[str] = None,
         parent: Optional[SceneGroupType] = None,
@@ -78,22 +79,17 @@ class LineAnnotation(BaseAnnotationElement[LineAnnotationStyle]):
             ValueError: If `target_coordinates` does not contain exactly two elements.
             TypeError: If elements in `target_coordinates` are not ResidueCoordinate instances.
         """
-        if not isinstance(target_coordinates, list) or len(target_coordinates) != 2:
-            raise ValueError(
-                "LineAnnotation target_coordinates must be a list containing exactly two ResidueCoordinate instances."
-            )
-        if not all(
-            isinstance(coord, ResidueCoordinate) for coord in target_coordinates
+        if not isinstance(start_coordinate, ResidueCoordinate) or not isinstance(
+            end_coordinate, ResidueCoordinate
         ):
-            raise TypeError(
-                "All items in target_coordinates must be ResidueCoordinate instances."
+            raise ValueError(
+                "LineAnnotation must be initialized with two ResidueCoordinate instances."
             )
 
         # Call superclass init
         super().__init__(
             id=id,
-            target_coordinates=target_coordinates,
-            residue_range_set=None,  # Explicitly None, targeting is via coordinates
+            target=[start_coordinate, end_coordinate],
             style=style,
             label=label,
             parent=parent,
@@ -102,13 +98,12 @@ class LineAnnotation(BaseAnnotationElement[LineAnnotationStyle]):
     @property
     def start_coordinate(self) -> ResidueCoordinate:
         """Get the start target coordinate for the line."""
-        # target_coordinates is guaranteed to be a list with two elements by __init__
-        return self._target_coordinates[0]
+        return self.target[0]
 
     @property
     def end_coordinate(self) -> ResidueCoordinate:
         """Get the end target coordinate for the line."""
-        return self._target_coordinates[1]
+        return self.target[1]
 
     @property
     def default_style(self) -> LineAnnotationStyle:

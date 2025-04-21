@@ -164,7 +164,7 @@ class AnnotationParser:
 
         return PointAnnotation(
             id=anno_id,
-            target_coordinate=target_coord,
+            target=target_coord,
             style=cast(Optional[PointAnnotationStyle], style_instance),
             label=label,
         )
@@ -193,7 +193,8 @@ class AnnotationParser:
 
         return LineAnnotation(
             id=anno_id,
-            target_coordinates=target_coords,
+            start_coordinate=target_coords[0],
+            end_coordinate=target_coords[1],
             style=cast(
                 Optional[LineAnnotationStyle], style_instance
             ),  # Cast for type checker

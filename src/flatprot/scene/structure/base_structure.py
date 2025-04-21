@@ -74,12 +74,12 @@ class BaseStructureSceneElement(
         # Uses the concrete class's name (e.g., "Helix")
         generated_id = self._generate_id(self.__class__, residue_range_set)
 
+        self.residue_range_set = residue_range_set
         # Pass the potentially None style to the BaseSceneElement constructor.
         # BaseSceneElement's `style` property handles returning the default
         # style if the instance's `_style` attribute is None.
         super().__init__(
             id=generated_id,
-            residue_range_set=residue_range_set,
             style=style,  # Pass the direct input style (can be None)
             parent=parent,
         )
@@ -96,8 +96,6 @@ class BaseStructureSceneElement(
         )
         return f"{cls.__name__}-{range_repr}"
 
-    # get_coordinates remains abstract, to be implemented by concrete subclasses
-    # (e.g., Helix, Sheet, Coil) based on their specific geometry.
     @abstractmethod
     def get_coordinates(self, structure: Structure) -> Optional[np.ndarray]:
         """Retrieve the final 2D + Depth coordinates for rendering this element.
@@ -247,3 +245,27 @@ class BaseStructureSceneElement(
             raise TypeError(f"Cannot check adjacency with {type(other)}")
 
         return self.residue_range_set.is_adjacent_to(other.residue_range_set)
+
+    @abstractmethod
+    def get_start_connection_point(self, structure: Structure) -> Optional[np.ndarray]:
+        """Calculate the 2D coordinate for the start connection point.
+
+        Args:
+            structure: The core Structure object containing projected coordinates.
+
+        Returns:
+            A NumPy array [X, Y] or None if calculation fails.
+        """
+        raise NotImplementedError
+
+    @abstractmethod
+    def get_end_connection_point(self, structure: Structure) -> Optional[np.ndarray]:
+        """Calculate the 2D coordinate for the end connection point.
+
+        Args:
+            structure: The core Structure object containing projected coordinates.
+
+        Returns:
+            A NumPy array [X, Y] or None if calculation fails.
+        """
+        raise NotImplementedError

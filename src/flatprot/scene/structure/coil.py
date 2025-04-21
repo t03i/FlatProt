@@ -241,3 +241,32 @@ class CoilSceneElement(BaseStructureSceneElement[CoilStyle]):
         interpolated_coord = coord_low * (1 - frac) + coord_high * frac
 
         return interpolated_coord
+
+    def get_start_connection_point(self, structure: Structure) -> Optional[np.ndarray]:
+        """Calculate the 2D coordinate for the start connection point.
+
+        Args:
+            structure: The core Structure object containing projected coordinates.
+
+        Returns:
+            A NumPy array [X, Y] or None if calculation fails.
+        """
+
+        coords_2d = self.get_coordinates(structure)[:, :2]
+        if coords_2d is None:
+            return None
+        return coords_2d[0, :2]
+
+    def get_end_connection_point(self, structure: Structure) -> Optional[np.ndarray]:
+        """Calculate the 2D coordinate for the end connection point.
+
+        Args:
+            structure: The core Structure object containing projected coordinates.
+
+        Returns:
+            A NumPy array [X, Y] or None if calculation fails.
+        """
+        coords_2d = self.get_coordinates(structure)[:, :2]
+        if coords_2d is None:
+            return None
+        return coords_2d[-1, :2]

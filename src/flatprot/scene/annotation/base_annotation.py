@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 from abc import ABC, abstractmethod
-from typing import Generic, TypeVar, Optional, List, Tuple
+from typing import Generic, TypeVar, Optional, List, Tuple, Union
 
 import numpy as np
 from pydantic import Field
@@ -62,82 +62,79 @@ class BaseAnnotationElement(
 ):
     """Abstract base class for scene elements representing annotations.
 
-    Annotations can target specific residues/points or broader residue ranges.
+    Stores the original target specification (coordinates, range, or range set)
+    and requires the corresponding ResidueRangeSet for the base scene element.
     Requires a concrete style type inheriting from BaseAnnotationStyle.
     """
 
     def __init__(
         self,
         id: str,  # ID is required for annotations
-        residue_range_set: Optional[ResidueRangeSet] = None,
-        target_coordinates: Optional[List[ResidueCoordinate]] = None,
+        target: Union[
+            ResidueCoordinate, List[ResidueCoordinate], ResidueRange, ResidueRangeSet
+        ],
         label: Optional[str] = None,
         style: Optional[AnnotationStyleType] = None,
         parent: Optional[SceneGroupType] = None,
     ):
         """Initializes a BaseAnnotationElement.
 
-        Exactly one of `residue_range_set` or `target_coordinates` must be provided
-        to define what the annotation refers to.
+        Subclasses are responsible for constructing the appropriate `residue_range_set`
+        based on their specific `target` type before calling this initializer.
 
         Args:
             id: A unique identifier for this annotation element.
-            residue_range_set: The set of residue ranges this annotation targets (for area-like annotations).
-            target_coordinates: A list of specific residue coordinates this annotation targets (for point/line annotations).
+            target: The original target specification (list of coordinates, range, or set).
+                    Stored for use by subclasses in `get_coordinates`.
+            residue_range_set: The ResidueRangeSet derived from the target, required by
+                               the BaseSceneElement for its internal logic (e.g., bounding box).
             label: The label for the annotation.
             style: An optional specific style instance for this annotation.
             parent: The parent SceneGroup in the scene graph, if any.
 
         Raises:
-            ValueError: If neither or both targeting arguments are provided.
+            TypeError: If the target type is not one of the allowed types.
+            ValueError: If residue_range_set is empty.
         """
-
-        self.label = label
-        if (residue_range_set is None and target_coordinates is None) or (
-            residue_range_set is not None and target_coordinates is not None
+        # Validate the target type
+        if not isinstance(
+            target, (ResidueCoordinate, list, ResidueRange, ResidueRangeSet)
+        ) or (
+            isinstance(target, list)
+            and not all(isinstance(item, ResidueCoordinate) for item in target)
         ):
             raise ValueError(
-                "Exactly one of 'residue_range_set' or 'target_coordinates' must be provided."
+                f"Unsupported target type for annotation: {type(target)}. "
+                f"Expected List[ResidueCoordinate], ResidueRange, or ResidueRangeSet."
             )
 
-        self._target_coordinates: Optional[List[ResidueCoordinate]] = target_coordinates
+        self.label = label
+        self._target = target  # Store the original target
 
-        # Determine the effective residue_range_set for the superclass init
-        effective_range_set: ResidueRangeSet
-        if residue_range_set is not None:
-            effective_range_set = residue_range_set
-        else:  # Derive from target_coordinates
-            # Create a minimal ResidueRangeSet covering the target points
-            ranges = [
-                ResidueRange(coord.chain_id, coord.residue_index, coord.residue_index)
-                for coord in target_coordinates
-            ]
-            effective_range_set = ResidueRangeSet(ranges)
-
-        # Pass the potentially None style to the BaseSceneElement constructor
+        # Pass the explicitly provided residue_range_set to the BaseSceneElement constructor
         super().__init__(
             id=id,
-            residue_range_set=effective_range_set,
             style=style,
             parent=parent,
         )
 
     @property
-    def target_coordinates(self) -> Optional[List[ResidueCoordinate]]:
-        """Get the specific target coordinates, if defined."""
-        return self._target_coordinates
+    def target(self) -> Union[List[ResidueCoordinate], ResidueRange, ResidueRangeSet]:
+        """Get the target specification provided during initialization."""
+        return self._target
 
     @property
     def targets_specific_coordinates(self) -> bool:
-        """Check if this annotation targets specific coordinates rather than a range set."""
-        return self._target_coordinates is not None
+        """Check if this annotation targets a list of specific coordinates."""
+        return isinstance(self._target, list)
 
     @abstractmethod
     def get_coordinates(self, resolver: CoordinateResolver) -> np.ndarray:
         """Calculate the renderable coordinates for this annotation.
 
         Uses the provided CoordinateResolver to find the correct coordinates for
-        its target residues in the context of the scene elements.
+        its target (coordinates, range, or range set) in the context of the scene elements.
+        The interpretation of the target depends on the concrete annotation type.
 
         Args:
             resolver: The CoordinateResolver instance for the scene.
