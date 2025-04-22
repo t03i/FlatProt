@@ -1,6 +1,6 @@
 # FlatProt
 
-<img width="910" alt="image" src="https://github.com/ConstantinCarl/prot2d/assets/156075124/34d415d3-55be-4784-a96d-035e40fc5afe">
+<img width="910" alt="image" src=".github/images/family_fixed.png">
 
 FlatProt is a tool for 2D protein visualization aimed at improving the comparability of protein structures through standardized 2D visualizations. FlatProt focuses on creating highly comparable representations for same-family proteins. In this case FlatProt was used to generate comparable representations for 3 3FTx structures.
 
@@ -82,6 +82,18 @@ The documentation includes:
 -   input PDB files need a header to work (important for predicted structures)
 -   FlatProt's methods can be used via command line commands (cli)
 
+## Contributing
+
+We welcome contributions to FlatProt! If you'd like to contribute, please follow these steps:
+
+1.  **Fork the repository:** Create your own fork of the FlatProt repository on GitHub.
+2.  **Create a branch:** Make your changes in a dedicated branch in your fork.
+3.  **Submit a pull request:** Open a pull request from your branch to the `staging` branch of the t03i/FlatProt repository.
+
+Please ensure your contributions adhere to the project's coding style and include tests where appropriate. For major changes, please open an issue first to discuss what you would like to change.
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for more detailed guidelines.
+
 ## Examples
 
 The `examples/` directory contains scripts demonstrating various FlatProt functionalities. You can run them directly in Google Colab using the badges below:
@@ -124,43 +136,22 @@ Runtime measurement script for FlatProt alignment and projection on human proteo
 
 ## Data
 
-This project uses datasets that can be found on Zenodo. Additional example files can be found here aswell. You can access and download the data using the following link or DOI:
+This project uses datasets that can be found on Zenodo.
 
--   [Zenodo Data](https://doi.org/10.5281/zenodo.10674045)
+[Zenodo Data](https://doi.org/10.5281/zenodo.15264810)
 
 ## Example visualizations
 
-### 3FTx: None|Anca_10|Anolis_carolinensis
+<img width="409" alt="Cobra protein visualization" src=".github/images/cobra.png">
 
-<img width="409" alt="image" src="https://github.com/ConstantinCarl/prot2d/assets/156075124/a315fd49-74cc-456e-b0d2-c6b63333b22b">
-
-### 3FTx - Family Overlay
-
-### 1kt1 - domain visualization (family vis)
-
-<img width="1000" alt="image" src="https://github.com/ConstantinCarl/prot2d/assets/156075124/1f8ac748-09d1-464c-9e42-c6fd93bfeddc">
-
-### 1kt1 - full protein visualization
-
-<img width="450" alt="image" src="https://github.com/ConstantinCarl/prot2d/assets/156075124/854a89a7-e91c-4ec5-b81d-d33b4f1b96ec">
-
-## Feature Highlights (cystein bonds)
-
-For highlighting features in a structure two types of highlights are possible. Both residue pairs and single residues can be annotated by residue index, name and wanted highlighting color in the following json format:
-
-<img width="464" alt="image" src="https://github.com/user-attachments/assets/84638ff1-fb64-4dad-9b0e-31b18529578d">
-
-Cystein bonds highlight annotations can be created by using FlatProt's "calculate_cystein_bonds" functionality.
-An example json can be downloaded here:
-
-## Runtime for protein sizes
-
-<img width="750" alt="image" src="https://github.com/ConstantinCarl/prot2d/assets/156075124/ff033992-3339-43ab-a7d4-dd71a26dddc4">
-<br>
-The runtimes are measured on a local lightweight device.<br>
+<img width="409" alt="Protein overlay visualization" src=".github/images/overlay.png">
 
 ## Reference
 
-In the following document one can find more information on the tool's methodology, result analysis and references of the shown proteins and used software.
+If you use FlatProt in your research, please cite:
 
-[BachelorThesis_ConstantinCarl_Enhancing-Protein-Comparability-with-Standardized-2D-Visualization.pdf](https://github.com/ConstantinCarl/prot2d/files/14605102/BachelorThesis_ConstantinCarl_Enhancing-Protein-Comparability-with-Standardized-2D-Visualization.pdf)
+_Citation details to be added here when available._
+
+## License
+
+FlatProt is licensed under the Apache License 2.0. See the [LICENSE](LICENSE) file for more details.
