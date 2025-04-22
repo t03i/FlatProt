@@ -33,7 +33,6 @@ class PointAnnotationStyle(BaseAnnotationStyle):
         ge=0,
         description="Radius of the point marker.",
     )
-    # Inherits color, offset, label etc. from BaseAnnotationStyle
 
 
 # --- Point Annotation Scene Element ---

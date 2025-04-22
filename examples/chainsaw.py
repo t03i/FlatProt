@@ -39,6 +39,9 @@ from typing import List, Optional, Dict
 # Third-party Libraries
 import gemmi
 import polars as pl
+import numpy as np
+
+from flatprot.scene.structure.base_structure import BaseStructureStyle
 
 print("[INFO] Imported standard libraries.")
 
@@ -47,9 +50,7 @@ try:
     from flatprot.core import Structure, ResidueRange, FlatProtError
     from flatprot.io import (
         GemmiStructureParser,
-        StyleParser,
         validate_structure_file,
-        validate_optional_files,
         InvalidStructureError,
         OutputFileError,
     )
@@ -57,8 +58,6 @@ try:
         AlignmentDatabase,
         align_structure_database,
         get_aligned_rotation_database,
-        NoSignificantAlignmentError,
-        DatabaseEntryNotFoundError,
         AlignmentResult,
     )
     from flatprot.transformation import TransformationMatrix, TransformationError
@@ -71,14 +70,12 @@ try:
     from flatprot.utils.domain_utils import (
         DomainTransformation,
         apply_domain_transformations_masked,
-        # Import the domain-aware scene creator
         create_domain_aware_scene,
     )
     from flatprot.utils.scene_utils import (
         create_scene_from_structure,
-        add_annotations_to_scene,
     )
-    from flatprot.scene import BaseStructureStyle
+    from flatprot.scene import BaseStructureStyle, AreaAnnotationStyle
     from flatprot.renderers import SVGRenderer
 
     # For displaying SVGs inline in Jupyter
@@ -108,9 +105,9 @@ tmp_dir: Path = Path("../tmp/domain_alignment_projection")
 
 # Alignment & Foldseek Databases (!!! VERIFY THESE PATHS !!!)
 database_base_dir: Path = data_base_dir / "databases"
-alignment_db_dir: Path = database_base_dir / "alignment"
-foldseek_db_dir: Path = database_base_dir / "foldseek"
-db_file_path: Path = alignment_db_dir / "alignments.h5"  # FlatProt HDF5 matrix database
+alignment_db_dir: Path = Path("../out/alignment_db")
+foldseek_db_dir: Path = alignment_db_dir / "foldseek"
+db_file_path: Path = alignment_db_dir / "alignments.h5"  # Use updated directory
 foldseek_db_path: Path = foldseek_db_dir / "db"  # Foldseek search database
 
 # Foldseek Configuration
@@ -125,15 +122,18 @@ output_svg_separated: Path = tmp_dir / f"{structure_id}-domains-separated-layout
 # Canvas & Layout
 canvas_width: int = 1000
 canvas_height: int = 1000
-domain_separation_spacing: float = 50.0  # Pixels between separated domains
+domain_separation_spacing: float = 100.0  # Pixels between separated domains
 domain_separation_arrangement: str = "horizontal"  # or "vertical"
 
-# Optional Input Files (Set to None or Path object)
-style_file: Optional[Path] = None  # e.g., Path("custom_styles.toml")
-annotations_file: Optional[Path] = None  # e.g., Path("feature_annotations.toml")
-dssp_file: Optional[
-    Path
-] = None  # REQUIRED if structure_file is PDB, e.g., structure_dir / f"{structure_id}.dssp"
+styles_dict: Optional[Dict[str, BaseStructureStyle]] = {
+    "area_annotation": AreaAnnotationStyle(
+        fill_color="#ddd",
+        fill_opacity=0.4,
+        line_style=(4, 2),
+        stroke_width=2.0,
+        label_offset=(-190, -150),
+    ),
+}
 
 # --- End Configuration ---
 
@@ -226,20 +226,12 @@ print("[INFO] Helper function `extract_domain` defined.")
 # %%
 print("\n[STEP 2] Loading Full Structure...")
 print(f"         Input file: {structure_file.resolve()}")
-if dssp_file:
-    print(f"         DSSP file: {dssp_file.resolve()}")
 
 original_structure: Optional[Structure] = None
 try:
     validate_structure_file(structure_file)
-    validate_optional_files([dssp_file])
-    is_cif = structure_file.suffix.lower() in (".cif", ".mmcif")
-    if not is_cif and dssp_file is None:
-        raise InvalidStructureError(
-            f"Input '{structure_file.name}' is not CIF. Provide DSSP via 'dssp_file'."
-        )
     parser = GemmiStructureParser()
-    original_structure = parser.parse_structure(structure_file, dssp_path=dssp_file)
+    original_structure = parser.parse_structure(structure_file)
     if original_structure is None:
         raise InvalidStructureError("Structure parsing returned None.")
     coord_count = (
@@ -248,7 +240,7 @@ try:
         else 0
     )
     print(
-        f"[DONE] Structure '{original_structure.id}' loaded ({len(original_structure.get_residues())} res, {coord_count} coords)."
+        f"[DONE] Structure '{original_structure.id}' loaded ({len(original_structure)} res, {coord_count} coords)."
     )
     if coord_count == 0:
         print("[WARN] Structure has no coordinates.")
@@ -289,7 +281,7 @@ try:
         f"         Applying orthographic projection ({canvas_width}x{canvas_height})..."
     )
     projected_original_structure = project_structure_orthographically(
-        inertia_transformed_structure, canvas_width, canvas_height, True, True
+        inertia_transformed_structure, canvas_width, canvas_height
     )
     if projected_original_structure.coordinates is None:
         raise FlatProtError("Projection removed coords.")
@@ -298,16 +290,9 @@ try:
     # 3. Create Scene and Render
     print("         Creating scene...")
     # Optional: Load styles if you want them applied to the normal projection too
-    styles_dict_normal: Optional[Dict[str, BaseStructureStyle]] = None
-    if style_file:
-        try:
-            styles_dict_normal = StyleParser(style_file).parse()
-        except Exception as e:
-            print(
-                f"         [WARN] Failed to parse style file for normal projection: {e}"
-            )
+
     scene_normal = create_scene_from_structure(
-        projected_original_structure, styles_dict_normal
+        projected_original_structure, styles_dict
     )
     # Optional: Add annotations if desired for the normal view
     # if annotations_file:
@@ -432,77 +417,62 @@ except Exception as e:
 
 domain_transformations: List[DomainTransformation] = []  # Stores results
 failed_domains: List[ResidueRange] = []
+domain_scop_ids: Dict[str, str] = {}  # Store domain_id -> scop_id mapping
 
 # --- Domain Processing Loop ---
 for i, domain_range in enumerate(defined_domains):
     print(f"\n   Processing Domain {i + 1}/{len(defined_domains)}: {domain_range}")
     domain_range_str_safe = (
-        f"{domain_range.chain_id}_{domain_range.start_res}_{domain_range.end_res}"
+        f"{domain_range.chain_id}_{domain_range.start}_{domain_range.end}"
     )
     domain_file_name = f"{structure_id}_domain_{domain_range_str_safe}.cif"
     temp_domain_file = tmp_dir / domain_file_name
     alignment_result: Optional[AlignmentResult] = None
     domain_matrix: Optional[TransformationMatrix] = None
-    try:
-        # 1. Extract
-        print("      [1/4] Extracting...")
-        extract_domain(
-            structure_file,
-            domain_range.chain_id,
-            domain_range.start_res,
-            domain_range.end_res,
-            temp_domain_file,
-        )
-        # 2. Align
-        print("      [2/4] Aligning...")
-        alignment_result = align_structure_database(
-            temp_domain_file, foldseek_db_path, foldseek_path, min_probability
-        )
-        print(
-            f"            -> Hit: {alignment_result.db_entry_id} (P={alignment_result.probability:.3f}, E={alignment_result.e_value:.2E}, TM={alignment_result.tm_score:.3f})"
-        )
-        # 3. Get Matrix
-        print("      [3/4] Retrieving matrix...")
-        matrix_result = get_aligned_rotation_database(alignment_result, alignment_db)
-        domain_matrix = matrix_result[0]
-        db_entry = matrix_result[1]
-        print(
-            f"            -> Matrix for CATH: {db_entry.cath_id if db_entry else 'N/A'}"
-        )
-        # 4. Store
-        if domain_matrix:
-            domain_id_str = f"{domain_range.chain_id}:{domain_range.start_res}-{domain_range.end_res}"
-            domain_tf = DomainTransformation(domain_range, domain_matrix, domain_id_str)
-            domain_transformations.append(domain_tf)
-            print("      [4/4] Stored transformation.")
-        else:
-            print("      [WARN] Matrix None. Skipping storage.")
-            failed_domains.append(domain_range)
-    # Error Handling
-    except (FileNotFoundError, InvalidStructureError, ValueError) as e:
-        print(f"      [ERROR] Extract/Validate failed: {e}. Skipping.")
-        failed_domains.append(domain_range)
-    except NoSignificantAlignmentError as e:
-        print(f"      [WARN] Align failed (P<{min_probability}): {e}. Skipping.")
-        failed_domains.append(domain_range)
-    except DatabaseEntryNotFoundError:
-        print(
-            f"      [ERROR] DB entry not found for '{alignment_result.db_entry_id if alignment_result else 'N/A'}'. Check DBs match. Skipping."
-        )
-        failed_domains.append(domain_range)
-    except (FlatProtError, TransformationError) as e:
-        print(f"      [ERROR] FlatProt processing failed: {e}. Skipping.")
-        failed_domains.append(domain_range)
-    except Exception as e:
-        print(f"      [ERROR] Unexpected failure: {e}")
-        traceback.print_exc(limit=1)
-        failed_domains.append(domain_range)
-    finally:  # Cleanup
-        if temp_domain_file.exists():
-            try:
-                os.remove(temp_domain_file)
-            except OSError as e:
-                print(f"      [WARN] Cleanup failed: {e}")
+    print("      [1/4] Extracting...")
+    extract_domain(
+        structure_file,
+        domain_range.chain_id,
+        domain_range.start,
+        domain_range.end,
+        temp_domain_file,
+    )
+    # 2. Align
+    print("      [2/4] Aligning...")
+    alignment_result = align_structure_database(
+        temp_domain_file, foldseek_db_path, foldseek_path, min_probability
+    )
+    print(
+        f"            -> Hit: {alignment_result.db_id} (P={alignment_result.probability:.3f})"
+    )
+    # 3. Get Matrix
+    print("      [3/4] Retrieving matrix...")
+    matrix_result = get_aligned_rotation_database(alignment_result, alignment_db)
+    domain_matrix = matrix_result[0]
+    db_entry = matrix_result[1]
+    print(f"            -> Matrix for {db_entry.entry_id if db_entry else 'N/A'}")
+
+    # Store the DB entry ID (assuming it's the SCOP ID)
+    domain_id_str = f"{domain_range.chain_id}:{domain_range.start}-{domain_range.end}"
+    if db_entry and db_entry.entry_id:
+        domain_scop_ids[domain_id_str] = db_entry.entry_id
+        print(f"            -> Associated DB ID: {db_entry.entry_id}")
+    else:
+        print(f"            -> DB entry or entry_id not found for {domain_id_str}.")
+
+    # 4. Store
+    if domain_matrix:
+        domain_tf = DomainTransformation(domain_range, domain_matrix, domain_id_str)
+        domain_transformations.append(domain_tf)
+        print("      [4/4] Stored transformation.")
+    else:
+        print("      [WARN] Matrix None. Skipping storage.")
+
+    if temp_domain_file.exists():
+        try:
+            os.remove(temp_domain_file)
+        except OSError as e:
+            print(f"      [WARN] Cleanup failed: {e}")
 
 # --- Post-loop Summary ---
 print(
@@ -562,7 +532,7 @@ try:
         raise ValueError("Transformed structure/coords missing.")
     print(f"         Input shape (3D): {transformed_structure.coordinates.shape}")
     projected_transformed_structure = project_structure_orthographically(
-        transformed_structure, canvas_width, canvas_height, True, True
+        transformed_structure, canvas_width, canvas_height
     )
     print("[DONE] Projection completed.")
     if (
@@ -594,33 +564,18 @@ except Exception as e:
 # %%
 print("\n[STEP 8] Rendering Domain-Aligned Projection SVG...")
 print(f"         Output file: {output_svg_aligned.resolve()}")
-if style_file:
-    print(f"         Using custom styles: {style_file.resolve()}")
-if annotations_file:
-    print(f"         Using annotations: {annotations_file.resolve()}")
 
 try:
     if projected_transformed_structure is None:
         raise ValueError("Projected transformed structure missing.")
-    styles_dict_aligned: Optional[
-        Dict[str, BaseStructureStyle]
-    ] = None  # Load styles if needed
-    if style_file:
-        try:
-            styles_dict_aligned = StyleParser(style_file).parse()
-        except Exception as e:
-            print(f"[WARN] Style parse failed: {e}")
 
-    print("         Creating scene...")
+    # --- Create the scene for the aligned structure --- #
+    print("         Creating scene for domain-aligned structure...")
     scene_aligned = create_scene_from_structure(
-        projected_transformed_structure, styles_dict_aligned
+        projected_transformed_structure, styles_dict
     )
-    if annotations_file:
-        try:
-            add_annotations_to_scene(annotations_file, scene_aligned)
-            print("         Annotations added.")
-        except Exception as e:
-            print(f"[WARN] Annotations failed: {e}")
+    print("         Scene created.")
+    # Optional: Add annotations if they apply to the transformed view
 
     print("         Rendering SVG...")
     renderer_aligned = SVGRenderer(scene_aligned, canvas_width, canvas_height)
@@ -661,12 +616,14 @@ try:
     domain_definitions_for_layout: List[DomainTransformation] = []
     for domain_range in defined_domains:
         domain_id_str = (
-            f"{domain_range.chain_id}:{domain_range.start_res}-{domain_range.end_res}"
+            f"{domain_range.chain_id}:{domain_range.start}-{domain_range.end}"
         )
         # Use identity matrix as we only need the range for grouping/layout here
         layout_tf = DomainTransformation(
             domain_range=domain_range,
-            transformation_matrix=TransformationMatrix.identity(),  # Placeholder matrix
+            transformation_matrix=TransformationMatrix(
+                np.eye(3), np.zeros(3)
+            ),  # Use np.eye(4) for identity
             domain_id=domain_id_str,
         )
         domain_definitions_for_layout.append(layout_tf)
@@ -674,20 +631,14 @@ try:
 
     # Create the domain-aware scene using the *normally projected* coordinates
     print("         Creating domain-aware scene...")
-    # Optional: Load styles if needed for this view specifically
-    styles_dict_separated: Optional[Dict[str, BaseStructureStyle]] = None
-    if style_file:
-        try:
-            styles_dict_separated = StyleParser(style_file).parse()
-        except Exception as e:
-            print(f"[WARN] Style parse failed: {e}")
 
     scene_separated = create_domain_aware_scene(
         projected_structure=projected_original_structure,  # Use coords from normal projection
         domain_definitions=domain_definitions_for_layout,  # Use ranges for grouping/layout
         spacing=domain_separation_spacing,
         arrangement=domain_separation_arrangement,
-        default_styles=styles_dict_separated,
+        default_styles=styles_dict,
+        domain_scop_ids=domain_scop_ids,  # Pass the SCOP ID mapping
     )
     print("         Scene created with domain groups.")
     # Note: Annotations might be complex to apply correctly to separated views unless defined relative to domains
@@ -695,7 +646,7 @@ try:
     # Render the separated scene
     print("         Rendering SVG...")
     renderer_separated = SVGRenderer(
-        scene_separated, width=None, height=None
+        scene_separated, width=canvas_width + 200, height=canvas_height + 200
     )  # Let renderer calculate canvas size based on layout
     # Adjust width/height if you want to force it, but None often works well for separated views
     renderer_separated.save_svg(output_svg_separated)
@@ -745,6 +696,3 @@ print("=" * 80)
 # ## End of Notebook
 #
 # Processing complete. The comparison SVGs are generated and displayed above.
-
-# %%
-print("\n[INFO] Script execution finished.")

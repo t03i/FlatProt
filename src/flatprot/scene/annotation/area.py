@@ -5,7 +5,7 @@ from typing import Optional, List, Tuple
 
 import numpy as np
 from pydantic import Field
-
+from pydantic_extra_types.color import Color
 from flatprot.core import (
     ResidueRangeSet,
     CoordinateCalculationError,
@@ -88,8 +88,8 @@ def _apply_padding(hull_points_2d, padding):
 class AreaAnnotationStyle(BaseAnnotationStyle):
     """Style properties specific to AreaAnnotation elements."""
 
-    fill_color: Optional[str] = Field(
-        default=None,
+    fill_color: Optional[Color] = Field(
+        default=Color((0, 0, 0, 0)),
         description="Optional fill color (hex string). If None, uses 'color' with reduced opacity.",
     )
     fill_opacity: float = Field(

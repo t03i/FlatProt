@@ -186,9 +186,9 @@ def _draw_area_annotation(
         outline = Path(
             stroke=style.color.as_hex(),
             stroke_width=1,  # Example, make configurable in style?
-            stroke_opacity=style.opacity * 0.8,  # Slightly transparent stroke
-            fill=style.color.as_hex(),
-            fill_opacity=style.opacity * 0.3,  # More transparent fill
+            stroke_opacity=style.opacity,  # Slightly transparent stroke
+            fill=style.fill_color.as_hex(),
+            fill_opacity=style.fill_opacity,  # More transparent fill
             class_="annotation area-outline",
             id=f"{annotation.id}-outline",
         )

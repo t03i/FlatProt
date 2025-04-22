@@ -280,7 +280,6 @@ class SVGRenderer:
         """Renders the scene to a drawsvg.Drawing object."""
         drawing = Drawing(self.width, self.height)
         svg_group_map: Dict[str, Group] = {}
-        connection_line_group = Group(id="flatprot-connections", class_="connections")
 
         # 1. Add Background
         if self.background_color:
@@ -300,7 +299,6 @@ class SVGRenderer:
         root_group = Group(id="flatprot-root")
         drawing.append(root_group)
         svg_group_map["flatprot-root"] = root_group  # Register root
-        root_group.append(connection_line_group)
 
         for top_level_node in self.scene.top_level_nodes:
             self._build_svg_hierarchy(top_level_node, root_group, svg_group_map)
@@ -378,8 +376,18 @@ class SVGRenderer:
                 element, self.scene.structure
             )
             if connection_line_svg:
-                # Connections have their own dedicated group added under root
-                connection_line_group.append(connection_line_svg)
+                # Determine the parent group for the connection
+                parent_group_id = (
+                    element.parent.id if element.parent else "flatprot-root"
+                )
+                target_svg_group = svg_group_map.get(parent_group_id)
+                if target_svg_group:
+                    target_svg_group.append(connection_line_svg)
+                else:
+                    # Log error if the parent group is not found in the map
+                    logger.error(
+                        f"Could not find target SVG group '{parent_group_id}' for connection element {element.id}"
+                    )
 
         # 6. Draw Annotation Elements (sorted by depth - effectively always last)
         for _, element in sorted_annotations:
@@ -426,7 +434,18 @@ class SVGRenderer:
             try:
                 svg_shapes = draw_func(element, rendered_coords)
                 if svg_shapes:
-                    root_group.append(svg_shapes)
+                    # Determine the parent group for the annotation
+                    parent_group_id = (
+                        element.parent.id if element.parent else "flatprot-root"
+                    )
+                    target_svg_group = svg_group_map.get(parent_group_id)
+                    if target_svg_group:
+                        target_svg_group.append(svg_shapes)
+                    else:
+                        # Log error if the parent group is not found
+                        logger.error(
+                            f"Could not find target SVG group '{parent_group_id}' for annotation element {element.id}"
+                        )
             except Exception as e:
                 logger.error(
                     f"Error drawing annotation '{element.id}' (type {element_type.__name__}): {e}",
