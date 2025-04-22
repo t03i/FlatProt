@@ -198,6 +198,7 @@ def create_cystine_bridge_annotations(
                 "color": "#FFD700",  # Gold color for visibility
                 "stroke_width": 1.5,
                 "line_style": (4, 2),  # Dashed line
+                "label_font_size": 6,
             },
         }
         annotations.append(annotation)
