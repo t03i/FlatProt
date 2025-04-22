@@ -35,7 +35,6 @@ from typing import Union
 from IPython import get_ipython
 from IPython.core.magic import register_cell_magic
 from IPython.display import SVG, display
-import numpy as np  # For opacity calculation
 
 # FlatProt Core Imports
 from flatprot.io import GemmiStructureParser, StyleParser
@@ -164,7 +163,7 @@ all_cluster_members = set()
 
 if cluster_file.exists():
     with open(cluster_file, "r") as f:
-        reader = csv.reader(f, delimiter="\\t")
+        reader = csv.reader(f, delimiter="\t")
         for row in reader:
             if len(row) == 2:
                 representative, member = row
@@ -248,9 +247,9 @@ opacity = 0.8 # Base opacity for elements
 color = "#AAAAAA"
 opacity = 0.5 # Base opacity for elements
 
-[line]
-stroke_width = 3
-
+[connection]
+color = "#AAAAAA"
+opacity = 0.5
 """
 
 style_file = tmp_dir / "style.toml"
@@ -349,166 +348,131 @@ print("Structure processing finished.")
 
 
 # %% [markdown]
-# ## Calculate Bounds and Create Overlay from Stored Data
+# ## Create Overlay from Stored Data (Fixed Viewbox)
 #
-# Calculate the overall bounding box from the stored projected coordinates.
-# Then, assemble the final SVG by rendering each stored scene, extracting
-# its content, and merging it into a new SVG with scaled opacity and the dynamic viewbox.
+# Assemble the final SVG by rendering each stored scene, extracting
+# its content, and merging it into a new SVG with scaled opacity and a fixed viewbox.
 
 # %%
-# --- Bounds Calculation ---
+# --- Define Fixed Viewbox ---
+# Centered around origin (0,0) as project_structure_uniformly centers the coords
+viewbox_x = -CANVAS_WIDTH / 2
+viewbox_y = -CANVAS_HEIGHT / 2
+viewbox_width = CANVAS_WIDTH
+viewbox_height = CANVAS_HEIGHT
+viewbox_str = (
+    f"{viewbox_x:.0f} {viewbox_y:.0f} {viewbox_width:.0f} {viewbox_height:.0f}"
+)
+print(f"Using Fixed ViewBox: {viewbox_str}")
 
-all_coords_list = list(projected_coordinates_map.values())
-final_svg_path = None  # Initialize variable
+# --- SVG Assembly ---
 
-if not all_coords_list:
-    print("Error: No projected coordinates were stored. Cannot create overlay.")
-else:
-    # Concatenate all coordinate arrays (only need X and Y, columns 0 and 1)
-    all_coords_np = np.concatenate(
-        [
-            coords[:, :2]
-            for coords in all_coords_list
-            if coords.size > 0 and coords.shape[1] >= 2
-        ],
-        axis=0,
-    )
+SVG_NAMESPACE = "http://www.w3.org/2000/svg"
+# Registering with a prefix might help make output cleaner if ET uses it
+ET.register_namespace("svg", SVG_NAMESPACE)
 
-    if all_coords_np.size == 0:
-        print("Error: Combined coordinate array is empty. Cannot determine viewbox.")
-        viewbox_str = "0 0 100 100"  # Default fallback
-    else:
-        min_x, min_y = np.min(all_coords_np, axis=0)
-        max_x, max_y = np.max(all_coords_np, axis=0)
+# Use namespaced element creation
+combined_svg_root = ET.Element(
+    f"{{{SVG_NAMESPACE}}}svg",
+    {
+        "xmlns": SVG_NAMESPACE,
+        "viewBox": viewbox_str,
+        "width": str(int(viewbox_width)),
+        "height": str(int(viewbox_height)),
+    },
+)
+combined_defs = ET.SubElement(combined_svg_root, f"{{{SVG_NAMESPACE}}}defs")
+unique_defs_ids = set()
 
-        padding = 50  # Keep padding consistent
-        viewbox_x = min_x - padding
-        viewbox_y = min_y - padding
-        viewbox_width = (max_x - min_x) + 2 * padding
-        viewbox_height = (max_y - min_y) + 2 * padding
-        # Ensure width/height are positive
-        viewbox_width = max(viewbox_width, 1)
-        viewbox_height = max(viewbox_height, 1)
+print(f"Assembling final SVG from {len(scene_map)} scenes...")
+processed_count = 0
+final_svg_path = None
 
-        viewbox_str = (
-            f"{viewbox_x:.2f} {viewbox_y:.2f} {viewbox_width:.2f} {viewbox_height:.2f}"
+# Iterate through the scenes we stored
+for rep_base_name, scene in scene_map.items():
+    opacity = representative_opacities.get(rep_base_name, 1.0)
+
+    try:
+        renderer = SVGRenderer(
+            scene, CANVAS_WIDTH, CANVAS_HEIGHT, background_color=None
         )
-        print(f"Calculated ViewBox from coordinates: {viewbox_str}")
+        svg_string = renderer.get_svg_string()
 
-    # --- SVG Assembly --- Only proceed if viewbox calculation was successful
+        parser = ET.XMLParser(encoding="utf-8")
+        individual_root = ET.fromstring(svg_string.encode("utf-8"), parser=parser)
+        xml_namespaces = {"svg": SVG_NAMESPACE}
 
-    ET.register_namespace("", "http://www.w3.org/2000/svg")
-    combined_svg_root = ET.Element(
-        "svg",
-        {
-            "xmlns": "http://www.w3.org/2000/svg",
-            "viewBox": viewbox_str,
-            "width": str(int(viewbox_width)),  # Use calculated width/height
-            "height": str(int(viewbox_height)),
-        },
-    )
-    combined_defs = ET.SubElement(combined_svg_root, "defs")
-    unique_defs_ids = set()  # Track defs IDs to avoid duplicates
-
-    print(f"Assembling final SVG from {len(scene_map)} scenes...")
-    processed_count = 0
-
-    # Iterate through the scenes we stored
-    for rep_base_name, scene in scene_map.items():
-        opacity = representative_opacities.get(rep_base_name, 1.0)
-
-        try:
-            # Render the scene to an SVG string
-            # Use the pre-defined canvas size, the final viewbox handles the overall display
-            # Make background transparent for overlay
-            renderer = SVGRenderer(
-                scene, CANVAS_WIDTH, CANVAS_HEIGHT, background_color=None
-            )
-            svg_string = renderer.get_svg_string()
-
-            # Parse this individual SVG string
-            # Use a parser that recovers from potential minor errors if needed
-            parser = ET.XMLParser(encoding="utf-8", recover=True)
-            individual_root = ET.fromstring(svg_string.encode("utf-8"), parser=parser)
-            namespaces = {"svg": "http://www.w3.org/2000/svg"}  # Define SVG namespace
-
-            # --- Merge Defs --- Might need refinement for complex defs/ID clashes
-            defs_element = individual_root.find("svg:defs", namespaces)
-            if defs_element is not None:
-                for elem in list(defs_element):
-                    elem_id = elem.get("id")
-                    if elem_id:
-                        if elem_id not in unique_defs_ids:
-                            combined_defs.append(elem)
-                            unique_defs_ids.add(elem_id)
-                    else:
+        # --- Merge Defs ---
+        defs_element = individual_root.find("svg:defs", xml_namespaces)
+        if defs_element is not None:
+            for elem in list(defs_element):
+                elem_id = elem.get("id")
+                if elem_id:
+                    if elem_id not in unique_defs_ids:
                         combined_defs.append(elem)
+                        unique_defs_ids.add(elem_id)
+                else:
+                    combined_defs.append(elem)
 
-            # --- Create Group and Copy Content ---
-            svg_group = ET.SubElement(
-                combined_svg_root,
-                "g",
-                {
-                    "opacity": f"{opacity:.3f}",
-                    "id": f"group_{rep_base_name}",  # Optional ID for the group
-                },
-            )
+        # --- Create Group and Copy Content ---
+        svg_group = ET.SubElement(
+            combined_svg_root,
+            f"{{{SVG_NAMESPACE}}}g",
+            {"opacity": f"{opacity:.3f}", "id": f"group_{rep_base_name}"},
+        )
 
-            # Copy graphical content
-            for element in individual_root:
-                if element.tag == "{http://www.w3.org/2000/svg}defs":
-                    continue
-                # Skip potential background rect if renderer added one despite None background
-                if (
-                    element.tag == "{http://www.w3.org/2000/svg}rect"
-                    and element.get("id") == "background"
-                ):
-                    continue
-                svg_group.append(element)
+        # Copy graphical content
+        for element in individual_root:
+            if element.tag == f"{{{SVG_NAMESPACE}}}defs":
+                continue
+            if (
+                element.tag == f"{{{SVG_NAMESPACE}}}rect"
+                and element.get("id") == "background"
+            ):
+                continue
+            # IMPORTANT: Assume copied elements *might* not be properly namespaced
+            # We rely on the parent group (svg_group) and root (combined_svg_root)
+            # having the correct namespace declaration (xmlns) for rendering engines.
+            svg_group.append(element)
 
-            processed_count += 1
+        processed_count += 1
 
-        except ET.ParseError as pe:
-            print(
-                f"  -> WARNING: Could not parse rendered SVG string for {rep_base_name}: {pe}"
-            )
-        except Exception as e:
-            print(
-                f"  -> WARNING: Error processing scene for {rep_base_name} during assembly: {e}"
-            )
-            logger.error(f"Error processing scene {rep_base_name}", exc_info=True)
+    except ET.ParseError as pe:
+        print(
+            f"  -> WARNING: Could not parse rendered SVG string for {rep_base_name}: {pe}"
+        )
+    except Exception as e:
+        print(
+            f"  -> WARNING: Error processing scene for {rep_base_name} during assembly: {e}"
+        )
+        logger.error(f"Error processing scene {rep_base_name}", exc_info=True)
 
-    # --- Save Final SVG ---
-    final_svg_path = tmp_dir / "overlay_direct_coords.svg"  # New name
+# --- Save Final SVG ---
+if processed_count > 0:
+    final_svg_path = tmp_dir / "overlay_fixed_viewbox.svg"
     tree = ET.ElementTree(combined_svg_root)
     try:
-        tree.write(
-            str(final_svg_path),
-            encoding="unicode",
-            xml_declaration=True,
-            default_namespace="http://www.w3.org/2000/svg",
-        )
+        # Write to a file handle, *without* default_namespace
+        with open(str(final_svg_path), "wb") as f_out:
+            tree.write(f_out, encoding="utf-8", xml_declaration=True)
         print(f"Created overlay of {processed_count} structures at {final_svg_path}")
-    except TypeError:
-        tree.write(str(final_svg_path), encoding="unicode", xml_declaration=True)
-        print(
-            f"Created overlay of {processed_count} structures at {final_svg_path} (with potential ns0 prefix)"
-        )
     except IOError as e:
         print(f"Error writing final overlay SVG: {e}")
-        final_svg_path = None  # Mark as failed
+        final_svg_path = None
+else:
+    print("No scenes were processed successfully, skipping final SVG generation.")
 
 # %% [markdown]
 # Display the final overlay SVG.
 # The overlay now shows representative structures aligned to SCOP Superfamily 3000114,
-# with dynamically calculated viewbox and opacity scaled by cluster size.
+# with a fixed viewbox and opacity scaled by cluster size.
 
 # %%
 # Display the overlay SVG in the notebook
 if final_svg_path and final_svg_path.exists():
     display(SVG(filename=str(final_svg_path)))
     print(
-        "Overlay of aligned representative protein structures (direct coords, scaled opacity):"
+        "Overlay of aligned representative protein structures (fixed viewbox, scaled opacity):"
     )
 else:
     print("Final overlay SVG generation failed or was skipped.")

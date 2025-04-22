@@ -433,35 +433,6 @@ class SVGRenderer:
                     exc_info=True,
                 )
 
-        # 7. Calculate Bounding Box and Set ViewBox
-        try:
-            bbox = drawing.get_bounding_box()  # Returns (min_x, max_x, min_y, max_y)
-            if bbox:
-                min_x, max_x, min_y, max_y = bbox
-                # Add padding
-                pad = self.padding
-                view_min_x = min_x - pad
-                view_min_y = min_y - pad
-                view_width = (max_x - min_x) + (2 * pad)
-                view_height = (max_y - min_y) + (2 * pad)
-
-                # Ensure width and height are non-negative
-                view_width = max(0, view_width)
-                view_height = max(0, view_height)
-
-                drawing.view_box = (view_min_x, view_min_y, view_width, view_height)
-                logger.debug(
-                    f"Set viewBox: ({view_min_x=}, {view_min_y=}, {view_width=}, {view_height=})"
-                )
-            else:
-                # Handle empty drawing: use initial width/height or default
-                logger.warning(
-                    "Drawing is empty or has no bounding box. Using initial dimensions for viewBox."
-                )
-                drawing.view_box = (0, 0, self.width, self.height)
-        except Exception as e:
-            logger.error(f"Error calculating or setting viewBox: {e}", exc_info=True)
-            # Fallback: Use initial dimensions if bounding box calculation fails
             drawing.view_box = (0, 0, self.width, self.height)
 
         return drawing

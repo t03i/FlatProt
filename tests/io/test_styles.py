@@ -11,6 +11,9 @@ import pytest
 from pydantic_extra_types.color import Color
 
 from flatprot.io.styles import StyleParser
+
+# Import ConnectionStyle for testing
+from flatprot.scene.connection import ConnectionStyle
 from flatprot.scene.structure import (
     HelixStyle,
     SheetStyle,
@@ -52,6 +55,10 @@ def valid_style_content() -> str:
     stroke_width = 2.5
     min_sheet_length = 3
 
+    [connection]
+    color = "gray"
+    stroke_width = 1.5
+    line_style = "dashed"
 
     [unknown_section] # This should be ignored with a warning
     some_value = 123
@@ -99,6 +106,7 @@ class TestStyleParserInitialization:
             # Check if raw data is loaded (basic check)
             assert "helix" in parser.get_raw_data()
             assert "sheet" in parser.get_raw_data()
+            assert "connection" in parser.get_raw_data()
             assert "unknown_section" in parser.get_raw_data()
         except Exception as e:
             pytest.fail(f"StyleParser initialization failed unexpectedly: {e}")
@@ -144,6 +152,7 @@ class TestStyleParsing:
         assert "helix" in parsed_styles
         assert "sheet" in parsed_styles
         assert "coil" not in parsed_styles  # Coil section was missing in the file
+        assert "connection" in parsed_styles
         assert "unknown_section" not in parsed_styles  # Unknown sections are not parsed
 
         # Check HelixStyle
@@ -162,6 +171,13 @@ class TestStyleParsing:
         assert sheet_style.stroke_color.as_hex() == Color("#000000").as_hex()  # 'black'
         assert sheet_style.stroke_width == 2.5
         assert sheet_style.min_sheet_length == 3
+
+        # Check ConnectionStyle
+        conn_style = parsed_styles["connection"]
+        assert isinstance(conn_style, ConnectionStyle)
+        assert conn_style.color.as_hex() == Color("#808080").as_hex()
+        assert conn_style.stroke_width == 1.5
+        assert conn_style.line_style == "dashed"
 
     def test_parse_partial_styles(self, partial_style_file: Path) -> None:
         """Test parsing a file with only a subset of known sections."""
@@ -258,19 +274,41 @@ class TestStyleValidationErrors:
         finally:
             os.unlink(file_path)
 
+    def test_invalid_connection_line_style(self) -> None:
+        """Test StyleValidationError for invalid connection line_style."""
+        content = """
+        [connection]
+        color = "green"
+        line_style = "dotted-dash-what?" # Invalid line style
+        """
+        file_path = create_temp_toml(content)
+        try:
+            parser = StyleParser(file_path)
+            with pytest.raises(StyleValidationError) as excinfo:
+                parser.parse()
+            assert "Invalid style definition in section 'connection'" in str(
+                excinfo.value
+            )
+            assert "line_style:" in str(excinfo.value)
+            # Check for part of the Pydantic error message related to literals
+            assert "Input should be 'solid', 'dashed' or 'dotted'" in str(excinfo.value)
+        finally:
+            os.unlink(file_path)
 
-class TestGetStructureStyles:
-    """Tests for the get_structure_styles() method."""
 
-    def test_get_structure_styles_success(self, valid_style_file: Path, capsys) -> None:
-        """Test get_structure_styles returns the same as parse on success."""
+class TestGetElementStyles:
+    """Tests for the get_element_styles() method."""
+
+    def test_get_element_styles_success(self, valid_style_file: Path, capsys) -> None:
+        """Test get_element_styles returns the same as parse on success."""
         parser = StyleParser(valid_style_file)
         capsys.readouterr()
         parsed_direct = parser.parse()
-        parsed_via_getter = parser.get_structure_styles()
+        parsed_via_getter = parser.get_element_styles()
         assert parsed_direct == parsed_via_getter
         assert "helix" in parsed_via_getter
         assert "sheet" in parsed_via_getter
+        assert "connection" in parsed_via_getter
 
 
 class TestGetRawData:
