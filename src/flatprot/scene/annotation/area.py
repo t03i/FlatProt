@@ -98,7 +98,7 @@ class AreaAnnotationStyle(BaseAnnotationStyle):
     stroke_width: float = Field(
         default=1.0, ge=0, description="Width of the area outline stroke."
     )
-    linestyle: Tuple[float, ...] = Field(
+    line_style: Tuple[float, ...] = Field(
         default=(),
         description="Dash pattern for the outline (e.g., (5, 5) for dashed). Empty tuple means solid.",
     )
@@ -117,7 +117,6 @@ class AreaAnnotationStyle(BaseAnnotationStyle):
         ge=1,
         description="Window size for rolling average smoothing (odd number recommended).",
     )
-    # Inherits color (used for stroke if fill_color is None), offset, label etc.
 
 
 # --- Area Annotation Scene Element ---

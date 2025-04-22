@@ -83,33 +83,30 @@ annotations_content = """
 [[annotations]]
 type = "point"
 label = "Active Site His"
-index = "A:41" # Example index, verify if correct for 1kt0
+index = "A:67" # Example index, verify if correct for 1kt0
 [annotations.style]
-marker_shape = "star" # Example shape
-marker_size = 12
-fill_color = "#FF0000" # Red
-label_offset_x = 5
-label_offset_y = -5
+marker_shape = "triangle" # Example shape
+marker_radius = 2
+color = "#FF0000" # Red
+label_offset = [5,-5]
 
 [[annotations]]
 type = "point"
 label = "Binding Pocket Tyr"
 index = "A:151" # Example index
 [annotations.style]
-marker_shape = "diamond"
-marker_size = 10
-fill_color = "#0000FF" # Blue
-stroke_color = "#000000"
-stroke_width = 1
+marker_shape = "circle"
+marker_radius = 2
+color = "#0000FF" # Blue
 
 [[annotations]]
 type = "line"
 label = "Interaction"
-indices = ["A:41", "A:57"] # Example indices for interaction
+indices = ["A:67", "A:57"] # Example indices for interaction
 [annotations.style]
-stroke = "#FF8C00" # Dark Orange
+line_color = "#FF8C00" # Dark Orange
 stroke_width = 2
-stroke_dasharray = "5 3"
+line_style = [5,3]
 label_color = "#FF8C00"
 label_font_size = 10
 
@@ -118,7 +115,7 @@ type = "line"
 label = "Domain Linker"
 indices = ["A:188", "A:190"] # Example short line
 [annotations.style]
-stroke = "#8A2BE2" # Blue Violet
+line_color = "#8A2BE2" # Blue Violet
 stroke_width = 1.5
 label_font_size = 9
 
@@ -129,7 +126,7 @@ range = "A:189-195" # Example range
 [annotations.style]
 fill_color = "#32CD32" # Lime Green
 opacity = 0.25
-stroke_color = "#228B22" # Forest Green
+color = "#228B22" # Forest Green
 stroke_width = 1
 
 """
