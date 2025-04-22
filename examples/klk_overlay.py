@@ -38,11 +38,6 @@ from IPython.display import SVG, display
 
 # FlatProt Core Imports
 from flatprot.io import GemmiStructureParser, StyleParser
-from flatprot.utils.structure_utils import (
-    transform_structure_with_matrix,
-    project_structure_uniformly,
-)
-from flatprot.utils.scene_utils import create_scene_from_structure
 from flatprot.renderers import SVGRenderer
 from flatprot.core import logger
 
@@ -308,42 +303,21 @@ print(
 )
 
 for file in representative_files:
-    matrix_path = matrix_dir / f"{file.stem}_matrix.npy"
-    # svg_path = svg_dir / f"{file.stem}.svg" # No longer needed here
+    matrix_path = str(matrix_dir / f"{file.stem}_matrix.npy")
+    file_str = str(file)
+    style_str = str(style_file)
+    svg_path = str(svg_dir / f"{file.stem}.svg")
+
     rep_base_name = file.stem  # Used as key
 
-    # print(f"Processing: {file.name}") # Optional: Verbose logging
+    print(f"Processing: {file.name}")  # Optional: Verbose logging
 
-    try:
-        # 1. Load Structure
-        structure_obj = structure_parser.parse_structure(file)
-
-        # 2. Apply Alignment Matrix Transformation
-        transformed_structure = transform_structure_with_matrix(
-            structure_obj, matrix_path
-        )
-
-        # 3. Apply Uniform Projection
-        projected_structure = project_structure_uniformly(
-            transformed_structure, scale_factor=UNIFORM_SCALE, center=True
-        )
-
-        # --- Store results ---
-        if (
-            hasattr(projected_structure, "coordinates")
-            and projected_structure.coordinates is not None
-        ):
-            projected_coordinates_map[rep_base_name] = projected_structure.coordinates
-            # Create scene now, using the structure with projected coords
-            scene = create_scene_from_structure(projected_structure, styles_dict)
-            scene_map[rep_base_name] = scene
-        else:
-            print(f"  -> WARNING: No coordinates found after projecting {file.name}")
-
-    except Exception as e:
-        print(f"  -> ERROR processing {file.name}: {e}")
-        logger.error(f"Failed processing {file.name}", exc_info=True)
-
+    ipython.run_cell_magic(
+        "pybash",
+        "",
+        "uv run flatprot project {file_str} {matrix_path} "
+        "-o {svg_path} --quiet --canvas-width {CANVAS_WIDTH} --canvas-height {CANVAS_HEIGHT} --style {style_str}",
+    )
 print("Structure processing finished.")
 
 
@@ -355,9 +329,8 @@ print("Structure processing finished.")
 
 # %%
 # --- Define Fixed Viewbox ---
-# Centered around origin (0,0) as project_structure_uniformly centers the coords
-viewbox_x = -CANVAS_WIDTH / 2
-viewbox_y = -CANVAS_HEIGHT / 2
+viewbox_x = 0
+viewbox_y = 0
 viewbox_width = CANVAS_WIDTH
 viewbox_height = CANVAS_HEIGHT
 viewbox_str = (
