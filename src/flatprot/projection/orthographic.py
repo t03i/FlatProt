@@ -20,7 +20,7 @@ class OrthographicProjectionParameters(BaseProjectionParameters):
     padding_y: Annotated[float, Field(strict=True, ge=0, lt=0.5)] = 0.05
     maintain_aspect_ratio: bool = True
     canvas_alignment: Literal["center", "top_left"] = "top_left"
-    center_original_coordinates = True
+    center_original_coordinates: bool = True
     view_direction: NDArray[Shape["3"], float] = np.array([0.0, 0.0, 1.0])
     up_vector: NDArray[Shape["3"], float] = np.array([0.0, 1.0, 0.0])
 

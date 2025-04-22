@@ -37,8 +37,6 @@ from IPython.core.magic import register_cell_magic
 from IPython.display import SVG, display
 
 # FlatProt Core Imports
-from flatprot.io import GemmiStructureParser, StyleParser
-from flatprot.renderers import SVGRenderer
 from flatprot.core import logger
 
 ipython = get_ipython()
@@ -221,7 +219,6 @@ for file in representative_files:
 # %% [markdown]
 # ## Generate Projections using Python API (Store Data)
 #
-# Define styles and uniform scaling. Loop through representatives, apply
 # transformations and projection, then store the projected coordinates and
 # the renderable Scene object in memory for later processing.
 
@@ -250,17 +247,10 @@ opacity = 0.5
 style_file = tmp_dir / "style.toml"
 style_file.write_text(style_config)
 
-# Define Uniform Scale Factor (adjust as needed)
-UNIFORM_SCALE = 50.0
 
 # Define Canvas size for intermediate rendering (large enough)
-CANVAS_WIDTH = 2000
-CANVAS_HEIGHT = 2000
-
-# Instantiate parsers and renderer outside the loop
-structure_parser = GemmiStructureParser()
-style_parser = StyleParser(style_file)
-styles_dict = style_parser.parse()
+CANVAS_WIDTH = 500
+CANVAS_HEIGHT = 500
 
 # Store cluster counts for opacity calculation
 cluster_counts = {rep: len(members) for rep, members in large_clusters.items()}
@@ -289,18 +279,12 @@ def calculate_opacity(cluster_counts, min_opacity=0.05, max_opacity=1.0):
 # Calculate opacities for the representatives we are processing
 representative_opacities = calculate_opacity(cluster_counts)
 
-# Data storage for overlay generation
-projected_coordinates_map = {}  # rep_base_name -> np.ndarray (N, 3)
-scene_map = {}  # rep_base_name -> Scene object
 
 # %% [markdown]
 # Loop through the representative `.cif` files, apply transformations,
-# perform uniform projection, and store results.
 
 # %%
-print(
-    f"Processing {len(representative_files)} structures for uniform projection (scale: {UNIFORM_SCALE})..."
-)
+print(f"Processing {len(representative_files)} structures for projection...")
 
 for file in representative_files:
     matrix_path = str(matrix_dir / f"{file.stem}_matrix.npy")
@@ -310,12 +294,10 @@ for file in representative_files:
 
     rep_base_name = file.stem  # Used as key
 
-    print(f"Processing: {file.name}")  # Optional: Verbose logging
-
     ipython.run_cell_magic(
         "pybash",
         "",
-        "uv run flatprot project {file_str} {matrix_path} "
+        "uv run flatprot project {file_str} --matrix {matrix_path} "
         "-o {svg_path} --quiet --canvas-width {CANVAS_WIDTH} --canvas-height {CANVAS_HEIGHT} --style {style_str}",
     )
 print("Structure processing finished.")
@@ -357,20 +339,30 @@ combined_svg_root = ET.Element(
 combined_defs = ET.SubElement(combined_svg_root, f"{{{SVG_NAMESPACE}}}defs")
 unique_defs_ids = set()
 
-print(f"Assembling final SVG from {len(scene_map)} scenes...")
+print(
+    f"Assembling final SVG from {len(representative_files)} representative structures..."
+)
 processed_count = 0
 final_svg_path = None
 
-# Iterate through the scenes we stored
-for rep_base_name, scene in scene_map.items():
-    opacity = representative_opacities.get(rep_base_name, 1.0)
+# Iterate through the generated SVG files
+# for svg_file_path in svg_files:
+# Iterate through the representative structure files
+for representative_file in representative_files:
+    rep_base_name = representative_file.stem
+    svg_file_path = svg_dir / f"{rep_base_name}.svg"
+
+    # Get the original cluster rep name (without _matrix suffix if present)
+    # cluster_rep_key = rep_base_name.replace("_matrix", "")
+    # Use rep_base_name directly as the key for opacity
+    opacity = representative_opacities.get(representative_file.name, 1.0)
 
     try:
-        renderer = SVGRenderer(
-            scene, CANVAS_WIDTH, CANVAS_HEIGHT, background_color=None
-        )
-        svg_string = renderer.get_svg_string()
+        # Read the SVG file content
+        with open(svg_file_path, "r", encoding="utf-8") as f:
+            svg_string = f.read()
 
+        # Parse the SVG content
         parser = ET.XMLParser(encoding="utf-8")
         individual_root = ET.fromstring(svg_string.encode("utf-8"), parser=parser)
         xml_namespaces = {"svg": SVG_NAMESPACE}
@@ -410,15 +402,15 @@ for rep_base_name, scene in scene_map.items():
 
         processed_count += 1
 
+    except FileNotFoundError:
+        print(f"  -> WARNING: SVG file not found: {svg_file_path}")
     except ET.ParseError as pe:
-        print(
-            f"  -> WARNING: Could not parse rendered SVG string for {rep_base_name}: {pe}"
-        )
+        print(f"  -> WARNING: Could not parse rendered SVG file {svg_file_path}: {pe}")
     except Exception as e:
         print(
-            f"  -> WARNING: Error processing scene for {rep_base_name} during assembly: {e}"
+            f"  -> WARNING: Error processing SVG file {svg_file_path} during assembly: {e}"
         )
-        logger.error(f"Error processing scene {rep_base_name}", exc_info=True)
+        logger.error(f"Error processing file {svg_file_path}", exc_info=True)
 
 # --- Save Final SVG ---
 if processed_count > 0:
