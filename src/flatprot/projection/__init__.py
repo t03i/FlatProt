@@ -3,7 +3,6 @@
 
 from .orthographic import OrthographicProjection, OrthographicProjectionParameters
 from .base import BaseProjection, BaseProjectionParameters
-from .uniform import UniformProjection, UniformProjectionParameters
 from flatprot.core.errors import FlatProtError
 
 __all__ = [
@@ -12,8 +11,6 @@ __all__ = [
     "BaseProjection",
     "BaseProjectionParameters",
     "ProjectionError",
-    "UniformProjection",
-    "UniformProjectionParameters",
 ]
 
 
