@@ -1,6 +1,6 @@
 # Copyright 2025 Tobias Olenyi.
 # SPDX-License-Identifier: Apache-2.0
-from typing import Annotated
+from typing import Annotated, Literal
 
 import numpy as np
 
@@ -19,7 +19,8 @@ class OrthographicProjectionParameters(BaseProjectionParameters):
     padding_x: Annotated[float, Field(strict=True, ge=0, lt=0.5)] = 0.05
     padding_y: Annotated[float, Field(strict=True, ge=0, lt=0.5)] = 0.05
     maintain_aspect_ratio: bool = True
-    center: bool = True
+    canvas_alignment: Literal["center", "top_left"] = "top_left"
+    center_original_coordinates = True
     view_direction: NDArray[Shape["3"], float] = np.array([0.0, 0.0, 1.0])
     up_vector: NDArray[Shape["3"], float] = np.array([0.0, 1.0, 0.0])
 
@@ -104,7 +105,7 @@ class OrthographicProjection(BaseProjection[OrthographicProjectionParameters]):
 
         # 3. Center coordinates in 2D view plane *before* scaling if requested
         coords_2d_centered = coords_2d
-        if parameters.center:
+        if parameters.center_original_coordinates:
             coords_2d_mean = np.mean(coords_2d, axis=0)
             coords_2d_centered = coords_2d - coords_2d_mean
 
@@ -130,7 +131,7 @@ class OrthographicProjection(BaseProjection[OrthographicProjectionParameters]):
             coords_2d_scaled = coords_2d_centered * np.array([scale_x, scale_y])
 
         # 5. Translate scaled coordinates to the final canvas position
-        if parameters.center:
+        if parameters.canvas_alignment == "center":
             # Translate the centered+scaled coordinates so their mean is at the canvas center
             canvas_center = np.array([parameters.width / 2, parameters.height / 2])
             final_coords_2d = coords_2d_scaled + canvas_center

@@ -253,7 +253,7 @@ def project_structure_orthographically(
             "padding_x": padding_x,
             "padding_y": padding_y,
             "maintain_aspect_ratio": maintain_aspect_ratio,
-            "center": center_projection,
+            "canvas_alignment": "center" if center_projection else "top_left",
         }
         if view_direction is not None:
             param_kwargs["view_direction"] = view_direction
