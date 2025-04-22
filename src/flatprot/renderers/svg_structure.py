@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 from typing import Optional
-import numpy as np  # Added for type hints
+import numpy as np
 from drawsvg import Path, Line, Circle
 
 from flatprot.scene import (
@@ -12,7 +12,15 @@ from flatprot.scene import (
 )
 
 from flatprot.scene.connection import ConnectionStyle
-from flatprot.core.logger import logger
+from flatprot.core import logger
+
+
+# Define SVG stroke-dasharray values for different line styles
+LINE_STYLE_MAP = {
+    "solid": None,
+    "dashed": "5,5",
+    "dotted": "1,3",
+}
 
 
 def _draw_coil(
@@ -176,20 +184,23 @@ def _draw_connection_line(
             class_="connection",
         )
 
-    dasharray = style.stroke_dasharray
+    # Get the dasharray based on the line_style
+    dasharray = LINE_STYLE_MAP.get(style.line_style)
 
     connection_line = Line(
         sx=start_point[0],
         sy=start_point[1],
         ex=end_point[0],
         ey=end_point[1],
-        stroke=style.stroke.as_hex(),
+        stroke=style.color.as_hex(),
         stroke_width=style.stroke_width,
-        stroke_dasharray=dasharray,  # Use the dasharray string directly
-        opacity=style.opacity,
-        stroke_linecap="round",  # Consistent styling
-        stroke_linejoin="round",  # Consistent styling
-        id=id,
-        class_="connection",  # Add class for potential CSS styling
+        stroke_opacity=style.opacity,
+        stroke_linecap="round",
+        class_="connection",
     )
+
+    # Apply dasharray only if it's not None (i.e., not 'solid')
+    if dasharray:
+        connection_line.args["stroke-dasharray"] = dasharray
+
     return connection_line

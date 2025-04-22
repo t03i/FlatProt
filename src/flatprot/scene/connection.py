@@ -1,6 +1,6 @@
 # Copyright 2025 Tobias Olenyi.
 # SPDX-License-Identifier: Apache-2.0
-from typing import Optional
+from typing import Optional, Literal
 
 from pydantic import Field
 from pydantic_extra_types.color import Color
@@ -12,14 +12,16 @@ from .base_element import BaseSceneElement, SceneGroupType, BaseSceneStyle
 
 
 class ConnectionStyle(BaseSceneStyle):
-    """Defines the visual style for a connection between residues."""
+    """Defines the visual style for a connection between elements."""
 
-    stroke: Color = Field(default=Color("black"), description="Connection line color.")
+    color: Color = Field(default=Color("black"), description="Connection line color.")
     stroke_width: float = Field(
         default=1.0, ge=0.0, description="Connection line width."
     )
-    stroke_dasharray: Optional[str] = Field(
-        default=None, description="SVG stroke-dasharray pattern (e.g., '5,5')."
+    # Use Literal for specific allowed values and rename field
+    line_style: Literal["solid", "dashed", "dotted"] = Field(
+        default="solid",
+        description="Connection line style ('solid', 'dashed', or 'dotted').",
     )
     opacity: float = Field(
         default=0.8, ge=0.0, le=1.0, description="Connection line opacity."

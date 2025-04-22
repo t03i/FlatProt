@@ -1,7 +1,7 @@
 # Copyright 2025 Tobias Olenyi.
 # SPDX-License-Identifier: Apache-2.0
 
-from typing import Dict, Optional, Type, Tuple, List
+from typing import Dict, Optional, Type, Tuple, List, Union
 from pathlib import Path
 
 from flatprot.core import (
@@ -14,7 +14,7 @@ from flatprot.core import (
 )
 from flatprot.scene import Scene, SceneGroup
 from flatprot.scene import SceneCreationError
-from flatprot.scene.connection import Connection
+from flatprot.scene.connection import Connection, ConnectionStyle
 
 # Import specific annotation types
 from flatprot.scene import (
@@ -51,7 +51,9 @@ STRUCTURE_ELEMENT_MAP: Dict[
 
 def create_scene_from_structure(
     structure: Structure,
-    default_styles: Optional[Dict[str, BaseStructureStyle]] = None,
+    default_styles: Optional[
+        Dict[str, Union[BaseStructureStyle, ConnectionStyle]]
+    ] = None,
 ) -> Scene:
     """Creates a Scene object populated with elements derived from a Structure.
 
@@ -64,11 +66,10 @@ def create_scene_from_structure(
     Args:
         structure: The core Structure object containing chain, secondary structure,
                    and pre-projected coordinate data (X, Y, Depth).
-        default_styles: An optional dictionary mapping lowercase secondary structure
-                        type names ('helix', 'sheet', 'coil') to specific style
-                        instances to be used as defaults for those element types.
-                        If not provided or a type is missing, the element's own
-                        default style will be used.
+        default_styles: An optional dictionary mapping lowercase element type names
+                        ('helix', 'sheet', 'coil', 'connection') to specific style
+                        instances to be used as defaults. If not provided or a type
+                        is missing, the element's own default style will be used.
 
     Returns:
         A Scene object representing the structure.
@@ -147,7 +148,22 @@ def create_scene_from_structure(
             element_i = chain_elements_in_order[i]
             element_i_plus_1 = chain_elements_in_order[i + 1]
             if element_i.is_adjacent_to(element_i_plus_1):
-                conn = Connection(start_element=element_i, end_element=element_i_plus_1)
+                # Get the default connection style if provided
+                conn_style = styles.get("connection", None)
+                # Ensure it's a ConnectionStyle or None before passing
+                if conn_style is not None and not isinstance(
+                    conn_style, ConnectionStyle
+                ):
+                    logger.warning(
+                        f"Invalid type provided for 'connection' style. Expected ConnectionStyle, got {type(conn_style)}. Using default."
+                    )
+                    conn_style = None
+
+                conn = Connection(
+                    start_element=element_i,
+                    end_element=element_i_plus_1,
+                    style=conn_style,  # Pass the default style
+                )
                 logger.debug(
                     f"\t>Adding connection {conn.id} to chain group {chain_group.id}"
                 )

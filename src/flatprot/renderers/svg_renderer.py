@@ -89,12 +89,14 @@ class SVGRenderer:
         height: The height of the SVG canvas.
         background_color: Optional background color for the SVG.
         background_opacity: Opacity for the background color.
+        padding: Padding around the content within the viewBox.
     """
 
     DEFAULT_WIDTH = 600
     DEFAULT_HEIGHT = 400
     DEFAULT_BG_COLOR = "#FFFFFF"
     DEFAULT_BG_OPACITY = 1.0
+    DEFAULT_PADDING = 10  # Default padding in SVG units
 
     # Map element types to their drawing functions
     DRAW_MAP = {
@@ -116,6 +118,7 @@ class SVGRenderer:
         height: int = DEFAULT_HEIGHT,
         background_color: Optional[str] = DEFAULT_BG_COLOR,
         background_opacity: float = DEFAULT_BG_OPACITY,
+        padding: int = DEFAULT_PADDING,
     ):
         """Initializes the SVGRenderer.
 
@@ -125,6 +128,7 @@ class SVGRenderer:
             height: Desired height of the SVG canvas.
             background_color: Background color (CSS string, e.g., '#FFFFFF' or 'white'). None for transparent.
             background_opacity: Background opacity (0.0 to 1.0).
+            padding: Padding around the content within the viewBox.
         """
         if not isinstance(scene, Scene):
             raise TypeError("Renderer requires a valid Scene object.")
@@ -134,6 +138,7 @@ class SVGRenderer:
         self.height = height
         self.background_color = background_color
         self.background_opacity = background_opacity
+        self.padding = padding  # Store padding
         self._element_map: Dict[str, BaseSceneElement] = {
             e.id: e for e in self.scene.get_all_elements()
         }
@@ -427,6 +432,37 @@ class SVGRenderer:
                     f"Error drawing annotation '{element.id}' (type {element_type.__name__}): {e}",
                     exc_info=True,
                 )
+
+        # 7. Calculate Bounding Box and Set ViewBox
+        try:
+            bbox = drawing.get_bounding_box()  # Returns (min_x, max_x, min_y, max_y)
+            if bbox:
+                min_x, max_x, min_y, max_y = bbox
+                # Add padding
+                pad = self.padding
+                view_min_x = min_x - pad
+                view_min_y = min_y - pad
+                view_width = (max_x - min_x) + (2 * pad)
+                view_height = (max_y - min_y) + (2 * pad)
+
+                # Ensure width and height are non-negative
+                view_width = max(0, view_width)
+                view_height = max(0, view_height)
+
+                drawing.view_box = (view_min_x, view_min_y, view_width, view_height)
+                logger.debug(
+                    f"Set viewBox: ({view_min_x=}, {view_min_y=}, {view_width=}, {view_height=})"
+                )
+            else:
+                # Handle empty drawing: use initial width/height or default
+                logger.warning(
+                    "Drawing is empty or has no bounding box. Using initial dimensions for viewBox."
+                )
+                drawing.view_box = (0, 0, self.width, self.height)
+        except Exception as e:
+            logger.error(f"Error calculating or setting viewBox: {e}", exc_info=True)
+            # Fallback: Use initial dimensions if bounding box calculation fails
+            drawing.view_box = (0, 0, self.width, self.height)
 
         return drawing
 

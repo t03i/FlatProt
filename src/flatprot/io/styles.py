@@ -9,6 +9,7 @@ from typing import Dict, Any, Union
 import toml
 from pydantic import ValidationError
 
+from flatprot.scene.connection import ConnectionStyle
 from flatprot.scene.structure import (
     BaseStructureStyle,
     HelixStyle,
@@ -25,13 +26,14 @@ from .errors import (
 
 
 class StyleParser:
-    """Parser for TOML style files focusing on structure elements (helix, sheet, coil)."""
+    """Parser for TOML style files focusing on structure elements and connections."""
 
-    # Define known structure sections and their corresponding Pydantic models
+    # Define known sections and their corresponding Pydantic models
     KNOWN_SECTIONS = {
         "helix": HelixStyle,
         "sheet": SheetStyle,
         "coil": CoilStyle,
+        "connection": ConnectionStyle,
     }
 
     def __init__(self, file_path: Union[str, Path]):
@@ -70,19 +72,19 @@ class StyleParser:
                 f"Warning: Unknown style sections found and ignored: {', '.join(unknown_sections)}"
             )
 
-    def parse(self) -> Dict[str, BaseStructureStyle]:
-        """Parses the known structure sections from the TOML file into Pydantic style objects.
+    def parse(self) -> Dict[str, Union[BaseStructureStyle, ConnectionStyle]]:
+        """Parses the known sections from the TOML file into Pydantic style objects.
 
         Returns:
-            A dictionary mapping section names ('helix', 'sheet', 'coil') to their
-            corresponding Pydantic style model instances (e.g., HelixStyle).
+            A dictionary mapping section names ('helix', 'sheet', 'coil', 'connection')
+            to their corresponding Pydantic style model instances.
 
         Raises:
             StyleValidationError: If any style section has invalid data according to
                                   its Pydantic model.
             StyleParsingError: For other general parsing issues.
         """
-        parsed_styles: Dict[str, BaseStructureStyle] = {}
+        parsed_styles: Dict[str, Union[BaseStructureStyle, ConnectionStyle]] = {}
 
         for section_name, StyleModelClass in self.KNOWN_SECTIONS.items():
             section_data = self.raw_style_data.get(section_name)
@@ -118,13 +120,15 @@ class StyleParser:
 
         return parsed_styles
 
-    def get_structure_styles(self) -> Dict[str, BaseStructureStyle]:
-        """Parse and return the structure styles defined in the TOML file.
+    def get_element_styles(
+        self,
+    ) -> Dict[str, Union[BaseStructureStyle, ConnectionStyle]]:
+        """Parse and return the element styles defined in the TOML file.
 
         Returns:
-            Dict mapping structure type names ('helix', 'sheet', 'coil') to their
-            parsed Pydantic style objects. Sections not found in the TOML file
-            will be omitted from the dictionary.
+            Dict mapping element type names ('helix', 'sheet', 'coil', 'connection')
+            to their parsed Pydantic style objects. Sections not found in the TOML
+            file will be omitted from the dictionary.
 
         Raises:
             StyleValidationError: If validation of any section fails.
@@ -133,11 +137,11 @@ class StyleParser:
         try:
             return self.parse()
         except (StyleValidationError, StyleParsingError):
-            # Re-raise exceptions from parse_styles
+            # Re-raise exceptions from parse
             raise
         except Exception as e:
             # Catch unexpected errors during the overall process
-            raise StyleParsingError(f"Failed to get structure styles: {e}") from e
+            raise StyleParsingError(f"Failed to get element styles: {e}") from e
 
     def get_raw_data(self) -> Dict[str, Any]:
         """Return the raw, unprocessed style data loaded from the TOML file.
