@@ -52,24 +52,13 @@ def get_aligned_rotation_database(
 
         db_entry = db.get_by_entry_id(db_id)
 
-    # alignment_transform represents the transformation from the target (db) to the query (input)
-    # db_transform represents the desired final orientation for the target frame
     alignment_transform: TransformationMatrix = alignment.rotation_matrix
     db_transform: TransformationMatrix = db_entry.rotation_matrix
-
-    # Manually calculate the inverse of the alignment transformation
-    # Inverse rotation is the transpose of the rotation matrix
-    R_align_inv = alignment_transform.rotation.T
-    # Inverse translation is -R_inv @ t
-    t_align_inv = -R_align_inv @ alignment_transform.translation
-    query_to_target_transform = TransformationMatrix(
-        rotation=R_align_inv, translation=t_align_inv
-    )
 
     # Combine the transformations: apply query_to_target_transform first, then db_transform.
     # T_final = T_db ∘ T_inv_align
     # Since T2.before(T1) applies T1 then T2, we use:
-    final_transform = db_transform.before(query_to_target_transform)
+    final_transform = db_transform.before(alignment_transform)
 
     return final_transform, db_entry
 

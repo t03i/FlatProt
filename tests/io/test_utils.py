@@ -9,15 +9,23 @@ from flatprot.alignment.errors import DatabaseEntryNotFoundError
 
 @pytest.fixture
 def sample_alignment():
-    """Create a sample alignment result for testing."""
+    """Create a sample alignment result for testing.
+    NOTE: The rotation_matrix here represents the Query -> Target transform,
+    as returned by the modified FoldseekAligner.
+    """
+    # Original T->Q: R=[[0,-1,0],[1,0,0],[0,0,1]], t=[0,1,0]
+    # Inverse Q->T: R_inv=R.T=[[0,1,0],[-1,0,0],[0,0,1]], t_inv=-R_inv@t=[-1,0,0]
+    query_to_target_rotation = np.array([[0, 1, 0], [-1, 0, 0], [0, 0, 1]])
+    query_to_target_translation = np.array([-1.0, 0.0, 0.0])
+
     return AlignmentResult(
         db_id="test_entry",
         probability=0.9,
         aligned_region=np.array([1, 100]),
         alignment_scores=np.ones(100),
         rotation_matrix=TransformationMatrix(
-            rotation=np.array([[0, -1, 0], [1, 0, 0], [0, 0, 1]]),
-            translation=np.array([0.0, 1.0, 0.0]),
+            rotation=query_to_target_rotation,
+            translation=query_to_target_translation,
         ),
     )
 

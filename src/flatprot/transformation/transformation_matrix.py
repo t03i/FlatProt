@@ -102,3 +102,9 @@ class TransformationMatrix:
         rotated = (self.rotation @ coordinates.T).T
         transformed = rotated + self.translation
         return transformed
+
+    def __eq__(self, other: "TransformationMatrix") -> bool:
+        """Check if two TransformationMatrix instances are equal."""
+        return np.allclose(self.rotation, other.rotation) and np.allclose(
+            self.translation, other.translation
+        )

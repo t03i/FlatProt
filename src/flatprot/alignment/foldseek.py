@@ -97,9 +97,16 @@ class FoldseekAligner:
         if isinstance(tmp_dir, tempfile.TemporaryDirectory):
             tmp_dir.cleanup()
 
-        rotation_matrix = TransformationMatrix(
-            rotation=_parse_foldseek_vector(match[0, "u"]).reshape(3, 3),
-            translation=_parse_foldseek_vector(match[0, "t"]),
+        target_to_query_matrix = _parse_foldseek_vector(match[0, "u"]).reshape(3, 3)
+        target_to_query_translation = _parse_foldseek_vector(match[0, "t"])
+
+        # Manually calculate the inverse of the alignment transformation
+        # Inverse rotation is the transpose of the rotation matrix
+        R_align_inv = target_to_query_matrix.T
+        # Inverse translation is -R_inv @ t
+        t_align_inv = -R_align_inv @ target_to_query_translation
+        query_to_target_transform = TransformationMatrix(
+            rotation=R_align_inv, translation=t_align_inv
         )
 
         return AlignmentResult(
@@ -107,7 +114,7 @@ class FoldseekAligner:
             probability=float(match[0, "prob"]),
             aligned_region=np.array((int(match[0, "qstart"]), int(match[0, "qend"]))),
             alignment_scores=_parse_foldseek_vector(match[0, "lddtfull"]),
-            rotation_matrix=rotation_matrix,
+            rotation_matrix=query_to_target_transform,
         )
 
     def _run_foldseek_search(

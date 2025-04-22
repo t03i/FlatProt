@@ -3,7 +3,7 @@
 
 
 from pathlib import Path
-from typing import Optional, Annotated
+from typing import Optional, Annotated, Literal
 import shutil
 import subprocess
 
@@ -59,6 +59,10 @@ def align_structure_rotation(
     ] = 0.5,
     download_db: bool = False,
     target_db_id: Annotated[Optional[str], Parameter(name=["--target-db-id"])] = None,
+    alignment_mode: Annotated[
+        Literal["family-identity", "family-inertia"],
+        Parameter(name=["--alignment-mode", "-a"]),
+    ] = "family-identity",
     *,
     common: CommonParameters | None = None,
 ) -> int:
@@ -156,10 +160,15 @@ def align_structure_rotation(
             target_db_id=target_db_id,
         )
 
-        # Matrix combination
-        final_matrix, db_entry = get_aligned_rotation_database(
+        combined_matrix, db_entry = get_aligned_rotation_database(
             alignment_result, alignment_db
         )
+
+        # Matrix combination
+        if alignment_mode == "family-identity":
+            final_matrix = alignment_result.rotation_matrix
+        elif alignment_mode == "family-inertia":
+            final_matrix = combined_matrix
 
         save_alignment_matrix(final_matrix, Path(matrix_out_path))
         logger.info(f"Saved rotation matrix to {matrix_out_path}")

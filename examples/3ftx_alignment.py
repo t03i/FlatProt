@@ -134,7 +134,7 @@ print("[INFO] Alignments complete. Matrices and info files generated.")
 print("\n[STEP 3] Running FlatProt Projections...")
 if ipython:  # Ensure we are in an IPython environment
     # Project Cobra
-    canvas_args = "--canvas-width 100 --canvas-height 300"
+    canvas_args = "--canvas-width 300 --canvas-height 200"
     print("Projecting Cobra...")
     cobra_project_cmd = f"uv run flatprot project {cobra_path} -o {cobra_out} --matrix {cobra_matrix} --quiet {canvas_args}"
     ipython.run_cell_magic("pybash", "", cobra_project_cmd)

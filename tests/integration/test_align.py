@@ -200,6 +200,7 @@ def test_align_success_basic_cif(
         "structure_file": valid_cif_file,
         "matrix_out_path": default_mock_data["mock_matrix_out_path"],
         "info_out_path": default_mock_data["mock_info_out_path"],
+        "alignment_mode": "family-inertia",
     }
     return_code, stdout = run_align_command(args)
 
