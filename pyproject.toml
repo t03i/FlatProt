@@ -18,10 +18,10 @@ dependencies = [
     "pydantic>=2.10.3",
     "pydantic-settings>=2.6.1",
     "tqdm>=4.67.1",
-    "pydantic-numpy>=8.0.0",
     "cyclopts>=3.9.0",
     "toml>=0.10.2",
     "h5py>=3.13.0",
+    "numpydantic>=1.6.8",
 ]
 
 [project.scripts]
@@ -37,6 +37,8 @@ dev = [
     "mkdocs>=1.6.1",
     "pytest-mock>=3.14.0",
     "pytest>=8.3.4",
+    "jupytext>=1.17.0",
+    "mkdocstrings[python]>=0.29.1",
 ]
 db-builder = [
     "httpx-retries>=0.3.0",

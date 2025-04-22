@@ -1,16 +1,22 @@
 # Copyright 2025 Tobias Olenyi.
 # SPDX-License-Identifier: Apache-2.0
 
-"""Parser for style definitions in TOML format."""
+"""Parser for structure style definitions in TOML format."""
 
 from pathlib import Path
-from typing import Dict, Any, Union, TypeVar
+from typing import Dict, Any, Union
+
 import toml
 from pydantic import ValidationError
-from pydantic_extra_types.color import Color
 
-from ..style.manager import StyleManager
-from ..style.base import Style
+from flatprot.scene.connection import ConnectionStyle
+from flatprot.scene.structure import (
+    BaseStructureStyle,
+    HelixStyle,
+    SheetStyle,
+    CoilStyle,
+)
+
 from .errors import (
     StyleParsingError,
     InvalidTomlError,
@@ -19,23 +25,16 @@ from .errors import (
 )
 
 
-StyleT = TypeVar("StyleT", bound=Style)
-
-
 class StyleParser:
-    """Parser for TOML style files."""
+    """Parser for TOML style files focusing on structure elements and connections."""
 
-    # Change from REQUIRED_SECTIONS to KNOWN_SECTIONS
-    KNOWN_SECTIONS = [
-        "helix",
-        "sheet",
-        "coil",
-        "point_annotation",
-        "line_annotation",
-        "area_annotation",
-        "canvas",
-        "annotation",
-    ]
+    # Define known sections and their corresponding Pydantic models
+    KNOWN_SECTIONS = {
+        "helix": HelixStyle,
+        "sheet": SheetStyle,
+        "coil": CoilStyle,
+        "connection": ConnectionStyle,
+    }
 
     def __init__(self, file_path: Union[str, Path]):
         """Initialize the style parser.
@@ -53,99 +52,101 @@ class StyleParser:
 
         try:
             with open(self.file_path, "r") as f:
-                self.style_data = toml.load(f)
+                self.raw_style_data = toml.load(f)
         except toml.TomlDecodeError as e:
             raise InvalidTomlError(f"Invalid TOML format: {e}")
 
         self._validate_structure()
 
     def _validate_structure(self) -> None:
-        """Validates the basic structure of the style file.
-
-        Makes sure any provided sections have valid formats.
-        All sections are optional - none are strictly required.
-        """
-        # Instead of checking for missing sections, just validate the ones that are present
+        """Checks for unknown top-level sections in the style file."""
         unknown_sections = [
-            section for section in self.style_data if section not in self.KNOWN_SECTIONS
+            section
+            for section in self.raw_style_data
+            if section not in self.KNOWN_SECTIONS
         ]
 
         if unknown_sections:
             # This is just a warning, not an error
             print(
-                f"Warning: Unknown style sections found: {', '.join(unknown_sections)}"
+                f"Warning: Unknown style sections found and ignored: {', '.join(unknown_sections)}"
             )
 
-    def _convert_colors(self, section_data: Dict[str, Any]) -> Dict[str, Any]:
-        """Convert string color values to Color objects.
-
-        Args:
-            section_data: Dictionary of style properties
+    def parse(self) -> Dict[str, Union[BaseStructureStyle, ConnectionStyle]]:
+        """Parses the known sections from the TOML file into Pydantic style objects.
 
         Returns:
-            Dict with color strings converted to Color objects
-        """
-        converted_data = section_data.copy()
-
-        # Look for color fields and convert them
-        for key, value in section_data.items():
-            if isinstance(value, str) and ("color" in key.lower()):
-                try:
-                    converted_data[key] = Color(value)
-                except ValueError as e:
-                    raise StyleValidationError(f"Invalid color format for '{key}': {e}")
-
-        return converted_data
-
-    def _process_sections(self) -> Dict[str, Dict[str, Any]]:
-        """Process all sections in the TOML file to prepare for StyleManager creation.
-
-        Returns:
-            Dict containing the processed style data with special handling for specific sections
-        """
-        processed_data = {}
-
-        for section_name, section_data in self.style_data.items():
-            # Skip unknown sections
-            if section_name not in self.KNOWN_SECTIONS:
-                continue
-
-            # Copy data to avoid modifying the original
-            processed_section = section_data.copy()
-
-            # Special handling for point style (converting radius to line_width)
-            if section_name == "point_annotation" and "radius" in processed_section:
-                radius = processed_section.pop("radius")
-                processed_section["stroke_width"] = radius
-
-            # Convert color strings to Color objects
-            processed_section = self._convert_colors(processed_section)
-
-            processed_data[section_name] = processed_section
-
-        return processed_data
-
-    def get_style_manager(self) -> StyleManager:
-        """Create and return a StyleManager populated with styles from the TOML file.
-
-        Returns:
-            StyleManager instance populated with the parsed styles
+            A dictionary mapping section names ('helix', 'sheet', 'coil', 'connection')
+            to their corresponding Pydantic style model instances.
 
         Raises:
-            StyleValidationError: If any style section has invalid data
+            StyleValidationError: If any style section has invalid data according to
+                                  its Pydantic model.
+            StyleParsingError: For other general parsing issues.
         """
-        try:
-            processed_data = self._process_sections()
-            return StyleManager.from_dict(processed_data)
-        except ValidationError as e:
-            raise StyleValidationError(f"Invalid style definition: {e}")
-        except Exception as e:
-            raise StyleParsingError(f"Error creating style manager: {e}")
+        parsed_styles: Dict[str, Union[BaseStructureStyle, ConnectionStyle]] = {}
 
-    def get_style_data(self) -> Dict[str, Any]:
-        """Return the validated style data.
+        for section_name, StyleModelClass in self.KNOWN_SECTIONS.items():
+            section_data = self.raw_style_data.get(section_name)
+
+            if section_data is None:
+                # Section not present in the file, skip it (will use default later)
+                continue
+
+            if not isinstance(section_data, dict):
+                raise StyleValidationError(
+                    f"Invalid format for section '{section_name}'. Expected a table (dictionary), got {type(section_data).__name__}."
+                )
+
+            try:
+                # Pydantic handles validation and type conversion (including Color)
+                style_instance = StyleModelClass(**section_data)
+                parsed_styles[section_name] = style_instance
+            except ValidationError as e:
+                # Provide more context for validation errors
+                error_details = e.errors()
+                error_msgs = [
+                    f"  - {err['loc'][0]}: {err['msg']}" for err in error_details
+                ]
+                raise StyleValidationError(
+                    f"Invalid style definition in section '{section_name}':\\n"
+                    + "\\n".join(error_msgs)
+                ) from e
+            except Exception as e:
+                # Catch other potential errors during instantiation
+                raise StyleParsingError(
+                    f"Error processing style section '{section_name}': {e}"
+                ) from e
+
+        return parsed_styles
+
+    def get_element_styles(
+        self,
+    ) -> Dict[str, Union[BaseStructureStyle, ConnectionStyle]]:
+        """Parse and return the element styles defined in the TOML file.
 
         Returns:
-            Dict containing the parsed style data
+            Dict mapping element type names ('helix', 'sheet', 'coil', 'connection')
+            to their parsed Pydantic style objects. Sections not found in the TOML
+            file will be omitted from the dictionary.
+
+        Raises:
+            StyleValidationError: If validation of any section fails.
+            StyleParsingError: For general parsing issues.
         """
-        return self.style_data
+        try:
+            return self.parse()
+        except (StyleValidationError, StyleParsingError):
+            # Re-raise exceptions from parse
+            raise
+        except Exception as e:
+            # Catch unexpected errors during the overall process
+            raise StyleParsingError(f"Failed to get element styles: {e}") from e
+
+    def get_raw_data(self) -> Dict[str, Any]:
+        """Return the raw, unprocessed style data loaded from the TOML file.
+
+        Returns:
+            Dict containing the raw parsed TOML data.
+        """
+        return self.raw_style_data

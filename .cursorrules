@@ -28,7 +28,7 @@ For any python file, be sure to ALWAYS add typing annotations to each function o
 
 Make sure you keep any comments that exist in a file.
 
-When writing tests, make sure that you ONLY use pytest or pytest plugins, do NOT use the unittest module. All tests should have typing annotations as well. All tests should be in ./tests. Be sure to create all necessary files and folders. If you are creating files inside of ./tests or ./src/flatprot, be sure to make a init.py file if one does not exist.
+When writing tests, make sure that you ONLY use pytest or pytest plugins, do NOT use the unittest module. All tests should have typing annotations as well. All tests should be in ./tests. Be sure to create all necessary files and folders. If you are creating files inside of ./src/flatprot and ./tests/\*, be sure to create a init.py file if one does not exist.
 
 All tests should be fully annotated and should contain docstrings. Only use pytest and pytest-mock plugins for testing. Ask me questions if you are unsure about anything. Use the mocker fixture for any mocking needs and only mock what is necessary. If you need to additionaly pytest plugins, ask me. Do not use the unittest module.
 
@@ -39,3 +39,5 @@ When writing code, be sure to use the latest version of the codebase.
 Do not delete comments unless they are outdated or incorrect.
 
 When working with Cyclopts, be aware that it is fundamentally different to typer. It requires setup of helptext through the doc string and typically does not need Options or Argument annotations but rather regular type annotations. When in doubt, compare to the /src/flatprot/cli/commands.py file or ask me.
+
+All python files in examples/ should be valid python code for ruff linting but are intended to be converted to jupyter notebooks using jupytex. A good example is the klk_overlay.py or 3ftx_alignment.py files.

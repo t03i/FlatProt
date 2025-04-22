@@ -6,7 +6,7 @@
 from typing import Optional
 from rich.console import Console
 
-from flatprot.core.error import FlatProtError
+from flatprot.core import FlatProtError
 
 console = Console()
 

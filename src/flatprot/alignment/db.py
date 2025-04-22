@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Dict
 from dataclasses import dataclass
 
 import h5py
@@ -18,6 +18,7 @@ class AlignmentDBEntry:
     rotation_matrix: TransformationMatrix
     entry_id: str
     structure_name: str
+    metadata: Optional[Dict[str, float | str]] = None
 
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, AlignmentDBEntry):
@@ -93,15 +94,16 @@ class AlignmentDatabase:
         """Returns alignment entry for given entry_id or default if not found. O(1) lookup."""
         if self._file is None:
             raise RuntimeError("Database not opened")
-
         if entry_id not in self._file:
             return default
 
         entry_group = self._file[entry_id]
+        metadata = {k: v for k, v in entry_group.attrs.items() if k != "structure_name"}
         return AlignmentDBEntry(
             rotation_matrix=TransformationMatrix.from_array(entry_group["rotation"][:]),
             entry_id=entry_id,
             structure_name=entry_group.attrs["structure_name"],
+            metadata=metadata if metadata else None,
         )
 
     def get_by_structure_name(
@@ -128,6 +130,11 @@ class AlignmentDatabase:
         entry_group = self._file.create_group(entry.entry_id)
         entry_group.create_dataset("rotation", data=entry.rotation_matrix.to_array())
         entry_group.attrs["structure_name"] = entry.structure_name
+
+        # Store metadata if available
+        if entry.metadata:
+            for key, value in entry.metadata.items():
+                entry_group.attrs[key] = value
 
         # Update index
         self._structure_name_index[entry.structure_name] = entry.entry_id
@@ -160,6 +167,11 @@ class AlignmentDatabase:
         entry_group = self._file.create_group(entry.entry_id)
         entry_group.create_dataset("rotation", data=entry.rotation_matrix.to_array())
         entry_group.attrs["structure_name"] = entry.structure_name
+
+        # Store metadata if available
+        if entry.metadata:
+            for key, value in entry.metadata.items():
+                entry_group.attrs[key] = value
 
         # Save index
         self._save_index()

@@ -1,249 +1,464 @@
 # Copyright 2025 Tobias Olenyi.
 # SPDX-License-Identifier: Apache-2.0
 
-from dataclasses import dataclass
-from typing import Optional
+from typing import List, Optional, Iterator, Generator, Set, Tuple, Dict
 
-from .structure import StructureSceneElement
-from .elements import SceneGroup, SceneElement
+from flatprot.core import (
+    Structure,
+    logger,
+)
 
+from .base_element import BaseSceneElement
+from .structure import BaseStructureSceneElement
 
-@dataclass
-class ResidueMapping:
-    """Mapping information for a structure element"""
+from .group import SceneGroup
+from .resolver import CoordinateResolver
 
-    chain_id: str
-    start: int
-    end: int
-
-    @property
-    def residue_range(self) -> range:
-        return range(self.start, self.end + 1)
+# Import custom errors
+from .errors import (
+    SceneError,
+    ElementNotFoundError,
+    DuplicateElementError,
+    ParentNotFoundError,
+    ElementTypeError,
+    CircularDependencyError,
+    SceneGraphInconsistencyError,
+    InvalidSceneOperationError,
+)
 
 
 class Scene:
-    """A container that manages structural elements and their hierarchical organization.
+    """Manages the scene graph for a protein structure visualization.
 
-    The Scene class serves two main purposes:
-    1. Maintains a registry of all structural elements and their residue mappings
-    2. Manages a hierarchical tree of elements and groups for SVG rendering
-
-    Key Features:
-    - Tracks residue mappings between structural elements and protein chain positions
-    - Provides methods to add, move, and organize elements within groups
-    - Maintains parent-child relationships between elements
-    - Supports querying elements by residue position
-
-    The scene has a root group that serves as the default parent for elements
-    when no specific parent is provided.
+    The Scene holds the core protein structure data and a hierarchical
+    tree of SceneElements (nodes), including SceneGroups.
+    It provides methods to build and manipulate this tree, and to query
+    elements based on residue information.
     """
 
-    def __init__(self):
-        self._elements: list[SceneElement] = []
-        self._residue_mappings: dict[StructureSceneElement, ResidueMapping] = {}
-        self._residue_ranges: dict[str, list[tuple[range, StructureSceneElement]]] = {}
-        self._root_group = SceneGroup(id="root")
-
-    def _register_element(
-        self,
-        element: SceneElement,
-        residue_mapping: ResidueMapping | None = None,
-    ) -> None:
-        """Internal method to register a structural element in the scene.
-
-        Updates residue mappings if the element is a StructureSceneElement.
-        """
-        if residue_mapping is not None:
-            self._residue_mappings[element] = residue_mapping
-        self._elements.append(element)
-
-    def _unregister_element(self, element: SceneElement) -> ResidueMapping | None:
-        """Internal method to unregister a structural element from the scene."""
-        mapping = None
-        if element in self._residue_mappings:
-            mapping = self._residue_mappings[element]
-            del self._residue_mappings[element]
-
-        self._elements.remove(element)
-        return mapping
-
-    def _set_parent(self, element: SceneElement, parent: SceneGroup) -> None:
-        """Internal method to set the parent of an element."""
-        assert element in self._elements, "Element must be registered in the scene"
-        assert (
-            parent is None or parent in self._elements
-        ), "Parent group must be registered in the scene"
-        assert parent is None or isinstance(
-            parent, SceneGroup
-        ), "Parent must be a SceneGroup instance"
-
-        if parent is None:
-            parent = self._root_group
-
-        element._parent = parent
-
-        if element not in parent._elements:
-            parent.add_element(element)
-
-    def _remove_parent(self, element: SceneElement) -> None:
-        """Internal method to remove the parent of an element."""
-        assert element in self._elements, "Element must be registered in the scene"
-
-        if element.parent:
-            element.parent.remove_element(element)
-
-        element._parent = None
-
-    def get_elements_for_residue(
-        self, chain_id: str, residue: int
-    ) -> list[StructureSceneElement]:
-        """Get all structural elements containing the specified residue.
+    def __init__(self, structure: Structure):
+        """Initializes the Scene with a core Structure object.
 
         Args:
-            chain_id: The chain ID to search for elements
-            residue: The residue number to search for
-
-        Returns:
-            A list of StructureSceneElements that contain the specified residue
+            structure: The core biological structure data.
         """
-        matching_elements = []
-        for element, mapping in self._residue_mappings.items():
-            if (
-                isinstance(element, StructureSceneElement)
-                and mapping.chain_id == chain_id
-                and residue in mapping.residue_range
-            ):
-                matching_elements.append(element)
-        return matching_elements
+        if not isinstance(structure, Structure):
+            raise TypeError("Scene must be initialized with a Structure object.")
 
-    def get_element_index_from_global_index(
-        self, global_index: int, element: StructureSceneElement
-    ) -> int:
-        """Get the index of an element from a global index"""
-        assert (
-            element in self._residue_mappings
-        ), "Element must be registered in the scene"
-        mapping = self._residue_mappings[element]
-        assert (
-            global_index in mapping.residue_range
-        ), "Global index must be in the element's residue range"
-        return global_index - mapping.start
-
-    def get_elements_for_residue_range(
-        self, chain_id: str, start: int, end: int
-    ) -> list[StructureSceneElement]:
-        """Get all structural elements containing the specified residue range.
-
-        Args:
-            chain_id: The chain ID to search for elements
-            start: The start residue number to search for
-            end: The end residue number to search for
-
-        Returns:
-            A list of StructureSceneElements that contain the specified residue range
-        """
-        # Return empty list if start > end
-        if start > end:
-            return []
-
-        matching_elements = []
-        for element, mapping in self._residue_mappings.items():
-            if (
-                isinstance(element, StructureSceneElement)
-                and mapping.chain_id == chain_id
-                and (
-                    # Check if ranges overlap
-                    (mapping.start <= start <= mapping.end)
-                    or (mapping.start <= end <= mapping.end)
-                    or (start <= mapping.start and end >= mapping.end)
-                )
-            ):
-                matching_elements.append(element)
-        return matching_elements
-
-    def add_element(
-        self,
-        element: SceneElement,
-        parent: Optional[SceneGroup] = None,
-        chain_id: Optional[str] = None,
-        start: Optional[int] = None,
-        end: Optional[int] = None,
-    ) -> None:
-        """Add any scene element (including groups) to the scene."""
-        assert element not in self._elements, "Element must not be in the scene"
-        assert parent is None or parent in self._elements, "Parent must be in the scene"
-
-        residue_mapping = None
-        if chain_id is not None and start is not None and end is not None:
-            residue_mapping = ResidueMapping(chain_id, start, end)
-
-        self._register_element(element, residue_mapping)
-        self._set_parent(element, parent)
-
-    def move_element_to_parent(
-        self,
-        element: SceneElement,
-        new_parent: SceneGroup,
-    ) -> None:
-        """Move an element from its current parent to a new parent group.
-
-        This method preserves any existing residue mappings and ensures proper
-        registration in the scene hierarchy.
-
-        Args:
-            element: The element to move
-            new_parent: The group that will become the element's new parent
-        """
-        # Store mapping info if it exists
-        mapping = self._residue_mappings.get(element)
-
-        assert new_parent in self._elements, "New parent must be in the scene"
-        assert element in self._elements, "Element must be in the scene"
-        assert isinstance(new_parent, SceneGroup), "New parent must be a SceneGroup"
-
-        # Remove from old parent
-        if element._parent:
-            element._parent.remove_element(element)
-            self._unregister_element(element)
-
-        # Add to new parent
-        new_parent.add_element(element)
-
-        # Restore mapping if it existed
-        if mapping:
-            self._register_element(
-                element, mapping.chain_id, int(mapping.start), int(mapping.end)
-            )
+        self._structure: Structure = structure
+        # List of top-level nodes (elements with no parent)
+        # The order here determines the base rendering order of top-level items.
+        self._nodes: List[BaseSceneElement] = []
+        # For quick lookups by ID
+        self._element_registry: Dict[str, BaseSceneElement] = {}
+        # Create the coordinate resolver instance
+        self._resolver: Optional[CoordinateResolver] = None  # Initialize as None
 
     @property
-    def root(self) -> SceneGroup:
-        """Get the root group of the scene."""
-        return self._root_group
+    def structure(self) -> Structure:
+        """Get the core Structure object associated with this scene."""
+        return self._structure
 
-    def __iter__(self):
-        """Iterate over all structural elements in the scene."""
-        return iter(self._elements)
+    @property
+    def top_level_nodes(self) -> List[BaseSceneElement]:
+        """Get the list of top-level nodes in the scene graph."""
+        return self._nodes
 
-    def move_elements_to_group(
-        self,
-        elements: list[SceneElement],
-        group: SceneGroup,
-        parent: Optional[SceneGroup] = None,
-    ) -> SceneGroup:
-        if group not in self._elements:
-            self._register_element(group)
+    def get_element_by_id(self, id: str) -> Optional[BaseSceneElement]:
+        """Retrieve a scene element by its unique ID.
 
-        # Move elements to new group
-        for element in elements:
-            self.move_element_to_parent(element, group)
+        Args:
+            id: The ID of the element to find.
 
-        if parent is None:
-            parent = self._root_group
-        parent.add_element(element=group)
+        Returns:
+            The found BaseSceneElement or None if no element has that ID.
+        """
+        return self._element_registry.get(id)
+
+    def _register_element(self, element: BaseSceneElement) -> None:
+        """Internal method to add an element to the ID registry."""
+        if element.id in self._element_registry:
+            # Raise specific error for duplicate IDs
+            raise DuplicateElementError(
+                f"Element with ID '{element.id}' already exists in the registry."
+            )
+        self._element_registry[element.id] = element
+
+    def _unregister_element(self, element: BaseSceneElement) -> None:
+        """Internal method to remove an element from the ID registry."""
+        if element.id in self._element_registry:
+            del self._element_registry[element.id]
+        # Invalidate resolver cache if element affecting it is removed
+        self._resolver = None
+
+    def add_element(
+        self, element: BaseSceneElement, parent_id: Optional[str] = None
+    ) -> None:
+        """Adds a SceneElement to the scene graph.
+
+        If parent_id is provided, the element is added as a child of the
+        specified parent group. Otherwise, it's added as a top-level node.
+
+        Args:
+            element: The SceneElement to add.
+            parent_id: The ID of the parent SceneGroup, or None for top-level.
+
+        Raises:
+            ValueError: If parent_id is specified but not found, or if the
+                        target parent is not a SceneGroup, or if the element ID
+                        already exists.
+            TypeError: If the element is not a BaseSceneElement.
+        """
+        if not isinstance(element, BaseSceneElement):
+            # Raise specific type error
+            raise ElementTypeError(
+                f"Object to add is not a BaseSceneElement subclass (got {type(element).__name__})."
+            )
+
+        # Check for existing element using ID registry (more reliable)
+        if element.id in self._element_registry:
+            raise DuplicateElementError(
+                f"Element with ID '{element.id}' already exists in the registry."
+            )
+
+        # Check if element object seems already attached (should have parent=None)
+        # This prevents adding the same *object* instance twice if somehow unregistered but still linked
+        if element.parent is not None:
+            raise InvalidSceneOperationError(
+                f"Element '{element.id}' already has a parent ('{element.parent.id}') and cannot be added directly."
+            )
+
+        # Check if it's already a top-level node (should not happen if parent is None check passes, but belt-and-suspenders)
+        if element in self._nodes:
+            raise InvalidSceneOperationError(
+                f"Element '{element.id}' is already a top-level node."
+            )
+
+        self._register_element(element)  # Register first
+
+        parent: Optional[SceneGroup] = None
+        if parent_id is not None:
+            potential_parent = self.get_element_by_id(parent_id)
+            if potential_parent is None:
+                self._unregister_element(element)  # Rollback
+                # Raise specific error for parent not found
+                raise ParentNotFoundError(
+                    f"Parent group with ID '{parent_id}' not found."
+                )
+            if not isinstance(potential_parent, SceneGroup):
+                self._unregister_element(element)  # Rollback
+                # Raise specific type error for parent
+                raise ElementTypeError(
+                    f"Specified parent '{parent_id}' is not a SceneGroup (got {type(potential_parent).__name__})."
+                )
+            parent = potential_parent
+
+        try:
+            if parent:
+                # Let add_child raise its specific errors (e.g., ValueError for circular)
+                parent.add_child(element)
+            else:
+                element._set_parent(None)
+                self._nodes.append(element)
+        except (ValueError, TypeError, SceneError) as e:
+            # Catch potential errors from add_child or _set_parent
+            self._unregister_element(
+                element
+            )  # Rollback registration (also invalidates resolver)
+            if parent is None and element in self._nodes:
+                self._nodes.remove(element)  # Rollback adding to top-level
+            # Re-raise the original specific error, don't wrap
+            raise e
+        # Invalidate resolver cache if element affecting it is added
+        self._resolver = None
+
+    def remove_element(self, element_id: str) -> None:
+        """Removes a SceneElement and its descendants from the scene graph by ID.
+
+        Args:
+            element_id: The ID of the SceneElement to remove.
+
+        Raises:
+            ValueError: If the element with the given ID is not found in the scene.
+        """
+        element = self.get_element_by_id(element_id)
+        if element is None:
+            # Raise specific error
+            raise ElementNotFoundError(f"Element with ID '{element_id}' not found.")
+
+        # --- Collect nodes to remove --- (No change needed here)
+        nodes_to_unregister: List[BaseSceneElement] = []
+        nodes_to_process: List[BaseSceneElement] = [element]
+
+        while nodes_to_process:
+            node = nodes_to_process.pop(0)
+            # Check if already unregistered (in case of complex graph manipulations, though ideally not needed)
+            if node.id not in self._element_registry:
+                continue
+
+            nodes_to_unregister.append(node)
+            if isinstance(node, SceneGroup):
+                # Add children to process queue (create copy for safe iteration)
+                nodes_to_process.extend(list(node.children))
+
+        for node in nodes_to_unregister:
+            self._unregister_element(node)
+
+        # --- Detach the root element --- #
+        parent = element.parent
+        element_was_top_level = element in self._nodes
+
+        if parent:
+            if parent.id in self._element_registry and isinstance(parent, SceneGroup):
+                try:
+                    parent.remove_child(element)
+                except ValueError:
+                    # This *shouldn't* happen if graph is consistent. Treat as inconsistency.
+                    # Log it, but also raise a specific error.
+                    element._set_parent(None)
+                    # Raise inconsistency error instead of just warning
+                    raise SceneGraphInconsistencyError(
+                        f"SceneGraph Inconsistency: Element '{element.id}' not found in supposed parent '{parent.id}' children list during removal."
+                    )
+            else:
+                # Parent reference exists but parent is invalid/unregistered.
+                element._set_parent(None)
+                # This is also an inconsistency
+                raise SceneGraphInconsistencyError(
+                    f"SceneGraph Inconsistency: Parent '{parent.id if parent else 'None'}' of element '{element.id}' is invalid or unregistered during removal."
+                )
+
+        elif element_was_top_level:
+            # If it was supposed to be top-level, remove it
+            self._nodes.remove(element)
+            element._set_parent(None)
+        else:
+            # Element was registered, had no parent, but wasn't in top-level nodes.
+            # This indicates an inconsistency.
+            element._set_parent(None)
+            raise SceneGraphInconsistencyError(
+                f"SceneGraph Inconsistency: Element '{element.id}' was registered but not found in the scene graph structure (neither parented nor top-level)."
+            )
+        # Invalidate resolver cache since elements were removed
+        self._resolver = None
+
+    def move_element(
+        self, element_id: str, new_parent_id: Optional[str] = None
+    ) -> None:
+        """Moves a SceneElement identified by its ID to a new parent.
+
+        Args:
+            element_id: The ID of the SceneElement to move.
+            new_parent_id: The ID of the new parent SceneGroup, or None to move
+                           to the top level.
+
+        Raises:
+            ValueError: If the element or new parent is not found, if the new
+                        parent is not a SceneGroup, or if the move would create
+                        a circular dependency.
+            TypeError: If the target parent is not a SceneGroup.
+        """
+        element = self.get_element_by_id(element_id)
+        if element is None:
+            raise ElementNotFoundError(f"Element with ID '{element_id}' not found.")
+
+        current_parent = element.parent
+        new_parent: Optional[SceneGroup] = None
+
+        if new_parent_id is not None:
+            potential_parent = self.get_element_by_id(new_parent_id)
+            if potential_parent is None:
+                raise ParentNotFoundError(
+                    f"New parent group with ID '{new_parent_id}' not found."
+                )
+            if not isinstance(potential_parent, SceneGroup):
+                raise ElementTypeError(
+                    f"Target parent '{new_parent_id}' is not a SceneGroup (got {type(potential_parent).__name__})."
+                )
+            new_parent = potential_parent
+
+            # Prevent circular dependency
+            temp_check: Optional[BaseSceneElement] = new_parent
+            while temp_check is not None:
+                if temp_check is element:
+                    raise CircularDependencyError(
+                        f"Cannot move element '{element_id}' under '{new_parent_id}' - would create circular dependency."
+                    )
+                temp_check = temp_check.parent
+
+        if current_parent is new_parent:
+            return
+
+        # --- Detach Phase --- #
+        element_was_in_nodes = element in self._nodes
+        try:
+            if current_parent:
+                current_parent.remove_child(
+                    element
+                )  # Let SceneGroup handle internal parent update
+            elif element_was_in_nodes:
+                self._nodes.remove(element)
+                element._set_parent(None)
+            elif (
+                element.parent is None
+            ):  # Already detached, potentially inconsistent state
+                raise SceneGraphInconsistencyError(
+                    f"SceneGraph Inconsistency: Element '{element_id}' was already detached before move operation."
+                )
+            else:  # Should not be reachable if graph is consistent
+                raise SceneGraphInconsistencyError(
+                    f"SceneGraph Inconsistency: Element '{element_id}' in inconsistent state during detach phase of move."
+                )
+        except ValueError as e:
+            # If remove_child fails unexpectedly (e.g., element not found when it should be)
+            element._set_parent(None)  # Force detachment
+            raise SceneGraphInconsistencyError(
+                "Scene Graph Inconsistency: "
+                + f"Error detaching '{element_id}' from current parent '{current_parent.id if current_parent else 'None'}': {e}"
+            ) from e  # Raise inconsistency
+
+        # --- Attach Phase --- #
+        try:
+            if new_parent:
+                new_parent.add_child(
+                    element
+                )  # Let add_child handle parent update & checks
+            else:
+                element._set_parent(None)
+                self._nodes.append(element)
+        except (ValueError, TypeError, SceneError) as e:
+            # If attaching fails, attempt rollback (reattach to original parent/location)
+            rollback_msg = f"Failed to attach element '{element_id}' to new parent '{new_parent_id}': {e}. Attempting rollback."
+            try:
+                if current_parent:
+                    current_parent.add_child(
+                        element
+                    )  # Try adding back to original parent
+                elif element_was_in_nodes:  # If it was originally top-level
+                    element._set_parent(None)
+                    self._nodes.append(element)
+                # If originally detached, leave it detached
+            except Exception as rollback_e:
+                # Rollback failed, graph is likely inconsistent
+                msg = f"Rollback failed after attach error for element '{element.id}'. Scene graph may be inconsistent. Rollback error: {rollback_e}"
+                raise SceneGraphInconsistencyError(
+                    msg
+                ) from e  # Raise inconsistency, chaining original error
+
+            raise InvalidSceneOperationError(rollback_msg) from e
+        # Invalidate resolver cache since element position changed
+        self._resolver = None
+
+    def traverse(self) -> Generator[Tuple[BaseSceneElement, int], None, None]:
+        """Performs a depth-first traversal of the scene graph.
+
+        Yields:
+            Tuple[BaseSceneElement, int]: A tuple containing the scene element
+                                          and its depth in the tree (0 for top-level).
+        """
+        nodes_to_visit: List[Tuple[BaseSceneElement, int]] = [
+            (node, 0) for node in reversed(self._nodes)
+        ]
+        visited_ids: Set[str] = set()
+
+        while nodes_to_visit:
+            element, depth = nodes_to_visit.pop()
+
+            # Check registry in case node was removed during traversal (unlikely but possible)
+            if element.id not in self._element_registry or element.id in visited_ids:
+                continue
+            visited_ids.add(element.id)
+
+            yield element, depth
+
+            if isinstance(element, SceneGroup):
+                # Add children to the stack in reverse order to maintain visit order
+                # Ensure children are also still registered before adding
+                children_to_add = [
+                    (child, depth + 1)
+                    for child in reversed(element.children)
+                    if child.id in self._element_registry
+                ]
+                nodes_to_visit.extend(children_to_add)
+
+    def get_all_elements(self) -> List[BaseSceneElement]:
+        """Returns a flat list of all elements in the scene graph.
+
+        Returns:
+            A list containing all BaseSceneElement objects registered in the scene.
+        """
+        return list(self._element_registry.values())
+
+    def get_sequential_structure_elements(self) -> List[BaseStructureSceneElement]:
+        """
+        Returns a list of all BaseStructureSceneElement instances in the scene,
+        sorted sequentially by chain ID and then by starting residue index.
+
+        Assumes each BaseStructureSceneElement primarily represents a single
+        contiguous range for sorting purposes.
+
+        Returns:
+            List[BaseStructureSceneElement]: Sorted list of structure elements.
+        """
+        structure_elements: List[BaseStructureSceneElement] = []
+        for element in self._element_registry.values():
+            if isinstance(element, BaseStructureSceneElement):
+                structure_elements.append(element)
+
+        def sort_key(element: BaseStructureSceneElement) -> Tuple[str, int]:
+            primary_chain = "~"  # Use ~ to sort after standard chain IDs
+            start_residue = float("inf")  # Sort elements without range last
+
+            if element.residue_range_set and element.residue_range_set.ranges:
+                # Use the first range (min start residue) for sorting key
+                try:
+                    first_range = min(
+                        element.residue_range_set.ranges,
+                        key=lambda r: (r.chain_id, r.start),
+                    )
+                    primary_chain = first_range.chain_id
+                    start_residue = first_range.start
+                except (ValueError, TypeError) as e:
+                    logger.warning(
+                        f"Could not determine sort key for element {element.id} due to range issue: {e}"
+                    )
+            else:
+                logger.debug(
+                    f"Structure element {element.id} has no residue range for sorting."
+                )
+
+            # Return a tuple for multi-level sorting
+            return (primary_chain, start_residue)
+
+        try:
+            structure_elements.sort(key=sort_key)
+        except Exception as e:
+            logger.error(f"Error sorting structure elements: {e}", exc_info=True)
+            # Return unsorted list in case of unexpected sorting error
+
+        return structure_elements
+
+    def __iter__(self) -> Iterator[BaseSceneElement]:
+        """Iterate over the top-level nodes of the scene graph."""
+        return iter(self._nodes)
+
+    def __len__(self) -> int:
+        """Return the total number of elements currently registered in the scene."""
+        return len(self._element_registry)
 
     def __repr__(self) -> str:
-        repr = f"Scene(elements={len(self._elements)})"
-        for element in self._elements:
-            if isinstance(element, SceneGroup) or element.parent is self._root_group:
-                repr += f"\n\t{element}"
-        return repr
+        """Provide a string representation of the scene."""
+        structure_id = getattr(self.structure, "id", "N/A")  # Safely get structure ID
+        return (
+            f"<Scene structure_id='{structure_id}' "
+            f"top_level_nodes={len(self._nodes)} total_elements={len(self)}>"
+        )
+
+    # Lazily create resolver only when needed to avoid issues during Scene init
+    @property
+    def resolver(self) -> CoordinateResolver:
+        """Get the CoordinateResolver instance for this scene."""
+        if self._resolver is None:
+            # Pass the current element registry
+            self._resolver = CoordinateResolver(self._structure, self._element_registry)
+        return self._resolver

@@ -14,7 +14,7 @@ from rich.panel import Panel
 from rich.text import Text
 from rich.traceback import Traceback
 
-from flatprot.core.error import FlatProtError
+from flatprot.core import FlatProtError
 
 console = Console()
 

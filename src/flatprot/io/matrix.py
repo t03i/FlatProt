@@ -8,7 +8,7 @@ from typing import Union
 
 import numpy as np
 
-from ..transformation.utils import TransformationMatrix
+from ..transformation.transformation_matrix import TransformationMatrix
 from .errors import (
     MatrixFileNotFoundError,
     MatrixFileError,

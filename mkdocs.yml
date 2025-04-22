@@ -5,6 +5,7 @@ site_name: FlatProt
 nav:
   - Home: index.md
   - Installation: installation.md
+  - Examples: examples.md
   - Commands:
       - Project: commands/project.md
       - Align: commands/align.md
@@ -12,6 +13,13 @@ nav:
       - Matrix Files: file_formats/matrix.md
       - Style Files: file_formats/style.md
       - Annotation Files: file_formats/annotations.md
+  - API Reference:
+      - IO: api/io.md
+      - Core: api/core.md
+      - Transformation & Projection: api/transformation.md
+      - Scene: api/scene.md
+      - Rendering: api/rendering.md
+      - DatabaseAlignment: api/alignment.md
 theme:
   name: readthedocs
   highlightjs: true
@@ -26,3 +34,7 @@ site_url: https://t03i.github.io/FlatProt/
 repo_url: https://github.com/t03i/FlatProt
 markdown_extensions:
   - admonition
+
+plugins:
+  - search
+  - mkdocstrings

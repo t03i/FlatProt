@@ -5,7 +5,8 @@ import sys
 
 from cyclopts import App
 
-from flatprot.cli.commands import project_structure_svg, align_structure_rotation
+from .project import project_structure_svg
+from .align import align_structure_rotation
 from flatprot import __version__
 
 

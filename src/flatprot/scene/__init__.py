@@ -2,34 +2,80 @@
 # SPDX-License-Identifier: Apache-2.0
 
 from .scene import Scene
-from .elements import SceneGroup, SceneElement
+from .connection import Connection, ConnectionStyle
+from .base_element import BaseSceneElement, BaseSceneStyle
+from .group import SceneGroup, GroupTransform, GroupStyle
 from .structure import (
-    HelixElement,
-    SheetElement,
-    CoilElement,
-    StructureSceneElement,
-    secondary_structure_to_scene_element,
+    HelixSceneElement,
+    HelixStyle,
+    SheetSceneElement,
+    SheetStyle,
+    CoilSceneElement,
+    CoilStyle,
+    BaseStructureSceneElement,
+    BaseStructureStyle,
 )
-from .annotations import (
-    Annotation,
-    GroupAnnotation,
+from .annotation import (
+    BaseAnnotationElement,
+    BaseAnnotationStyle,
     PointAnnotation,
+    PointAnnotationStyle,
     LineAnnotation,
+    LineAnnotationStyle,
     AreaAnnotation,
+    AreaAnnotationStyle,
+)
+from .errors import (
+    SceneError,
+    SceneCreationError,
+    SceneAnnotationError,
+    ElementNotFoundError,
+    DuplicateElementError,
+    ParentNotFoundError,
+    ElementTypeError,
+    CircularDependencyError,
+    SceneGraphInconsistencyError,
+    InvalidSceneOperationError,
+    TargetResidueNotFoundError,
 )
 
+from .resolver import CoordinateResolver
+
 __all__ = [
+    "CoordinateResolver",
+    "Connection",
+    "ConnectionStyle",
     "Scene",
     "SceneGroup",
-    "SceneElement",
-    "HelixElement",
-    "SheetElement",
-    "CoilElement",
-    "StructureSceneElement",
-    "secondary_structure_to_scene_element",
-    "Annotation",
-    "GroupAnnotation",
+    "GroupTransform",
+    "GroupStyle",
+    "BaseSceneElement",
+    "BaseSceneStyle",
+    "BaseStructureSceneElement",
+    "BaseStructureStyle",
+    "HelixSceneElement",
+    "HelixStyle",
+    "SheetSceneElement",
+    "SheetStyle",
+    "CoilSceneElement",
+    "CoilStyle",
+    "BaseAnnotationElement",
+    "BaseAnnotationStyle",
     "PointAnnotation",
+    "PointAnnotationStyle",
     "LineAnnotation",
+    "LineAnnotationStyle",
     "AreaAnnotation",
+    "AreaAnnotationStyle",
+    "SceneError",
+    "SceneCreationError",
+    "SceneAnnotationError",
+    "ElementNotFoundError",
+    "DuplicateElementError",
+    "ParentNotFoundError",
+    "ElementTypeError",
+    "CircularDependencyError",
+    "SceneGraphInconsistencyError",
+    "InvalidSceneOperationError",
+    "TargetResidueNotFoundError",
 ]

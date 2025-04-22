@@ -1,15 +1,15 @@
 # Copyright 2025 Tobias Olenyi.
 # SPDX-License-Identifier: Apache-2.0
 
-from .orthographic import OrthographicProjector, OrthographicProjectionParameters
-from .base import Projector, ProjectionParameters
-from flatprot.core.error import FlatProtError
+from .orthographic import OrthographicProjection, OrthographicProjectionParameters
+from .base import BaseProjection, BaseProjectionParameters
+from flatprot.core.errors import FlatProtError
 
 __all__ = [
-    "OrthographicProjector",
+    "OrthographicProjection",
     "OrthographicProjectionParameters",
-    "Projector",
-    "ProjectionParameters",
+    "BaseProjection",
+    "BaseProjectionParameters",
     "ProjectionError",
 ]
 

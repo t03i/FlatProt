@@ -1,157 +1,130 @@
 # Project Command
 
-The project command transforms protein structures into standardized 2D representations.
+The `project` command transforms a 3D protein structure into a standardized 2D SVG representation, optionally applying custom transformations, styles, and annotations.
 
-## Basic Usage
+## Usage
 
 ```bash
-flatprot STRUCTURE_FILE [OUTPUT_FILE] [OPTIONS]
+flatprot project STRUCTURE_FILE [OPTIONS]
 ```
 
-Where:
+## Arguments
 
--   `STRUCTURE_FILE` is the path to a PDB or CIF structure file (required)
--   `OUTPUT_FILE` is the path for the output SVG file (optional, defaults to stdout)
+-   `STRUCTURE_FILE`: Path to the input protein structure file (PDB or mmCIF format). Required.
 
 ## Options
 
-| Option               | Description                                                |
-| -------------------- | ---------------------------------------------------------- |
-| `--matrix PATH`      | Path to a custom transformation matrix file (NumPy format) |
-| `--style PATH`       | Path to a TOML file with custom style definitions          |
-| `--annotations PATH` | Path to a TOML file with annotation definitions            |
-| `--dssp PATH`        | Path to a DSSP file with secondary structure assignments   |
-| `--quiet`            | Suppress all output except errors                          |
-| `--verbose`          | Print additional information                               |
+| Option            | Short | Type    | Default  | Description                                                                                                                                     |
+| ----------------- | ----- | ------- | -------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| `--output`        | `-o`  | Path    | _stdout_ | Path to save the output SVG file. If omitted, the SVG content is printed to standard output.                                                    |
+| `--matrix`        |       | Path    | _None_   | Path to a custom transformation matrix (NumPy `.npy` format). If omitted, an inertia-based transformation is applied. See format details below. |
+| `--style`         |       | Path    | _None_   | Path to a custom style file (TOML format). See [Style File Format](../file_formats/style.md).                                                   |
+| `--annotations`   |       | Path    | _None_   | Path to a custom annotation file (TOML format). See [Annotation File Format](../file_formats/annotations.md).                                   |
+| `--dssp`          |       | Path    | _None_   | Path to a DSSP file for secondary structure assignment. **Required if `STRUCTURE_FILE` is in PDB format.** Ignored for mmCIF files.             |
+| `--canvas-width`  |       | Integer | `1000`   | Width of the output SVG canvas in pixels.                                                                                                       |
+| `--canvas-height` |       | Integer | `1000`   | Height of the output SVG canvas in pixels.                                                                                                      |
+| `--quiet`         |       | Boolean | `false`  | Suppress all informational output except errors.                                                                                                |
+| `--verbose`       |       | Boolean | `false`  | Print additional debug information during execution.                                                                                            |
 
 ## Input File Formats
 
-### Structure Files
+### Structure File (`STRUCTURE_FILE`)
 
-FlatProt accepts protein structure files in the following formats:
+-   Accepts protein structure files in PDB (`.pdb`) or mmCIF (`.cif`, `.mmcif`) format.
+-   **PDB Requirement:** If using a `.pdb` file, you **must** provide secondary structure information via a corresponding DSSP file using the `--dssp` option. FlatProt cannot determine secondary structure directly from PDB format.
+-   **mmCIF:** Usually contains secondary structure information; the `--dssp` option is typically not needed.
 
--   PDB (.pdb)
--   mmCIF (.cif, .mmcif)
+### Matrix File (`--matrix`)
 
-Note: When using PDB files, you must also provide a DSSP file using the `--dssp` option, as secondary structure information cannot be extracted directly from PDB files. **This is not required if using a CIF file enriched with secondary structure information.**
+-   Optional. If provided, must be a NumPy file (`.npy`).
+-   Specifies a custom 3D transformation (rotation and translation) applied before projection.
+-   Expected formats:
+    -   A 4x3 matrix: 3x3 rotation matrix in the top 3 rows, 1x3 translation vector in the bottom row.
+    -   A 3x4 matrix: Transposed version of the 4x3 format (will be auto-corrected).
+    -   A 3x3 matrix: Pure rotation matrix (translation is assumed to be zero).
+-   If omitted, the structure is transformed based on its principal axes of inertia.
 
-### Matrix Files
+### Style File (`--style`)
 
-Custom transformation matrices should be provided as NumPy (.npy) files containing a 3x3 or 4x4 transformation matrix. If not provided, FlatProt uses an inertia-based transformation by default.
+-   Optional. Must be a TOML file.
+-   Defines visual properties (colors, strokes, sizes, etc.) for secondary structure elements.
+-   See the [Style File Format documentation](../file_formats/style.md) for details.
 
-### Style Files
+### Annotation File (`--annotations`)
 
-Style files use the TOML format to define visual properties for different elements of the visualization. Here's an example of a style file:
+-   Optional. Must be a TOML file.
+-   Defines points, lines, and areas to highlight specific residues or regions.
+-   Can include inline styles to customize individual annotations.
+-   See the [Annotation File Format documentation](../file_formats/annotations.md) for details.
 
-```toml
-[helix]
-fill_color = "#FF5733"
-stroke_color = "#000000"
-amplitude = 0.5
+### DSSP File (`--dssp`)
 
-[sheet]
-fill_color = "#33FF57"
-line_width = 2.0
-min_sheet_length = 3
-
-[point]
-fill_color = "#3357FF"
-radius = 5.0
-
-[line]
-stroke_color = "#FF33A8"
-stroke_width = 2.0
-
-[area]
-fill_color = "#FFFF33"
-fill_opacity = 0.5
-stroke_color = "#000000"
-padding = 2.0
-smoothing_window = 3
-interpolation_points = 10
-```
-
-### Annotation Files
-
-Annotation files use the TOML format to define points, lines, and areas to highlight in the visualization. Here's an example:
-
-```toml
-[[annotations]]
-type = "point"
-label = "Active Site"
-indices = [45]
-chain = "A"
-
-[[annotations]]
-type = "line"
-label = "Disulfide Bond"
-indices = [23, 76]
-chain = "A"
-
-[[annotations]]
-type = "area"
-label = "Binding Domain"
-range = { start = 100, end = 150 }
-chain = "A"
-```
+-   Optional, but **required** when the input `STRUCTURE_FILE` is in PDB format.
+-   Standard DSSP output file providing secondary structure assignments (helix, sheet, coil) for each residue.
 
 ## Examples
 
-### Basic Visualization
-
-Generate a basic 2D visualization of a protein structure:
+**Basic Projection (mmCIF to SVG file):**
 
 ```bash
-flatprot structure.cif output.svg
+flatprot project structure.cif -o output.svg
 ```
 
-### Custom Styling
-
-Apply custom styles to the visualization:
+**Projection with DSSP (PDB to SVG file):**
 
 ```bash
-flatprot structure.cif output.svg --style styles.toml
+flatprot project structure.pdb -o output.svg --dssp structure.dssp
 ```
 
-### Adding Annotations
-
-Highlight specific features in the visualization:
+**Projection to Standard Output (Stdout):**
 
 ```bash
-flatprot structure.cif output.svg --annotations annotations.toml
+flatprot project structure.cif > output.svg
 ```
 
-### Custom Transformation
-
-Use a custom transformation matrix:
+**Apply Custom Styling:**
 
 ```bash
-flatprot structure.cif output.svg --matrix custom_matrix.npy
+flatprot project structure.cif -o output.svg --style custom_styles.toml
 ```
 
-### Using DSSP for Secondary Structure
-
-Provide secondary structure information for a PDB file:
+**Add Annotations:**
 
 ```bash
-flatprot structure.pdb output.svg --dssp structure.dssp
+flatprot project structure.cif -o output.svg --annotations features.toml
 ```
 
-### Combining Options
-
-You can combine multiple options:
+**Use a Pre-calculated Alignment Matrix:**
 
 ```bash
-flatprot structure.cif output.svg --style styles.toml --annotations annotations.toml --verbose
+flatprot project structure.cif -o aligned_output.svg --matrix alignment_matrix.npy
+```
+
+**Combine Multiple Options:**
+
+```bash
+flatprot project structure.cif -o styled_annotated.svg \
+    --matrix alignment_matrix.npy \
+    --style custom_styles.toml \
+    --annotations features.toml \
+    --verbose
+```
+
+**Adjust Canvas Size:**
+
+```bash
+flatprot project structure.cif -o large_output.svg --canvas-width 1500 --canvas-height 1200
 ```
 
 ## Error Handling
 
-The CLI provides informative error messages for common issues:
+The command provides informative error messages for various issues:
 
--   Missing or invalid structure files
--   Incompatible file formats
--   Missing required secondary structure information
--   Invalid annotation or style specifications
+-   **File Errors:** Missing or invalid input files (`FileNotFoundError`, `InvalidStructureError`).
+-   **Format Errors:** Incorrect format for structure, matrix, style, or annotation files (`FlatProtError`, specific parser errors).
+-   **Missing DSSP:** Error if a PDB file is provided without a `--dssp` file (`FlatProtError`).
+-   **Processing Errors:** Issues during transformation, projection, scene creation, or rendering (`FlatProtError`, `CoordinateCalculationError`).
+-   **Output Errors:** Failure to write the output SVG file (`OutputFileError`).
 
-Use the `--verbose` flag to get more detailed information when errors occur.
+Use the `--verbose` flag for more detailed error information and debugging output.
+Exit codes are `0` for success and `1` for any error.

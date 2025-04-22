@@ -6,15 +6,31 @@ import tempfile
 
 import polars as pl
 
-
+# -------------------------------------------------------------------------------------- #
+#                                     Configuration                                    #
+# -------------------------------------------------------------------------------------- #
 
 # Load configuration
 configfile: "db_builder/config.yaml"
 
-# Use config values with defaults
-OUTPUT_DIR = config.get("output_dir", "out/alignment_db")
-WORK_DIR = config.get("work_dir", "tmp/alignment_pipeline")
+# --- Base Directories ---
+# Use config values with defaults if they weren't specified in the config file
+# These are needed to format the paths loaded from the config below
+OUTPUT_DIR = Path(config.get("output_dir", "out/alignment_db"))
+WORK_DIR = Path(config.get("work_dir", "tmp/alignment_pipeline"))
+TMP_DIR = Path(tempfile.mkdtemp(prefix="flatprot_snk_")) # Use a unique temp dir per run
 
+# --- Convenience function to format paths from config ---
+def format_path(key: str, **kwargs):
+    """Formats a path from the config using base dirs and wildcards."""
+    return config["paths"][key].format(
+        work_dir=WORK_DIR,
+        output_dir=OUTPUT_DIR,
+        tmp_dir=TMP_DIR,
+        **kwargs
+    )
+
+# --- Pipeline Settings ---
 RETRY_COUNT = config.get("pdb_retry_count", 3)
 TIMEOUT = config.get("pdb_network_timeout", 20)
 TEST_MODE = config.get("test_mode", False)
@@ -25,36 +41,33 @@ FOLDSEEK_PATH = config.get("foldseek_path", "foldseek")
 FOLDSEEK_SMALL_THREADS = config.get("foldseek_small_threads", 4)
 FOLDSEEK_LARGE_THREADS = config.get("foldseek_large_threads", 10)
 
-## Step outputs
-SCOP_FILE = f"{WORK_DIR}/scop-cla-latest.txt"
-SUPERFAMILIES = f"{WORK_DIR}/superfamilies.tsv"
-PDB_FILES = f"{WORK_DIR}/pdbs"
-DOMAIN_FILES = f"{WORK_DIR}/domains"
-DOMAIN_FLAG = f"{DOMAIN_FILES}/{{sf_id}}/extracted.flag"
-REPRESENTATIVE_DOMAINS = f"{WORK_DIR}/representative_domains"
-MATRICES = f"{WORK_DIR}/matrices"
-ALIGNMENT_DB = f"{OUTPUT_DIR}/alignments.h5"
-FOLDSEEK_DB = f"{OUTPUT_DIR}/foldseek/db"
-DATABASE_INFO = f"{OUTPUT_DIR}/database_info.json"
-REPORT_DIR = f"{WORK_DIR}/reports"
-TMP_DIR = Path(tempfile.mkdtemp())
-TMP_FOLDSEEK_DB = f"{TMP_DIR}/foldseek/{{sf_id}}/db"
-PDB_FLAG = f"{TMP_DIR}/download_all_pdbs.flag"
-REPRESENTATIVE_FLAG = f"{TMP_DIR}/representatives.flag"
+# -------------------------------------------------------------------------------------- #
+#                             Directory Creation                                       #
+# -------------------------------------------------------------------------------------- #
 
-# Add log directory
-LOG_DIR = f"{WORK_DIR}/logs"
-os.makedirs(LOG_DIR, exist_ok=True)
+# Use paths directly from config, formatted with base dirs
+LOG_DIR = Path(format_path("log_dir"))
+PDB_FILES_DIR = Path(format_path("pdb_files_dir"))
+DOMAIN_FILES_DIR = Path(format_path("domain_files_dir"))
+REP_DOMAINS_DIR = Path(format_path("representative_domains_dir"))
+MATRICES_DIR = Path(format_path("matrices_dir"))
+REPORT_DIR = Path(format_path("report_dir"))
+FOLDSEEK_DB_DIR = Path(format_path("foldseek_db_dir"))
 
-# Create output directories
+# Create output/working directories (TMP_DIR is created by tempfile.mkdtemp)
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 os.makedirs(WORK_DIR, exist_ok=True)
-os.makedirs(Path(FOLDSEEK_DB).parent, exist_ok=True)
-os.makedirs(PDB_FILES, exist_ok=True)
-os.makedirs(DOMAIN_FILES, exist_ok=True)
-os.makedirs(REPRESENTATIVE_DOMAINS, exist_ok=True)
-os.makedirs(MATRICES, exist_ok=True)
+os.makedirs(LOG_DIR, exist_ok=True)
+os.makedirs(PDB_FILES_DIR, exist_ok=True)
+os.makedirs(DOMAIN_FILES_DIR, exist_ok=True) # Base domain dir
+os.makedirs(REP_DOMAINS_DIR, exist_ok=True)
+os.makedirs(MATRICES_DIR, exist_ok=True)
 os.makedirs(REPORT_DIR, exist_ok=True)
+os.makedirs(FOLDSEEK_DB_DIR, exist_ok=True)
+
+# -------------------------------------------------------------------------------------- #
+#                                Wildcard Constraints                                    #
+# -------------------------------------------------------------------------------------- #
 
 wildcard_constraints:
     sf_id=r"\d+",
@@ -68,62 +81,83 @@ wildcard_constraints:
 # -------------------------------------------------------------------------------------- #
 
 def get_all_superfamily_ids():
-    """Get list of superfamilies to process based on TEST_MODE setting."""
+    """Get list of all superfamilies initially identified from SCOP."""
+    superfamilies_path = format_path("superfamilies")
     try:
-        df = pl.read_csv(SUPERFAMILIES, separator="\t")
+        df = pl.read_csv(superfamilies_path, separator="\t")
+        sf_ids = df["sf_id"].unique()
         if TEST_MODE:
-            return df["sf_id"].unique().shuffle(seed=RANDOM_SEED).to_list()[:NUM_FAMILIES]
-        return df["sf_id"].unique().to_list()
+            # Ensure we seed the shuffle if in test mode
+            return sf_ids.shuffle(seed=RANDOM_SEED).to_list()[:NUM_FAMILIES]
+        return sf_ids.to_list()
     except FileNotFoundError:
-        # Return empty list if file doesn't exist yet (during DAG construction)
+        return [] # Expected during initial DAG construction
+    except Exception as e:
+        print(f"Error reading superfamilies file {superfamilies_path}: {e}")
+        return []
+
+def get_valid_superfamily_ids_from_file():
+    """Reads the list of valid superfamily IDs from the intermediate file."""
+    valid_sf_list_path = format_path("valid_sf_list")
+    try:
+        with open(valid_sf_list_path, 'r') as f:
+            ids = [int(line.strip()) for line in f if line.strip()]
+        return ids
+    except FileNotFoundError:
+        return [] # Expected during initial DAG construction
+    except Exception as e:
+        print(f"Error reading valid superfamilies file {valid_sf_list_path}: {e}")
         return []
 
 def get_all_structure_ids():
+    """Get all unique PDB IDs required based on the superfamilies list (respecting TEST_MODE)."""
+    superfamilies_path = format_path("superfamilies")
     try:
-        ids = get_all_superfamily_ids()
-        df = pl.read_csv(SUPERFAMILIES, separator="\t")
-        return df.filter(pl.col("sf_id").is_in(ids))["pdb_id"].unique().to_list()
+        # Use the potentially filtered list of superfamilies (respecting TEST_MODE)
+        sf_ids_to_process = get_all_superfamily_ids()
+        if not sf_ids_to_process:
+             return [] # If no superfamilies, no structures
+
+        df = pl.read_csv(superfamilies_path, separator="\t")
+        # Filter the full list based on the superfamilies we are actually processing
+        return df.filter(pl.col("sf_id").is_in(sf_ids_to_process))["pdb_id"].unique().to_list()
     except FileNotFoundError:
-        # Return empty list if file doesn't exist yet (during DAG construction)
+        return [] # Expected during initial DAG construction
+    except Exception as e:
+        print(f"Error reading superfamilies file {superfamilies_path}: {e}")
         return []
 
 def get_domains_for_superfamily(wildcards):
-    """Get domains for a superfamily based on successful downloads."""
-    # We only need to wait for the checkpoint to complete, no need to use its output
-    checkpoints.download_all_pdbs.get()
+    """Get expected domain files for a superfamily based on SCOP data."""
+    superfamilies_path = format_path("superfamilies")
+    # Checkpoint dependency removed, rely on rule dependencies
+    # checkpoints.download_all_pdbs.get()
 
-    df = pl.read_csv(SUPERFAMILIES, separator="\t")
+    try:
+        df = pl.read_csv(superfamilies_path, separator="\t")
+    except FileNotFoundError:
+        return [] # If SUPERFAMILIES doesn't exist yet
+    except Exception as e:
+        print(f"Error reading SUPERFAMILIES file {superfamilies_path}: {e}")
+        return []
 
     # Filter for this superfamily
     sf_df = df.filter(pl.col("sf_id") == int(wildcards.sf_id))
 
-    # Return list of domain files, but only for successfully downloaded PDBs
+    # Generate list of expected domain files using the config pattern
     domain_files = []
     for row in sf_df.iter_rows(named=True):
-        pdb_id = row["pdb_id"]
-        chain = row["chain"]
-        start = row["start_res"]
-        end = row["end_res"]
-
-        # Check if the PDB was successfully downloaded
-        status_file = f"{PDB_FILES}/{pdb_id}.status"
-        if os.path.exists(status_file):
-            with open(status_file, 'r') as f:
-                status_data = json.load(f)
-
-            # Only include domain if download was successful
-            if status_data.get("success", False):
-                domain_file = f"{DOMAIN_FILES}/{wildcards.sf_id}/{pdb_id}_{chain}_{start}_{end}.cif"
-                domain_files.append(domain_file)
-
+        domain_file = format_path(
+            "domain_file_pattern",
+            sf_id=wildcards.sf_id,
+            pdb_id=row["pdb_id"],
+            chain=row["chain"],
+            start=row["start_res"],
+            end=row["end_res"]
+        )
+        domain_files.append(domain_file)
 
     return domain_files
-
-def generate_domain_tsv(sf_id, input_file, output_file):
-    """Generate a TSV file for a superfamily."""
-    df = pl.read_csv(input_file, separator="\t")
-    sf_df = df.filter(pl.col("sf_id") == int(sf_id))
-    sf_df.write_csv(output_file, separator="\t")
 
 # -------------------------------------------------------------------------------------- #
 #                                      Target rule                                       #
@@ -131,10 +165,9 @@ def generate_domain_tsv(sf_id, input_file, output_file):
 
 rule all:
     input:
-        FOLDSEEK_DB,
-        ALIGNMENT_DB,
-        DATABASE_INFO
-
+        format_path("foldseek_db"),
+        format_path("alignment_db"),
+        format_path("database_info")
 
 # -------------------------------------------------------------------------------------- #
 #                                Process SCOP information                                #
@@ -142,9 +175,10 @@ rule all:
 
 rule download_scop:
     output:
-        scop_file = f"{SCOP_FILE}"
+        scop_file = format_path("scop_file")
     log:
-        f"{LOG_DIR}/download_scop.log"
+        # Use format_path for consistency, though LOG_DIR is already defined
+        format_path("log_dir") + "/download_scop.log"
     shell:
         """
         wget -O {output.scop_file} https://www.ebi.ac.uk/pdbe/scop/files/scop-cla-latest.txt 2>&1 | tee {log}
@@ -152,12 +186,12 @@ rule download_scop:
 
 rule parse_scop:
     input:
-        scop_file = f"{SCOP_FILE}"
+        scop_file = format_path("scop_file")
     output:
-        superfamilies = f"{SUPERFAMILIES}",
-        report = report(f"{REPORT_DIR}/scop.rst", category="SCOP Analysis")
+        superfamilies = format_path("superfamilies"),
+        report = report(format_path("scop_report_pattern"), category="SCOP Analysis")
     log:
-        f"{LOG_DIR}/parse_scop.log"
+        format_path("log_dir") + "/parse_scop.log"
     script:
         "scop_parse.py"
 
@@ -167,218 +201,293 @@ rule parse_scop:
 
 rule download_pdb:
     output:
-        struct_file = f"{PDB_FILES}/{{pdb_id}}.struct",
-        status = f"{PDB_FILES}/{{pdb_id}}.status"
+        # Use config patterns directly
+        struct_file = format_path("pdb_struct_pattern", pdb_id="{pdb_id}"),
+        status = format_path("pdb_status_pattern", pdb_id="{pdb_id}")
     params:
         pdb_id = "{pdb_id}",
         retry_count = RETRY_COUNT,
-        timeout = TIMEOUT
+        timeout = TIMEOUT,
+        # Pass proxy from main config if needed by script
+        proxy_url = config.get("proxy_url")
     resources:
-        network_connections = 1
+        network_connections = CONCURRENT_DOWNLOADS # Control concurrency here
     log:
-        f"{LOG_DIR}/download_pdb_{{pdb_id}}.log"
+        format_path("log_dir") + "/download_pdb_{pdb_id}.log"
     script:
         "pdb_download.py"
 
 checkpoint download_all_pdbs:
     input:
-        superfamilies = SUPERFAMILIES,
-        structure_ids = [f"{PDB_FILES}/{pdb_id}.struct" for pdb_id in get_all_structure_ids()]
+        # Depend on the status files, not structure files, as status indicates attempt completion
+        status_files = expand(format_path("pdb_status_pattern", pdb_id="{pdb_id}"), pdb_id=get_all_structure_ids()),
+        superfamilies = format_path("superfamilies")
     output:
-        flag = temp(f"{PDB_FLAG}"),
-        report = report(f"{REPORT_DIR}/pdb_download_report.rst", category="PDB Download Report")
+        flag = touch(format_path("pdb_flag_pattern")),
+        report = report(format_path("pdb_report_pattern"), category="PDB Download Report")
     params:
-        pdb_dir = f"{PDB_FILES}"
+        # Pass the directory path needed by the report script
+        pdb_dir = format_path("pdb_files_dir")
     log:
-        f"{LOG_DIR}/download_all_pdbs.log"
+        format_path("log_dir") + "/download_all_pdbs_report.log"
     script:
         "pdb_report.py"
 
-
 rule extract_domain:
     input:
-        struct_file = f"{PDB_FILES}/{{pdb_id}}.struct"
+        struct_file = format_path("pdb_struct_pattern", pdb_id="{pdb_id}")
     output:
-        domain_file = f"{DOMAIN_FILES}/{{sf_id}}/{{pdb_id}}_{{chain}}_{{start}}_{{end}}.cif"
+        # Use config pattern
+        domain_file = format_path("domain_file_pattern", sf_id="{sf_id}", pdb_id="{pdb_id}", chain="{chain}", start="{start}", end="{end}")
     params:
         sf_id = "{sf_id}",
         chain = "{chain}",
         start = "{start}",
         end = "{end}"
     log:
-        f"{LOG_DIR}/extract_domain_{{sf_id}}_{{pdb_id}}_{{chain}}_{{start}}_{{end}}.log"
+        format_path("log_dir") + "/extract_domain_{sf_id}_{pdb_id}_{chain}_{start}_{end}.log"
     script:
         "domain_extract.py"
 
-# Add a rule to generate domain extraction requests from SCOP data
-rule generate_domain_extraction_requests:
-    input:
-        superfamilies = SUPERFAMILIES,
-        flag = f"{PDB_FLAG}"
-    output:
-        sf_domains = f"{DOMAIN_FILES}/{{sf_id}}/domains.tsv"
-    params:
-        sf_id = "{sf_id}"
-    log:
-        f"{LOG_DIR}/generate_domain_extraction_requests_{{sf_id}}.log"
-    run:
-        with open(log[0], "w") as f:
-            f.write(f"Generating domain extraction requests for superfamily {params.sf_id}\n")
-            generate_domain_tsv(params.sf_id, input.superfamilies, output.sf_domains)
-            f.write("Domain extraction requests generated successfully\n")
-
 rule extract_all_domains_for_superfamily:
     input:
-        sf_domains = f"{DOMAIN_FILES}/{{sf_id}}/domains.tsv",
-        domain_files = lambda wildcards: get_domains_for_superfamily(wildcards)
+        domain_files = get_domains_for_superfamily
     output:
-        flag = f"{DOMAIN_FLAG}",
+        # Use config pattern, touch creates the file
+        flag = touch(format_path("domain_flag_pattern", sf_id="{sf_id}"))
     log:
-        f"{LOG_DIR}/extract_all_domains_{{sf_id}}.log"
-    shell:
-        """
-        echo "Completed domain extraction for superfamily {wildcards.sf_id}" > {log}
-        touch {output.flag}
-        """
-
-
-rule domain_extraction_report:
-    input:
-        superfamilies = SUPERFAMILIES,
-        flags = expand(f"{DOMAIN_FLAG}", sf_id=get_all_superfamily_ids()),
-        pdb_dir = PDB_FILES,
-        domain_dir = DOMAIN_FILES
-    output:
-        report = report(f"{REPORT_DIR}/domain_extraction_report.rst", category="Domain Extraction Report")
-    log:
-        f"{LOG_DIR}/domain_extraction_report.log"
-    script:
-        "domain_report.py"
+        format_path("log_dir") + "/extract_all_domains_{sf_id}.log"
+    run:
+        # Use python logging/print directly instead of shell echo
+        log_file_path = log[0]
+        # Check if any domain files expected by get_domains_for_superfamily were actually generated
+        if not input.domain_files:
+            # Log using print (Snakemake redirects to log file)
+            print(f"Warning: No domain files were expected for superfamily {wildcards.sf_id} based on SCOP data.")
+        else:
+            # Check how many of the expected files actually exist after extract_domain rules ran
+            try:
+                existing_files = [f for f in input.domain_files if os.path.exists(f)]
+                num_expected = len(input.domain_files)
+                num_existing = len(existing_files)
+                if num_existing == 0:
+                    print(f"Warning: No domain files were successfully extracted for superfamily {wildcards.sf_id}. Flag will be created, but directory may be empty.")
+                else:
+                    print(f"Completed domain extraction checks for superfamily {wildcards.sf_id}. {num_existing}/{num_expected} expected files present.")
+            except Exception as e:
+                 # Log potential errors during os.path.exists (e.g., permissions, long paths)
+                 print(f"Error checking existence of domain files for superfamily {wildcards.sf_id}: {e}")
+                 # Re-raise to make the job fail clearly
+                 raise
+        # Flag file is touched by Snakemake on successful completion of the run block
 
 # -------------------------------------------------------------------------------------- #
-#                          Foldseek Alignment for all families                           #
+#                         Identify Valid Superfamilies                                   #
 # -------------------------------------------------------------------------------------- #
 
-# Update create_domain_db to depend on domain extraction completion
-rule create_domain_db:
+rule filter_valid_superfamilies:
     input:
-        extraction_complete = f"{DOMAIN_FLAG}",
+        # Depends on the flags created by extract_all_domains_for_superfamily
+        flags = expand(format_path("domain_flag_pattern", sf_id="{sf_id}"), sf_id=get_all_superfamily_ids())
     output:
-        domain_db = temp(f"{TMP_FOLDSEEK_DB}")
-    params:
-        sf_id = "{sf_id}",
-        domain_dir = str(Path(f"{DOMAIN_FLAG}").parent)
-    resources:
-        cpus = FOLDSEEK_SMALL_THREADS
+        valid_list = format_path("valid_sf_list")
     log:
-        f"{LOG_DIR}/create_domain_db_{{sf_id}}.log"
+        format_path("log_dir") + "/filter_valid_superfamilies.log"
+    run:
+        valid_sf_ids = []
+        # Iterate through the expected flag files based on initial SCOP parse
+        all_sf_ids = get_all_superfamily_ids()
+        log_file = log[0]
+
+        with open(log_file, "w") as log_f:
+            log_f.write(f"Checking {len(all_sf_ids)} potential superfamilies...\n")
+            for sf_id in all_sf_ids:
+                flag_file = format_path("domain_flag_pattern", sf_id=sf_id)
+                # Check if the flag file exists (meaning the extraction rule finished)
+                # Add an extra check: does the domain subdir actually contain any .cif files?
+                domain_subdir = Path(format_path("domain_subdir_pattern", sf_id=sf_id))
+                if os.path.exists(flag_file) and domain_subdir.is_dir() and any(domain_subdir.glob("*.cif")):
+                    valid_sf_ids.append(str(sf_id))
+                    log_f.write(f"Superfamily {sf_id}: Valid (flag exists, domains found).\n")
+                elif os.path.exists(flag_file):
+                    log_f.write(f"Superfamily {sf_id}: Invalid (flag exists, but no *.cif files found in {domain_subdir}).\n")
+                else:
+                    log_f.write(f"Superfamily {sf_id}: Invalid (flag file {flag_file} does not exist).\n")
+
+            with open(output.valid_list, "w") as f:
+                for sf_id in valid_sf_ids:
+                    f.write(f"{sf_id}\n")
+            log_f.write(f"Found {len(valid_sf_ids)} valid superfamilies with extracted domains.\n")
+            log_f.write(f"List saved to {output.valid_list}\n")
+
+# -------------------------------------------------------------------------------------- #
+#                  Create Foldseek DBs and Align Domains                                 #
+# -------------------------------------------------------------------------------------- #
+
+rule create_foldseek_db_per_sf:
+    input:
+        # Depend on the extraction flag for this SF
+        flag = format_path("domain_flag_pattern", sf_id="{sf_id}"),
+        # Depend on the *existence* of cif files (implicitly via domain_subdir)
+        domains = lambda wildcards: list(Path(format_path("domain_subdir_pattern", sf_id=wildcards.sf_id)).glob("*.cif"))
+    output:
+        # Foldseek creates multiple files, target the main db file
+        db = format_path("tmp_foldseek_db_pattern", sf_id="{sf_id}")
+    params:
+        foldseek_bin = FOLDSEEK_PATH,
+        domain_dir = format_path("domain_subdir_pattern", sf_id="{sf_id}"),
+        tmp_db_prefix = format_path("tmp_foldseek_db_pattern", sf_id="{sf_id}"),
+        tmp_db_dir = format_path("tmp_foldseek_dir_pattern", sf_id="{sf_id}") # Dir for temp files
+    threads:
+        FOLDSEEK_SMALL_THREADS
+    log:
+        format_path("log_dir") + "/create_foldseek_db_per_sf_{sf_id}.log"
     shell:
         """
-        mkdir -p $(dirname {output.domain_db}) && \
-        {FOLDSEEK_PATH} createdb {params.domain_dir} {output.domain_db} --threads {resources.cpus} -v 3  2>&1 > {log}
+        # Ensure the temporary directory for this SF exists
+        mkdir -p {params.tmp_db_dir}
+        # Create the Foldseek database from CIF files in the domain subdirectory
+        # Use the specified temp directory for intermediate files
+        {params.foldseek_bin} createdb {params.domain_dir} {params.tmp_db_prefix} --threads {threads} > {log} 2>&1
         """
 
-# Update get_domain_alignment to track alignment progress
-# cf. https://github.com/steineggerlab/foldseek/issues/33#issuecomment-1495652159 for all v. all
-rule get_domain_alignment:
+rule align_domains:
     input:
-        domain_db = f"{TMP_FOLDSEEK_DB}"
+        # Depends on the temporary Foldseek DB for this SF
+        db = format_path("tmp_foldseek_db_pattern", sf_id="{sf_id}"),
+        # Include domains as input to ensure they exist before alignment
+        domains = lambda wildcards: list(Path(format_path("domain_subdir_pattern", sf_id=wildcards.sf_id)).glob("*.cif"))
     output:
-        alignment = f"{MATRICES}/{{sf_id}}.m8",
-        tmp_dir = temp(directory(f"{WORK_DIR}/{{sf_id}}"))
+        alignment_file = format_path("matrix_file_pattern", sf_id="{sf_id}")
     params:
-        sf_id = "{sf_id}"
-    resources:
-        cpus = FOLDSEEK_SMALL_THREADS
+        foldseek_bin = FOLDSEEK_PATH,
+        tmp_db_prefix = format_path("tmp_foldseek_db_pattern", sf_id="{sf_id}"),
+        tmp_dir = format_path("tmp_foldseek_dir_pattern", sf_id="{sf_id}") # Pass tmp dir
+    threads:
+        FOLDSEEK_SMALL_THREADS
     log:
-        f"{LOG_DIR}/get_domain_alignment_{{sf_id}}.log"
+        format_path("log_dir") + "/align_domains_{sf_id}.log"
     shell:
         """
-        {FOLDSEEK_PATH} easy-search \
-            {input.domain_db} \
-            {input.domain_db} \
-            {output.alignment} \
-            {output.tmp_dir} \
-            --format-output query,target,qstart,qend,tstart,tend,tseq,prob,alntmscore \
-            -e inf \
-            --exhaustive-search 1 \
-            --tmscore-threshold 0.0 \
-            --alignment-type 2 \
-            --threads {resources.cpus} \
-            -v 3 2>&1 > {log}
+        # Perform all-vs-all alignment within the superfamily DB
+        # Output format includes query, target, qstart, qend, tstart, tend, tseq, prob, alntmscore
+        {params.foldseek_bin} easy-search {params.tmp_db_prefix} {params.tmp_db_prefix} {output.alignment_file} {params.tmp_dir}/aln_tmp_{wildcards.sf_id} \
+            --format-output query,target,qstart,qend,tstart,tend,tseq,prob,alntmscore -e inf --threads {threads} > {log} 2>&1
         """
 
-# Connect representative selection to domain alignments
-rule get_representative_domain:
+# -------------------------------------------------------------------------------------- #
+#                   Select Representatives and Build Final DBs                           #
+# -------------------------------------------------------------------------------------- #
+
+rule select_representative:
     input:
-        alignment_file = f"{MATRICES}/{{sf_id}}.m8",
-        domain_flag = f"{DOMAIN_FLAG}"
+        # Depends on the alignment results for this SF
+        alignment_file = format_path("matrix_file_pattern", sf_id="{sf_id}"),
+        # Depends on the valid SF list being created
+        valid_list = format_path("valid_sf_list")
     output:
-        representative_domain = f"{REPRESENTATIVE_DOMAINS}/{{sf_id}}.cif"
+        representative_domain = format_path("representative_domain_pattern", sf_id="{sf_id}")
     params:
-        domain_dir = str(Path(f"{DOMAIN_FLAG}").parent),
-        sf_id = "{sf_id}"
+        # Pass the directory where original domain CIFs are located
+        domain_dir = format_path("domain_subdir_pattern", sf_id="{sf_id}")
     log:
-        f"{LOG_DIR}/get_representative_domain_{{sf_id}}.log"
+        format_path("log_dir") + "/select_representative_{sf_id}.log"
     script:
         "domain_select.py"
 
-
-# -------------------------------------------------------------------------------------- #
-#                            Aggregate final output database                             #
-# -------------------------------------------------------------------------------------- #
-
-
-
-rule aggregate_representatives:
+checkpoint collect_representatives:
     input:
-        superfamilies = SUPERFAMILIES,
-        representative_domains = expand(
-            f"{REPRESENTATIVE_DOMAINS}/{{sf_id}}.cif",
-            sf_id=get_all_superfamily_ids()
+        # Depend on all representative domain files being created for *valid* superfamilies
+        representatives = expand(
+            format_path("representative_domain_pattern", sf_id="{sf_id}"),
+            sf_id=get_valid_superfamily_ids_from_file()
+        ),
+        valid_list = format_path("valid_sf_list")
+    output:
+        flag = touch(format_path("representative_flag_pattern"))
+    log:
+        format_path("log_dir") + "/collect_representatives.log"
+    run:
+        num_representatives = len(input.representatives)
+        print(f"Collected {num_representatives} representative domains.")
+
+
+rule create_foldseek_database:
+    input:
+        # Depend on the checkpoint flag ensuring all representatives exist
+        flag = format_path("representative_flag_pattern"),
+        # Explicitly list representative files as input for Foldseek
+        representatives = expand(
+            format_path("representative_domain_pattern", sf_id="{sf_id}"),
+            sf_id=get_valid_superfamily_ids_from_file()
         )
     output:
-        flag = temp(f"{REPRESENTATIVE_FLAG}")
+        # Foldseek creates multiple files, specify the prefix
+        db = format_path("foldseek_db")
+    params:
+        foldseek_bin = FOLDSEEK_PATH,
+        # Pass the directory containing the representative CIF files
+        representative_dir = format_path("representative_domains_dir"),
+    threads:
+        FOLDSEEK_LARGE_THREADS
     log:
-        f"{LOG_DIR}/aggregate_representatives.log"
+        format_path("log_dir") + "/create_foldseek_database.log"
     shell:
         """
-        echo "Aggregating representatives completed" > {log}
-        touch {output.flag}
+        # Create the final Foldseek database from all representative domains
+        # Note: foldseek createdb takes the *directory* containing structures
+        {params.foldseek_bin} createdb {params.representative_dir} {output.db} --threads {threads} > {log} 2>&1
         """
 
 rule create_alignment_database:
     input:
-        flag = f"{REPRESENTATIVE_FLAG}",
-        representative_domains = [f for f in Path(REPRESENTATIVE_DOMAINS).glob("*.cif")],
-        scop_file = SCOP_FILE
+        # Depend on the checkpoint flag ensuring all representatives exist
+        flag = format_path("representative_flag_pattern"),
+        # Get the list of representative files (needed by the script)
+        representatives = expand(
+            format_path("representative_domain_pattern", sf_id="{sf_id}"),
+            sf_id=get_valid_superfamily_ids_from_file()
+        ),
+        # Pass the superfamilies file if needed by the script for metadata
+        superfamilies = format_path("superfamilies")
     output:
-        database = f"{ALIGNMENT_DB}",
-        database_info = f"{DATABASE_INFO}"
-    log:
-        f"{LOG_DIR}/create_alignment_database.log"
+        database = format_path("alignment_db"),
+        database_info = format_path("database_info")
     params:
-        test_mode = TEST_MODE,
-        num_families = NUM_FAMILIES
+        # Pass the directory containing representatives to the script
+        representative_dir = format_path("representative_domains_dir"),
+        db_version = config.get("db_version", "1.0")
+    log:
+        format_path("log_dir") + "/create_alignment_database.log"
     script:
         "db_create.py"
 
+# -------------------------------------------------------------------------------------- #
+#                                     Cleanup Rule (Optional)                          #
+# -------------------------------------------------------------------------------------- #
+# Example of how to add the cleanup script as a rule, if desired
+# rule clean:
+#     run:
+#         shell("python db_builder/clean_pipeline.py")
 
-rule create_alignment_foldseek_db:
-    input:
-        flag = f"{REPRESENTATIVE_FLAG}",
-        representative_domains_folder = REPRESENTATIVE_DOMAINS,
-        scop_file = SCOP_FILE
-    output:
-        FOLDSEEK_DB
-    resources:
-        cpus = FOLDSEEK_LARGE_THREADS
-    params:
-        test_mode = TEST_MODE,
-        num_families = NUM_FAMILIES
-    log:
-        f"{LOG_DIR}/create_alignment_foldseek_db.log"
-    shell:
-        """
-        {FOLDSEEK_PATH} createdb {input.representative_domains_folder} {output} --threads {resources.cpus} -v 3 2>&1 > {log}
-        """
+# -------------------------------------------------------------------------------------- #
+#                                    On Success/Error Hooks                             #
+# -------------------------------------------------------------------------------------- #
+
+onsuccess:
+    # Clean up temporary directory on successful run
+    if TMP_DIR.exists():
+        print(f"Workflow successful. Cleaning up temporary directory: {TMP_DIR}")
+        shell(f"rm -rf {TMP_DIR}")
+
+onerror:
+    # Provide instructions on error
+    print(f"Workflow failed. Check logs in: {LOG_DIR}")
+    print(f"Temporary files kept for debugging in: {TMP_DIR}")
+    print(f"Consider running 'python db_builder/clean_pipeline.py' and retrying.")
+
+# -------------------------------------------------------------------------------------- #
+#                                     Report Generation (Optional)                     #
+# -------------------------------------------------------------------------------------- #
+
+# report: format_path("report_dir") + "/pipeline_report.html"

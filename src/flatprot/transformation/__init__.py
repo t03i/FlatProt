@@ -1,40 +1,30 @@
 # Copyright 2024 Tobias Olenyi.
 # SPDX-License-Identifier: Apache-2.0
 
-from .base import BaseTransformer, TransformParameters
-from .inertia import (
+from .base_transformation import (
+    BaseTransformation,
+    BaseTransformationParameters,
+    BaseTransformationArguments,
+)
+from .inertia_transformation import (
     InertiaTransformer,
-    InertiaTransformerParameters,
-    InertiaTransformParameters,
+    InertiaTransformationParameters,
+    InertiaTransformationArguments,
 )
-from .structure_elements import (
-    StructureElementsTransformer,
-    StructureElementsTransformerParameters,
-    StructureElementsTransformParameters,
-)
-from .matrix import MatrixTransformer, MatrixTransformParameters
-from .utils import TransformationMatrix
-from flatprot.core.error import FlatProtError
+
+from .matrix_transformation import MatrixTransformer, MatrixTransformParameters
+from .transformation_matrix import TransformationMatrix
+from .error import TransformationError
 
 __all__ = [
-    "BaseTransformer",
-    "TransformParameters",
+    "BaseTransformation",
+    "BaseTransformationParameters",
+    "BaseTransformationArguments",
     "InertiaTransformer",
-    "InertiaTransformerParameters",
-    "InertiaTransformParameters",
-    "StructureElementsTransformer",
-    "StructureElementsTransformerParameters",
-    "StructureElementsTransformParameters",
-    "TransformationMatrix",
+    "InertiaTransformationParameters",
+    "InertiaTransformationArguments",
     "MatrixTransformer",
     "MatrixTransformParameters",
     "TransformationError",
+    "TransformationMatrix",
 ]
-
-
-# Transformation-related errors
-class TransformationError(FlatProtError):
-    """Exception raised when a transformation operation fails."""
-
-    def __init__(self, message: str):
-        super().__init__(f"Transformation error: {message}")
