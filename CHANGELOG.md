@@ -1,6 +1,592 @@
 # CHANGELOG
 
 
+## v2.0.0 (2025-04-22)
+
+### Bug Fixes
+
+- Add - to allow for negative coords
+  ([`f4df4a0`](https://github.com/t03i/FlatProt/commit/f4df4a0398c52840727cf82477daa8e5de9544cb))
+
+- Add connection styles
+  ([`771c228`](https://github.com/t03i/FlatProt/commit/771c22834f5f163e0dd05e9ac6abf6426160970f))
+
+- Add opacity drawing
+  ([`2d54351`](https://github.com/t03i/FlatProt/commit/2d5435118c28d91a5fdd1bbe79c71acc02570751))
+
+- Better checkpoint usage
+  ([`a1f1f0c`](https://github.com/t03i/FlatProt/commit/a1f1f0c0a880cbeeed8130b255fc0a0cafadde25))
+
+- Connection calculation
+  ([`5a6b9ab`](https://github.com/t03i/FlatProt/commit/5a6b9ab40bb9b4376a29aaf9d7577fa95ae6fc4a))
+
+- Dix dssp parsing
+  ([`ed3fc37`](https://github.com/t03i/FlatProt/commit/ed3fc370aea317008c60f9d12fa388cc3935da75))
+
+- Filter for target db now working
+  ([`27b12c6`](https://github.com/t03i/FlatProt/commit/27b12c61269f9305c6d3d038b65970d795a45513))
+
+- Import issues
+  ([`563ba83`](https://github.com/t03i/FlatProt/commit/563ba836ee40aa3b5cead0feb01258a834120047))
+
+- Improve error handling in alignment and transformation matrix
+  ([`466356e`](https://github.com/t03i/FlatProt/commit/466356e5cb956b4c0332fa25ff219af7f1b040bb))
+
+- Enhanced error handling in the `align_structure_rotation` function by reintroducing specific
+  handling for `FlatProtError`, ensuring consistent logging of error messages. - Added validation
+  checks in the `from_array` and `from_string` methods of the `TransformationMatrix` class to ensure
+  input arrays conform to expected dimensions, raising appropriate `ValueError` exceptions when
+  necessary. - Updated docstrings for clarity and compliance with PEP257.
+
+- Improve error handling in SVG rendering process
+  ([`f1b310d`](https://github.com/t03i/FlatProt/commit/f1b310d23de694a59b836eb4ebe39ebeed1ea74a))
+
+- Wrapped the SVG rendering and saving logic in a try...except block to capture and log errors
+  during the rendering process. - Added logging for exceptions raised during SVG rendering,
+  providing clearer context for failures. - Removed the broad try...except block in the annotation
+  processing to allow errors to propagate, improving error visibility. - Updated docstrings for
+  clarity and compliance with PEP257.
+
+- Metadata
+  ([`bd38488`](https://github.com/t03i/FlatProt/commit/bd3848876c76e6483abfa6c8ddb84ed3a61d0c50))
+
+- Put params in correct position
+  ([`d882b82`](https://github.com/t03i/FlatProt/commit/d882b822c207ffd101482b274f1eb0a1067828f0))
+
+- Resolve alignment loading issues
+  ([`a6b62c2`](https://github.com/t03i/FlatProt/commit/a6b62c2788e8d19a159ad18d7c263a101fe16a26))
+
+- Resolve default style not applied
+  ([`9b0e275`](https://github.com/t03i/FlatProt/commit/9b0e275a654f3544b15c200f18bbad8d149f7440))
+
+- Resolve issues with invalid report
+  ([`ed01efc`](https://github.com/t03i/FlatProt/commit/ed01efccfaf9cbbf28bfd15c316d2f4b98fb27ac))
+
+- Resolve representative issues
+  ([`f0195b5`](https://github.com/t03i/FlatProt/commit/f0195b5d62f4ff6c652696fdf62d4acc7583268c))
+
+- Scop parser excludes discontinous domains
+  ([`486937d`](https://github.com/t03i/FlatProt/commit/486937d3c8c02981f0cc899276ef16cfd6938682))
+
+- Scop parsing for negative numbers
+  ([`9fcaa2a`](https://github.com/t03i/FlatProt/commit/9fcaa2aa9cc02c04c0c813d1a103e40768341173))
+
+- Short helix coordinate-computation
+  ([`5eca824`](https://github.com/t03i/FlatProt/commit/5eca824e61dbb39c324f447cced795f906aa0e2c))
+
+- Snakefile again
+  ([`4fc8967`](https://github.com/t03i/FlatProt/commit/4fc8967f015c491f64caedfdce85dd73bcc81499))
+
+- Snakemake
+  ([`02ba248`](https://github.com/t03i/FlatProt/commit/02ba24888e34e79b6cb6bf313179608118c20371))
+
+- Syntax error
+  ([`110a916`](https://github.com/t03i/FlatProt/commit/110a916d4c6e2f1094675a0d65247dc36b549a8b))
+
+- Update connection tests
+  ([`7ea28d0`](https://github.com/t03i/FlatProt/commit/7ea28d0a67f4f195688761698fc823fcaf1aea96))
+
+- Update db creation
+  ([`1912742`](https://github.com/t03i/FlatProt/commit/19127425b5ae2d9bfb8709e6a4cc0cad50fd8da0))
+
+- Update dependencies
+  ([`fbce3a7`](https://github.com/t03i/FlatProt/commit/fbce3a756a774e062bcb24dfab501efd5bbc827e))
+
+- Update pipeline for proper foldseek path
+  ([`2e29b7f`](https://github.com/t03i/FlatProt/commit/2e29b7f3a78cd6d3dcccd1579353b731e81f0683))
+
+- Update snakemake config
+  ([`6ab9152`](https://github.com/t03i/FlatProt/commit/6ab9152c510eff9ec2987c0d33f2b22b6e9b5fd4))
+
+- Update tests
+  ([`1f93a71`](https://github.com/t03i/FlatProt/commit/1f93a7152b5a06e1043b77964a21a9b9599deaf4))
+
+- Update tests to better connection rendering
+  ([`d2ef4d7`](https://github.com/t03i/FlatProt/commit/d2ef4d7576b8d5f3957c8aa11dbff2021c455317))
+
+- Update the foldseek rotation to be correct
+  ([`47810c7`](https://github.com/t03i/FlatProt/commit/47810c7855b1c5d8382d685bb1f0d7843f631192))
+
+### Chores
+
+- Add command scaffold for align
+  ([`27f4b92`](https://github.com/t03i/FlatProt/commit/27f4b9256c2f5935bd019eb68d5505b46767562f))
+
+- Add fixtures and tests for multi-chain SVG rendering
+  ([`ece32bf`](https://github.com/t03i/FlatProt/commit/ece32bfeaa2010814138597f17081db4eddb8e67))
+
+- Introduced new pytest fixtures to create mock structures with two chains for testing. - Added
+  tests to ensure that connections are not drawn between elements of different chains. - Enhanced
+  existing tests for rendering elements to improve clarity and consistency. - Updated docstrings for
+  new fixtures and tests to comply with PEP257.
+
+- Add linter ignore
+  ([`bd6315b`](https://github.com/t03i/FlatProt/commit/bd6315b171fd22a28386c7244dd152a925db6353))
+
+- Add project integration tests
+  ([`5a205cc`](https://github.com/t03i/FlatProt/commit/5a205cce1198249da873c259c9488ddcea74cd93))
+
+- Add scaffold db creation script
+  ([`25720d4`](https://github.com/t03i/FlatProt/commit/25720d47707744d30f18da510ca7d7090ecaa14b))
+
+- Add tests for utils
+  ([`e0c6e4c`](https://github.com/t03i/FlatProt/commit/e0c6e4cf4ff7abffa248a573683edeb80cfd3df7))
+
+- Add workflow for notebooks
+  ([`523ad8f`](https://github.com/t03i/FlatProt/commit/523ad8f918d588d7245c714572dc21c0625cb8b1))
+
+- Fix svg_render test
+  ([`8550c3d`](https://github.com/t03i/FlatProt/commit/8550c3d31514ad957601d93ef98535141dd818e3))
+
+- Fix test attribute
+  ([`c4ef6d5`](https://github.com/t03i/FlatProt/commit/c4ef6d5dafb9026ce3fbcfa5487bdf11f2499a48))
+
+- Reenable large files
+  ([`33f0a6d`](https://github.com/t03i/FlatProt/commit/33f0a6d06836380f5896f9bcae6445ace2d10222))
+
+- Update
+  ([`818717e`](https://github.com/t03i/FlatProt/commit/818717e3679942dc290b3d6b157c234e9bd1e1fc))
+
+### Code Style
+
+- Fix cmd formatting
+  ([`b3ad38c`](https://github.com/t03i/FlatProt/commit/b3ad38cceaa850312396315ab1d9c85f490681b0))
+
+- Fix example formatting
+  ([`3bd37cd`](https://github.com/t03i/FlatProt/commit/3bd37cdc42a4a183dc44091851a9a91a16621c65))
+
+- Improve cli output
+  ([`633fbef`](https://github.com/t03i/FlatProt/commit/633fbef069e56a2df23ae6a1fca3a2d6cd85f783))
+
+- Update cli description
+  ([`af3faaa`](https://github.com/t03i/FlatProt/commit/af3faaa09dd4be68189ddd963b198e76bde25844))
+
+- Update examples
+  ([`04a4f91`](https://github.com/t03i/FlatProt/commit/04a4f913a4f48298ee454f902efcc495ce4917c4))
+
+### Continuous Integration
+
+- Fix invalid reference name
+  ([`1a4a706`](https://github.com/t03i/FlatProt/commit/1a4a706fd4b7bb6028d4dbff69a2da8cc4747d0a))
+
+### Documentation
+
+- Add API documentation
+  ([`60d4b24`](https://github.com/t03i/FlatProt/commit/60d4b2441224acaa3713a39815137db41bab4f09))
+
+- Add example data
+  ([`7193627`](https://github.com/t03i/FlatProt/commit/7193627d4d2be3950914ccd3c1e82b0d959f7a54))
+
+- Correct foldseek command
+  ([`1a8f833`](https://github.com/t03i/FlatProt/commit/1a8f83307be83ea79f5e0e6f9940e1709052242e))
+
+- Improve description
+  ([`d706a55`](https://github.com/t03i/FlatProt/commit/d706a558aa2b7e92d2a57760f392d2019d62ef8e))
+
+- Update docs to reflect commandline interface
+  ([`b6fee15`](https://github.com/t03i/FlatProt/commit/b6fee15025c6384bcbf45626536d63fa2bf660f3))
+
+- Update documentation
+  ([`04e6cca`](https://github.com/t03i/FlatProt/commit/04e6ccadfc872a763d79d2686bd5f4448f5e49e1))
+
+- Update documentation for align
+  ([`c01345b`](https://github.com/t03i/FlatProt/commit/c01345b4b53dda203bacd6d632c0444d5a2c9f85))
+
+- Update examples
+  ([`6a1fe16`](https://github.com/t03i/FlatProt/commit/6a1fe16f9c0fc6a500dbcc4faf1ad0fd76d8fb48))
+
+- Update issue templates
+  ([`dfa2d55`](https://github.com/t03i/FlatProt/commit/dfa2d55f4d25c1792c4e6ac82ed3c6c862fa6236))
+
+### Features
+
+- Add adjacency checks for ResidueRange and ResidueRangeSet
+  ([`af0259f`](https://github.com/t03i/FlatProt/commit/af0259f9eee3a8fb4931a2b8e8dfc7f1979357b3))
+
+- Implemented `is_adjacent_to` method in `ResidueRange` and `ResidueRangeSet` classes to determine
+  adjacency between ranges and coordinates. - Enhanced error handling with TypeError for invalid
+  comparisons. - Added comprehensive tests for adjacency functionality in
+  `tests/core/test_coordinates.py`. - Updated docstrings for clarity and compliance with PEP257.
+
+- Add basic cmd example 3Ftx
+  ([`e13ec95`](https://github.com/t03i/FlatProt/commit/e13ec959e40d5855365cb5b55fa93b86d5347862))
+
+- Add db download functionality
+  ([`6ad7e6e`](https://github.com/t03i/FlatProt/commit/6ad7e6eb6d0740ab06c5dee63a73c29c3271b3bb))
+
+- Add domain reporting
+  ([`f8d230f`](https://github.com/t03i/FlatProt/commit/f8d230f62972f4dc24b281d013ad656ab5500d1d))
+
+- Add domain transformation utilities and update examples
+  ([`b1c1043`](https://github.com/t03i/FlatProt/commit/b1c1043e6af91051499a0b82ca4c47d935a53927))
+
+- Introduced `DomainTransformation` class to encapsulate transformation matrices for specific
+  protein domains. - Implemented `apply_domain_transformations_masked` function to apply
+  transformations using boolean masks, ensuring overlapping domains are handled correctly. - Added
+  `create_domain_aware_scene` function to generate scenes with elements grouped by domain, improving
+  spatial arrangement and visualization. - Updated examples to reflect new domain transformation
+  functionalities and ensure clarity in usage. - Enhanced error handling and logging throughout the
+  new utilities. - Updated docstrings and added typing annotations to comply with PEP257 standards.
+
+- Add example for overlay and annotations
+  ([`de2e0ca`](https://github.com/t03i/FlatProt/commit/de2e0ca6c49293a5d5a7458868ab9d38e0fa2753))
+
+- Add improved chainsaw example
+  ([`3e3cbb1`](https://github.com/t03i/FlatProt/commit/3e3cbb15d8882fa830183db8d35d05216a3ec0d6))
+
+- Add initial db pipeline
+  ([`d7bb462`](https://github.com/t03i/FlatProt/commit/d7bb46216d3e477fc42556b3090da47e52a8a5b4))
+
+- Add runtime analysis
+  ([`4e9ec82`](https://github.com/t03i/FlatProt/commit/4e9ec8245d149c36af5ca746e4f753641af1b709))
+
+- Add uniform projection
+  ([`4e3f185`](https://github.com/t03i/FlatProt/commit/4e3f1854b9f3ee13eb742e69240ecd4dc54d3981))
+
+- Enhance SVG rendering with connection point calculations
+  ([`fa29171`](https://github.com/t03i/FlatProt/commit/fa2917176839ca06d0542f8989e847e255fbb8fa))
+
+- Added `_prepare_render_data` method to `SVGRenderer` for pre-calculating 2D coordinates and
+  connection points for structure elements. - Introduced new utility functions in `svg_structure.py`
+  to calculate connection points for coils, helices, and sheets. - Updated drawing functions to
+  utilize the new connection point calculations. - Improved error handling and logging for data
+  preparation failures. - Enhanced tests in `test_svg_renderer.py` to cover new rendering logic and
+  connection point assertions. - Updated docstrings for clarity and compliance with PEP257.
+
+- Integrate staging branch updates introducing breaking changes
+  ([#8](https://github.com/t03i/FlatProt/pull/8),
+  [`02d2488`](https://github.com/t03i/FlatProt/commit/02d2488806fe072a48f29c60f29433b426ccb048))
+
+This pull request merges the accumulated features, refactors, and bug fixes from the staging branch
+  into main. It represents a significant update to the application's core functionality and
+  structure. Summary of Changes: Integration of various features and improvements developed and
+  tested on the staging branch. Refactoring of key components to enhance modularity,
+  maintainability, and performance. Updates to dependencies and build processes. Improvements to
+  testing infrastructure and documentation.
+
+BREAKING CHANGES: This merge introduces significant breaking changes due to [briefly mention the
+  reason for the breaking changes, e.g., major API redesign, data model restructuring, CLI command
+  signature changes]. Compatibility with previous versions deployed from main is broken. Users and
+  downstream systems will need to adapt to the new interfaces/structures.
+
+### Refactoring
+
+- Add alignment step to commands
+  ([`a0abe56`](https://github.com/t03i/FlatProt/commit/a0abe56f39f9c25e2528b5e940808c9a46fa9a37))
+
+- Add basic scene tests
+  ([`4b6e423`](https://github.com/t03i/FlatProt/commit/4b6e42347dbddeee0028d3de23d98a5ef2848a77))
+
+- Add connections class
+  ([`c33d01f`](https://github.com/t03i/FlatProt/commit/c33d01f951c1426a14d6e196e97be8b6140e07c5))
+
+- Add debug output
+  ([`bef3e4b`](https://github.com/t03i/FlatProt/commit/bef3e4bfb31aa2401c084ffde89ec3d429812f03))
+
+- Add error handling to scop parsing
+  ([`9dbb2d7`](https://github.com/t03i/FlatProt/commit/9dbb2d736e99bc256c6349bf637ab367868bce1d))
+
+- Add family-identity alignment mode as default
+  ([`ebab00e`](https://github.com/t03i/FlatProt/commit/ebab00e111b77c4aebbb589e8a1288755a718c33))
+
+- Add id calculation for annotations
+  ([`030904e`](https://github.com/t03i/FlatProt/commit/030904e21667d58d960a8c974f5b13577e80e999))
+
+- Add label text to svg
+  ([`fe8cf11`](https://github.com/t03i/FlatProt/commit/fe8cf11cd136815ed4b4c3c61eb76dda00a0a374))
+
+- Add logfiles
+  ([`982adf6`](https://github.com/t03i/FlatProt/commit/982adf632571f008f693a86fc76623c418993d23))
+
+- Add logging output config
+  ([`9aad01a`](https://github.com/t03i/FlatProt/commit/9aad01a20bda544911c7768f60c7eba3eede26aa))
+
+- Add metadata to db
+  ([`3aedb43`](https://github.com/t03i/FlatProt/commit/3aedb43a0681641fe39972eae9a21b8a4d984744))
+
+- Add proper group transforms
+  ([`4639237`](https://github.com/t03i/FlatProt/commit/46392373952c5503e4a9adcb4c1affe828ba51bd))
+
+- Add render tests
+  ([`3632b8c`](https://github.com/t03i/FlatProt/commit/3632b8cad6094a033b85431e679cb7b242509f17))
+
+- Add scene integration tests
+  ([`36d7341`](https://github.com/t03i/FlatProt/commit/36d73410088fed454c6705d9036c3fc3431b8874))
+
+- Add scene_utils for scene creation
+  ([`162c61f`](https://github.com/t03i/FlatProt/commit/162c61f3bbf752ade8e73662b50143c4604ced4b))
+
+- Add structure id and proper dict iteration
+  ([`aa1479a`](https://github.com/t03i/FlatProt/commit/aa1479ab1f3ea58d5be3b01526b8ef33e0599e9a))
+
+- Add tests for core elements
+  ([`d3813a3`](https://github.com/t03i/FlatProt/commit/d3813a3e44e3ea45de2ca3b34bab637585a6978d))
+
+- Add vectorized coordinate manipulation to structure
+  ([`04664d1`](https://github.com/t03i/FlatProt/commit/04664d17df29c27d272febaded2bc78da341ce86))
+
+- Add version
+  ([`0864731`](https://github.com/t03i/FlatProt/commit/0864731bf12d460fdadab8d6b879ab7a461b3d73))
+
+- Adopt stateless architecture and enhance documentation
+  ([#7](https://github.com/t03i/FlatProt/pull/7),
+  [`b1afec6`](https://github.com/t03i/FlatProt/commit/b1afec6d9a3e0997d3414450c528b85dc8f0e359))
+
+# Refactor to Stateless Architecture and Enhance Documentation
+
+This pull request introduces a significant refactoring of the codebase to adopt a more stateless
+  architecture. This change aims to improve predictability, testability, and scalability.
+
+Key changes include:
+
+* **Stateless Refactoring:** Core components have been redesigned to operate without maintaining
+  internal state where possible. This simplifies the flow of data and reduces potential side
+  effects. * **Extensive Documentation:** Added comprehensive docstrings to functions and classes
+  across the project, adhering to PEP 257 conventions. Updated existing documentation to reflect the
+  architectural changes. * **New Examples:** Included several new example scripts in the `examples/`
+  directory to demonstrate the usage of the refactored components and showcase common workflows.
+  These examples are designed to be easily convertible to Jupyter notebooks using Jupytext.
+
+**Review Focus:**
+
+* Please review the architectural changes for adherence to stateless principles. * Verify the
+  clarity and accuracy of the new documentation and examples. * Ensure the refactored code maintains
+  existing functionality and passes all tests.
+
+This refactor sets a foundation for future development by improving the overall structure and
+  maintainability of the codebase.
+
+- Allow both cif and pdb
+  ([`e6d6b8d`](https://github.com/t03i/FlatProt/commit/e6d6b8d3ca82643ba7a425ef2848c58d7b308aa2))
+
+- Better 3ftx display
+  ([`8e96271`](https://github.com/t03i/FlatProt/commit/8e962711f211f65138d44e7f1d5a098851da8eeb))
+
+- Bump test family number
+  ([`a827fdc`](https://github.com/t03i/FlatProt/commit/a827fdcf1109eda4c0f7e6d3f0fdac1173e8ab3b))
+
+- Change db to be ignored per-default
+  ([`f377fee`](https://github.com/t03i/FlatProt/commit/f377feefd0ea1a1a6bb27f2145b7c708fc2e3433))
+
+- Change index off by one issues
+  ([`e64ad11`](https://github.com/t03i/FlatProt/commit/e64ad111417d09ad5145d121225a7618f09ff0e3))
+
+- Change out to tmp
+  ([`118487e`](https://github.com/t03i/FlatProt/commit/118487e8d48c68fe7519dd05ebb055355e3f5b91))
+
+- Change to secondary_structure_type
+  ([`d5bc870`](https://github.com/t03i/FlatProt/commit/d5bc870040e36937d20a73d091564eafff230c57))
+
+- Clean up pipeline def
+  ([`46db50f`](https://github.com/t03i/FlatProt/commit/46db50f64c58fe0382c7521bff7af5a0f1d5bb58))
+
+- Cleanup transformation structure
+  ([`3440429`](https://github.com/t03i/FlatProt/commit/3440429c4b1fb2ad3fc33f342940ff365fa38e31))
+
+- Enhance error handling and update annotations
+  ([`597ae7f`](https://github.com/t03i/FlatProt/commit/597ae7fa6eeaa92db31c9eee5b4f9f38107755d8))
+
+- Added `CoordinateCalculationError` to the core error handling for better clarity in error
+  propagation. - Updated the `__init__.py` file to include the new error class in the module
+  exports. - Refactored the annotation tests to improve clarity and ensure proper error handling
+  during coordinate calculations. - Enhanced existing tests to cover scenarios where annotations
+  return None or invalid shapes, ensuring robust error reporting. - Updated docstrings across
+  various files to comply with PEP257 standards.
+
+- Enhance transformation matrix methods and update docstrings
+  ([`4a2be7f`](https://github.com/t03i/FlatProt/commit/4a2be7fdb13e87322bb845bac58bd05e18ecc5cc))
+
+- Refactored the `get_aligned_rotation_database` function to improve clarity in rotation matrix
+  application. - Updated the `calculate_inertia_transformation_matrix` function's docstring to
+  better describe the transformation process and return values. - Renamed the `combined_rotation`
+  method to `before` in the `TransformationMatrix` class for improved clarity, and added a new
+  `after` method for combining transformations. - Enhanced the `apply` method in the
+  `TransformationMatrix` class with additional input validation and updated docstring for clarity. -
+  Updated tests for inertia transformation to reflect changes in the transformation logic and ensure
+  proper validation of expected outcomes. - Ensured all docstrings comply with PEP257 standards and
+  added typing annotations where necessary.
+
+- Finalize core structure API
+  ([`aa8c4b8`](https://github.com/t03i/FlatProt/commit/aa8c4b8ce4d02583848832a77d2c3e1e74a57268))
+
+- Fix example
+  ([`2cd8aa6`](https://github.com/t03i/FlatProt/commit/2cd8aa66a058fde09c4b2d416cd99421801160c5))
+
+- Fix issue
+  ([`35a3826`](https://github.com/t03i/FlatProt/commit/35a3826b18967320e769a1c94df26143dfb09cfd))
+
+- Fix issues
+  ([`b6e61d9`](https://github.com/t03i/FlatProt/commit/b6e61d9e77eb9ef0ab264e94de8b5e32dd6d3e19))
+
+- Fix issues
+  ([`4a4cd28`](https://github.com/t03i/FlatProt/commit/4a4cd28c73c31cc9165ec77d095e45072c46be13))
+
+- Fix missing input rule issues
+  ([`e14649d`](https://github.com/t03i/FlatProt/commit/e14649df8dac3bf73a9ed3ede150773f16e63c1c))
+
+- Fix pipeline end to end
+  ([`d2cf57c`](https://github.com/t03i/FlatProt/commit/d2cf57cb0e02691229e0cbef5eb2a81b4b76cb5f))
+
+- Fix structure tests
+  ([`f9594ea`](https://github.com/t03i/FlatProt/commit/f9594ea8a073609bb70a3c928aabf427a154f057))
+
+- Fix styles test
+  ([`db49238`](https://github.com/t03i/FlatProt/commit/db492386bca39ab6c8cddbe9c189d7e6bab8c2a1))
+
+- Foldseek threads to 4
+  ([`14937ed`](https://github.com/t03i/FlatProt/commit/14937ed4753737413619111588f0d23b8f8dd05a))
+
+- Global style rename
+  ([`9dff8ba`](https://github.com/t03i/FlatProt/commit/9dff8ba103c206ea6354fec2163eb0b13989c514))
+
+- Implement chain coordinates
+  ([`84b1621`](https://github.com/t03i/FlatProt/commit/84b162142cc86a64a4bad4bc6ef0e941f5fdada9))
+
+- Implement new structure in commands
+  ([`0a9eeea`](https://github.com/t03i/FlatProt/commit/0a9eeea129c511e911c78ed5b0b6584e9818b679))
+
+- Improve annotation calculation logic
+  ([`f0db8d7`](https://github.com/t03i/FlatProt/commit/f0db8d7a024e1acf875891c63fe193ef223f9008))
+
+- Improve clarity for projection
+  ([`13037da`](https://github.com/t03i/FlatProt/commit/13037dafaf2720cc6fb6ccfa75c94103313d103d))
+
+- Improve commands naming
+  ([`b03fcf2`](https://github.com/t03i/FlatProt/commit/b03fcf2d8671492c50be2e7d322915b098dbc319))
+
+- Improve naming
+  ([`0925eef`](https://github.com/t03i/FlatProt/commit/0925eef63071f6b1eb9c7eda76410d6af92c2f4f))
+
+- Improve param clarity
+  ([`bdf8a86`](https://github.com/t03i/FlatProt/commit/bdf8a8678413d67fac09460cc0f52fc575e9a37a))
+
+- Improve scene to handle the annotation coordinates.
+  ([`96400c5`](https://github.com/t03i/FlatProt/commit/96400c536f080ad51da2ae177f3e2adcdd5706d2))
+
+Extend the scene class and refactor and extend tests to cover the functionality
+
+- Move alignment results to avoid circular import
+  ([`3bcd220`](https://github.com/t03i/FlatProt/commit/3bcd2209dadac5e16881e85290709446a347a15c))
+
+- Move annotation tests to new structure
+  ([`3eb5928`](https://github.com/t03i/FlatProt/commit/3eb5928f333b6f70284dd30850f950ea6bdcc755))
+
+- Move checkpoint to pdb download
+  ([`06f25aa`](https://github.com/t03i/FlatProt/commit/06f25aa08646120d378722461266a4dcb8691200))
+
+- Move data wrangling to utils package
+  ([`20f8313`](https://github.com/t03i/FlatProt/commit/20f831391cf4ed63a25a07a74f4274c4bf9ff8dc))
+
+- Move style to notebook
+  ([`5b2f73b`](https://github.com/t03i/FlatProt/commit/5b2f73baea504607f827ae9413c1c6cda637f6ef))
+
+- Move to config file
+  ([`83714f7`](https://github.com/t03i/FlatProt/commit/83714f7a94072df351e587535cfd8b7eb951be79))
+
+- Overhaul rendering logic to work with improved structure and scene
+  ([`cc5447f`](https://github.com/t03i/FlatProt/commit/cc5447fcbe38de6c4701a8cbefbdb88cac14b43e))
+
+- Overhaul scene graph to be more linear and streamlined
+  ([`ec3d400`](https://github.com/t03i/FlatProt/commit/ec3d4007371b443ad9e1290043ca3a721a2c6377))
+
+- Proper tempfile handling
+  ([`7790a22`](https://github.com/t03i/FlatProt/commit/7790a22cf01b69dbee94ec96cf7295549c78824d))
+
+- Remove coordinate manager
+  ([`6bd1649`](https://github.com/t03i/FlatProt/commit/6bd1649453372d5047af0dbd2f13b4cfcdd1f53e))
+
+- Remove coordinate manager for coordinate transformation
+  ([`8174a24`](https://github.com/t03i/FlatProt/commit/8174a2406b89231788f353a5889f09f8998178af))
+
+- Remove obsolete tests
+  ([`19848de`](https://github.com/t03i/FlatProt/commit/19848de157a8d7c52d14159dcb44194549682c59))
+
+- Remove old db
+  ([`71ddbcf`](https://github.com/t03i/FlatProt/commit/71ddbcfeea3c8a8d9526edde90fbd6631c7b9d1d))
+
+- Remove style file
+  ([`5c55f54`](https://github.com/t03i/FlatProt/commit/5c55f548e422ed5bc7a599ff565ee275a680708c))
+
+- Remove target_residue_set
+  ([`1db2fa6`](https://github.com/t03i/FlatProt/commit/1db2fa6ab51305cdf5125206960445806b1dd37f))
+
+- Remove unused uniform projection
+  ([`0909676`](https://github.com/t03i/FlatProt/commit/09096763d1328baaeb0c9ac6e4df28d25ce24ec8))
+
+- Rename scene node to element
+  ([`cf985bf`](https://github.com/t03i/FlatProt/commit/cf985bf6edeabc00fbdd40f3b8eb3eaec6837528))
+
+- Rename to snakefile
+  ([`03988c2`](https://github.com/t03i/FlatProt/commit/03988c2588a5743cf91f0a76095394d7cc261323))
+
+- Status to json
+  ([`bd52157`](https://github.com/t03i/FlatProt/commit/bd52157614597f18739d2fe6acb8f798b08e04f5))
+
+- To allow for domain based
+  ([`63208ff`](https://github.com/t03i/FlatProt/commit/63208ffe2ba7a85d4acaee4e8081d4fe6707ba94))
+
+BREAKING CHANGE: overhaul coordinate management
+
+- Tune CPU requirement for faster speeds
+  ([`083cdee`](https://github.com/t03i/FlatProt/commit/083cdee7a2cb6993bdb4ed0337953a8d37ebab5e))
+
+- Update annotation handling and error propagation
+  ([`66328db`](https://github.com/t03i/FlatProt/commit/66328db176ec0202fc63e30e9c5228895f1c89c3))
+
+- Refactored annotation classes to utilize a new `CoordinateResolver` for improved coordinate
+  resolution. - Introduced `TargetResidueNotFoundError` in the scene error handling to enhance
+  clarity in error reporting. - Updated the `get_coordinates` method in annotation classes to accept
+  a `CoordinateResolver` instance, ensuring consistent coordinate retrieval. - Enhanced error
+  handling in the `SVGRenderer` to catch specific errors during annotation processing. - Removed
+  outdated tests related to scene coordinate delegation, as this logic is now managed by annotations
+  and the resolver. - Updated docstrings across various files to comply with PEP257 standards.
+
+- Update annotations
+  ([`8fb8a52`](https://github.com/t03i/FlatProt/commit/8fb8a52c1fd8a52cfe30874d1c184d455b2bcf3f))
+
+- Update annotations parser to include style
+  ([`0e8db7c`](https://github.com/t03i/FlatProt/commit/0e8db7c041a1d4512cd772e688e073a4452c79b9))
+
+- Update db id
+  ([`a455d5d`](https://github.com/t03i/FlatProt/commit/a455d5dabc59869bde7771f5280b6edbdaf60609))
+
+- Update db path
+  ([`8226d27`](https://github.com/t03i/FlatProt/commit/8226d275588555af88537c0d75ecc10e0c1480c5))
+
+- Update domain implementation
+  ([`af32432`](https://github.com/t03i/FlatProt/commit/af324321c9f509a81031b32ce7f43c829f1156e6))
+
+- Update extract domain output
+  ([`0a53495`](https://github.com/t03i/FlatProt/commit/0a534950768824faf3c11df2217f85dcbda062a4))
+
+- Update imports
+  ([`04a18ad`](https://github.com/t03i/FlatProt/commit/04a18adab667640f1fce47d25204b03e7fa976f2))
+
+- Update module paths
+  ([`8714fea`](https://github.com/t03i/FlatProt/commit/8714feabebbb6b291977c6eccf6cae87f8a5a658))
+
+- Update numpy typing for projection parameters
+  ([`dddc5a6`](https://github.com/t03i/FlatProt/commit/dddc5a6ec5665d13a24bf6c4536bdefd67dfdf0e))
+
+- Update overlay to regular commands
+  ([`7330b9a`](https://github.com/t03i/FlatProt/commit/7330b9aa9cd366e8b1fed33305a78d049b90bfac))
+
+- Update projection test and upgrade to better numpydantic library
+  ([`c046245`](https://github.com/t03i/FlatProt/commit/c0462452b7cd7bc90b476d0c95e8bf852380667f))
+
+- Update style parser to not use manager
+  ([`aa4e10d`](https://github.com/t03i/FlatProt/commit/aa4e10db7323e022bb705a3f3a20660ed50a8a7d))
+
+- Update styling
+  ([`d5273e1`](https://github.com/t03i/FlatProt/commit/d5273e1ff6980541006b71e91bd334244da6f571))
+
+- Update the snakemake pipeline
+  ([`4e83358`](https://github.com/t03i/FlatProt/commit/4e83358c19f4244e655e30dbb77269813b9b61cb))
+
+- Update transformation tests and fix transformation apply issue
+  ([`1e50155`](https://github.com/t03i/FlatProt/commit/1e50155d1037f1e54a904f0de2e7d7ca417c4cf1))
+
+
 ## v1.0.0 (2025-03-17)
 
 ### Continuous Integration

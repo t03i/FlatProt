@@ -1,6 +1,6 @@
 [project]
 name = "FlatProt"
-version = "1.0.0"
+version = "2.0.0"
 description = "Python package for creating simplified 2D protein visualizations. Specialized on showing differences and similarities between proteins of the same protein family."
 readme = "README.md"
 license = "Apache-2.0"
