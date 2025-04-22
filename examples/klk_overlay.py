@@ -145,7 +145,7 @@ clustering_tmp_dir_str = str(clustering_tmp_dir)
 ipython.run_cell_magic(
     "pybash",
     "",
-    "foldseek easy-cluster {structures_dir_str} {cluster_output_prefix_str} {clustering_tmp_dir_str} --min-seq-id 0.8 --threads 4 -v 0 | cat",
+    "foldseek easy-cluster {structures_dir_str} {cluster_output_prefix_str} {clustering_tmp_dir_str} --min-seq-id 0.5 --c 0.9 --threads 4 -v 0 | cat",
 )
 
 # Parse the cluster results
