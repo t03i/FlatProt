@@ -76,36 +76,49 @@ The `[canvas]` section defines the overall properties of the visualization.
 
 ### Secondary Structure Styles
 
-#### Helix Style
+These sections define the appearance of secondary structure elements rendered in the visualization. Common properties like `color`, `stroke_color`, `stroke_width`, and `opacity` are inherited but can be overridden.
 
-The `[helix]` section defines the appearance of alpha helices.
+#### Helix Style (`[helix]`)
 
-| Property       | Type  | Description                            |
-| -------------- | ----- | -------------------------------------- |
-| `fill_color`   | Color | Fill color for helices                 |
-| `stroke_color` | Color | Outline color for helices              |
-| `stroke_width` | Float | Width of the helix outline             |
-| `amplitude`    | Float | Controls the wave amplitude of helices |
+Defines the appearance of alpha helices, typically rendered as zigzag ribbons.
 
-#### Sheet Style
+| Property           | Type    | Default     | Description                                                                           |
+| ------------------ | ------- | ----------- | ------------------------------------------------------------------------------------- |
+| `color`            | Color   | `"#ff0000"` | Fill color for the helix ribbon (default red).                                        |
+| `stroke_color`     | Color   | `"#000000"` | Color for the outline/stroke (default black).                                         |
+| `stroke_width`     | Float   | `1.0`       | Reference width; used as a base for other dimensions.                                 |
+| `opacity`          | Float   | `1.0`       | Opacity of the helix element (0.0 to 1.0).                                            |
+| `ribbon_thickness` | Float   | `8.0`       | Thickness of the zigzag ribbon.                                                       |
+| `wavelength`       | Float   | `10.0`      | Length of one full zigzag cycle along the helix axis.                                 |
+| `amplitude`        | Float   | `3.0`       | Height of the zigzag peaks/valleys from the center line.                              |
+| `min_helix_length` | Integer | `4`         | Minimum number of residues required to draw a zigzag shape instead of a simple line.  |
+| `simplified_width` | Float   | `2.0`       | Line width used when the helix is rendered as a simple line (below min_helix_length). |
 
-The `[sheet]` section defines the appearance of beta sheets.
+#### Sheet Style (`[sheet]`)
 
-| Property           | Type    | Description                                         |
-| ------------------ | ------- | --------------------------------------------------- |
-| `fill_color`       | Color   | Fill color for beta sheets                          |
-| `stroke_color`     | Color   | Outline color for beta sheets                       |
-| `stroke_width`     | Float   | Width of the sheet outline                          |
-| `min_sheet_length` | Integer | Minimum number of residues to be considered a sheet |
+Defines the appearance of beta sheets, typically rendered as arrows.
 
-#### Coil Style
+| Property           | Type    | Default     | Description                                                                           |
+| ------------------ | ------- | ----------- | ------------------------------------------------------------------------------------- |
+| `color`            | Color   | `"#0000ff"` | Fill color for the sheet arrow (default blue).                                        |
+| `stroke_color`     | Color   | `"#000000"` | Color for the outline/stroke (default black).                                         |
+| `stroke_width`     | Float   | `1.0`       | Reference width; primarily defines the base width of the arrow body.                  |
+| `opacity`          | Float   | `1.0`       | Opacity of the sheet element (0.0 to 1.0).                                            |
+| `arrow_width`      | Float   | `8.0`       | Width of the arrowhead base relative to the start point.                              |
+| `min_sheet_length` | Integer | `3`         | Minimum number of residues required to draw an arrow shape instead of a line.         |
+| `simplified_width` | Float   | `2.0`       | Line width used when the sheet is rendered as a simple line (below min_sheet_length). |
 
-The `[coil]` section defines the appearance of coil regions.
+#### Coil Style (`[coil]`)
 
-| Property       | Type  | Description            |
-| -------------- | ----- | ---------------------- |
-| `stroke_color` | Color | Color for coil regions |
-| `stroke_width` | Float | Width of the coil line |
+Defines the appearance of coil regions, typically rendered as smoothed lines.
+
+| Property           | Type  | Default     | Description                                                                                                      |
+| ------------------ | ----- | ----------- | ---------------------------------------------------------------------------------------------------------------- |
+| `color`            | Color | `"#5b5859"` | Color used for the coil line (default light grey). This often isn't visible as coils usually only have a stroke. |
+| `stroke_color`     | Color | `"#000000"` | Color for the coil line (default black).                                                                         |
+| `stroke_width`     | Float | `1.0`       | Width of the coil line.                                                                                          |
+| `opacity`          | Float | `1.0`       | Opacity of the coil line (0.0 to 1.0).                                                                           |
+| `smoothing_factor` | Float | `0.1`       | Fraction of points to keep during smoothing (0.0=max smoothing, 1.0=no smoothing).                               |
 
 ### Annotation Styles
 

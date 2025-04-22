@@ -1,0 +1,73 @@
+# Output directories
+output_dir: "out/alignment_db"
+work_dir: "tmp/alignment_pipeline"
+
+# Pipeline settings
+pdb_retry_count: 3
+pdb_network_timeout: 20
+test_mode: false
+num_families: 401
+random_seed: 42
+concurrent_downloads: 10
+
+# External tools
+foldseek_path: "foldseek"
+
+db_version: "1.0"
+
+# Resource settings
+foldseek_small_threads: 4
+foldseek_large_threads: 10
+
+proxy_url: "http://proxy.cit.tum.de:8080/" # Optional proxy URL (e.g., "http://user:pass@host:port")
+
+# -------------------------------------------------------------------------------------- #
+#                                    Path Definitions                                    #
+# -------------------------------------------------------------------------------------- #
+# These paths support formatting with {work_dir}, {output_dir}, {tmp_dir}, and wildcards
+paths:
+  # --- Base Directories (derived from top-level config) ---
+  work: "{work_dir}"
+  output: "{output_dir}"
+  tmp: "{tmp_dir}" # Base temp directory for intermediate flags etc.
+
+  # --- Working Directory Contents ---
+  scop_file: "{work_dir}/scop-cla-latest.txt"
+  superfamilies: "{work_dir}/superfamilies.tsv"
+  pdb_files_dir: "{work_dir}/pdbs" # Directory for downloaded PDB .struct/.status files
+  domain_files_dir: "{work_dir}/domains" # Base directory for extracted domain CIFs (organized by sf_id)
+  representative_domains_dir: "{work_dir}/representative_domains" # Dir for selected representative CIFs
+  matrices_dir: "{work_dir}/matrices" # Directory for Foldseek alignment .aln files
+  report_dir: "{work_dir}/reports" # Directory for generated RST reports
+  valid_sf_list: "{work_dir}/valid_superfamilies.txt" # List of SF IDs with extracted domains
+  log_dir: "{work_dir}/logs" # Directory for rule logs
+
+  # --- Output Directory Contents ---
+  alignment_db: "{output_dir}/alignments.h5" # Final HDF5 alignment database
+  foldseek_db_dir: "{output_dir}/foldseek" # Base directory for the final Foldseek DB
+  foldseek_db: "{output_dir}/foldseek/db" # Final Foldseek database prefix
+  database_info: "{output_dir}/database_info.json" # Metadata for the alignment DB
+
+  # --- File/Directory Patterns (used with wildcards in snakefile rules) ---
+  # PDB downloads
+  pdb_struct_pattern: "{work_dir}/pdbs/{pdb_id}.struct"
+  pdb_status_pattern: "{work_dir}/pdbs/{pdb_id}.status"
+  # Domain extraction
+  domain_subdir_pattern: "{work_dir}/domains/{sf_id}" # Subdirectory for a superfamily's domains
+  domain_file_pattern: "{work_dir}/domains/{sf_id}/{pdb_id}_{chain}_{start}_{end}.cif"
+  domain_flag_pattern: "{work_dir}/domains/{sf_id}/extracted.flag" # Flag indicating domain extraction complete for SF
+  # Foldseek alignment/selection
+  matrix_file_pattern: "{work_dir}/matrices/{sf_id}.aln"
+  representative_domain_pattern: "{work_dir}/representative_domains/{sf_id}.cif"
+  # Temporary Foldseek DBs
+  tmp_foldseek_dir_pattern: "{tmp_dir}/foldseek/{sf_id}" # Temp dir for SF-specific foldseek DB
+  tmp_foldseek_db_pattern: "{tmp_dir}/foldseek/{sf_id}/db" # Temp foldseek DB prefix for an SF
+  # Temporary Flags
+  pdb_flag_pattern: "{tmp_dir}/download_all_pdbs.flag"
+  representative_flag_pattern: "{tmp_dir}/representatives.flag"
+  # Reports
+  scop_report_pattern: "{work_dir}/reports/scop.rst"
+  pdb_report_pattern: "{work_dir}/reports/pdb_download_report.rst"
+  domain_report_pattern: "{work_dir}/reports/domain_extraction_report_{sf_id}.rst" # Per-SF domain report
+  # Logs (examples - specific log paths defined directly in rules using log_dir)
+  log_file_pattern: "{work_dir}/logs/{rule_name}.log" # General pattern if needed

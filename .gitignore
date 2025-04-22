@@ -80,6 +80,7 @@ target/
 
 # Jupyter Notebook
 .ipynb_checkpoints
+examples/*.ipynb
 
 # IPython
 profile_default/
@@ -164,4 +165,8 @@ cython_debug/
 #  option (not recommended) you can uncomment the following to ignore the entire idea folder.
 #.idea/
 
-out/* 
+tmp/*
+out/*
+
+.snakemake/*
+*/**/.snakemake/*

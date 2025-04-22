@@ -8,7 +8,7 @@ from typing import Union
 
 import numpy as np
 
-from ..transformation.utils import TransformationMatrix
+from ..transformation.transformation_matrix import TransformationMatrix
 from .errors import (
     MatrixFileNotFoundError,
     MatrixFileError,
@@ -49,7 +49,7 @@ class MatrixLoader:
             InvalidMatrixDimensionsError: If the matrix has invalid dimensions
         """
         try:
-            matrix_array = np.load(self.file_path)
+            matrix_array = np.load(self.file_path, allow_pickle=False)
         except Exception as e:
             raise InvalidMatrixFormatError(f"Failed to load matrix file: {e}")
 

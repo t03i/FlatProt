@@ -10,7 +10,7 @@ import numpy as np
 from pathlib import Path
 
 from flatprot.io.matrix import MatrixLoader
-from flatprot.transformation.utils import TransformationMatrix
+from flatprot.transformation.transformation_matrix import TransformationMatrix
 from flatprot.io import (
     InvalidMatrixDimensionsError,
     InvalidMatrixFormatError,

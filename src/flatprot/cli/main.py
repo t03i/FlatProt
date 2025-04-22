@@ -5,12 +5,21 @@ import sys
 
 from cyclopts import App
 
-from flatprot.cli.commands import main
+from .project import project_structure_svg
+from .align import align_structure_rotation
 from flatprot import __version__
 
 
 app = App(version=__version__)
-app.default(main)
+app.command(
+    project_structure_svg,
+    "project",
+)
+app.command(
+    align_structure_rotation,
+    "align",
+)
+
 
 if __name__ == "__main__":
     sys.exit(app())
