@@ -340,12 +340,26 @@ class HelixSceneElement(BaseStructureSceneElement[HelixStyle]):
         Returns:
             A NumPy array [X, Y] or None if calculation fails.
         """
-        coords_2d = self.get_coordinates(structure)[:, :2]
-        if coords_2d is None:
+        # Get the full 3D coordinates used for rendering
+        display_coords = self.get_coordinates(structure)
+        if display_coords is None or len(display_coords) == 0:
             return None
-        if len(coords_2d) < 3:
-            return coords_2d[0, :2]
-        return (coords_2d[0, :2] + coords_2d[-1, :2]) / 2
+
+        coords_2d = display_coords[:, :2]  # Work with XY
+
+        # If rendered as a simple line (2 points)
+        if len(coords_2d) == 2:
+            return coords_2d[0]
+
+        # If rendered as zigzag (even number of points >= 4)
+        if len(coords_2d) >= 4:
+            # Midpoint of the starting edge
+            # First point (top edge start) = coords_2d[0]
+            # Corresponding bottom point (bottom edge start) = coords_2d[-1]
+            return (coords_2d[0] + coords_2d[-1]) / 2.0
+
+        # Fallback for unexpected cases (e.g., single point helix coord result)
+        return coords_2d[0]  # Return the first point
 
     def get_end_connection_point(self, structure: Structure) -> Optional[np.ndarray]:
         """Calculate the 2D coordinate for the end connection point.
@@ -356,15 +370,26 @@ class HelixSceneElement(BaseStructureSceneElement[HelixStyle]):
         Returns:
             A NumPy array [X, Y] or None if calculation fails.
         """
-        coords_2d = self.get_coordinates(structure)[:, :2]
-        if coords_2d is None:
+        # Get the full 3D coordinates used for rendering
+        display_coords = self.get_coordinates(structure)
+        if display_coords is None or len(display_coords) == 0:
             return None
-        if len(coords_2d) < 3:
-            return coords_2d[-1, :2]
 
-        # The end connection is the midpoint between the middle vertices
-        mid_idx = len(coords_2d) // 2
-        if len(coords_2d) % 2 == 0:  # Even number of points
-            return (coords_2d[mid_idx - 1, :2] + coords_2d[mid_idx, :2]) / 2
-        else:
-            return coords_2d[mid_idx, :2]
+        coords_2d = display_coords[:, :2]  # Work with XY
+
+        # If rendered as a simple line (2 points)
+        if len(coords_2d) == 2:
+            return coords_2d[1]
+
+        # If rendered as zigzag (even number of points >= 4)
+        if len(coords_2d) >= 4:
+            # Midpoint of the ending edge
+            # Last point of top edge = coords_2d[num_edge_points - 1]
+            # Corresponding last point of bottom edge = coords_2d[num_edge_points]
+            num_edge_points = len(coords_2d) // 2
+            last_top_point = coords_2d[num_edge_points - 1]
+            last_bottom_point = coords_2d[num_edge_points]
+            return (last_top_point + last_bottom_point) / 2.0
+
+        # Fallback for unexpected cases (e.g., single point helix coord result)
+        return coords_2d[-1]  # Return the last point

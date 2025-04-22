@@ -408,9 +408,14 @@ def test_render_area_annotation(
         err_msg=f"Mismatch between expected points and rendered path points for {outline_id}",
     )
 
-    # Check fill/stroke attributes as before
-    assert path.attrib.get("fill") == area_anno_A5_A7.style.color.as_hex()
-    assert path.attrib.get("stroke") == area_anno_A5_A7.style.color.as_hex()
+    # Check fill/stroke attributes based on _draw_area_annotation logic
+    # Fill uses fill_color, Stroke uses base color
+    assert (
+        path.attrib.get("fill") == area_anno_A5_A7.style.fill_color.as_hex()
+    ), f"Fill color mismatch: Expected {area_anno_A5_A7.style.fill_color.as_hex()}, Got {path.attrib.get('fill')}"
+    assert (
+        path.attrib.get("stroke") == area_anno_A5_A7.style.color.as_hex()
+    ), f"Stroke color mismatch: Expected {area_anno_A5_A7.style.color.as_hex()}, Got {path.attrib.get('stroke')}"
 
 
 # --- Phase 2 Tests ---

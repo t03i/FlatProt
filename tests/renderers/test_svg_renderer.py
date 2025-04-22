@@ -826,15 +826,17 @@ def test_render_single_residue_coil_bridge(
     root = _parse_svg(svg_output)
     ns = {"svg": "http://www.w3.org/2000/svg"}
 
-    # Check that the connection lines are still drawn correctly
-    connection_group = root.find(".//svg:g[@id='flatprot-connections']", namespaces=ns)
-    assert (
-        connection_group is not None
-    ), "Connection group 'flatprot-connections' not found."
-    # Find connection *paths* by class
-    connection_paths = connection_group.findall(
-        "./svg:path[@class='connection']", namespaces=ns
+    # Check that the connection lines (now paths) are still drawn correctly
+    root_group = root.find(".//svg:g[@id='flatprot-root']", namespaces=ns)
+    assert root_group is not None, "Root group 'flatprot-root' not found."
+
+    # Find connection paths within the root group
+    connection_paths = root_group.findall(
+        ".//svg:path[@class='connection']",
+        namespaces=ns,  # Search for paths
     )
+
+    # Should only be one connection (helix -> single_coil)
     assert (
         len(connection_paths) == 1
     ), f"Expected 1 connection path, found {len(connection_paths)}"
@@ -892,17 +894,22 @@ def test_render_no_connection_between_chains(
     root = _parse_svg(svg_output)
     ns = {"svg": "http://www.w3.org/2000/svg"}
 
-    # Find connection paths
-    connection_group = root.find(".//svg:g[@id='flatprot-connections']", namespaces=ns)
-    assert connection_group is not None, "Connection group not found"
-    connection_paths = connection_group.findall(
-        "./svg:path[@class='connection']", namespaces=ns
+    # Find connection paths within the root group
+    root_group = root.find(".//svg:g[@id='flatprot-root']", namespaces=ns)
+    assert root_group is not None, "Root group not found"
+
+    connection_paths = root_group.findall(
+        ".//svg:path[@class='connection']",
+        namespaces=ns,  # Search for paths
     )
 
     # Assert exactly TWO connections were made (A9->A10 and B5->B6)
     assert (
         len(connection_paths) == 2
     ), f"Expected 2 connection paths (within chains), found {len(connection_paths)}"
+    # Basic check: Ensure they are path elements
+    assert connection_paths[0].tag == f"{{{ns['svg']}}}path"
+    assert connection_paths[1].tag == f"{{{ns['svg']}}}path"
 
 
 # --- Connection Logic Tests ---
@@ -960,13 +967,13 @@ def test_render_connections_between_adjacent_elements(
     ns = {"svg": "http://www.w3.org/2000/svg"}
 
     # --- Find Connection Paths ---
-    connection_group = root.find(".//svg:g[@id='flatprot-connections']", namespaces=ns)
-    assert (
-        connection_group is not None
-    ), "Connection group 'flatprot-connections' not found."
-    # Find connection *paths* by class
-    connection_paths = connection_group.findall(
-        "./svg:path[@class='connection']", namespaces=ns
+    root_group = root.find(".//svg:g[@id='flatprot-root']", namespaces=ns)
+    assert root_group is not None, "Root group 'flatprot-root' not found."
+
+    # Find connection paths within the root group
+    connection_paths = root_group.findall(
+        ".//svg:path[@class='connection']",
+        namespaces=ns,  # Search for paths
     )
 
     # --- Assertions ---
@@ -974,13 +981,13 @@ def test_render_connections_between_adjacent_elements(
         len(connection_paths) == 2
     ), f"Expected 2 connection paths, found {len(connection_paths)}."
 
+    # --- Optional: Check connection points ---
     # Path 1: Helix End to Coil Start
     path1 = connection_paths[0]
     points1 = extract_path_points(path1.attrib.get("d"))
     assert len(points1) == 2, "Path 1 should have 2 points (M, L)"
     p1_start = points1[0]
     p1_end = points1[1]
-
     assert np.allclose(
         p1_start, exp_helix_end, atol=1e-5
     ), f"Path 1 start {p1_start} != expected helix end {exp_helix_end}"
@@ -994,7 +1001,6 @@ def test_render_connections_between_adjacent_elements(
     assert len(points2) == 2, "Path 2 should have 2 points (M, L)"
     p2_start = points2[0]
     p2_end = points2[1]
-
     assert np.allclose(
         p2_start, exp_coil_end, atol=1e-5
     ), f"Path 2 start {p2_start} != expected coil end {exp_coil_end}"
@@ -1021,12 +1027,6 @@ def test_render_no_connection_between_non_adjacent_elements(
     # --- Define Mock Data (similar to previous test, but elements are not adjacent) ---
     helix_coords = helix_element_a3_9.get_coordinates(scene.structure)
     sheet_coords = sheet_element_a13_18.get_coordinates(scene.structure)
-
-    exp_helix_start = (helix_coords[0, :2] + helix_coords[3, :2]) / 2
-    exp_helix_end = (helix_coords[1, :2] + helix_coords[2, :2]) / 2
-    exp_sheet_start = (sheet_coords[0, :2] + sheet_coords[1, :2]) / 2
-    exp_sheet_end = (sheet_coords[-2, :2] + sheet_coords[-1, :2]) / 2
-
     # Simulate _prepare_render_data returning these non-adjacent elements in order
     mock_ordered_elements = [
         helix_element_a3_9,
@@ -1036,21 +1036,17 @@ def test_render_no_connection_between_non_adjacent_elements(
         helix_element_a3_9.id: helix_coords[:, :2],
         sheet_element_a13_18.id: sheet_coords[:, :2],
     }
-    mock_connection_cache = {
-        helix_element_a3_9.id: (exp_helix_start, exp_helix_end),
-        sheet_element_a13_18.id: (exp_sheet_start, exp_sheet_end),
-    }
 
     # The key part: is_adjacent_to should return False between these two
     mocker.patch.object(helix_element_a3_9, "is_adjacent_to", return_value=False)
 
     # --- Mock the Method ---
     renderer = SVGRenderer(scene=scene)
-    # Mock prepare_render_data just to provide the data; adjacency check happens *inside* render loop 5
+    # Mock prepare_render_data; fix return value to be a 2-tuple
     mocker.patch.object(
         renderer,
         "_prepare_render_data",
-        return_value=(mock_ordered_elements, mock_coords_cache, mock_connection_cache),
+        return_value=(mock_ordered_elements, mock_coords_cache),  # CORRECTED
     )
 
     # --- Render and Parse ---
@@ -1059,18 +1055,19 @@ def test_render_no_connection_between_non_adjacent_elements(
     ns = {"svg": "http://www.w3.org/2000/svg"}
 
     # --- Find Connection Paths ---
-    connection_group = root.find(".//svg:g[@id='flatprot-connections']", namespaces=ns)
-    assert (
-        connection_group is not None
-    ), "Connection group 'flatprot-connections' not found."
-    connection_paths = connection_group.findall(
-        "./svg:path[@class='connection']", namespaces=ns
+    root_group = root.find(".//svg:g[@id='flatprot-root']", namespaces=ns)
+    assert root_group is not None, "Root group 'flatprot-root' not found."
+
+    # Find connection paths within the root group
+    connection_paths = root_group.findall(
+        ".//svg:path[@class='connection']",
+        namespaces=ns,  # Search for paths
     )
 
     # --- Assertions ---
     assert (
         len(connection_paths) == 0
-    ), "Expected 0 connection paths between non-adjacent elements."
+    ), f"Expected 0 connection paths between non-adjacent elements, found {len(connection_paths)}"
 
 
 # --- Single Residue Element Rendering Tests ---

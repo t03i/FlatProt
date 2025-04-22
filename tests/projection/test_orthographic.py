@@ -180,7 +180,12 @@ def test_centering_option() -> None:
 
     # Test with centering=True (use padding)
     params_centered = OrthographicProjectionParameters(
-        width=width, height=height, center=True, padding_x=pad, padding_y=pad
+        width=width,
+        height=height,
+        canvas_alignment="center",
+        center_original_coordinates=True,
+        padding_x=pad,
+        padding_y=pad,
     )
     projected_centered: NpFloatArray = projector.project(coords, params_centered)
     coords_2d_centered = projected_centered[:, :2]
@@ -289,7 +294,8 @@ def test_padding_with_aspect_ratio(simple_cube: NpFloatArray) -> None:
         padding_x=0.1,  # 10% padding each side
         padding_y=0.1,  # 10% padding each side
         maintain_aspect_ratio=True,
-        center=True,  # Center the result within the padded area
+        canvas_alignment="center",
+        center_original_coordinates=True,
     )
 
     projected_data: NpFloatArray = projector.project(simple_cube, params)
@@ -438,7 +444,12 @@ def test_single_point_projection(simple_cube: NpFloatArray) -> None:
 
     # Test centered
     params_centered = OrthographicProjectionParameters(
-        width=width, height=height, padding_x=pad_x, padding_y=pad_y, center=True
+        width=width,
+        height=height,
+        padding_x=pad_x,
+        padding_y=pad_y,
+        canvas_alignment="center",
+        center_original_coordinates=True,
     )
     projected_centered: NpFloatArray = projector.project(single_point, params_centered)
     assert projected_centered.shape == (1, 3)

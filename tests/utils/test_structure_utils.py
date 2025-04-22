@@ -662,7 +662,6 @@ def test_project_structure_orthographically_custom_params(
     assert call_args[1].padding_x == custom_params["padding_x"]
     assert call_args[1].padding_y == custom_params["padding_y"]
     assert call_args[1].maintain_aspect_ratio == custom_params["maintain_aspect_ratio"]
-    assert call_args[1].center == custom_params["center_projection"]
     assert np.array_equal(call_args[1].view_direction, custom_params["view_direction"])
     assert np.array_equal(call_args[1].up_vector, custom_params["up_vector"])
 
