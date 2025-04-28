@@ -53,50 +53,8 @@ _An example download workflow for usage can also be found in the google colab_
 
 ## First experiences with Google Colab
 
-For users to get to know FlatProt we've prepared a Google Colab notebook with a quick tutorial through the major functions/possibilities of FlatProt. Therefore the example protein 1kt1 is used and visualized in different ways. This allows for basic understanding of the functionalities:
-
--   [Google Colab tutorial](https://colab.research.google.com/drive/17u0twE81kYYspNFsdXUHrCyP33hj0dO6?usp=sharing)
-
-Instructions in the Colab help with the first hands-on.
-
-For direct usage of FlatProt including all parameters the following Collab provides functionalities for using FlatProt without locally downloading anything.
-Users can upload their own proteins to the Collab and visualize them as wanted.
+For direct usage of FlatProt including all parameters the following Collabs provide functionalities for using FlatProt without locally downloading anything.
 The runtime of the Colab is way longer than local usage. Therefore we don't advise using it for big amounts of data:
-
--   [Google Colab usage](https://colab.research.google.com/drive/1pJHMagKgpTJ1cfBHkBSh2hMlkzQk263d?usp=sharing)
-
-## Documentation
-
-FlatProt's documentation can found here:
-
--   [FlatProt documentation!](https://t03i.github.io/FlatProt/)
-
-The documentation includes:
-
--   Detailed CLI usage instructions
--   File format specifications
--   API reference
-
-**important notes:**
-
--   input PDB files need a header to work (important for predicted structures)
--   FlatProt's methods can be used via command line commands (cli)
-
-## Contributing
-
-We welcome contributions to FlatProt! If you'd like to contribute, please follow these steps:
-
-1.  **Fork the repository:** Create your own fork of the FlatProt repository on GitHub.
-2.  **Create a branch:** Make your changes in a dedicated branch in your fork.
-3.  **Submit a pull request:** Open a pull request from your branch to the `staging` branch of the t03i/FlatProt repository.
-
-Please ensure your contributions adhere to the project's coding style and include tests where appropriate. For major changes, please open an issue first to discuss what you would like to change.
-
-See [CONTRIBUTING.md](CONTRIBUTING.md) for more detailed guidelines.
-
-## Examples
-
-The `examples/` directory contains scripts demonstrating various FlatProt functionalities. You can run them directly in Google Colab using the badges below:
 
 ### Annotation and Style Example
 
@@ -128,11 +86,34 @@ This notebook demonstrates how to: Compute cystine (disulfide) bridges from a pr
 
 This example script demonstrates how to align KLK (Kallikrein) structures and overlay their FlatProt projections.
 
-### `runtime.py`
+## Documentation
 
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/t03i/FlatProt/blob/main/examples/runtime.ipynb)
+FlatProt's documentation can found here:
 
-Runtime measurement script for FlatProt alignment and projection on human proteome. This script measures the runtime of FlatProt's structural alignment and projection functionality on AlphaFold predicted structures from the human proteome.
+-   [FlatProt documentation!](https://t03i.github.io/FlatProt/)
+
+The documentation includes:
+
+-   Detailed CLI usage instructions
+-   File format specifications
+-   API reference
+
+**important notes:**
+
+-   input PDB files need a header to work (important for predicted structures)
+-   FlatProt's methods can be used via command line commands (cli)
+
+## Contributing
+
+We welcome contributions to FlatProt! If you'd like to contribute, please follow these steps:
+
+1.  **Fork the repository:** Create your own fork of the FlatProt repository on GitHub.
+2.  **Create a branch:** Make your changes in a dedicated branch in your fork.
+3.  **Submit a pull request:** Open a pull request from your branch to the `staging` branch of the t03i/FlatProt repository.
+
+Please ensure your contributions adhere to the project's coding style and include tests where appropriate. For major changes, please open an issue first to discuss what you would like to change.
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for more detailed guidelines.
 
 ## Data
 
@@ -150,7 +131,9 @@ This project uses datasets that can be found on Zenodo.
 
 If you use FlatProt in your research, please cite:
 
-_Citation details to be added here when available._
+> FlatProt: 2D visualization eases protein structure comparison
+> Tobias Olenyi, Constantin Carl, Tobias Senoner, Ivan Koludarov, Burkhard Rost
+> bioRxiv 2025.04.22.650077; doi: https://doi.org/10.1101/2025.04.22.650077
 
 ## License
 
