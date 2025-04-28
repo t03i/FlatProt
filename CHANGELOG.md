@@ -1,6 +1,63 @@
 # CHANGELOG
 
 
+## v2.0.4 (2025-04-28)
+
+### Bug Fixes
+
+- Documentation updates
+  ([`9cd4af7`](https://github.com/t03i/FlatProt/commit/9cd4af74fa78306780eac5f3524a83a7c2b2e8ec))
+
+
+## v2.0.3 (2025-04-28)
+
+### Continuous Integration
+
+- Simplify release config
+  ([`0d929c3`](https://github.com/t03i/FlatProt/commit/0d929c3b15e6389b7e46b4c183158498f85d8bea))
+
+- Update mkdocs command
+  ([`6cd2768`](https://github.com/t03i/FlatProt/commit/6cd2768e5fc8c903702a751322db2ca80487d9ca))
+
+
+## v2.0.2 (2025-04-28)
+
+### Chores
+
+- Generate example notebooks ([#9](https://github.com/t03i/FlatProt/pull/9),
+  [`31ec311`](https://github.com/t03i/FlatProt/commit/31ec3113ccb0680cab91368c0c0620f269588e61))
+
+Automated generation of Jupyter notebooks from example Python scripts. Changes detected in
+  `examples/*.py`.
+
+Co-authored-by: t03i <t03i@users.noreply.github.com>
+
+### Continuous Integration
+
+- Add deps to docs-release
+  ([`c4bfb08`](https://github.com/t03i/FlatProt/commit/c4bfb08a9c8ba30f9920d3f0dae0a1681a335543))
+
+- Add labels permission
+  ([`4fb5d23`](https://github.com/t03i/FlatProt/commit/4fb5d237249384efc39a0f0a6483e959f1d37758))
+
+- Add repo checkout to finalize-release
+  ([`41885a6`](https://github.com/t03i/FlatProt/commit/41885a6f9235d5a0e48c1434b85aeeca7be74f2f))
+
+- Update notebook pull request
+  ([`d23e6b6`](https://github.com/t03i/FlatProt/commit/d23e6b6a645afce85f08e158607674726ccb3c4b))
+
+- Update pull request permissions
+  ([`c4ad0dc`](https://github.com/t03i/FlatProt/commit/c4ad0dcc8dea136092b1c8bd7b3ee6604b697f29))
+
+### Documentation
+
+- Update README
+  ([`ee64954`](https://github.com/t03i/FlatProt/commit/ee649540bd2244cf777c783764d26a8ff6a8a49d))
+
+
+## v2.0.1 (2025-04-22)
+
+
 ## v2.0.0 (2025-04-22)
 
 ### Bug Fixes
@@ -169,6 +226,9 @@
 - Fix invalid reference name
   ([`1a4a706`](https://github.com/t03i/FlatProt/commit/1a4a706fd4b7bb6028d4dbff69a2da8cc4747d0a))
 
+- Update permissions
+  ([`d8d2936`](https://github.com/t03i/FlatProt/commit/d8d2936246cbdb20ccb86514e2953cedad900c47))
+
 ### Documentation
 
 - Add API documentation
@@ -197,6 +257,9 @@
 
 - Update issue templates
   ([`dfa2d55`](https://github.com/t03i/FlatProt/commit/dfa2d55f4d25c1792c4e6ac82ed3c6c862fa6236))
+
+- Update Readme and add CoC & Contributing
+  ([`6dd9fa3`](https://github.com/t03i/FlatProt/commit/6dd9fa3000bcbd052d0379117b6012d027395209))
 
 ### Features
 
