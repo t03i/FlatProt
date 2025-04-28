@@ -148,32 +148,11 @@ os.makedirs(tmp_dir, exist_ok=True)
 print(f"[INFO] Using temporary directory: {tmp_dir.resolve()}")
 
 
-# Alignment database path (relative to out_dir)
-db_path_obj = db_dir / "alignment_db" # Path object
-db_path = str(db_path_obj.resolve()) # String for commands
-
-# Ensure data directory exists (after potential download)
-if not data_dir.exists():
-    print(f"[ERROR] Specific data directory not found: {data_dir}")
-    if IN_COLAB:
-        print("      Check if 'data/3Ftx' exists in the repository or was downloaded correctly.")
-    raise FileNotFoundError(f"Data directory not found: {data_dir}")
-if not data_dir.is_dir():
-    raise NotADirectoryError(f"Data path is not a directory: {data_dir}")
-
-# Check if alignment DB directory exists
-if not db_path_obj.exists() or not (db_path_obj / "db").exists():
-    print(f"[WARN] Alignment database directory ({db_path_obj}) or its contents not found.")
-    if IN_COLAB:
-        print("       Consider running the database creation script or ensure 'out/alignment_db' is in the repo.")
-
-
 # Alignment parameter
 min_p = 0.5
 
 
 print(f"[INFO] Using data directory: {data_dir.resolve()}")
-print(f"[INFO] Using alignment database: {db_path}")
 print(f"[INFO] Minimum alignment probability: {min_p}")
 
 # %% [markdown]
@@ -359,12 +338,11 @@ for structure_file in structure_files:
 
         # 3. Align Structure
         print("  Running alignment...")
-        align_cmd = "uv run flatprot align {structure_file} {output_matrix} {output_info} -d {db_path} --min-probability {min_p} --quiet"
+        align_cmd = "uv run flatprot align {structure_file} {output_matrix} {output_info} --min-probability {min_p} --quiet"
         f_locals_align = {
             "structure_file": structure_file.resolve(),
             "output_matrix": output_matrix.resolve(),
             "output_info": output_info.resolve(),
-            "db_path": db_path,  # db_path is already resolved
             "min_p": min_p,
         }
         formatted_align_cmd = align_cmd.format(**f_locals_align)

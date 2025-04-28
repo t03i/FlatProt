@@ -38,18 +38,18 @@
 # %%
 import os
 import sys
-from pathlib import Path # Ensure Path is imported here
+from pathlib import Path  # Ensure Path is imported here
 
-IN_COLAB = 'google.colab' in sys.modules
-COLAB_BASE_DIR = Path(".") # Base directory for Colab CWD (/content)
-REPO_DIR_NAME = "FlatProt-main" # Default dir name after unzip
+IN_COLAB = "google.colab" in sys.modules
+COLAB_BASE_DIR = Path(".")  # Base directory for Colab CWD (/content)
+REPO_DIR_NAME = "FlatProt-main"  # Default dir name after unzip
 
 if IN_COLAB:
     print("Running in Google Colab. Setting up environment and data...")
 
     # --- 1. Install FlatProt ---
     print("\n[1/4] Installing FlatProt...")
-    !{sys.executable} -m pip install --quiet --upgrade git+https://github.com/t03i/FlatProt.git#egg=flatprot
+    # !{sys.executable} -m pip install --quiet --upgrade git+https://github.com/t03i/FlatProt.git#egg=flatprot
     print("FlatProt installation attempted.")
 
     # --- 2. Install Foldseek ---
@@ -58,24 +58,24 @@ if IN_COLAB:
     foldseek_tar = "foldseek-linux-avx2.tar.gz"
     foldseek_dir = "foldseek"
     print(f"Downloading Foldseek from {foldseek_url}...")
-    !wget -q {foldseek_url} -O {foldseek_tar}
+    # !wget -q {foldseek_url} -O {foldseek_tar}
     print("Extracting Foldseek...")
-    !tar -xzf {foldseek_tar}
+    # !tar -xzf {foldseek_tar}
     foldseek_bin_path = os.path.join(os.getcwd(), foldseek_dir, "bin")
-    os.environ['PATH'] = f"{foldseek_bin_path}:{os.environ['PATH']}"
+    os.environ["PATH"] = f"{foldseek_bin_path}:{os.environ['PATH']}"
     print(f"Added {foldseek_bin_path} to PATH")
     print("Verifying Foldseek installation...")
-    !foldseek --help | head -n 5
+    # !foldseek --help | head -n 5
     print("Foldseek installation attempted.")
 
     # --- 3. Install DSSP ---
     print("\n[3/4] Installing DSSP...")
     print("Updating apt package list...")
-    !sudo apt-get update -qq
+    # !sudo apt-get update -qq
     print("Installing DSSP...")
-    !sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -qq dssp
+    # !sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -qq dssp
     print("Verifying DSSP installation...")
-    !mkdssp --version
+    # !mkdssp --version
     print("DSSP installation attempted.")
 
     # --- 4. Download Repository Data ---
@@ -85,32 +85,34 @@ if IN_COLAB:
     repo_temp_dir = "repo_temp"
 
     print(f"Downloading repository archive from {repo_zip_url}...")
-    !wget -q {repo_zip_url} -O {repo_zip_file}
+    # !wget -q {repo_zip_url} -O {repo_zip_file}
     print(f"Extracting archive to {repo_temp_dir}...")
-    !unzip -o -q {repo_zip_file} -d {repo_temp_dir}
+    # !unzip -o -q {repo_zip_file} -d {repo_temp_dir}
 
     extracted_repo_path = COLAB_BASE_DIR / repo_temp_dir / REPO_DIR_NAME
     if extracted_repo_path.is_dir():
-         print(f"Moving data/ and out/ directories from {extracted_repo_path}...")
-         source_data_path = extracted_repo_path / "data"
-         if source_data_path.exists():
-             !mv -T {source_data_path} {COLAB_BASE_DIR}/data
-             print("Moved data/ directory.")
-         else:
-             print("[WARN] data/ directory not found in archive.")
+        print(f"Moving data/ and out/ directories from {extracted_repo_path}...")
+        source_data_path = extracted_repo_path / "data"
+        if source_data_path.exists():
+            # !mv -T {source_data_path} {COLAB_BASE_DIR}/data
+            print("Moved data/ directory.")
+        else:
+            print("[WARN] data/ directory not found in archive.")
 
-         source_out_path = extracted_repo_path / "out"
-         if source_out_path.exists():
-             !mv -T {source_out_path} {COLAB_BASE_DIR}/out
-             print("Moved out/ directory.")
-         else:
-             print("[INFO] out/ directory not found in archive, creating.")
-             (COLAB_BASE_DIR / "out").mkdir(exist_ok=True)
+        source_out_path = extracted_repo_path / "out"
+        if source_out_path.exists():
+            # !mv -T {source_out_path} {COLAB_BASE_DIR}/out
+            print("Moved out/ directory.")
+        else:
+            print("[INFO] out/ directory not found in archive, creating.")
+            (COLAB_BASE_DIR / "out").mkdir(exist_ok=True)
     else:
-         print(f"[ERROR] Expected directory '{extracted_repo_path}' not found after extraction.")
+        print(
+            f"[ERROR] Expected directory '{extracted_repo_path}' not found after extraction."
+        )
 
     print("Cleaning up downloaded files...")
-    !rm -rf {repo_temp_dir} {repo_zip_file}
+    # !rm -rf {repo_temp_dir} {repo_zip_file}
 
     print("\nEnvironment and data setup complete.")
     base_dir = COLAB_BASE_DIR
@@ -128,7 +130,7 @@ out_dir.mkdir(parents=True, exist_ok=True)
 
 # %%
 # Essential Imports (Keep remaining imports here)
-import shutil # Already imported above if not IN_COLAB
+import shutil  # Already imported above if not IN_COLAB
 import traceback
 from typing import List, Optional, Dict
 
@@ -162,6 +164,9 @@ from flatprot.utils.domain_utils import (
     apply_domain_transformations_masked,
     create_domain_aware_scene,
 )
+
+# Import the database utility
+from flatprot.utils.database import ensure_database_available
 from flatprot.utils.scene_utils import (
     create_scene_from_structure,
 )
@@ -194,13 +199,13 @@ chainsaw_file: Path = structure_dir / f"{structure_id.lower()}-chainsaw-domains.
 structure_file: Path = structure_dir / f"{structure_id}.cif"
 
 # Temporary Directory for Intermediate Files
-tmp_dir: Path = tmp_dir_base / "domain_alignment_projection" # Specific tmp dir
+tmp_dir: Path = tmp_dir_base / "domain_alignment_projection"  # Specific tmp dir
 
-# Alignment & Foldseek Databases (Use base out_dir)
-alignment_db_dir: Path = out_dir / "alignment_db"
-foldseek_db_dir: Path = alignment_db_dir / "foldseek"
-db_file_path: Path = alignment_db_dir / "alignments.h5"
-foldseek_db_path: Path = foldseek_db_dir / "db"  # Foldseek search database
+# Alignment & Foldseek Databases (These will be derived later using ensure_database_available)
+# alignment_db_dir: Path = out_dir / "alignment_db" # No longer needed
+# foldseek_db_dir: Path = alignment_db_dir / "foldseek" # Derived later
+# db_file_path: Path = alignment_db_dir / "alignments.h5" # Derived later
+# foldseek_db_path: Path = foldseek_db_dir / "db"  # Derived later
 
 # Foldseek Configuration
 foldseek_path: str = "foldseek"  # Path to executable (name assumed in PATH after setup)
@@ -495,21 +500,33 @@ except Exception as e:
 print(
     f"\n[STEP 5] Aligning Domains & Collecting Transformations ({len(defined_domains)} total)..."
 )
-print(f"         Alignment DB: {db_file_path.resolve()}")
-print(f"         Foldseek DB: {foldseek_db_path.resolve()}")
+
+# --- Ensure database is available and get its path ---
+print("         Ensuring alignment database is available (will download if needed)...")
+try:
+    # Call the utility function to get the validated/downloaded DB path
+    validated_db_path = ensure_database_available()
+    print(f"         Using database at: {validated_db_path.resolve()}")
+except RuntimeError as e:
+    print(f"[ERROR] Could not obtain alignment database: {e}")
+    raise SystemExit(1)
+
+# Derive specific file/dir paths from the validated main DB path
+db_file_path: Path = validated_db_path / "alignments.h5"
+foldseek_db_dir: Path = validated_db_path / "foldseek"
+foldseek_db_path: Path = foldseek_db_dir / "db"  # Foldseek search database target
+
+print(f"         Alignment DB file: {db_file_path.resolve()}")
+print(f"         Foldseek DB index: {foldseek_db_path.resolve()}")
+
 
 # --- Pre-checks & Init ---
-if not db_file_path.exists():
-    print("[ERROR] Alignment DB not found")
-    raise SystemExit(1)
-if not foldseek_db_path.exists():
-    print("[ERROR] Foldseek DB dir not found")
-    raise SystemExit(1)
+# No need to check db_file_path/foldseek_db_dir existence, ensure_database_available handles it.
 if original_structure is None:
     print("[ERROR] Original structure not loaded.")
     raise SystemExit(1)
 try:
-    alignment_db = AlignmentDatabase(db_file_path)
+    alignment_db = AlignmentDatabase(db_file_path)  # Use derived path
     print("[INFO] Alignment DB connection initialized.")
 except Exception as e:
     print(f"[ERROR] Failed to init alignment DB: {e}")

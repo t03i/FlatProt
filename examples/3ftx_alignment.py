@@ -165,17 +165,6 @@ snake_matrix = str(tmp_dir / "snake_matrix.npy")
 snake_info = str(tmp_dir / "snake_info.json")
 snake_out = str(tmp_dir / "snake.svg")
 
-# Alignment database path (relative to out_dir)
-db_path_obj = db_dir / "alignment_db" # Path object
-db_path = str(db_path_obj.resolve()) # String for commands
-
-# Check if alignment DB directory exists (after potential download)
-if not db_path_obj.exists() or not (db_path_obj / "db").exists(): # Check for inner foldseek db too
-    print(f"[WARN] Alignment database directory ({db_path_obj}) or its contents not found.")
-    if IN_COLAB:
-        print("       Consider running the database creation script or ensure 'out/alignment_db' is in the repo.")
-    # Allow script to continue, but alignment will likely fail
-
 # Alignment parameter
 min_p = 0.5
 
@@ -184,7 +173,6 @@ print(f"  Input Cobra: {cobra_path}")
 print(f"  Input Krait: {krait_path}")
 print(f"  Input Snake: {snake_path}")
 print(f"  Output Dir: {tmp_dir.resolve()}")
-print(f"  Database Path: {db_path}")
 print(f"  Min Probability: {min_p}")
 
 # %% [markdown]
@@ -198,17 +186,17 @@ print("\n[STEP 2] Running FlatProt Alignments...")
 # Remove if ipython check
 # Align Cobra
 print("Aligning Cobra...")
-cobra_align_cmd = f"uv run flatprot align {cobra_path} {cobra_matrix} {cobra_info} -d {db_path} --min-probability {min_p} --quiet"
+cobra_align_cmd = f"uv run flatprot align {cobra_path} {cobra_matrix} {cobra_info}  --min-probability {min_p} --quiet"
 !{cobra_align_cmd}
 
 # Align Krait
 print("Aligning Krait...")
-krait_align_cmd = f"uv run flatprot align {krait_path} {krait_matrix} {krait_info} -d {db_path} --min-probability {min_p} --quiet"
+krait_align_cmd = f"uv run flatprot align {krait_path} {krait_matrix} {krait_info} --min-probability {min_p} --quiet"
 !{krait_align_cmd}
 
 # Align Snake
 print("Aligning Snake...")
-snake_align_cmd = f"uv run flatprot align {snake_path} {snake_matrix} {snake_info} -d {db_path} --min-probability {min_p} --quiet"
+snake_align_cmd = f"uv run flatprot align {snake_path} {snake_matrix} {snake_info}  --min-probability {min_p} --quiet"
 !{snake_align_cmd}
 
 print("[INFO] Alignments complete. Matrices and info files generated.")

@@ -146,24 +146,6 @@ data_archive = data_dir_base / "KLK.zip" # Specific input archive
 os.makedirs(tmp_dir, exist_ok=True)
 print(f"[INFO] Using temporary directory: {tmp_dir.resolve()}")
 
-# Alignment database path (relative to out_dir)
-alignment_db_path_obj = out_dir / "alignment_db" # Path object
-alignment_db_path = str(alignment_db_path_obj.resolve()) # String for commands
-
-# Validate input archive and DB path
-if not data_archive.exists():
-    print(f"[ERROR] Input data archive not found: {data_archive}")
-    if IN_COLAB:
-        print("       Check if 'data/KLK.zip' exists in the repository or was downloaded correctly.")
-    raise FileNotFoundError(f"Data archive not found: {data_archive}")
-
-if not alignment_db_path_obj.exists() or not (alignment_db_path_obj / "db").exists():
-    print(f"[WARN] Alignment database directory ({alignment_db_path_obj}) or its contents not found.")
-    if IN_COLAB:
-        print("       Consider running the database creation script or ensure 'out/alignment_db' is in the repo.")
-
-print("[INFO] Input archive and DB path checks complete.")
-
 
 # %% [markdown]
 # ## Extract KLK Structures
@@ -289,8 +271,7 @@ info_dir = tmp_dir / "json"
 matrix_dir.mkdir(exist_ok=True)
 info_dir.mkdir(exist_ok=True)
 
-# Adjust this path to your actual Foldseek database location
-alignment_db_path = "../out/alignment_db"
+
 
 # %% [markdown]
 # Run `flatprot align` for each representative structure against the database.
@@ -307,7 +288,7 @@ for file in representative_files:
 
     align_cmd = (
         f"uv run flatprot align {file_str} {matrix_path_str} {info_path_str} "
-        f"-d {alignment_db_path} --target-db-id 3000114 --quiet"
+        f"--target-db-id 3000114 --quiet"
     )
     # Remove if ipython check
     !{align_cmd}
