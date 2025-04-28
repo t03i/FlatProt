@@ -11,23 +11,94 @@ permissions:
 
 jobs:
     python-release:
-        uses: ./.github/workflows/release-python.yml
-        with:
-            tag: ${{ github.ref_name }}
-
-    docs-release:
-        uses: ./.github/workflows/release-docs.yml
-        with:
-            ref: ${{ github.ref_name }}
-
-    finalize-release:
         runs-on: ubuntu-latest
+        environment:
+            name: release
+            url: https://pypi.org/p/flatprot
+        env:
+            UV_TOOL_DIR: /tmp/.uv-tools
+        permissions:
+            id-token: write
+            contents: write
         steps:
             - name: Checkout Repository
               uses: actions/checkout@v4
               with:
                   fetch-depth: 0
-                  ref: ${{ github.ref_name }}
+                  ref: ${{ github.ref }}
+
+            - name: Install uv
+              uses: astral-sh/setup-uv@v5
+              with:
+                  enable-cache: true
+                  cache-dependency-glob: "uv.lock"
+
+            - name: Set up Python
+              uses: actions/setup-python@v5
+              with:
+                  python-version-file: "pyproject.toml"
+
+            - name: Build Python Package
+              run: uv build
+
+            - name: Create GitHub Release
+              uses: softprops/action-gh-release@v2
+              with:
+                  files: dist/
+                  tag_name: ${{ github.ref_name }}
+                  draft: true
+
+            - name: Publish to PyPI
+              uses: pypa/gh-action-pypi-publish@release/v1
+
+    docs-release:
+        runs-on: ubuntu-latest
+        environment:
+            name: github-pages
+        env:
+            UV_TOOL_DIR: /tmp/.uv-tools
+        permissions:
+            pages: write
+            id-token: write
+            contents: write
+        steps:
+            - uses: actions/checkout@v4
+              with:
+                  ref: ${{ github.ref }}
+                  fetch-depth: 0
+
+            - name: Set up Python
+              uses: actions/setup-python@v5
+              with:
+                  python-version-file: "pyproject.toml"
+
+            - name: Install uv
+              uses: astral-sh/setup-uv@v5
+              with:
+                  enable-cache: true
+                  cache-dependency-glob: "uv.lock"
+
+            - name: Install the project
+              run: uv sync --locked --all-extras --dev
+
+            - name: Build documentation
+              run: uv run mkdocs build
+
+            - name: Deploy to GitHub Pages
+              uses: peaceiris/actions-gh-pages@v3
+              with:
+                  github_token: ${{ secrets.GITHUB_TOKEN }}
+                  publish_dir: ./site
+
+    finalize-release:
+        runs-on: ubuntu-latest
+        needs: [python-release, docs-release]
+        steps:
+            - name: Checkout Repository
+              uses: actions/checkout@v4
+              with:
+                  fetch-depth: 0
+                  ref: ${{ github.ref }}
 
             - name: Create GitHub Release
               uses: softprops/action-gh-release@v2
