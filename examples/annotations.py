@@ -15,64 +15,104 @@
 # ---
 # ## Environment Setup for Google Colab
 #
-# The following cell checks if the notebook is running in Google Colab and installs the necessary dependencies using IPython magic commands:
+# The following cell checks if the notebook is running in Google Colab and installs the necessary dependencies and downloads required data:
 #
 # 1.  **FlatProt:** Installs the latest version directly from the GitHub repository using `pip`.
 # 2.  **Foldseek:** Downloads (`wget`) and extracts (`tar`) the Foldseek binary (for Linux AVX2) and adds it to the system `PATH`.
 # 3.  **DSSP:** Installs the `dssp` package (which provides `mkdssp`) using `apt`.
+# 4.  **Repository Data:** Downloads the repository archive, extracts it, and moves the `data/` and `out/` directories to the Colab environment's root.
 #
-# This setup ensures that the example can run successfully in a Colab environment. If not running in Colab, it assumes dependencies are already installed.
+# This setup ensures that the example can run successfully in a Colab environment. If not running in Colab, it assumes dependencies and relative data paths are already correct.
 
 # %%
 import os
 import sys
+from pathlib import Path # Ensure Path is imported here
 
 IN_COLAB = 'google.colab' in sys.modules
+COLAB_BASE_DIR = Path(".") # Base directory for Colab CWD (/content)
+REPO_DIR_NAME = "FlatProt-main" # Default dir name after unzip
 
 if IN_COLAB:
-    print("Running in Google Colab. Setting up environment...")
+    print("Running in Google Colab. Setting up environment and data...")
 
-    # 1. Install FlatProt from GitHub
-    print("\n[1/3] Installing FlatProt...")
-    # Use sys.executable to ensure pip is run with the correct Python interpreter
-    !{sys.executable} -m pip install --quiet --upgrade git+https://github.com/rostlab/FlatProt.git#egg=flatprot
-    print("FlatProt installation attempted.") # Add confirmation
+    # --- 1. Install FlatProt ---
+    print("\n[1/4] Installing FlatProt...")
+    !{sys.executable} -m pip install --quiet --upgrade git+https://github.com/t03i/FlatProt.git#egg=flatprot
+    print("FlatProt installation attempted.")
 
-    # 2. Install Foldseek
-    print("\n[2/3] Installing Foldseek...")
+    # --- 2. Install Foldseek ---
+    print("\n[2/4] Installing Foldseek...")
     foldseek_url = "https://mmseqs.com/foldseek/foldseek-linux-avx2.tar.gz"
     foldseek_tar = "foldseek-linux-avx2.tar.gz"
-    foldseek_dir = "foldseek" # Expected directory name after extraction
-
+    foldseek_dir = "foldseek"
     print(f"Downloading Foldseek from {foldseek_url}...")
     !wget -q {foldseek_url} -O {foldseek_tar}
     print("Extracting Foldseek...")
     !tar -xzf {foldseek_tar}
-
-    # Add Foldseek bin directory to PATH
     foldseek_bin_path = os.path.join(os.getcwd(), foldseek_dir, "bin")
     os.environ['PATH'] = f"{foldseek_bin_path}:{os.environ['PATH']}"
     print(f"Added {foldseek_bin_path} to PATH")
     print("Verifying Foldseek installation...")
-    !foldseek --help | head -n 5 # Verify installation by running command
+    !foldseek --help | head -n 5
+    print("Foldseek installation attempted.")
 
-    # 3. Install DSSP
-    print("\n[3/3] Installing DSSP...")
+    # --- 3. Install DSSP ---
+    print("\n[3/4] Installing DSSP...")
     print("Updating apt package list...")
     !sudo apt-get update -qq
     print("Installing DSSP...")
-    !sudo apt-get install -y -qq dssp
+    !sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -qq dssp
     print("Verifying DSSP installation...")
-    !mkdssp --version # Verify installation
+    !mkdssp --version
+    print("DSSP installation attempted.")
 
-    print("\nEnvironment setup complete.")
+    # --- 4. Download Repository Data ---
+    print("\n[4/4] Downloading repository data (data/ and out/)...")
+    repo_zip_url = "https://github.com/t03i/FlatProt/archive/refs/heads/main.zip"
+    repo_zip_file = "repo.zip"
+    repo_temp_dir = "repo_temp"
 
+    print(f"Downloading repository archive from {repo_zip_url}...")
+    !wget -q {repo_zip_url} -O {repo_zip_file}
+    print(f"Extracting archive to {repo_temp_dir}...")
+    !unzip -o -q {repo_zip_file} -d {repo_temp_dir}
 
-# %% [markdown]
-# ---
-# ## Step 1: Setup and Imports
-#
-# Import necessary libraries, define file paths, and setup the `pybash` magic command.
+    extracted_repo_path = COLAB_BASE_DIR / repo_temp_dir / REPO_DIR_NAME
+    if extracted_repo_path.is_dir():
+         print(f"Moving data/ and out/ directories from {extracted_repo_path}...")
+         source_data_path = extracted_repo_path / "data"
+         if source_data_path.exists():
+             !mv -T {source_data_path} {COLAB_BASE_DIR}/data
+             print("Moved data/ directory.")
+         else:
+             print("[WARN] data/ directory not found in archive.")
+
+         source_out_path = extracted_repo_path / "out"
+         if source_out_path.exists():
+             !mv -T {source_out_path} {COLAB_BASE_DIR}/out
+             print("Moved out/ directory.")
+         else:
+             print("[INFO] out/ directory not found in archive, creating.")
+             (COLAB_BASE_DIR / "out").mkdir(exist_ok=True)
+    else:
+         print(f"[ERROR] Expected directory '{extracted_repo_path}' not found after extraction.")
+
+    print("Cleaning up downloaded files...")
+    !rm -rf {repo_temp_dir} {repo_zip_file}
+
+    print("\nEnvironment and data setup complete.")
+    base_dir = COLAB_BASE_DIR
+
+# --- Path Definitions ---
+print(f"[INFO] Using base directory: {base_dir.resolve()}")
+data_dir_base = base_dir / "data"
+tmp_dir_base = base_dir / "tmp"
+# out_dir not needed for this specific script
+
+# Ensure base tmp directory exists
+tmp_dir_base.mkdir(parents=True, exist_ok=True)
+
 
 # %%
 # Essential Imports
@@ -82,25 +122,28 @@ import os
 # IPython Specifics for Bash Magic and Display
 from IPython.display import SVG, display
 
+
 # %%
 # --- Configuration ---
 
 print("[STEP 1] Setting up paths and variables...")
 
-# Define base directories and file paths
-base_dir = Path("..")
-tmp_dir = base_dir / "tmp" / "files_example"
-structure_file = base_dir / "data" / "1KT0" / "1kt0.cif"
+# Define script-specific directories and file paths using base paths
+tmp_dir = tmp_dir_base / "files_example" # Specific tmp dir
+structure_file = data_dir_base / "1KT0" / "1kt0.cif" # Specific input file
 
 structure_svg = tmp_dir / "1kt0_styled_annotated.svg"  # More descriptive name
 style_file = tmp_dir / "custom_style.toml"
 annotations_file = tmp_dir / "custom_annotations.toml"
 
-# Ensure input structure file exists
+# Ensure input structure file exists (after potential download)
 if not structure_file.exists():
+    print(f"[ERROR] Input structure file not found: {structure_file}")
+    if IN_COLAB:
+         print("      Check if 'data/1KT0/1kt0.cif' exists in the repository or was downloaded correctly.")
     raise FileNotFoundError(f"Input structure file not found: {structure_file}")
 
-# Create temporary directory if it doesn't exist
+# Create specific temporary directory if it doesn't exist
 os.makedirs(tmp_dir, exist_ok=True)
 print(f"[INFO] Using temporary directory: {tmp_dir.resolve()}")
 

@@ -26,73 +26,110 @@
 # ---
 # ## Environment Setup for Google Colab
 #
-# The following cell checks if the notebook is running in Google Colab and installs the necessary dependencies using IPython magic commands:
+# The following cell checks if the notebook is running in Google Colab and installs the necessary dependencies and downloads required data:
 #
 # 1.  **FlatProt:** Installs the latest version directly from the GitHub repository using `pip`.
 # 2.  **Foldseek:** Downloads (`wget`) and extracts (`tar`) the Foldseek binary (for Linux AVX2) and adds it to the system `PATH`.
 # 3.  **DSSP:** Installs the `dssp` package (which provides `mkdssp`) using `apt`.
+# 4.  **Repository Data:** Downloads the repository archive, extracts it, and moves the `data/` and `out/` directories to the Colab environment's root.
 #
-# This setup ensures that the example can run successfully in a Colab environment. If not running in Colab, it assumes dependencies are already installed.
+# This setup ensures that the example can run successfully in a Colab environment. If not running in Colab, it assumes dependencies and relative data paths are already correct.
 
 # %%
 import os
 import sys
-import subprocess # Keep for non-Colab checks
+from pathlib import Path # Ensure Path is imported here
 
 IN_COLAB = 'google.colab' in sys.modules
+COLAB_BASE_DIR = Path(".") # Base directory for Colab CWD (/content)
+REPO_DIR_NAME = "FlatProt-main" # Default dir name after unzip
 
 if IN_COLAB:
-    print("Running in Google Colab. Setting up environment...")
+    print("Running in Google Colab. Setting up environment and data...")
 
-    # 1. Install FlatProt from GitHub
-    print("\n[1/3] Installing FlatProt...")
-    # Use sys.executable to ensure pip is run with the correct Python interpreter
-    !{sys.executable} -m pip install --quiet --upgrade git+https://github.com/rostlab/FlatProt.git#egg=flatprot
-    print("FlatProt installation attempted.") # Add confirmation
+    # --- 1. Install FlatProt ---
+    print("\n[1/4] Installing FlatProt...")
+    !{sys.executable} -m pip install --quiet --upgrade git+https://github.com/t03i/FlatProt.git#egg=flatprot
+    print("FlatProt installation attempted.")
 
-    # 2. Install Foldseek
-    print("\n[2/3] Installing Foldseek...")
+    # --- 2. Install Foldseek ---
+    print("\n[2/4] Installing Foldseek...")
     foldseek_url = "https://mmseqs.com/foldseek/foldseek-linux-avx2.tar.gz"
     foldseek_tar = "foldseek-linux-avx2.tar.gz"
-    foldseek_dir = "foldseek" # Expected directory name after extraction
-
+    foldseek_dir = "foldseek"
     print(f"Downloading Foldseek from {foldseek_url}...")
     !wget -q {foldseek_url} -O {foldseek_tar}
     print("Extracting Foldseek...")
     !tar -xzf {foldseek_tar}
-
-    # Add Foldseek bin directory to PATH
     foldseek_bin_path = os.path.join(os.getcwd(), foldseek_dir, "bin")
     os.environ['PATH'] = f"{foldseek_bin_path}:{os.environ['PATH']}"
     print(f"Added {foldseek_bin_path} to PATH")
     print("Verifying Foldseek installation...")
-    !foldseek --help | head -n 5 # Verify installation by running command
+    !foldseek --help | head -n 5
+    print("Foldseek installation attempted.")
 
-    # 3. Install DSSP
-    print("\n[3/3] Installing DSSP...")
+    # --- 3. Install DSSP ---
+    print("\n[3/4] Installing DSSP...")
     print("Updating apt package list...")
     !sudo apt-get update -qq
     print("Installing DSSP...")
-    !sudo apt-get install -y -qq dssp
+    !sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -qq dssp
     print("Verifying DSSP installation...")
-    !mkdssp --version # Verify installation
+    !mkdssp --version
+    print("DSSP installation attempted.")
 
-    print("\nEnvironment setup complete.")
+    # --- 4. Download Repository Data ---
+    print("\n[4/4] Downloading repository data (data/ and out/)...")
+    repo_zip_url = "https://github.com/t03i/FlatProt/archive/refs/heads/main.zip"
+    repo_zip_file = "repo.zip"
+    repo_temp_dir = "repo_temp"
 
+    print(f"Downloading repository archive from {repo_zip_url}...")
+    !wget -q {repo_zip_url} -O {repo_zip_file}
+    print(f"Extracting archive to {repo_temp_dir}...")
+    !unzip -o -q {repo_zip_file} -d {repo_temp_dir}
 
+    extracted_repo_path = COLAB_BASE_DIR / repo_temp_dir / REPO_DIR_NAME
+    if extracted_repo_path.is_dir():
+         print(f"Moving data/ and out/ directories from {extracted_repo_path}...")
+         source_data_path = extracted_repo_path / "data"
+         if source_data_path.exists():
+             !mv -T {source_data_path} {COLAB_BASE_DIR}/data
+             print("Moved data/ directory.")
+         else:
+             print("[WARN] data/ directory not found in archive.")
 
-# %% [markdown]
-# ---
-# ## Step 1: Setup and Imports
-#
-# Import necessary libraries and configure input/output paths and parameters.
+         source_out_path = extracted_repo_path / "out"
+         if source_out_path.exists():
+             !mv -T {source_out_path} {COLAB_BASE_DIR}/out
+             print("Moved out/ directory.")
+         else:
+             print("[INFO] out/ directory not found in archive, creating.")
+             (COLAB_BASE_DIR / "out").mkdir(exist_ok=True)
+    else:
+         print(f"[ERROR] Expected directory '{extracted_repo_path}' not found after extraction.")
+
+    print("Cleaning up downloaded files...")
+    !rm -rf {repo_temp_dir} {repo_zip_file}
+
+    print("\nEnvironment and data setup complete.")
+    base_dir = COLAB_BASE_DIR
+
+# --- Path Definitions ---
+print(f"[INFO] Using base directory: {base_dir.resolve()}")
+data_dir_base = base_dir / "data"
+tmp_dir_base = base_dir / "tmp"
+out_dir = base_dir / "out"
+
+# Ensure base tmp/out directories exist
+tmp_dir_base.mkdir(parents=True, exist_ok=True)
+out_dir.mkdir(parents=True, exist_ok=True)
+
 
 # %%
-# Essential Imports
-import os
-import shutil
+# Essential Imports (Keep remaining imports here)
+import shutil # Already imported above if not IN_COLAB
 import traceback
-from pathlib import Path
 from typing import List, Optional, Dict
 
 # Third-party Libraries
@@ -100,80 +137,76 @@ import gemmi
 import polars as pl
 import numpy as np
 
+# FlatProt Components (Assuming setup block installed it)
 from flatprot.scene.structure.base_structure import BaseStructureStyle
+from flatprot.core import Structure, ResidueRange, FlatProtError
+from flatprot.io import (
+    GemmiStructureParser,
+    validate_structure_file,
+    InvalidStructureError,
+    OutputFileError,
+)
+from flatprot.alignment import (
+    AlignmentDatabase,
+    align_structure_database,
+    get_aligned_rotation_database,
+    AlignmentResult,
+)
+from flatprot.transformation import TransformationMatrix, TransformationError
+from flatprot.utils.structure_utils import (
+    project_structure_orthographically,
+    transform_structure_with_inertia,
+)
+from flatprot.utils.domain_utils import (
+    DomainTransformation,
+    apply_domain_transformations_masked,
+    create_domain_aware_scene,
+)
+from flatprot.utils.scene_utils import (
+    create_scene_from_structure,
+)
+from flatprot.scene import BaseStructureStyle, AreaAnnotationStyle
+from flatprot.renderers import SVGRenderer
 
-print("[INFO] Imported standard libraries.")
+# For displaying SVGs inline in Jupyter
+from IPython.display import display, SVG
 
-# FlatProt Components
-try:
-    from flatprot.core import Structure, ResidueRange, FlatProtError
-    from flatprot.io import (
-        GemmiStructureParser,
-        validate_structure_file,
-        InvalidStructureError,
-        OutputFileError,
-    )
-    from flatprot.alignment import (
-        AlignmentDatabase,
-        align_structure_database,
-        get_aligned_rotation_database,
-        AlignmentResult,
-    )
-    from flatprot.transformation import TransformationMatrix, TransformationError
+print("[INFO] Imported libraries and FlatProt components.")
 
-    # Import specific transformation functions needed
-    from flatprot.utils.structure_utils import (
-        project_structure_orthographically,
-        transform_structure_with_inertia,
-    )
-    from flatprot.utils.domain_utils import (
-        DomainTransformation,
-        apply_domain_transformations_masked,
-        create_domain_aware_scene,
-    )
-    from flatprot.utils.scene_utils import (
-        create_scene_from_structure,
-    )
-    from flatprot.scene import BaseStructureStyle, AreaAnnotationStyle
-    from flatprot.renderers import SVGRenderer
+# %% [markdown]
+# ---
+# ## Step 1: Setup and Imports - Configuration
+#
+# Configure input/output paths and parameters.
 
-    # For displaying SVGs inline in Jupyter
-    from IPython.display import display, SVG
-
-    print("[INFO] Successfully imported FlatProt components and IPython display.")
-except ImportError as e:
-    print(f"[ERROR] Failed to import components: {e}")
-    print("        Please ensure FlatProt and IPython are installed correctly.")
-    raise SystemExit(1)
-
+# %%
 # --- User Configuration ---
 
 # Input Structure Details
 structure_id: str = "1kt0"  # PDB ID or identifier for file naming
-data_base_dir: Path = Path("../data")  # Root directory for data/databases
 
+# Use base paths defined after Colab check
 # Domain Definition File (from Chainsaw)
-structure_dir: Path = data_base_dir / structure_id
+structure_dir: Path = data_dir_base / structure_id
 chainsaw_file: Path = structure_dir / f"{structure_id.lower()}-chainsaw-domains.tsv"
 
 # Primary Structure File (PDB or CIF)
 structure_file: Path = structure_dir / f"{structure_id}.cif"
 
 # Temporary Directory for Intermediate Files
-tmp_dir: Path = Path("../tmp/domain_alignment_projection")
+tmp_dir: Path = tmp_dir_base / "domain_alignment_projection" # Specific tmp dir
 
-# Alignment & Foldseek Databases (!!! VERIFY THESE PATHS !!!)
-database_base_dir: Path = data_base_dir / "databases"
-alignment_db_dir: Path = Path("../out/alignment_db")
+# Alignment & Foldseek Databases (Use base out_dir)
+alignment_db_dir: Path = out_dir / "alignment_db"
 foldseek_db_dir: Path = alignment_db_dir / "foldseek"
-db_file_path: Path = alignment_db_dir / "alignments.h5"  # Use updated directory
+db_file_path: Path = alignment_db_dir / "alignments.h5"
 foldseek_db_path: Path = foldseek_db_dir / "db"  # Foldseek search database
 
 # Foldseek Configuration
-foldseek_path: str = "foldseek"  # Path to executable (or name if in PATH)
+foldseek_path: str = "foldseek"  # Path to executable (name assumed in PATH after setup)
 min_probability: float = 0.5  # Minimum probability for accepting an alignment
 
-# Output Configuration (!!! Distinct filenames !!!)
+# Output Configuration (Distinct filenames)
 output_svg_normal: Path = tmp_dir / f"{structure_id}-normal-projection.svg"
 output_svg_aligned: Path = tmp_dir / f"{structure_id}-domains-aligned-reassembled.svg"
 output_svg_separated: Path = tmp_dir / f"{structure_id}-domains-separated-layout.svg"
@@ -196,7 +229,7 @@ styles_dict: Optional[Dict[str, BaseStructureStyle]] = {
 
 # --- End Configuration ---
 
-# Setup Environment
+# Setup Environment (Create specific tmp dir)
 os.makedirs(tmp_dir, exist_ok=True)
 print(f"[SETUP] Using temporary directory: {tmp_dir.resolve()}")
 print("[SETUP] Output Files:")
@@ -205,17 +238,25 @@ print(f"         Domain-Aligned:    {output_svg_aligned.resolve()}")
 print(f"         Domain-Separated:  {output_svg_separated.resolve()}")
 
 
-# Validate Foldseek executable early
-if not Path(foldseek_path).exists() and not shutil.which(foldseek_path):
+# Validate Foldseek executable (Should be in PATH now if IN_COLAB)
+foldseek_found_path = shutil.which(foldseek_path)
+if not foldseek_found_path:
     print(
-        f"[ERROR] FoldSeek executable not found at '{foldseek_path}' or in system PATH."
+        f"[WARN] FoldSeek executable '{foldseek_path}' not found in system PATH after setup."
     )
-    print("        Please install Foldseek or correct the 'foldseek_path' variable.")
-    raise SystemExit(1)
+    # Don't exit here, let the alignment step fail if it's truly missing
 else:
-    print(
-        f"[SETUP] Foldseek executable found: {shutil.which(foldseek_path) or Path(foldseek_path).resolve()}"
-    )
+    print(f"[SETUP] Foldseek executable confirmed in PATH: {foldseek_found_path}")
+
+# Validate input files (after potential download)
+if not structure_file.exists():
+    print(f"[ERROR] Input structure file not found: {structure_file}")
+    raise FileNotFoundError(f"Input structure file not found: {structure_file}")
+if not chainsaw_file.exists():
+    print(f"[ERROR] Chainsaw domain file not found: {chainsaw_file}")
+    raise FileNotFoundError(f"Chainsaw domain file not found: {chainsaw_file}")
+
+print("[SETUP] Input files validated.")
 
 # %% [markdown]
 # ---
