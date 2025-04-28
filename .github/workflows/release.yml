@@ -23,6 +23,12 @@ jobs:
     finalize-release:
         runs-on: ubuntu-latest
         steps:
+            - name: Checkout Repository
+              uses: actions/checkout@v4
+              with:
+                  fetch-depth: 0
+                  ref: ${{ github.ref_name }}
+
             - name: Create GitHub Release
               uses: softprops/action-gh-release@v2
               with:
