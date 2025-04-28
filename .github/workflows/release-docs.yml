@@ -32,10 +32,13 @@ jobs:
                   python-version-file: "pyproject.toml"
 
             - name: Install uv
-              uses: astral-sh/setup-uv@v3
+              uses: astral-sh/setup-uv@v5
               with:
                   enable-cache: true
                   cache-dependency-glob: "uv.lock"
+
+            - name: Install the project
+              run: uv sync --locked --all-extras --dev
 
             - name: Build documentation
               run: mkdocs build
