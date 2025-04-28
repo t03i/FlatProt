@@ -1,6 +1,40 @@
 # CHANGELOG
 
 
+## v2.0.5 (2025-04-28)
+
+### Bug Fixes
+
+- Refactor DB utils and update examples
+  ([`84abd4d`](https://github.com/t03i/FlatProt/commit/84abd4da0b42594ebf4402d255b97bd168c3ef3e))
+
+This PR introduces several improvements to the handling of the alignment database and updates the
+  chainsaw.py example accordingly. Key Changes: Database Utilities (src/flatprot/utils/database.py):
+  Refactored DEFAULT_DB_DIR to use platformdirs for a standard, cross-platform data location
+  (rostlab/flatprot). Updated DEFAULT_DB_URL to point to the correct Zenodo archive
+  (alignment_db.zip). Added verify=False to the httpx client during download to mitigate potential
+  SSL certificate verification errors (includes a warning log). Improved the archive extraction
+  logic in download_database to: Extract to a temporary location. Specifically look for the
+  alignment_db folder within the archive. Move the contents of alignment_db to the final target
+  directory. Ignore other files/folders in the archive (like __MACOSX). Adjusted logging levels for
+  better clarity during download/extraction. Chainsaw Example (examples/chainsaw.py): Updated the
+  script to use the new flatprot.utils.database.ensure_database_available function to locate or
+  download the alignment database, removing hardcoded paths. Commented out Colab-specific shell
+  commands (!pip, !wget, etc.) to resolve linter errors and ensure the file is valid Python syntax.
+  Added the missing import for ensure_database_available. Motivation: To make the alignment database
+  download and storage more robust and platform-independent. To resolve issues related to SSL
+  verification and archive structure during database download. To ensure the example script utilizes
+  the centralized database handling logic. To fix linter errors in the example script.
+
+### Chores
+
+- Remove CNAME
+  ([`8ac9db4`](https://github.com/t03i/FlatProt/commit/8ac9db4f21f74edbbf6d557c543918ace21fc8a8))
+
+- Update connector color
+  ([`979fe58`](https://github.com/t03i/FlatProt/commit/979fe584b9e831cbdfa610a1abd33cbe34b963f0))
+
+
 ## v2.0.4 (2025-04-28)
 
 ### Bug Fixes
