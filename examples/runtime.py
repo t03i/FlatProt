@@ -1,5 +1,77 @@
-# Copyright 2025 Tobias Olenyi.
-# SPDX-License-Identifier: Apache-2.0
+# %% [markdown]
+# # FlatProt Runtime Measurement: Human Proteome
+#
+# **Goal:** This script measures the runtime of FlatProt's structural alignment and projection functionality on AlphaFold predicted structures from the human proteome.
+#
+# **Workflow:**
+# 1.  Downloads AlphaFold PDB structures for UniProt IDs listed in an input file.
+# 2.  Runs `flatprot align` (via internal API) using a FoldSeek database.
+# 3.  Runs `flatprot project` (via internal API) if alignment is successful.
+# 4.  Records alignment time, projection time, and any errors.
+# 5.  Saves results to a TSV file.
+
+# %% [markdown]
+# ---
+# ## Environment Setup for Google Colab
+#
+# The following cell checks if the notebook is running in Google Colab and installs the necessary dependencies using IPython magic commands:
+#
+# 1.  **FlatProt:** Installs the latest version directly from the GitHub repository using `pip`.
+# 2.  **Foldseek:** Downloads (`wget`) and extracts (`tar`) the Foldseek binary (for Linux AVX2) and adds it to the system `PATH`.
+# 3.  **DSSP:** Installs the `dssp` package (which provides `mkdssp`) using `apt`.
+#
+# This setup ensures that the example can run successfully in a Colab environment. If not running in Colab, it assumes dependencies are already installed.
+
+# %% import os
+import sys
+
+IN_COLAB = "google.colab" in sys.modules
+
+if IN_COLAB:
+    print("Running in Google Colab. Setting up environment...")
+
+    # 1. Install FlatProt from GitHub
+    print("\n[1/3] Installing FlatProt...")
+    !{sys.executable} -m pip install --quiet --upgrade git+https://github.com/rostlab/FlatProt.git#egg=flatprot
+    print("FlatProt installation attempted.") # Add confirmation
+
+    # 2. Install Foldseek
+    print("\n[2/3] Installing Foldseek...")
+    foldseek_url = "https://mmseqs.com/foldseek/foldseek-linux-avx2.tar.gz"
+    foldseek_tar = "foldseek-linux-avx2.tar.gz"
+    foldseek_dir = "foldseek" # Expected directory name after extraction
+
+    print(f"Downloading Foldseek from {foldseek_url}...")
+    !wget -q {foldseek_url} -O {foldseek_tar}
+    print("Extracting Foldseek...")
+    !tar -xzf {foldseek_tar}
+
+    # Add Foldseek bin directory to PATH
+    foldseek_bin_path = os.path.join(os.getcwd(), foldseek_dir, "bin")
+    os.environ['PATH'] = f"{foldseek_bin_path}:{os.environ['PATH']}"
+    print(f"Added {foldseek_bin_path} to PATH")
+    print("Verifying Foldseek installation...")
+    !foldseek --help | head -n 5 # Verify installation by running command
+
+    # 3. Install DSSP
+    print("\n[3/3] Installing DSSP...")
+    print("Updating apt package list...")
+    !sudo apt-get update -qq
+    print("Installing DSSP...")
+    !sudo apt-get install -y -qq dssp
+    print("Verifying DSSP installation...")
+    !mkdssp --version # Verify installation
+
+    print("\nEnvironment setup complete.")
+
+
+# %% [markdown]
+# ---
+# ## Step 1: Setup and Imports
+#
+# Import necessary libraries and define paths.
+
+# %%
 
 """Runtime measurement script for FlatProt alignment and projection on human proteome.
 

@@ -21,7 +21,9 @@ repos:
       - id: ruff
         args:
           - --fix
+        exclude: ^examples/.*\.py$ # Exclude example scripts due to IPython magic
       - id: ruff-format
+        exclude: ^examples/.*\.py$ # Exclude example scripts due to IPython magic
 
   - repo: local
     hooks:

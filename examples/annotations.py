@@ -13,6 +13,63 @@
 
 # %% [markdown]
 # ---
+# ## Environment Setup for Google Colab
+#
+# The following cell checks if the notebook is running in Google Colab and installs the necessary dependencies using IPython magic commands:
+#
+# 1.  **FlatProt:** Installs the latest version directly from the GitHub repository using `pip`.
+# 2.  **Foldseek:** Downloads (`wget`) and extracts (`tar`) the Foldseek binary (for Linux AVX2) and adds it to the system `PATH`.
+# 3.  **DSSP:** Installs the `dssp` package (which provides `mkdssp`) using `apt`.
+#
+# This setup ensures that the example can run successfully in a Colab environment. If not running in Colab, it assumes dependencies are already installed.
+
+# %%
+import os
+import sys
+
+IN_COLAB = 'google.colab' in sys.modules
+
+if IN_COLAB:
+    print("Running in Google Colab. Setting up environment...")
+
+    # 1. Install FlatProt from GitHub
+    print("\n[1/3] Installing FlatProt...")
+    # Use sys.executable to ensure pip is run with the correct Python interpreter
+    !{sys.executable} -m pip install --quiet --upgrade git+https://github.com/rostlab/FlatProt.git#egg=flatprot
+    print("FlatProt installation attempted.") # Add confirmation
+
+    # 2. Install Foldseek
+    print("\n[2/3] Installing Foldseek...")
+    foldseek_url = "https://mmseqs.com/foldseek/foldseek-linux-avx2.tar.gz"
+    foldseek_tar = "foldseek-linux-avx2.tar.gz"
+    foldseek_dir = "foldseek" # Expected directory name after extraction
+
+    print(f"Downloading Foldseek from {foldseek_url}...")
+    !wget -q {foldseek_url} -O {foldseek_tar}
+    print("Extracting Foldseek...")
+    !tar -xzf {foldseek_tar}
+
+    # Add Foldseek bin directory to PATH
+    foldseek_bin_path = os.path.join(os.getcwd(), foldseek_dir, "bin")
+    os.environ['PATH'] = f"{foldseek_bin_path}:{os.environ['PATH']}"
+    print(f"Added {foldseek_bin_path} to PATH")
+    print("Verifying Foldseek installation...")
+    !foldseek --help | head -n 5 # Verify installation by running command
+
+    # 3. Install DSSP
+    print("\n[3/3] Installing DSSP...")
+    print("Updating apt package list...")
+    !sudo apt-get update -qq
+    print("Installing DSSP...")
+    !sudo apt-get install -y -qq dssp
+    print("Verifying DSSP installation...")
+    !mkdssp --version # Verify installation
+
+    print("\nEnvironment setup complete.")
+
+
+# %% [markdown]
+# ---
 # ## Step 1: Setup and Imports
 #
 # Import necessary libraries, define file paths, and setup the `pybash` magic command.
@@ -23,22 +80,7 @@ from pathlib import Path
 import os
 
 # IPython Specifics for Bash Magic and Display
-from IPython import get_ipython
-from IPython.core.magic import register_cell_magic
 from IPython.display import SVG, display
-
-# %%
-# Register pybash magic command if running in IPython
-ipython = get_ipython()
-if ipython:
-
-    @register_cell_magic
-    def pybash(line, cell):
-        """Execute bash commands within IPython, substituting Python variables."""
-        ipython.run_cell_magic("bash", "", cell.format(**globals()))
-
-else:
-    print("[WARN] Not running in IPython environment. `pybash` magic will not work.")
 
 # %%
 # --- Configuration ---
@@ -194,7 +236,7 @@ except IOError as e:
 print("\n[STEP 5] Generating FlatProt projection with styles and annotations...")
 
 # Check if config files were written successfully before proceeding
-if style_file.exists() and annotations_file.exists() and ipython:
+if style_file.exists() and annotations_file.exists():
     # Construct the command
     project_cmd = (
         f"uv run flatprot project {structure_file.resolve()} "
@@ -204,18 +246,16 @@ if style_file.exists() and annotations_file.exists() and ipython:
         f"--quiet"
     )
 
-    # Run the command using pybash magic via run_cell_magic
+    # Run the command using ! magic
     print("  Running command: flatprot project ...")  # Keep it concise
     try:
-        ipython.run_cell_magic("pybash", "", project_cmd)
+        !{project_cmd}
         print(f"  SVG projection saved to: {structure_svg.resolve()}")
     except Exception as e:
         print(f"[ERROR] flatprot project command failed: {e}")
 
 elif not style_file.exists() or not annotations_file.exists():
     print("[WARN] Style or annotations file does not exist. Skipping projection.")
-elif not ipython:
-    print("[WARN] Not in IPython environment. Skipping projection command.")
 
 # %% [markdown]
 # ---

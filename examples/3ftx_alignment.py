@@ -11,6 +11,65 @@
 
 # %% [markdown]
 # ---
+# ## Environment Setup for Google Colab
+#
+# The following cell checks if the notebook is running in Google Colab and installs the necessary dependencies using IPython magic commands:
+#
+# 1.  **FlatProt:** Installs the latest version directly from the GitHub repository using `pip`.
+# 2.  **Foldseek:** Downloads (`wget`) and extracts (`tar`) the Foldseek binary (for Linux AVX2) and adds it to the system `PATH`.
+# 3.  **DSSP:** Installs the `dssp` package (which provides `mkdssp`) using `apt`.
+#
+# This setup ensures that the example can run successfully in a Colab environment. If not running in Colab, it assumes dependencies are already installed.
+
+# %%
+import os
+import sys
+
+IN_COLAB = 'google.colab' in sys.modules
+
+if IN_COLAB:
+    print("Running in Google Colab. Setting up environment...")
+
+    # 1. Install FlatProt from GitHub
+    print("\n[1/3] Installing FlatProt...")
+    # Use sys.executable to ensure pip is run with the correct Python interpreter
+    !{sys.executable} -m pip install --quiet --upgrade git+https://github.com/rostlab/FlatProt.git#egg=flatprot
+    print("FlatProt installation attempted.") # Add confirmation
+
+    # 2. Install Foldseek
+    print("\n[2/3] Installing Foldseek...")
+    foldseek_url = "https://mmseqs.com/foldseek/foldseek-linux-avx2.tar.gz"
+    foldseek_tar = "foldseek-linux-avx2.tar.gz"
+    foldseek_dir = "foldseek" # Expected directory name after extraction
+
+    print(f"Downloading Foldseek from {foldseek_url}...")
+    !wget -q {foldseek_url} -O {foldseek_tar}
+    print("Extracting Foldseek...")
+    !tar -xzf {foldseek_tar}
+
+    # Add Foldseek bin directory to PATH
+    foldseek_bin_path = os.path.join(os.getcwd(), foldseek_dir, "bin")
+    os.environ['PATH'] = f"{foldseek_bin_path}:{os.environ['PATH']}"
+    print(f"Added {foldseek_bin_path} to PATH")
+    print("Verifying Foldseek installation...")
+    !foldseek --help | head -n 5 # Verify installation by running command
+
+    # 3. Install DSSP
+    print("\n[3/3] Installing DSSP...")
+    print("Updating apt package list...")
+    !sudo apt-get update -qq
+    print("Installing DSSP...")
+    !sudo apt-get install -y -qq dssp
+    print("Verifying DSSP installation...")
+    !mkdssp --version # Verify installation
+
+    print("\nEnvironment setup complete.")
+
+
+
+
+# %% [markdown]
+# ---
 # ## Step 1: Setup and Imports
 #
 # Import necessary libraries and define file paths for input structures and output results.
@@ -22,22 +81,9 @@ import os
 from typing import List, Optional
 
 # IPython Specifics for Bash Magic and Display
-from IPython import get_ipython
-from IPython.core.magic import register_cell_magic
+# Remove get_ipython import
 from IPython.display import display, HTML
 
-# %%
-# Register pybash magic command if running in IPython
-ipython = get_ipython()
-if ipython:
-
-    @register_cell_magic
-    def pybash(line, cell):
-        """Execute bash commands within IPython, substituting Python variables."""
-        ipython.run_cell_magic("bash", "", cell.format(**globals()))
-
-else:
-    print("[WARN] Not running in IPython environment. `pybash` magic will not work.")
 
 # %%
 # --- Configuration ---
@@ -104,23 +150,21 @@ print(f"  Min Probability: {min_p}")
 
 # %%
 print("\n[STEP 2] Running FlatProt Alignments...")
-if ipython:  # Ensure we are in an IPython environment
-    # Align Cobra
-    print("Aligning Cobra...")
-    cobra_align_cmd = f"uv run flatprot align {cobra_path} {cobra_matrix} {cobra_info} -d {db_path} --min-probability {min_p} --quiet"
-    ipython.run_cell_magic("pybash", "", cobra_align_cmd)
+# Remove if ipython check
+# Align Cobra
+print("Aligning Cobra...")
+cobra_align_cmd = f"uv run flatprot align {cobra_path} {cobra_matrix} {cobra_info} -d {db_path} --min-probability {min_p} --quiet"
+!{cobra_align_cmd}
 
-    # Align Krait
-    print("Aligning Krait...")
-    krait_align_cmd = f"uv run flatprot align {krait_path} {krait_matrix} {krait_info} -d {db_path} --min-probability {min_p} --quiet"
-    ipython.run_cell_magic("pybash", "", krait_align_cmd)
+# Align Krait
+print("Aligning Krait...")
+krait_align_cmd = f"uv run flatprot align {krait_path} {krait_matrix} {krait_info} -d {db_path} --min-probability {min_p} --quiet"
+!{krait_align_cmd}
 
-    # Align Snake
-    print("Aligning Snake...")
-    snake_align_cmd = f"uv run flatprot align {snake_path} {snake_matrix} {snake_info} -d {db_path} --min-probability {min_p} --quiet"
-    ipython.run_cell_magic("pybash", "", snake_align_cmd)
-else:
-    print("[WARN] Not in IPython. Skipping alignment commands.")
+# Align Snake
+print("Aligning Snake...")
+snake_align_cmd = f"uv run flatprot align {snake_path} {snake_matrix} {snake_info} -d {db_path} --min-probability {min_p} --quiet"
+!{snake_align_cmd}
 
 print("[INFO] Alignments complete. Matrices and info files generated.")
 
@@ -132,25 +176,22 @@ print("[INFO] Alignments complete. Matrices and info files generated.")
 
 # %%
 print("\n[STEP 3] Running FlatProt Projections...")
-if ipython:  # Ensure we are in an IPython environment
-    # Project Cobra
-    canvas_args = "--canvas-width 300 --canvas-height 200"
-    print("Projecting Cobra...")
-    cobra_project_cmd = f"uv run flatprot project {cobra_path} -o {cobra_out} --matrix {cobra_matrix} --quiet {canvas_args}"
-    ipython.run_cell_magic("pybash", "", cobra_project_cmd)
+# Remove if ipython check
+# Project Cobra
+canvas_args = "--canvas-width 300 --canvas-height 200"
+print("Projecting Cobra...")
+cobra_project_cmd = f"uv run flatprot project {cobra_path} -o {cobra_out} --matrix {cobra_matrix} --quiet {canvas_args}"
+!{cobra_project_cmd}
 
-    # Project Krait
-    print("Projecting Krait...")
-    krait_project_cmd = f"uv run flatprot project {krait_path} -o {krait_out} --matrix {krait_matrix} --quiet {canvas_args}"
-    ipython.run_cell_magic("pybash", "", krait_project_cmd)
+# Project Krait
+print("Projecting Krait...")
+krait_project_cmd = f"uv run flatprot project {krait_path} -o {krait_out} --matrix {krait_matrix} --quiet {canvas_args}"
+!{krait_project_cmd}
 
-    # Project Snake
-    print("Projecting Snake...")
-    snake_project_cmd = f"uv run flatprot project {snake_path} -o {snake_out} --matrix {snake_matrix} --quiet {canvas_args}"
-    ipython.run_cell_magic("pybash", "", snake_project_cmd)
-else:
-    print("[WARN] Not in IPython. Skipping projection commands.")
-
+# Project Snake
+print("Projecting Snake...")
+snake_project_cmd = f"uv run flatprot project {snake_path} -o {snake_out} --matrix {snake_matrix} --quiet {canvas_args}"
+!{snake_project_cmd}
 
 print("[INFO] Projections complete. SVG files generated.")
 
