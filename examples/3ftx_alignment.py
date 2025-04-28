@@ -11,60 +11,143 @@
 
 # %% [markdown]
 # ---
-# ## Step 1: Setup and Imports
+# ## Environment Setup for Google Colab
 #
-# Import necessary libraries and define file paths for input structures and output results.
+# The following cell checks if the notebook is running in Google Colab and installs the necessary dependencies and downloads required data:
+#
+# 1.  **FlatProt:** Installs the latest version directly from the GitHub repository using `pip`.
+# 2.  **Foldseek:** Downloads (`wget`) and extracts (`tar`) the Foldseek binary (for Linux AVX2) and adds it to the system `PATH`.
+# 3.  **DSSP:** Installs the `dssp` package (which provides `mkdssp`) using `apt`.
+# 4.  **Repository Data:** Downloads the repository archive, extracts it, and moves the `data/` and `out/` directories to the Colab environment's root.
+#
+# This setup ensures that the example can run successfully in a Colab environment. If not running in Colab, it assumes dependencies and relative data paths are already correct.
 
 # %%
-# Essential Imports
-from pathlib import Path
 import os
-from typing import List, Optional
+import sys
+from pathlib import Path # Ensure Path is imported here
 
+IN_COLAB = 'google.colab' in sys.modules
+COLAB_BASE_DIR = Path(".") # Base directory for Colab CWD (/content)
+REPO_DIR_NAME = "FlatProt-main" # Default dir name after unzip
+
+if IN_COLAB:
+    print("Running in Google Colab. Setting up environment and data...")
+
+    # --- 1. Install FlatProt ---
+    print("\n[1/4] Installing FlatProt...")
+    !{sys.executable} -m pip install --quiet --upgrade git+https://github.com/t03i/FlatProt.git#egg=flatprot
+    print("FlatProt installation attempted.")
+
+    # --- 2. Install Foldseek ---
+    print("\n[2/4] Installing Foldseek...")
+    foldseek_url = "https://mmseqs.com/foldseek/foldseek-linux-avx2.tar.gz"
+    foldseek_tar = "foldseek-linux-avx2.tar.gz"
+    foldseek_dir = "foldseek"
+    print(f"Downloading Foldseek from {foldseek_url}...")
+    !wget -q {foldseek_url} -O {foldseek_tar}
+    print("Extracting Foldseek...")
+    !tar -xzf {foldseek_tar}
+    foldseek_bin_path = os.path.join(os.getcwd(), foldseek_dir, "bin")
+    os.environ['PATH'] = f"{foldseek_bin_path}:{os.environ['PATH']}"
+    print(f"Added {foldseek_bin_path} to PATH")
+    print("Verifying Foldseek installation...")
+    !foldseek --help | head -n 5
+    print("Foldseek installation attempted.")
+
+    # --- 3. Install DSSP ---
+    print("\n[3/4] Installing DSSP...")
+    print("Updating apt package list...")
+    !sudo apt-get update -qq
+    print("Installing DSSP...")
+    !sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -qq dssp
+    print("Verifying DSSP installation...")
+    !mkdssp --version
+    print("DSSP installation attempted.")
+
+    # --- 4. Download Repository Data ---
+    print("\n[4/4] Downloading repository data (data/ and out/)...")
+    repo_zip_url = "https://github.com/t03i/FlatProt/archive/refs/heads/main.zip"
+    repo_zip_file = "repo.zip"
+    repo_temp_dir = "repo_temp"
+
+    print(f"Downloading repository archive from {repo_zip_url}...")
+    !wget -q {repo_zip_url} -O {repo_zip_file}
+    print(f"Extracting archive to {repo_temp_dir}...")
+    !unzip -o -q {repo_zip_file} -d {repo_temp_dir}
+
+    extracted_repo_path = COLAB_BASE_DIR / repo_temp_dir / REPO_DIR_NAME
+    if extracted_repo_path.is_dir():
+         print(f"Moving data/ and out/ directories from {extracted_repo_path}...")
+         source_data_path = extracted_repo_path / "data"
+         if source_data_path.exists():
+             !mv -T {source_data_path} {COLAB_BASE_DIR}/data
+             print("Moved data/ directory.")
+         else:
+             print("[WARN] data/ directory not found in archive.")
+
+         source_out_path = extracted_repo_path / "out"
+         if source_out_path.exists():
+             !mv -T {source_out_path} {COLAB_BASE_DIR}/out
+             print("Moved out/ directory.")
+         else:
+             print("[INFO] out/ directory not found in archive, creating.")
+             (COLAB_BASE_DIR / "out").mkdir(exist_ok=True) # Ensure out exists even if not in archive
+    else:
+         print(f"[ERROR] Expected directory '{extracted_repo_path}' not found after extraction.")
+
+    print("Cleaning up downloaded files...")
+    !rm -rf {repo_temp_dir} {repo_zip_file}
+
+    print("\nEnvironment and data setup complete.")
+    base_dir = COLAB_BASE_DIR
+
+# --- Path Definitions ---
+print(f"[INFO] Using base directory: {base_dir.resolve()}")
+data_dir_base = base_dir / "data"
+tmp_dir_base = base_dir / "tmp"
+out_dir = base_dir / "out"
+
+# Ensure base tmp/out directories exist
+tmp_dir_base.mkdir(parents=True, exist_ok=True)
+out_dir.mkdir(parents=True, exist_ok=True) # Ensures out/ exists for db path
+
+
+# %%
+# Essential Imports (keep remaining imports here)
+from typing import List, Optional
 # IPython Specifics for Bash Magic and Display
-from IPython import get_ipython
-from IPython.core.magic import register_cell_magic
 from IPython.display import display, HTML
 
-# %%
-# Register pybash magic command if running in IPython
-ipython = get_ipython()
-if ipython:
-
-    @register_cell_magic
-    def pybash(line, cell):
-        """Execute bash commands within IPython, substituting Python variables."""
-        ipython.run_cell_magic("bash", "", cell.format(**globals()))
-
-else:
-    print("[WARN] Not running in IPython environment. `pybash` magic will not work.")
 
 # %%
 # --- Configuration ---
 
 print("[STEP 1] Setting up paths and variables...")
 
-# Define base directories
-base_dir = Path("..")
-data_dir = base_dir / "data" / "3Ftx"
-tmp_dir = base_dir / "tmp" / "3ftx_alignment"
-db_dir = base_dir / "out"  # Assuming db is here
+# Define script-specific directories using the base paths
+data_dir = data_dir_base / "3Ftx" # Specific data dir for this script
+tmp_dir = tmp_dir_base / "3ftx_alignment" # Specific tmp dir
+db_dir = out_dir  # Alignment DB expected in out/
 
-# Input structure files
+# Create specific temporary directory if it doesn't exist
+os.makedirs(tmp_dir, exist_ok=True)
+print(f"[INFO] Using temporary directory: {tmp_dir.resolve()}")
+
+
+# Input structure files (relative to specific data_dir)
 cobra_file = data_dir / "cobra.cif"
 krait_file = data_dir / "krait.cif"
 snake_file = data_dir / "snake.cif"
 
-# Ensure data directory exists
+# Ensure data directory exists (after potential download)
 if not data_dir.exists():
-    print(f"[ERROR] Data directory not found: {data_dir}")
-    # Handle error appropriately, e.g., raise FileNotFoundError or exit
+    # If we are here, it means base_dir/data/3Ftx doesn't exist
+    print(f"[ERROR] Specific data directory not found: {data_dir}")
+    if IN_COLAB:
+        print("      This might indicate an issue with the repository structure or download.")
     raise FileNotFoundError(f"Data directory not found: {data_dir}")
 
-
-# Create temporary directory if it doesn't exist
-os.makedirs(tmp_dir, exist_ok=True)
-print(f"[INFO] Using temporary directory: {tmp_dir.resolve()}")
 
 # Define output file paths within the temporary directory
 cobra_path = str(cobra_file.resolve())
@@ -82,9 +165,6 @@ snake_matrix = str(tmp_dir / "snake_matrix.npy")
 snake_info = str(tmp_dir / "snake_info.json")
 snake_out = str(tmp_dir / "snake.svg")
 
-# Alignment database path
-db_path = str((db_dir / "alignment_db").resolve())  # Ensure path is correct
-
 # Alignment parameter
 min_p = 0.5
 
@@ -93,7 +173,6 @@ print(f"  Input Cobra: {cobra_path}")
 print(f"  Input Krait: {krait_path}")
 print(f"  Input Snake: {snake_path}")
 print(f"  Output Dir: {tmp_dir.resolve()}")
-print(f"  Database Path: {db_path}")
 print(f"  Min Probability: {min_p}")
 
 # %% [markdown]
@@ -104,23 +183,21 @@ print(f"  Min Probability: {min_p}")
 
 # %%
 print("\n[STEP 2] Running FlatProt Alignments...")
-if ipython:  # Ensure we are in an IPython environment
-    # Align Cobra
-    print("Aligning Cobra...")
-    cobra_align_cmd = f"uv run flatprot align {cobra_path} {cobra_matrix} {cobra_info} -d {db_path} --min-probability {min_p} --quiet"
-    ipython.run_cell_magic("pybash", "", cobra_align_cmd)
+# Remove if ipython check
+# Align Cobra
+print("Aligning Cobra...")
+cobra_align_cmd = f"uv run flatprot align {cobra_path} {cobra_matrix} {cobra_info}  --min-probability {min_p} --quiet"
+!{cobra_align_cmd}
 
-    # Align Krait
-    print("Aligning Krait...")
-    krait_align_cmd = f"uv run flatprot align {krait_path} {krait_matrix} {krait_info} -d {db_path} --min-probability {min_p} --quiet"
-    ipython.run_cell_magic("pybash", "", krait_align_cmd)
+# Align Krait
+print("Aligning Krait...")
+krait_align_cmd = f"uv run flatprot align {krait_path} {krait_matrix} {krait_info} --min-probability {min_p} --quiet"
+!{krait_align_cmd}
 
-    # Align Snake
-    print("Aligning Snake...")
-    snake_align_cmd = f"uv run flatprot align {snake_path} {snake_matrix} {snake_info} -d {db_path} --min-probability {min_p} --quiet"
-    ipython.run_cell_magic("pybash", "", snake_align_cmd)
-else:
-    print("[WARN] Not in IPython. Skipping alignment commands.")
+# Align Snake
+print("Aligning Snake...")
+snake_align_cmd = f"uv run flatprot align {snake_path} {snake_matrix} {snake_info}  --min-probability {min_p} --quiet"
+!{snake_align_cmd}
 
 print("[INFO] Alignments complete. Matrices and info files generated.")
 
@@ -132,25 +209,22 @@ print("[INFO] Alignments complete. Matrices and info files generated.")
 
 # %%
 print("\n[STEP 3] Running FlatProt Projections...")
-if ipython:  # Ensure we are in an IPython environment
-    # Project Cobra
-    canvas_args = "--canvas-width 300 --canvas-height 200"
-    print("Projecting Cobra...")
-    cobra_project_cmd = f"uv run flatprot project {cobra_path} -o {cobra_out} --matrix {cobra_matrix} --quiet {canvas_args}"
-    ipython.run_cell_magic("pybash", "", cobra_project_cmd)
+# Remove if ipython check
+# Project Cobra
+canvas_args = "--canvas-width 300 --canvas-height 200"
+print("Projecting Cobra...")
+cobra_project_cmd = f"uv run flatprot project {cobra_path} -o {cobra_out} --matrix {cobra_matrix} --quiet {canvas_args}"
+!{cobra_project_cmd}
 
-    # Project Krait
-    print("Projecting Krait...")
-    krait_project_cmd = f"uv run flatprot project {krait_path} -o {krait_out} --matrix {krait_matrix} --quiet {canvas_args}"
-    ipython.run_cell_magic("pybash", "", krait_project_cmd)
+# Project Krait
+print("Projecting Krait...")
+krait_project_cmd = f"uv run flatprot project {krait_path} -o {krait_out} --matrix {krait_matrix} --quiet {canvas_args}"
+!{krait_project_cmd}
 
-    # Project Snake
-    print("Projecting Snake...")
-    snake_project_cmd = f"uv run flatprot project {snake_path} -o {snake_out} --matrix {snake_matrix} --quiet {canvas_args}"
-    ipython.run_cell_magic("pybash", "", snake_project_cmd)
-else:
-    print("[WARN] Not in IPython. Skipping projection commands.")
-
+# Project Snake
+print("Projecting Snake...")
+snake_project_cmd = f"uv run flatprot project {snake_path} -o {snake_out} --matrix {snake_matrix} --quiet {canvas_args}"
+!{snake_project_cmd}
 
 print("[INFO] Projections complete. SVG files generated.")
 

@@ -40,24 +40,16 @@ jobs:
                   # The create-pull-request action will commit them if changes exist.
                   git add --force examples/*.ipynb
 
-            - name: Create Pull Request
-              uses: peter-evans/create-pull-request@v6
-              with:
-                  token: ${{ secrets.GITHUB_TOKEN }} # Use default GitHub token
-                  commit-message: "chore: Generate example notebooks"
-                  committer: GitHub <noreply@github.com> # Use default committer
-                  author: ${{ github.actor }} <${{ github.actor }}@users.noreply.github.com>
-                  signoff: false
-                  branch: chore/generate-notebooks # Name of the branch to create the PR from
-                  delete-branch: true # Delete the branch after merging/closing PR
-                  title: "chore: Generate example notebooks"
-                  body: |
-                      Automated generation of Jupyter notebooks from example Python scripts.
-                      Changes detected in `examples/*.py`.
-                  labels: |
-                      automated
-                      chore
-                  assignees: ${{ github.actor }}
-                  reviewers: ${{ github.actor }}
-                  add-paths: |
-                      examples/*.ipynb
+            - name: Commit and Push Notebooks to 'notebooks' branch
+              run: |
+                  git config user.name "GitHub Action"
+                  git config user.email "action@github.com"
+                  # Create/switch to the notebooks branch
+                  git checkout -B notebooks
+                  # Add the files again on the new branch (in case checkout unstaged them)
+                  git add --force examples/*.ipynb
+                  # Check if there are staged changes, commit only if there are
+                  git diff --staged --quiet || git commit -m "chore: Generate example notebooks [skip ci]"
+                  # Push to the remote notebooks branch, force pushing is necessary
+                  # as this branch's history is disposable and frequently rewritten.
+                  git push origin notebooks --force

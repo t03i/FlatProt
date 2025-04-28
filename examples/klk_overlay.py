@@ -19,51 +19,132 @@
 # Jupyter Notebook using Jupytext.
 
 # %% [markdown]
-# ## Setup
+# ---
+# ## Environment Setup for Google Colab
 #
-# Import necessary libraries and define a helper magic command `pybash`
-# to run shell commands within the Python script, substituting Python variables.
+# The following cell checks if the notebook is running in Google Colab and installs the necessary dependencies and downloads required data:
+#
+# 1.  **FlatProt:** Installs the latest version directly from the GitHub repository using `pip`.
+# 2.  **Foldseek:** Downloads (`wget`) and extracts (`tar`) the Foldseek binary (for Linux AVX2) and adds it to the system `PATH`.
+# 3.  **DSSP:** Installs the `dssp` package (which provides `mkdssp`) using `apt`.
+# 4.  **Repository Data:** Downloads the repository archive, extracts it, and moves the `data/` and `out/` directories to the Colab environment's root.
+#
+# This setup ensures that the example can run successfully in a Colab environment. If not running in Colab, it assumes dependencies and relative data paths are already correct.
 
 # %%
+import os
+import sys
+from pathlib import Path # Ensure Path is imported here
+
+IN_COLAB = 'google.colab' in sys.modules
+COLAB_BASE_DIR = Path(".") # Base directory for Colab CWD (/content)
+REPO_DIR_NAME = "FlatProt-main" # Default dir name after unzip
+
+if IN_COLAB:
+    print("Running in Google Colab. Setting up environment and data...")
+
+    # --- 1. Install FlatProt ---
+    print("\n[1/4] Installing FlatProt...")
+    !{sys.executable} -m pip install --quiet --upgrade git+https://github.com/t03i/FlatProt.git#egg=flatprot
+    print("FlatProt installation attempted.")
+
+    # --- 2. Install Foldseek ---
+    print("\n[2/4] Installing Foldseek...")
+    foldseek_url = "https://mmseqs.com/foldseek/foldseek-linux-avx2.tar.gz"
+    foldseek_tar = "foldseek-linux-avx2.tar.gz"
+    foldseek_dir = "foldseek"
+    print(f"Downloading Foldseek from {foldseek_url}...")
+    !wget -q {foldseek_url} -O {foldseek_tar}
+    print("Extracting Foldseek...")
+    !tar -xzf {foldseek_tar}
+    foldseek_bin_path = os.path.join(os.getcwd(), foldseek_dir, "bin")
+    os.environ['PATH'] = f"{foldseek_bin_path}:{os.environ['PATH']}"
+    print(f"Added {foldseek_bin_path} to PATH")
+    print("Verifying Foldseek installation...")
+    !foldseek --help | head -n 5
+    print("Foldseek installation attempted.")
+
+    # --- 3. Install DSSP ---
+    print("\n[3/4] Installing DSSP...")
+    print("Updating apt package list...")
+    !sudo apt-get update -qq
+    print("Installing DSSP...")
+    !sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -qq dssp
+    print("Verifying DSSP installation...")
+    !mkdssp --version
+    print("DSSP installation attempted.")
+
+    # --- 4. Download Repository Data ---
+    print("\n[4/4] Downloading repository data (data/ and out/)...")
+    repo_zip_url = "https://github.com/t03i/FlatProt/archive/refs/heads/main.zip"
+    repo_zip_file = "repo.zip"
+    repo_temp_dir = "repo_temp"
+
+    print(f"Downloading repository archive from {repo_zip_url}...")
+    !wget -q {repo_zip_url} -O {repo_zip_file}
+    print(f"Extracting archive to {repo_temp_dir}...")
+    !unzip -o -q {repo_zip_file} -d {repo_temp_dir}
+
+    extracted_repo_path = COLAB_BASE_DIR / repo_temp_dir / REPO_DIR_NAME
+    if extracted_repo_path.is_dir():
+         print(f"Moving data/ and out/ directories from {extracted_repo_path}...")
+         source_data_path = extracted_repo_path / "data"
+         if source_data_path.exists():
+             !mv -T {source_data_path} {COLAB_BASE_DIR}/data
+             print("Moved data/ directory.")
+         else:
+             print("[WARN] data/ directory not found in archive.")
+
+         source_out_path = extracted_repo_path / "out"
+         if source_out_path.exists():
+             !mv -T {source_out_path} {COLAB_BASE_DIR}/out
+             print("Moved out/ directory.")
+         else:
+             print("[INFO] out/ directory not found in archive, creating.")
+             (COLAB_BASE_DIR / "out").mkdir(exist_ok=True)
+    else:
+         print(f"[ERROR] Expected directory '{extracted_repo_path}' not found after extraction.")
+
+    print("Cleaning up downloaded files...")
+    !rm -rf {repo_temp_dir} {repo_zip_file}
+
+    print("\nEnvironment and data setup complete.")
+    base_dir = COLAB_BASE_DIR
+
+# --- Path Definitions ---
+print(f"[INFO] Using base directory: {base_dir.resolve()}")
+data_dir_base = base_dir / "data"
+tmp_dir_base = base_dir / "tmp"
+out_dir = base_dir / "out"
+
+# Ensure base tmp/out directories exist
+tmp_dir_base.mkdir(parents=True, exist_ok=True)
+out_dir.mkdir(parents=True, exist_ok=True)
+
+
+# %%
+# Essential Imports (Keep remaining imports here)
 import collections
 import csv
 import xml.etree.ElementTree as ET
-from pathlib import Path
-import os
-import zipfile
+import zipfile # Needed later
 from typing import Union
-from IPython import get_ipython
-from IPython.core.magic import register_cell_magic
 from IPython.display import SVG, display
 
 # FlatProt Core Imports
 from flatprot.core import logger
 
-ipython = get_ipython()
-
-
-@register_cell_magic
-def pybash(line: str, cell: str) -> None:
-    """Execute cell contents as a bash script, substituting Python variables.
-
-    Args:
-        line: The arguments passed to the magic command (unused).
-        cell: The content of the cell to execute. Python variables can be
-              interpolated using f-string-like syntax (e.g., {variable_name}).
-    """
-    if ipython:
-        ipython.run_cell_magic("bash", "", cell.format(**globals()))
-
-
-# %% [markdown]
-# Define paths for temporary data, the input data archive,
-# and create the temporary directory.
-
 # %%
-tmp_dir = Path("../tmp/klk_overlay")
-data_archive = Path("../data/KLK.zip")
+# --- Configuration & Setup ---
+print("\n[STEP 1] Setting up script paths and variables...")
 
+# Define script-specific directories and file paths using base paths
+tmp_dir = tmp_dir_base / "klk_overlay" # Specific tmp dir
+data_archive = data_dir_base / "KLK.zip" # Specific input archive
+
+# Create specific temporary directory if it doesn't exist
 os.makedirs(tmp_dir, exist_ok=True)
+print(f"[INFO] Using temporary directory: {tmp_dir.resolve()}")
 
 
 # %% [markdown]
@@ -141,12 +222,10 @@ structures_dir_str = str(structures_dir)
 cluster_output_prefix_str = str(cluster_output_prefix)
 clustering_tmp_dir_str = str(clustering_tmp_dir)
 
-# Run foldseek easy-cluster
-ipython.run_cell_magic(
-    "pybash",
-    "",
-    "foldseek easy-cluster {structures_dir_str} {cluster_output_prefix_str} {clustering_tmp_dir_str} --min-seq-id 0.5 --c 0.9 --threads 4 -v 0 | cat",
-)
+# Run foldseek easy-cluster using ! magic
+cluster_cmd = f"foldseek easy-cluster {structures_dir_str} {cluster_output_prefix_str} {clustering_tmp_dir_str} --min-seq-id 0.5 --c 0.9 --threads 4 -v 0 | cat"
+# Remove if ipython check
+!{cluster_cmd}
 
 # Parse the cluster results
 cluster_file = Path(f"{cluster_output_prefix_str}_cluster.tsv")
@@ -192,8 +271,7 @@ info_dir = tmp_dir / "json"
 matrix_dir.mkdir(exist_ok=True)
 info_dir.mkdir(exist_ok=True)
 
-# Adjust this path to your actual Foldseek database location
-alignment_db_path = "../out/alignment_db"
+
 
 # %% [markdown]
 # Run `flatprot align` for each representative structure against the database.
@@ -204,16 +282,16 @@ for file in representative_files:
     info_path = info_dir / f"{file.stem}_info.json"
 
     # Convert paths to strings for the command line
-    file_str = str(file)
-    matrix_path_str = str(matrix_path)
-    info_path_str = str(info_path)
+    file_str = str(file.resolve())
+    matrix_path_str = str(matrix_path.resolve())
+    info_path_str = str(info_path.resolve())
 
-    ipython.run_cell_magic(
-        "pybash",
-        "",
-        "uv run flatprot align {file_str} {matrix_path_str} {info_path_str} "
-        "-d {alignment_db_path} --target-db-id 3000114 --quiet",
+    align_cmd = (
+        f"uv run flatprot align {file_str} {matrix_path_str} {info_path_str} "
+        f"--target-db-id 3000114 --quiet"
     )
+    # Remove if ipython check
+    !{align_cmd}
 
 
 # %% [markdown]
@@ -288,18 +366,19 @@ print(f"Processing {len(representative_files)} structures for projection...")
 
 for file in representative_files:
     matrix_path = str(matrix_dir / f"{file.stem}_matrix.npy")
-    file_str = str(file)
-    style_str = str(style_file)
+    file_str = str(file.resolve())
+    style_str = str(style_file.resolve())
     svg_path = str(svg_dir / f"{file.stem}.svg")
 
     rep_base_name = file.stem  # Used as key
 
-    ipython.run_cell_magic(
-        "pybash",
-        "",
-        "uv run flatprot project {file_str} --matrix {matrix_path} "
-        "-o {svg_path} --quiet --canvas-width {CANVAS_WIDTH} --canvas-height {CANVAS_HEIGHT} --style {style_str}",
+    project_cmd = (
+        f"uv run flatprot project {file_str} --matrix {matrix_path} "
+        f"-o {svg_path} --quiet --canvas-width {CANVAS_WIDTH} --canvas-height {CANVAS_HEIGHT} --style {style_str}"
     )
+    # Remove if ipython check
+    !{project_cmd}
+
 print("Structure processing finished.")
 
 

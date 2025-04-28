@@ -22,6 +22,7 @@ dependencies = [
     "toml>=0.10.2",
     "h5py>=3.13.0",
     "numpydantic>=1.6.8",
+    "platformdirs>=4.3.6",
 ]
 
 [project.scripts]

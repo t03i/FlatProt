@@ -21,74 +21,138 @@
 
 # %% [markdown]
 # ---
-# ## Step 1: Setup and Imports
+# ## Environment Setup for Google Colab
 #
-# Import necessary libraries and define file paths. Setup the `pybash` magic command for executing shell commands if running in an IPython environment.
+# The following cell checks if the notebook is running in Google Colab and installs the necessary dependencies and downloads required data:
+#
+# 1.  **FlatProt:** Installs the latest version directly from the GitHub repository using `pip`.
+# 2.  **Foldseek:** Downloads (`wget`) and extracts (`tar`) the Foldseek binary (for Linux AVX2) and adds it to the system `PATH`.
+# 3.  **DSSP:** Installs the `dssp` package (which provides `mkdssp`) using `apt`.
+# 4.  **Repository Data:** Downloads the repository archive, extracts it, and moves the `data/` and `out/` directories to the Colab environment's root.
+#
+# This setup ensures that the example can run successfully in a Colab environment. If not running in Colab, it assumes dependencies and relative data paths are already correct.
 
 # %%
-# Essential Imports
-from pathlib import Path
 import os
+import sys
+from pathlib import Path # Ensure Path is imported here
+
+IN_COLAB = 'google.colab' in sys.modules
+COLAB_BASE_DIR = Path(".") # Base directory for Colab CWD (/content)
+REPO_DIR_NAME = "FlatProt-main" # Default dir name after unzip
+
+if IN_COLAB:
+    print("Running in Google Colab. Setting up environment and data...")
+
+    # --- 1. Install FlatProt ---
+    print("\n[1/4] Installing FlatProt...")
+    !{sys.executable} -m pip install --quiet --upgrade git+https://github.com/t03i/FlatProt.git#egg=flatprot
+    print("FlatProt installation attempted.")
+
+    # --- 2. Install Foldseek ---
+    print("\n[2/4] Installing Foldseek...")
+    foldseek_url = "https://mmseqs.com/foldseek/foldseek-linux-avx2.tar.gz"
+    foldseek_tar = "foldseek-linux-avx2.tar.gz"
+    foldseek_dir = "foldseek"
+    print(f"Downloading Foldseek from {foldseek_url}...")
+    !wget -q {foldseek_url} -O {foldseek_tar}
+    print("Extracting Foldseek...")
+    !tar -xzf {foldseek_tar}
+    foldseek_bin_path = os.path.join(os.getcwd(), foldseek_dir, "bin")
+    os.environ['PATH'] = f"{foldseek_bin_path}:{os.environ['PATH']}"
+    print(f"Added {foldseek_bin_path} to PATH")
+    print("Verifying Foldseek installation...")
+    !foldseek --help | head -n 5
+    print("Foldseek installation attempted.")
+
+    # --- 3. Install DSSP ---
+    print("\n[3/4] Installing DSSP...")
+    print("Updating apt package list...")
+    !sudo apt-get update -qq
+    print("Installing DSSP...")
+    !sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -qq dssp
+    print("Verifying DSSP installation...")
+    !mkdssp --version
+    print("DSSP installation attempted.")
+
+    # --- 4. Download Repository Data ---
+    print("\n[4/4] Downloading repository data (data/ and out/)...")
+    repo_zip_url = "https://github.com/t03i/FlatProt/archive/refs/heads/main.zip"
+    repo_zip_file = "repo.zip"
+    repo_temp_dir = "repo_temp"
+
+    print(f"Downloading repository archive from {repo_zip_url}...")
+    !wget -q {repo_zip_url} -O {repo_zip_file}
+    print(f"Extracting archive to {repo_temp_dir}...")
+    !unzip -o -q {repo_zip_file} -d {repo_temp_dir}
+
+    extracted_repo_path = COLAB_BASE_DIR / repo_temp_dir / REPO_DIR_NAME
+    if extracted_repo_path.is_dir():
+         print(f"Moving data/ and out/ directories from {extracted_repo_path}...")
+         source_data_path = extracted_repo_path / "data"
+         if source_data_path.exists():
+             !mv -T {source_data_path} {COLAB_BASE_DIR}/data
+             print("Moved data/ directory.")
+         else:
+             print("[WARN] data/ directory not found in archive.")
+
+         source_out_path = extracted_repo_path / "out"
+         if source_out_path.exists():
+             !mv -T {source_out_path} {COLAB_BASE_DIR}/out
+             print("Moved out/ directory.")
+         else:
+             print("[INFO] out/ directory not found in archive, creating.")
+             (COLAB_BASE_DIR / "out").mkdir(exist_ok=True)
+    else:
+         print(f"[ERROR] Expected directory '{extracted_repo_path}' not found after extraction.")
+
+    print("Cleaning up downloaded files...")
+    !rm -rf {repo_temp_dir} {repo_zip_file}
+
+    print("\nEnvironment and data setup complete.")
+    base_dir = COLAB_BASE_DIR
+
+# --- Path Definitions ---
+print(f"[INFO] Using base directory: {base_dir.resolve()}")
+data_dir_base = base_dir / "data"
+tmp_dir_base = base_dir / "tmp"
+out_dir = base_dir / "out"
+
+# Ensure base tmp/out directories exist
+tmp_dir_base.mkdir(parents=True, exist_ok=True)
+out_dir.mkdir(parents=True, exist_ok=True)
+
+
+# %%
+# Essential Imports (Keep remaining imports here)
 import toml
 import numpy as np
-import gemmi
+import gemmi # Already checked if not IN_COLAB
 from typing import List, Tuple
-
 # IPython Specifics for Bash Magic and Display
-from IPython import get_ipython
-from IPython.core.magic import register_cell_magic
 from IPython.display import display, HTML
 
-
-# %%
-# Register pybash magic command if running in IPython
-ipython = get_ipython()
-if ipython:
-
-    @register_cell_magic
-    def pybash(line, cell):
-        """Execute bash commands within IPython, substituting Python variables."""
-        # Expand paths before formatting
-        f_globals = {
-            k: (v.resolve() if isinstance(v, Path) else v) for k, v in globals().items()
-        }
-        ipython.run_cell_magic("bash", "", cell.format(**f_globals))
-
-else:
-    print("[WARN] Not running in IPython environment. `pybash` magic will not work.")
 
 # %%
 # --- Configuration ---
 
 print("[STEP 1] Setting up paths and variables...")
 
-# Define base directories and file paths
-base_dir = Path("..")
-# Updated tmp_dir for multiple outputs
-tmp_dir = base_dir / "tmp" / "3ftx_dysulfide_annotations"
-data_dir = base_dir / "data" / "3Ftx"
-# Define path for alignment database
-db_dir = base_dir / "out"  # Assuming db is here
-db_path = str((db_dir / "alignment_db").resolve())  # Ensure path is correct
+# Define script-specific directories using base paths
+tmp_dir = tmp_dir_base / "3ftx_dysulfide_annotations" # Specific tmp dir
+data_dir = data_dir_base / "3Ftx" # Specific data dir
+db_dir = out_dir # Alignment DB expected in out/
 
-# Ensure data directory exists
-if not data_dir.exists():
-    raise FileNotFoundError(f"Data directory not found: {data_dir}")
-if not data_dir.is_dir():
-    raise NotADirectoryError(f"Data path is not a directory: {data_dir}")
+# Create specific temporary directory if it doesn't exist
+os.makedirs(tmp_dir, exist_ok=True)
+print(f"[INFO] Using temporary directory: {tmp_dir.resolve()}")
 
-# Ensure database path exists (optional check)
-# if not (db_dir / "alignment_db").exists():
-#    print(f"[WARN] Alignment database not found at {db_path}")
 
 # Alignment parameter
 min_p = 0.5
 
-# Create temporary directory if it doesn't exist
-os.makedirs(tmp_dir, exist_ok=True)
-print(f"[INFO] Using temporary directory: {tmp_dir.resolve()}")
+
 print(f"[INFO] Using data directory: {data_dir.resolve()}")
-print(f"[INFO] Using alignment database: {db_path}")
 print(f"[INFO] Minimum alignment probability: {min_p}")
 
 # %% [markdown]
@@ -272,36 +336,31 @@ for structure_file in structure_files:
         create_cystine_bridge_annotations(cystine_bridges, output_annotation)
         print(f"    Annotation file created: {output_annotation.name}")
 
-        # 3. Align Structure (only if in IPython)
-        alignment_successful = False  # Initialize alignment status
-        if ipython:
-            print("  Running alignment...")
-            align_cmd = "uv run flatprot align {structure_file} {output_matrix} {output_info} -d {db_path} --min-probability {min_p} --quiet"
-            f_locals_align = {
-                "structure_file": structure_file.resolve(),
-                "output_matrix": output_matrix.resolve(),
-                "output_info": output_info.resolve(),
-                "db_path": db_path,  # db_path is already resolved
-                "min_p": min_p,
-            }
-            try:
-                # Attempt to run the alignment command using bash magic
-                ipython.run_cell_magic("bash", "", align_cmd.format(**f_locals_align))
-                # Check if output files were created as a proxy for success
-                if output_matrix.exists() and output_info.exists():
-                    print(f"    Alignment likely successful for {structure_file.name}.")
-                    alignment_successful = True
-                else:
-                    print(
-                        f"    [WARN] Alignment command ran, but output files not found for {structure_file.name}."
-                    )
-            except Exception as e:
-                print(f"    [ERROR] Alignment failed for {structure_file.name}: {e}")
-        else:
-            print("  [WARN] Not in IPython environment. Skipping alignment.")
+        # 3. Align Structure
+        print("  Running alignment...")
+        align_cmd = "uv run flatprot align {structure_file} {output_matrix} {output_info} --min-probability {min_p} --quiet"
+        f_locals_align = {
+            "structure_file": structure_file.resolve(),
+            "output_matrix": output_matrix.resolve(),
+            "output_info": output_info.resolve(),
+            "min_p": min_p,
+        }
+        formatted_align_cmd = align_cmd.format(**f_locals_align)
+        alignment_successful = False # Initialize alignment status
+        try:
+            !{formatted_align_cmd}
+            if output_matrix.exists() and output_info.exists():
+                print(f"    Alignment likely successful for {structure_file.name}.")
+                alignment_successful = True
+            else:
+                print(
+                    f"    [WARN] Alignment command ran, but output files not found for {structure_file.name}."
+                )
+        except Exception as e:
+            print(f"    [ERROR] Alignment failed for {structure_file.name}: {e}")
 
-        # 4. Generate Projection (only if in IPython, annotations exist, and alignment was successful)
-        if ipython and output_annotation.exists() and alignment_successful:
+        # 4. Generate Projection (only if annotations exist and alignment was successful)
+        if output_annotation.exists() and alignment_successful:
             print("  Running projection...")
             # Include --matrix argument
             project_cmd = "uv run flatprot project {structure_file} -o {output_svg} --annotations {output_annotation} --matrix {output_matrix} --quiet --canvas-width 300 --canvas-height 500"
@@ -310,12 +369,11 @@ for structure_file in structure_files:
                 "structure_file": structure_file.resolve(),
                 "output_svg": output_svg.resolve(),
                 "output_annotation": output_annotation.resolve(),
-                "output_matrix": output_matrix.resolve(),  # Use the generated matrix
+                "output_matrix": output_matrix.resolve(),
             }
+            formatted_project_cmd = project_cmd.format(**f_locals_project)
             try:
-                ipython.run_cell_magic(
-                    "bash", "", project_cmd.format(**f_locals_project)
-                )
+                !{formatted_project_cmd}
                 if output_svg.exists():
                     print(f"    SVG projection saved: {output_svg.name}")
                     generated_svgs.append(output_svg)
@@ -326,8 +384,6 @@ for structure_file in structure_files:
             except Exception as e:
                 print(f"    [ERROR] Projection failed for {structure_file.name}: {e}")
 
-        elif not ipython:
-            print("  [WARN] Not in IPython environment. Skipping projection.")
         elif not output_annotation.exists():
             print(
                 "  [WARN] Annotation file missing (should not happen if bridges were found). Skipping projection."
@@ -361,8 +417,7 @@ else:
     print("  No SVG files were generated successfully.")
 
 # Example of how to display one SVG if needed (e.g., the first one)
-# You might want to adapt this part or loop through generated_svgs to display all
-if generated_svgs and ipython:
+if generated_svgs:
     print("\nDisplaying the first generated SVG as an example:")
     first_svg_path = generated_svgs[0]
     try:
