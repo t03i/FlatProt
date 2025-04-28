@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><link rel="canonical" href="https://t03i.github.io/FlatProt/commands/align/" />
+      <link rel="shortcut icon" href="../../img/favicon.ico" />
+    <title>Align - FlatProt</title>
+    <link rel="stylesheet" href="../../css/theme.css" />
+    <link rel="stylesheet" href="../../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+        <link href="../../assets/_mkdocstrings.css" rel="stylesheet" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "Align";
+        var mkdocs_page_input_path = "commands/align.md";
+        var mkdocs_page_url = "/FlatProt/commands/align/";
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="../../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/languages/yaml.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/languages/python.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/languages/json.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/languages/toml.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/languages/bash.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/languages/numpy.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href="../.." class="icon icon-home"> FlatProt
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../..">Home</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../installation/">Installation</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../examples/">Examples</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Commands</span></p>
+              <ul class="current">
+                  <li class="toctree-l1"><a class="reference internal" href="../project/">Project</a>
+                  </li>
+                  <li class="toctree-l1 current"><a class="reference internal current" href="#">Align</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#usage">Usage</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#arguments">Arguments</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#options">Options</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#examples">Examples</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#output-files">Output Files</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#error-handling">Error Handling</a>
+    </li>
+    </ul>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">File Formats</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../file_formats/matrix/">Matrix Files</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../file_formats/style/">Style Files</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../file_formats/annotations/">Annotation Files</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">API Reference</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../api/io/">IO</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../api/core/">Core</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../api/transformation/">Transformation & Projection</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../api/scene/">Scene</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../api/rendering/">Rendering</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../api/alignment/">DatabaseAlignment</a>
+                  </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../..">FlatProt</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../.." class="icon icon-home" aria-label="Docs"></a></li>
+          <li class="breadcrumb-item">Commands</li>
+      <li class="breadcrumb-item active">Align</li>
+    <li class="wy-breadcrumbs-aside">
+          <a href="https://github.com/t03i/FlatProt/edit/master/docs/commands/align.md" class="icon icon-github"> Edit on GitHub</a>
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="align-command">Align Command</h1>
+<p>The <code>align</code> command finds the best matching protein superfamily for a given structure using Foldseek and retrieves the corresponding pre-calculated transformation matrix for standardized visualization.</p>
+<h2 id="usage">Usage</h2>
+<pre><code class="language-bash">flatprot align STRUCTURE_FILE [OPTIONS]
+</code></pre>
+<h2 id="arguments">Arguments</h2>
+<ul>
+<li><code>STRUCTURE_FILE</code>: Path to the input protein structure file (PDB or mmCIF format). The file must exist and be readable.</li>
+</ul>
+<h2 id="options">Options</h2>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Short</th>
+<th>Type</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>--matrix</code></td>
+<td><code>-m</code></td>
+<td>Path</td>
+<td><code>alignment_matrix.npy</code></td>
+<td>Path to save the output transformation matrix (NumPy format).</td>
+</tr>
+<tr>
+<td><code>--info</code></td>
+<td><code>-i</code></td>
+<td>Path</td>
+<td><em>None</em></td>
+<td>Optional path to save detailed alignment information as JSON. If omitted, info is printed to stdout.</td>
+</tr>
+<tr>
+<td><code>--foldseek</code></td>
+<td><code>-f</code></td>
+<td>String</td>
+<td><code>"foldseek"</code></td>
+<td>Path to the FoldSeek executable. Assumes it's in PATH if not specified.</td>
+</tr>
+<tr>
+<td><code>--foldseek-db</code></td>
+<td><code>-b</code></td>
+<td>Path</td>
+<td><em>Default</em></td>
+<td>Path to a custom Foldseek database. Defaults to the database bundled with FlatProt or previously downloaded.</td>
+</tr>
+<tr>
+<td><code>--database</code></td>
+<td><code>-d</code></td>
+<td>Path</td>
+<td><em>Default</em></td>
+<td>Path to the directory containing the custom FlatProt alignment database (HDF5 file and supporting files).</td>
+</tr>
+<tr>
+<td><code>--database-file-name</code></td>
+<td><code>-n</code></td>
+<td>String</td>
+<td><code>"alignments.h5"</code></td>
+<td>Name of the alignment database file within the <code>--database</code> directory.</td>
+</tr>
+<tr>
+<td><code>--min-probability</code></td>
+<td><code>-p</code></td>
+<td>Float</td>
+<td><code>0.5</code></td>
+<td>Minimum Foldseek alignment probability threshold (0.0 to 1.0).</td>
+</tr>
+<tr>
+<td><code>--target-db-id</code></td>
+<td></td>
+<td>String</td>
+<td><em>None</em></td>
+<td>Force alignment against a specific target ID from the Foldseek database, bypassing probability checks.</td>
+</tr>
+<tr>
+<td><code>--alignment-mode</code></td>
+<td><code>-a</code></td>
+<td><code>family-identity</code>, <code>family-inertia</code></td>
+<td><code>family-identity</code></td>
+<td>Alignment mode: <code>family-identity</code> uses the direct alignment matrix, <code>family-inertia</code> uses the database reference matrix.</td>
+</tr>
+<tr>
+<td><code>--download-db</code></td>
+<td></td>
+<td>Boolean</td>
+<td><code>false</code></td>
+<td>Force download/update of the default database even if it exists locally.</td>
+</tr>
+<tr>
+<td><code>--quiet</code></td>
+<td></td>
+<td>Boolean</td>
+<td><code>false</code></td>
+<td>Suppress all informational output except errors.</td>
+</tr>
+<tr>
+<td><code>--verbose</code></td>
+<td></td>
+<td>Boolean</td>
+<td><code>false</code></td>
+<td>Print additional debug information during execution.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="examples">Examples</h2>
+<p><strong>Basic Alignment (Family Identity):</strong> (Saves direct alignment matrix to <code>alignment_matrix.npy</code>)</p>
+<pre><code class="language-bash">flatprot align protein.pdb
+</code></pre>
+<p><strong>Alignment Using Family Inertia:</strong></p>
+<p>In addition to applying the family rotation, it applies the inertia transformation that was calulated for the family.</p>
+<p><strong>Note</strong>: This will spread out structure elements while keeping the basic family rotation but sacrifices consistent structure element placement.</p>
+<pre><code class="language-bash">flatprot align protein.pdb --alignment-mode family-inertia
+</code></pre>
+<p><strong>Specify Output Paths:</strong></p>
+<pre><code class="language-bash">flatprot align protein.cif -m rotation.npy -i alignment_info.json
+</code></pre>
+<p><strong>Use Custom Foldseek Executable and Database:</strong></p>
+<pre><code class="language-bash">flatprot align protein.pdb -f /path/to/foldseek -b /path/to/foldseek_db
+</code></pre>
+<p><strong>Adjust Probability Threshold:</strong></p>
+<pre><code class="language-bash">flatprot align protein.pdb --min-probability 0.7
+</code></pre>
+<p><strong>Force Alignment to a Specific Target:</strong></p>
+<pre><code class="language-bash">flatprot align protein.pdb --target-db-id &quot;3000114&quot;
+</code></pre>
+<h2 id="output-files">Output Files</h2>
+<ol>
+<li>
+<p><strong>Transformation Matrix (<code>--matrix</code>):</strong></p>
+<ul>
+<li>A 4x4 NumPy array (<code>.npy</code> file) representing the rotation matrix that aligns the input structure.</li>
+<li>If <code>--alignment-mode</code> is <code>family-identity</code> (default), this is the matrix directly resulting from the Foldseek alignment between the input and the best-matching database entry.</li>
+<li>If <code>--alignment-mode</code> is <code>family-inertia</code>, this is the pre-calculated reference matrix for the matched superfamily, combined with the Foldseek alignment matrix.</li>
+<li>This matrix is intended for use with the <code>flatprot project</code> command.</li>
+</ul>
+</li>
+<li>
+<p><strong>Alignment Information (<code>--info</code>, Optional JSON):</strong></p>
+<ul>
+<li>
+<p>If a path is provided via <code>--info</code>, a JSON file containing detailed alignment results is saved. The exact content may vary, but typically includes:</p>
+<p><code>json
+{
+    "structure_file": "path/to/protein.pdb",
+    "foldseek_db_path": "/path/to/foldseek_db",
+    "min_probability": 0.5,
+    "target_db_id": null,
+    "alignment_mode": "family-identity", // Reflects the chosen mode
+    "best_hit": {
+        "query_id": "protein",
+        "target_id": "T1084-D1",
+        "probability": 0.995,
+        "e_value": 8.74e-15,
+        "tm_score": 0.789
+    },
+    "db_entry": { // Only present if mode is family-inertia
+        "entry_id": "T1084-D1",
+        "structure_name": "Example Superfamily",
+        "rotation_matrix": { ... } // Details of the database matrix
+    },
+    "matrix_file": "rotation.npy"
+}</code></p>
+</li>
+</ul>
+</li>
+</ol>
+<h2 id="error-handling">Error Handling</h2>
+<p>The command includes robust error handling:</p>
+<ul>
+<li><strong>Input Errors:</strong> Checks for invalid or non-existent structure files (<code>InvalidStructureError</code>, <code>FileNotFoundError</code>).</li>
+<li><strong>FoldSeek Errors:</strong> Verifies the FoldSeek executable path. Catches errors during FoldSeek execution (<code>RuntimeError</code>, <code>subprocess.SubprocessError</code>).</li>
+<li><strong>Database Errors:</strong> Handles issues finding or accessing the alignment database (<code>DatabaseEntryNotFoundError</code>). Suggests using <code>--download-db</code> if corruption is suspected. This error is more likely in <code>family-inertia</code> mode.</li>
+<li><strong>Alignment Quality:</strong> If no alignment meets the <code>--min-probability</code> threshold, it reports <code>NoSignificantAlignmentError</code> and suggests lowering the threshold.</li>
+<li><strong>Output Errors:</strong> Catches errors writing the matrix or info files (<code>OutputFileError</code>).</li>
+<li><strong>General Errors:</strong> Catches other <code>FlatProtError</code> types and unexpected exceptions.</li>
+</ul>
+<p>Exit codes are <code>0</code> for success and <code>1</code> for any error.</p>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="../project/" class="btn btn-neutral float-left" title="Project"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../../file_formats/matrix/" class="btn btn-neutral float-right" title="Matrix Files">Next <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+        <span>
+          <a href="https://github.com/t03i/FlatProt" class="fa fa-github" style="color: #fcfcfc"> GitHub</a>
+        </span>
+    
+    
+      <span><a href="../project/" style="color: #fcfcfc">&laquo; Previous</a></span>
+    
+    
+      <span><a href="../../file_formats/matrix/" style="color: #fcfcfc">Next &raquo;</a></span>
+    
+  </span>
+</div>
+    <script src="../../js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = "../..";</script>
+    <script src="../../js/theme_extra.js"></script>
+    <script src="../../js/theme.js"></script>
+      <script src="../../search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>

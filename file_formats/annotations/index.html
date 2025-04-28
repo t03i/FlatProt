@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><link rel="canonical" href="https://t03i.github.io/FlatProt/file_formats/annotations/" />
+      <link rel="shortcut icon" href="../../img/favicon.ico" />
+    <title>Annotation Files - FlatProt</title>
+    <link rel="stylesheet" href="../../css/theme.css" />
+    <link rel="stylesheet" href="../../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+        <link href="../../assets/_mkdocstrings.css" rel="stylesheet" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "Annotation Files";
+        var mkdocs_page_input_path = "file_formats/annotations.md";
+        var mkdocs_page_url = "/FlatProt/file_formats/annotations/";
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="../../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/languages/yaml.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/languages/python.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/languages/json.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/languages/toml.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/languages/bash.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/languages/numpy.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href="../.." class="icon icon-home"> FlatProt
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../..">Home</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../installation/">Installation</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../examples/">Examples</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Commands</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../commands/project/">Project</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../commands/align/">Align</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">File Formats</span></p>
+              <ul class="current">
+                  <li class="toctree-l1"><a class="reference internal" href="../matrix/">Matrix Files</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../style/">Style Files</a>
+                  </li>
+                  <li class="toctree-l1 current"><a class="reference internal current" href="#">Annotation Files</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#overview">Overview</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#file-format">File Format</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#annotation-table-fields">Annotation Table Fields</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#inline-style-style-table">Inline Style (style Table)</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#common-style-attributes-applicable-to-all-types-within-the-style-table">Common Style Attributes (Applicable to all types within the style table)</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#point-annotation-style-style-table-when-type-point">Point Annotation Style (style table when type = "point")</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#line-annotation-style-style-table-when-type-line">Line Annotation Style (style table when type = "line")</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#area-annotation-style-style-table-when-type-area">Area Annotation Style (style table when type = "area")</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#color-formats">Color Formats</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#validation">Validation</a>
+    </li>
+    </ul>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">API Reference</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../api/io/">IO</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../api/core/">Core</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../api/transformation/">Transformation & Projection</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../api/scene/">Scene</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../api/rendering/">Rendering</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../api/alignment/">DatabaseAlignment</a>
+                  </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../..">FlatProt</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../.." class="icon icon-home" aria-label="Docs"></a></li>
+          <li class="breadcrumb-item">File Formats</li>
+      <li class="breadcrumb-item active">Annotation Files</li>
+    <li class="wy-breadcrumbs-aside">
+          <a href="https://github.com/t03i/FlatProt/edit/master/docs/file_formats/annotations.md" class="icon icon-github"> Edit on GitHub</a>
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="annotation-file-format">Annotation File Format</h1>
+<p>FlatProt uses <a href="https://toml.io/">TOML</a> files for defining annotations to highlight specific features in protein structures. This document explains the format and options available for creating different types of annotations.</p>
+<h2 id="overview">Overview</h2>
+<p>The annotation file must be a valid TOML document. The primary structure consists of a top-level key named <code>annotations</code> which holds an array of tables. Each table in this array represents a single annotation.</p>
+<p>Annotations allow you to highlight specific features in your protein structure, including:</p>
+<ul>
+<li>Individual residues (point annotations)</li>
+<li>Connections between residues (line annotations)</li>
+<li>Regions of the structure (area annotations)</li>
+</ul>
+<p>You can define multiple annotations in a single file by adding more tables to the <code>annotations</code> array.</p>
+<h2 id="file-format">File Format</h2>
+<pre><code class="language-toml"># This entire file is in TOML format.
+# The top-level key must be 'annotations', containing an array of tables.
+
+[[annotations]]
+
+type = &quot;point&quot;,          # Required: type of annotation
+label = &quot;Active Site His&quot;, # Optional: displayed label
+index = &quot;A:41&quot;,          # Required: target residue (ChainID:ResidueIndex)
+id = &quot;point-his41&quot;,      # Optional: unique identifier
+
+# Optional inline 'style' table for overrides:
+[annotations.style]
+    marker_shape = &quot;star&quot;,
+    marker_radius = 8.0,
+    color = &quot;#FF0000&quot;,
+    label_offset = [5.0, -5.0] # TOML array for tuple
+
+
+
+  # --- Second Annotation Table --- #
+[[annotations]]
+
+type = &quot;line&quot;,
+label = &quot;Disulfide Bond&quot;,
+indices = [&quot;A:23&quot;, &quot;A:76&quot;], # Required: target start/end residues
+
+[annotations.style]
+  line_color = &quot;#FFA500&quot;,   # Orange
+  stroke_width = 2.0,
+  line_style = [4.0, 2.0], # Dashed line pattern (TOML array)
+  connector_radius = 3.0
+
+  # --- Third Annotation Table --- #
+[[annotations]]
+
+type = &quot;area&quot;,
+label = &quot;Binding Domain&quot;,
+range = &quot;A:100-150&quot;,       # Required: target residue range (ChainID:Start-End)
+
+[annotations.style]
+  fill_color = &quot;#00FF00&quot;,   # Green
+  fill_opacity = 0.25,
+  stroke_color = &quot;#808080&quot;, # Grey outline
+  padding = 15.0
+
+</code></pre>
+<h2 id="annotation-table-fields">Annotation Table Fields</h2>
+<p>Each table within the <code>annotations</code> list defines a single annotation and must contain the following fields:</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Description</th>
+<th>Required</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>type</code></td>
+<td>String</td>
+<td>Type of annotation. Must be one of: <code>"point"</code>, <code>"line"</code>, <code>"area"</code>.</td>
+<td>Yes</td>
+<td>N/A</td>
+</tr>
+<tr>
+<td><code>label</code></td>
+<td>String</td>
+<td>Optional descriptive text label displayed with the annotation.</td>
+<td>No</td>
+<td><code>None</code></td>
+</tr>
+<tr>
+<td><code>id</code></td>
+<td>String</td>
+<td>Optional unique identifier for the annotation. If omitted, one is generated.</td>
+<td>No</td>
+<td>Generated</td>
+</tr>
+<tr>
+<td><code>style</code></td>
+<td>Table</td>
+<td>Optional inline table defining style overrides for this specific annotation. See below.</td>
+<td>No</td>
+<td>Default annotation styles</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Additionally, exactly one of the following targeting fields must be provided:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Description</th>
+<th>Required by Type</th>
+<th>Format Example</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>index</code></td>
+<td>String</td>
+<td>Target residue for <code>point</code> annotations. Format: <code>"ChainID:ResidueIndex"</code>.</td>
+<td><code>point</code> only</td>
+<td><code>"A:41"</code></td>
+</tr>
+<tr>
+<td><code>indices</code></td>
+<td>Array of Strings</td>
+<td>Target start and end residues for <code>line</code> annotations. Format as <code>index</code>.</td>
+<td><code>line</code> only</td>
+<td><code>["A:23", "A:76"]</code></td>
+</tr>
+<tr>
+<td><code>range</code></td>
+<td>String</td>
+<td>Target residue range for <code>area</code> annotations. Format: <code>"ChainID:Start-End"</code>.</td>
+<td><code>area</code> only</td>
+<td><code>"A:100-150"</code></td>
+</tr>
+</tbody>
+</table>
+<h2 id="inline-style-style-table">Inline Style (<code>style</code> Table)</h2>
+<p>Each annotation can optionally include a <code>style</code> table (a TOML table) to override default appearance settings. If a <code>style</code> table is present, its fields override the corresponding defaults for that specific annotation type. If the <code>style</code> table or individual fields within it are omitted, the default values are used.</p>
+<h3 id="common-style-attributes-applicable-to-all-types-within-the-style-table">Common Style Attributes (Applicable to all types within the <code>style</code> table)</h3>
+<table>
+<thead>
+<tr>
+<th>Attribute</th>
+<th>Type</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>color</code></td>
+<td>Color</td>
+<td><code>"#FF0000"</code></td>
+<td>Default color (e.g., for marker fill, line stroke). Red.</td>
+</tr>
+<tr>
+<td><code>offset</code></td>
+<td>Array[Float, Float]</td>
+<td><code>[0.0, 0.0]</code></td>
+<td>2D offset (x, y) applied to the annotation's anchor point.</td>
+</tr>
+<tr>
+<td><code>label_color</code></td>
+<td>Color</td>
+<td><code>"#000000"</code></td>
+<td>Color for the annotation label (default black).</td>
+</tr>
+<tr>
+<td><code>label_font_size</code></td>
+<td>Float</td>
+<td><code>12.0</code></td>
+<td>Font size for the label.</td>
+</tr>
+<tr>
+<td><code>label_font_weight</code></td>
+<td>String</td>
+<td><code>"normal"</code></td>
+<td>Font weight for the label (e.g., "normal", "bold").</td>
+</tr>
+<tr>
+<td><code>label_font_family</code></td>
+<td>String</td>
+<td><code>"Arial"</code></td>
+<td>Font family for the label.</td>
+</tr>
+<tr>
+<td><code>label_offset</code></td>
+<td>Array[Float, Float]</td>
+<td><code>[0.0, 0.0]</code></td>
+<td>2D offset (x, y) applied specifically to the label's position.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="point-annotation-style-style-table-when-type-point">Point Annotation Style (<code>style</code> table when <code>type = "point"</code>)</h3>
+<table>
+<thead>
+<tr>
+<th>Attribute</th>
+<th>Type</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>marker_shape</code></td>
+<td>String (<code>"circle"</code>, <code>"square"</code>, <code>"triangle"</code>, <code>"diamond"</code>)</td>
+<td><code>"circle"</code></td>
+<td>Shape of the marker.</td>
+</tr>
+<tr>
+<td><code>marker_radius</code></td>
+<td>Float</td>
+<td><code>5.0</code></td>
+<td>Radius (size) of the point marker (must be &gt;= 0).</td>
+</tr>
+</tbody>
+</table>
+<h3 id="line-annotation-style-style-table-when-type-line">Line Annotation Style (<code>style</code> table when <code>type = "line"</code>)</h3>
+<table>
+<thead>
+<tr>
+<th>Attribute</th>
+<th>Type</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>stroke_width</code></td>
+<td>Float</td>
+<td><code>1.0</code></td>
+<td>Width of the annotation line (must be &gt;= 0).</td>
+</tr>
+<tr>
+<td><code>line_style</code></td>
+<td>Array[Float, ...]</td>
+<td><code>[5.0, 5.0]</code></td>
+<td>Dash pattern (e.g., <code>[5.0, 5.0]</code> for dashed). Empty <code>[]</code> means solid.</td>
+</tr>
+<tr>
+<td><code>connector_color</code></td>
+<td>Color</td>
+<td><code>"#000000"</code></td>
+<td>Color of the small circles at the start/end points (default black).</td>
+</tr>
+<tr>
+<td><code>line_color</code></td>
+<td>Color</td>
+<td><code>"#000000"</code></td>
+<td>Color of the line itself (default black).</td>
+</tr>
+<tr>
+<td><code>arrowhead_start</code></td>
+<td>Boolean</td>
+<td><code>false</code></td>
+<td>Draw an arrowhead at the start of the line?</td>
+</tr>
+<tr>
+<td><code>arrowhead_end</code></td>
+<td>Boolean</td>
+<td><code>false</code></td>
+<td>Draw an arrowhead at the end of the line?</td>
+</tr>
+<tr>
+<td><code>connector_radius</code></td>
+<td>Float</td>
+<td><code>2.0</code></td>
+<td>Radius of the connector circles (must be &gt;= 0).</td>
+</tr>
+</tbody>
+</table>
+<h3 id="area-annotation-style-style-table-when-type-area">Area Annotation Style (<code>style</code> table when <code>type = "area"</code>)</h3>
+<table>
+<thead>
+<tr>
+<th>Attribute</th>
+<th>Type</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>fill_color</code></td>
+<td>Color</td>
+<td><code>None</code></td>
+<td>Fill color. If <code>None</code>, uses <code>color</code> with <code>fill_opacity</code>.</td>
+</tr>
+<tr>
+<td><code>fill_opacity</code></td>
+<td>Float</td>
+<td><code>0.3</code></td>
+<td>Opacity for the fill (0.0 to 1.0).</td>
+</tr>
+<tr>
+<td><code>stroke_width</code></td>
+<td>Float</td>
+<td><code>1.0</code></td>
+<td>Width of the area outline (must be &gt;= 0).</td>
+</tr>
+<tr>
+<td><code>linestyle</code></td>
+<td>Array[Float, ...]</td>
+<td><code>[]</code></td>
+<td>Dash pattern for the outline. Empty <code>[]</code> means solid.</td>
+</tr>
+<tr>
+<td><code>padding</code></td>
+<td>Float</td>
+<td><code>20.0</code></td>
+<td>Padding pixels added outside the convex hull of the area points (must be &gt;= 0).</td>
+</tr>
+<tr>
+<td><code>interpolation_points</code></td>
+<td>Integer</td>
+<td><code>3</code></td>
+<td>(Internal detail related to rendering, might not be useful to expose widely)</td>
+</tr>
+<tr>
+<td><code>smoothing_window</code></td>
+<td>Integer</td>
+<td><code>1</code></td>
+<td>(Internal detail related to rendering, might not be useful to expose widely)</td>
+</tr>
+</tbody>
+</table>
+<h2 id="color-formats">Color Formats</h2>
+<p>Colors can be specified in any of the following formats recognized by Pydantic's <code>Color</code> type:</p>
+<ul>
+<li>Hex codes: <code>"#FF5733"</code>, <code>"FF5733"</code>, <code>"#F53"</code>, <code>"F53"</code></li>
+<li>RGB format: <code>"rgb(255, 87, 51)"</code></li>
+<li>RGBA format: <code>"rgba(255, 87, 51, 0.5)"</code> (Alpha is usually handled by <code>opacity</code> or <code>fill_opacity</code> style fields)</li>
+<li>Named colors: <code>"red"</code>, <code>"blue"</code>, <code>"green"</code>, etc. (Standard web color names)</li>
+</ul>
+<h2 id="validation">Validation</h2>
+<p>FlatProt validates annotation files when parsing:</p>
+<ol>
+<li>Checks for valid TOML syntax.</li>
+<li>Ensures the top-level <code>annotations</code> list exists and contains tables (dictionaries).</li>
+<li>Verifies that each annotation table has a valid <code>type</code>.</li>
+<li>Checks for the presence and correct format of the required targeting field (<code>index</code>, <code>indices</code>, or <code>range</code>).</li>
+<li>Validates the format of coordinate and range strings (<code>ChainID:Index</code>, <code>ChainID:Start-End</code>).</li>
+<li>If an inline <code>style</code> table is present, validates its fields against the corresponding style model (e.g., checks types, ranges, allowed values).</li>
+</ol>
+<p>If an annotation file is invalid, an error message will be displayed explaining the specific issue and location (e.g., <code>Annotation #3: Invalid value for 'marker_radius'</code>).</p>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="../style/" class="btn btn-neutral float-left" title="Style Files"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../../api/io/" class="btn btn-neutral float-right" title="IO">Next <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+        <span>
+          <a href="https://github.com/t03i/FlatProt" class="fa fa-github" style="color: #fcfcfc"> GitHub</a>
+        </span>
+    
+    
+      <span><a href="../style/" style="color: #fcfcfc">&laquo; Previous</a></span>
+    
+    
+      <span><a href="../../api/io/" style="color: #fcfcfc">Next &raquo;</a></span>
+    
+  </span>
+</div>
+    <script src="../../js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = "../..";</script>
+    <script src="../../js/theme_extra.js"></script>
+    <script src="../../js/theme.js"></script>
+      <script src="../../search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>

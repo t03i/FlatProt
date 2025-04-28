@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><link rel="canonical" href="https://t03i.github.io/FlatProt/commands/project/" />
+      <link rel="shortcut icon" href="../../img/favicon.ico" />
+    <title>Project - FlatProt</title>
+    <link rel="stylesheet" href="../../css/theme.css" />
+    <link rel="stylesheet" href="../../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+        <link href="../../assets/_mkdocstrings.css" rel="stylesheet" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "Project";
+        var mkdocs_page_input_path = "commands/project.md";
+        var mkdocs_page_url = "/FlatProt/commands/project/";
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="../../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/languages/yaml.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/languages/python.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/languages/json.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/languages/toml.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/languages/bash.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/languages/numpy.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href="../.." class="icon icon-home"> FlatProt
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../..">Home</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../installation/">Installation</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../examples/">Examples</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Commands</span></p>
+              <ul class="current">
+                  <li class="toctree-l1 current"><a class="reference internal current" href="#">Project</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#usage">Usage</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#arguments">Arguments</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#options">Options</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#input-file-formats">Input File Formats</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#structure-file-structure_file">Structure File (STRUCTURE_FILE)</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#matrix-file-matrix">Matrix File (--matrix)</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#style-file-style">Style File (--style)</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#annotation-file-annotations">Annotation File (--annotations)</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#dssp-file-dssp">DSSP File (--dssp)</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#examples">Examples</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#error-handling">Error Handling</a>
+    </li>
+    </ul>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../align/">Align</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">File Formats</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../file_formats/matrix/">Matrix Files</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../file_formats/style/">Style Files</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../file_formats/annotations/">Annotation Files</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">API Reference</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../api/io/">IO</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../api/core/">Core</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../api/transformation/">Transformation & Projection</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../api/scene/">Scene</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../api/rendering/">Rendering</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../api/alignment/">DatabaseAlignment</a>
+                  </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../..">FlatProt</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../.." class="icon icon-home" aria-label="Docs"></a></li>
+          <li class="breadcrumb-item">Commands</li>
+      <li class="breadcrumb-item active">Project</li>
+    <li class="wy-breadcrumbs-aside">
+          <a href="https://github.com/t03i/FlatProt/edit/master/docs/commands/project.md" class="icon icon-github"> Edit on GitHub</a>
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="project-command">Project Command</h1>
+<p>The <code>project</code> command transforms a 3D protein structure into a standardized 2D SVG representation, optionally applying custom transformations, styles, and annotations.</p>
+<h2 id="usage">Usage</h2>
+<pre><code class="language-bash">flatprot project STRUCTURE_FILE [OPTIONS]
+</code></pre>
+<h2 id="arguments">Arguments</h2>
+<ul>
+<li><code>STRUCTURE_FILE</code>: Path to the input protein structure file (PDB or mmCIF format). Required.</li>
+</ul>
+<h2 id="options">Options</h2>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Short</th>
+<th>Type</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>--output</code></td>
+<td><code>-o</code></td>
+<td>Path</td>
+<td><em>stdout</em></td>
+<td>Path to save the output SVG file. If omitted, the SVG content is printed to standard output.</td>
+</tr>
+<tr>
+<td><code>--matrix</code></td>
+<td></td>
+<td>Path</td>
+<td><em>None</em></td>
+<td>Path to a custom transformation matrix (NumPy <code>.npy</code> format). If omitted, an inertia-based transformation is applied. See format details below.</td>
+</tr>
+<tr>
+<td><code>--style</code></td>
+<td></td>
+<td>Path</td>
+<td><em>None</em></td>
+<td>Path to a custom style file (TOML format). See <a href="../../file_formats/style/">Style File Format</a>.</td>
+</tr>
+<tr>
+<td><code>--annotations</code></td>
+<td></td>
+<td>Path</td>
+<td><em>None</em></td>
+<td>Path to a custom annotation file (TOML format). See <a href="../../file_formats/annotations/">Annotation File Format</a>.</td>
+</tr>
+<tr>
+<td><code>--dssp</code></td>
+<td></td>
+<td>Path</td>
+<td><em>None</em></td>
+<td>Path to a DSSP file for secondary structure assignment. <strong>Required if <code>STRUCTURE_FILE</code> is in PDB format.</strong> Ignored for mmCIF files.</td>
+</tr>
+<tr>
+<td><code>--canvas-width</code></td>
+<td></td>
+<td>Integer</td>
+<td><code>1000</code></td>
+<td>Width of the output SVG canvas in pixels.</td>
+</tr>
+<tr>
+<td><code>--canvas-height</code></td>
+<td></td>
+<td>Integer</td>
+<td><code>1000</code></td>
+<td>Height of the output SVG canvas in pixels.</td>
+</tr>
+<tr>
+<td><code>--quiet</code></td>
+<td></td>
+<td>Boolean</td>
+<td><code>false</code></td>
+<td>Suppress all informational output except errors.</td>
+</tr>
+<tr>
+<td><code>--verbose</code></td>
+<td></td>
+<td>Boolean</td>
+<td><code>false</code></td>
+<td>Print additional debug information during execution.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="input-file-formats">Input File Formats</h2>
+<h3 id="structure-file-structure_file">Structure File (<code>STRUCTURE_FILE</code>)</h3>
+<ul>
+<li>Accepts protein structure files in PDB (<code>.pdb</code>) or mmCIF (<code>.cif</code>, <code>.mmcif</code>) format.</li>
+<li><strong>PDB Requirement:</strong> If using a <code>.pdb</code> file, you <strong>must</strong> provide secondary structure information via a corresponding DSSP file using the <code>--dssp</code> option. FlatProt cannot determine secondary structure directly from PDB format.</li>
+<li><strong>mmCIF:</strong> Usually contains secondary structure information; the <code>--dssp</code> option is typically not needed.</li>
+</ul>
+<h3 id="matrix-file-matrix">Matrix File (<code>--matrix</code>)</h3>
+<ul>
+<li>Optional. If provided, must be a NumPy file (<code>.npy</code>).</li>
+<li>Specifies a custom 3D transformation (rotation and translation) applied before projection.</li>
+<li>Expected formats:<ul>
+<li>A 4x3 matrix: 3x3 rotation matrix in the top 3 rows, 1x3 translation vector in the bottom row.</li>
+<li>A 3x4 matrix: Transposed version of the 4x3 format (will be auto-corrected).</li>
+<li>A 3x3 matrix: Pure rotation matrix (translation is assumed to be zero).</li>
+</ul>
+</li>
+<li>If omitted, the structure is transformed based on its principal axes of inertia.</li>
+</ul>
+<h3 id="style-file-style">Style File (<code>--style</code>)</h3>
+<ul>
+<li>Optional. Must be a TOML file.</li>
+<li>Defines visual properties (colors, strokes, sizes, etc.) for secondary structure elements.</li>
+<li>See the <a href="../../file_formats/style/">Style File Format documentation</a> for details.</li>
+</ul>
+<h3 id="annotation-file-annotations">Annotation File (<code>--annotations</code>)</h3>
+<ul>
+<li>Optional. Must be a TOML file.</li>
+<li>Defines points, lines, and areas to highlight specific residues or regions.</li>
+<li>Can include inline styles to customize individual annotations.</li>
+<li>See the <a href="../../file_formats/annotations/">Annotation File Format documentation</a> for details.</li>
+</ul>
+<h3 id="dssp-file-dssp">DSSP File (<code>--dssp</code>)</h3>
+<ul>
+<li>Optional, but <strong>required</strong> when the input <code>STRUCTURE_FILE</code> is in PDB format.</li>
+<li>Standard DSSP output file providing secondary structure assignments (helix, sheet, coil) for each residue.</li>
+</ul>
+<h2 id="examples">Examples</h2>
+<p><strong>Basic Projection (mmCIF to SVG file):</strong></p>
+<pre><code class="language-bash">flatprot project structure.cif -o output.svg
+</code></pre>
+<p><strong>Projection with DSSP (PDB to SVG file):</strong></p>
+<pre><code class="language-bash">flatprot project structure.pdb -o output.svg --dssp structure.dssp
+</code></pre>
+<p><strong>Projection to Standard Output (Stdout):</strong></p>
+<pre><code class="language-bash">flatprot project structure.cif &gt; output.svg
+</code></pre>
+<p><strong>Apply Custom Styling:</strong></p>
+<pre><code class="language-bash">flatprot project structure.cif -o output.svg --style custom_styles.toml
+</code></pre>
+<p><strong>Add Annotations:</strong></p>
+<pre><code class="language-bash">flatprot project structure.cif -o output.svg --annotations features.toml
+</code></pre>
+<p><strong>Use a Pre-calculated Alignment Matrix:</strong></p>
+<pre><code class="language-bash">flatprot project structure.cif -o aligned_output.svg --matrix alignment_matrix.npy
+</code></pre>
+<p><strong>Combine Multiple Options:</strong></p>
+<pre><code class="language-bash">flatprot project structure.cif -o styled_annotated.svg \
+    --matrix alignment_matrix.npy \
+    --style custom_styles.toml \
+    --annotations features.toml \
+    --verbose
+</code></pre>
+<p><strong>Adjust Canvas Size:</strong></p>
+<pre><code class="language-bash">flatprot project structure.cif -o large_output.svg --canvas-width 1500 --canvas-height 1200
+</code></pre>
+<h2 id="error-handling">Error Handling</h2>
+<p>The command provides informative error messages for various issues:</p>
+<ul>
+<li><strong>File Errors:</strong> Missing or invalid input files (<code>FileNotFoundError</code>, <code>InvalidStructureError</code>).</li>
+<li><strong>Format Errors:</strong> Incorrect format for structure, matrix, style, or annotation files (<code>FlatProtError</code>, specific parser errors).</li>
+<li><strong>Missing DSSP:</strong> Error if a PDB file is provided without a <code>--dssp</code> file (<code>FlatProtError</code>).</li>
+<li><strong>Processing Errors:</strong> Issues during transformation, projection, scene creation, or rendering (<code>FlatProtError</code>, <code>CoordinateCalculationError</code>).</li>
+<li><strong>Output Errors:</strong> Failure to write the output SVG file (<code>OutputFileError</code>).</li>
+</ul>
+<p>Use the <code>--verbose</code> flag for more detailed error information and debugging output.
+Exit codes are <code>0</code> for success and <code>1</code> for any error.</p>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="../../examples/" class="btn btn-neutral float-left" title="Examples"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../align/" class="btn btn-neutral float-right" title="Align">Next <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+        <span>
+          <a href="https://github.com/t03i/FlatProt" class="fa fa-github" style="color: #fcfcfc"> GitHub</a>
+        </span>
+    
+    
+      <span><a href="../../examples/" style="color: #fcfcfc">&laquo; Previous</a></span>
+    
+    
+      <span><a href="../align/" style="color: #fcfcfc">Next &raquo;</a></span>
+    
+  </span>
+</div>
+    <script src="../../js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = "../..";</script>
+    <script src="../../js/theme_extra.js"></script>
+    <script src="../../js/theme.js"></script>
+      <script src="../../search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>

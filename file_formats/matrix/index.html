@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><link rel="canonical" href="https://t03i.github.io/FlatProt/file_formats/matrix/" />
+      <link rel="shortcut icon" href="../../img/favicon.ico" />
+    <title>Matrix Files - FlatProt</title>
+    <link rel="stylesheet" href="../../css/theme.css" />
+    <link rel="stylesheet" href="../../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+        <link href="../../assets/_mkdocstrings.css" rel="stylesheet" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "Matrix Files";
+        var mkdocs_page_input_path = "file_formats/matrix.md";
+        var mkdocs_page_url = "/FlatProt/file_formats/matrix/";
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="../../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/languages/yaml.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/languages/python.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/languages/json.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/languages/toml.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/languages/bash.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/languages/numpy.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href="../.." class="icon icon-home"> FlatProt
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../..">Home</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../installation/">Installation</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../examples/">Examples</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Commands</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../commands/project/">Project</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../commands/align/">Align</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">File Formats</span></p>
+              <ul class="current">
+                  <li class="toctree-l1 current"><a class="reference internal current" href="#">Matrix Files</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#overview">Overview</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#file-format">File Format</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#creating-matrix-files">Creating Matrix Files</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#validation">Validation</a>
+    </li>
+    </ul>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../style/">Style Files</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../annotations/">Annotation Files</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">API Reference</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../api/io/">IO</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../api/core/">Core</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../api/transformation/">Transformation & Projection</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../api/scene/">Scene</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../api/rendering/">Rendering</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../api/alignment/">DatabaseAlignment</a>
+                  </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../..">FlatProt</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../.." class="icon icon-home" aria-label="Docs"></a></li>
+          <li class="breadcrumb-item">File Formats</li>
+      <li class="breadcrumb-item active">Matrix Files</li>
+    <li class="wy-breadcrumbs-aside">
+          <a href="https://github.com/t03i/FlatProt/edit/master/docs/file_formats/matrix.md" class="icon icon-github"> Edit on GitHub</a>
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="matrix-file-format">Matrix File Format</h1>
+<p>FlatProt uses transformation matrices to control how protein structures are oriented in the 2D visualization. This document explains the format of these matrix files.</p>
+<h2 id="overview">Overview</h2>
+<p>A transformation matrix in FlatProt consists of:</p>
+<ul>
+<li>A 3×3 rotation matrix</li>
+<li>A 3-element translation vector</li>
+</ul>
+<p>Together, these define how the protein structure is positioned and oriented in 3D space before projection to 2D.</p>
+<h2 id="file-format">File Format</h2>
+<p>Matrix files should be saved as NumPy <code>.npy</code> files containing a 2D array with one of the following shapes:</p>
+<ol>
+<li>
+<p><strong>4×3 matrix</strong> (preferred format):</p>
+<ul>
+<li>First 3 rows: 3×3 rotation matrix</li>
+<li>Last row: 1×3 translation vector</li>
+</ul>
+</li>
+<li>
+<p><strong>3×4 matrix</strong> (will be automatically transposed):</p>
+<ul>
+<li>First 3 columns: 3×3 rotation matrix</li>
+<li>Last column: 3×1 translation vector</li>
+</ul>
+</li>
+<li>
+<p><strong>3×3 matrix</strong> (rotation only):</p>
+<ul>
+<li>The entire matrix is treated as a rotation matrix</li>
+<li>Translation is assumed to be zero</li>
+</ul>
+</li>
+</ol>
+<h2 id="creating-matrix-files">Creating Matrix Files</h2>
+<p>You can create a matrix file using NumPy:</p>
+<pre><code class="language-python">import numpy as np
+
+# Create a rotation matrix (identity rotation)
+rotation = np.eye(3)
+
+# Create a translation vector (move 5 units along x-axis)
+translation = np.array([5.0, 0.0, 0.0])
+
+# Combine into a 4×3 matrix
+matrix = np.vstack([rotation, translation])
+
+# Save to a file
+np.save(&quot;my_transformation.npy&quot;, matrix)
+</code></pre>
+<h2 id="validation">Validation</h2>
+<p>FlatProt validates matrix files to ensure they have the correct dimensions and format. If a matrix file is invalid, an error message will be displayed explaining the issue.</p>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="../../commands/align/" class="btn btn-neutral float-left" title="Align"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../style/" class="btn btn-neutral float-right" title="Style Files">Next <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+        <span>
+          <a href="https://github.com/t03i/FlatProt" class="fa fa-github" style="color: #fcfcfc"> GitHub</a>
+        </span>
+    
+    
+      <span><a href="../../commands/align/" style="color: #fcfcfc">&laquo; Previous</a></span>
+    
+    
+      <span><a href="../style/" style="color: #fcfcfc">Next &raquo;</a></span>
+    
+  </span>
+</div>
+    <script src="../../js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = "../..";</script>
+    <script src="../../js/theme_extra.js"></script>
+    <script src="../../js/theme.js"></script>
+      <script src="../../search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>

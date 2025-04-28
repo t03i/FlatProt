@@ -1,0 +1,1796 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><link rel="canonical" href="https://t03i.github.io/FlatProt/api/rendering/" />
+      <link rel="shortcut icon" href="../../img/favicon.ico" />
+    <title>Rendering - FlatProt</title>
+    <link rel="stylesheet" href="../../css/theme.css" />
+    <link rel="stylesheet" href="../../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+        <link href="../../assets/_mkdocstrings.css" rel="stylesheet" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "Rendering";
+        var mkdocs_page_input_path = "api/rendering.md";
+        var mkdocs_page_url = "/FlatProt/api/rendering/";
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="../../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/languages/yaml.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/languages/python.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/languages/json.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/languages/toml.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/languages/bash.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/languages/numpy.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href="../.." class="icon icon-home"> FlatProt
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../..">Home</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../installation/">Installation</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../examples/">Examples</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Commands</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../commands/project/">Project</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../commands/align/">Align</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">File Formats</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../file_formats/matrix/">Matrix Files</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../file_formats/style/">Style Files</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../file_formats/annotations/">Annotation Files</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">API Reference</span></p>
+              <ul class="current">
+                  <li class="toctree-l1"><a class="reference internal" href="../io/">IO</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../core/">Core</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../transformation/">Transformation & Projection</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../scene/">Scene</a>
+                  </li>
+                  <li class="toctree-l1 current"><a class="reference internal current" href="#">Rendering</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#rendering-concept">Rendering Concept</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#peculiarities-and-design-choices">Peculiarities and Design Choices</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#renderer-classes">Renderer Classes</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#flatprot.renderers.svg_renderer.SVGRenderer">SVGRenderer</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#flatprot.renderers.svg_renderer.SVGRenderer.__init__">__init__</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#flatprot.renderers.svg_renderer.SVGRenderer.get_svg_string">get_svg_string</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#flatprot.renderers.svg_renderer.SVGRenderer.render">render</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#flatprot.renderers.svg_renderer.SVGRenderer.save_svg">save_svg</a>
+    </li>
+    </ul>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../alignment/">DatabaseAlignment</a>
+                  </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../..">FlatProt</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../.." class="icon icon-home" aria-label="Docs"></a></li>
+          <li class="breadcrumb-item">API Reference</li>
+      <li class="breadcrumb-item active">Rendering</li>
+    <li class="wy-breadcrumbs-aside">
+          <a href="https://github.com/t03i/FlatProt/edit/master/docs/api/rendering.md" class="icon icon-github"> Edit on GitHub</a>
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="rendering-api">Rendering API</h1>
+<p>This section documents the rendering system in FlatProt, responsible for converting the abstract <code>Scene</code> object into a concrete visual output format, primarily SVG.</p>
+<h2 id="rendering-concept">Rendering Concept</h2>
+<p>Renderers act as the final stage in the visualization pipeline. They take a populated <code>Scene</code> object, which contains various <code>SceneElement</code> instances (like <code>HelixSceneElement</code>, <code>PointAnnotation</code>, etc.) already projected into a 2D canvas space with associated depth (Z) information.</p>
+<p>The renderer iterates through the elements in the scene, translates their geometric data and style attributes into the target output format (e.g., SVG tags and attributes), and produces the final file or output string.</p>
+<h2 id="peculiarities-and-design-choices">Peculiarities and Design Choices</h2>
+<p>Several aspects define how the FlatProt rendering system, particularly the <code>SVGRenderer</code>, operates:</p>
+<ol>
+<li>
+<p><strong>Depth Sorting (Z-Ordering):</strong></p>
+<ul>
+<li>Before drawing, scene elements are typically sorted based on their calculated average depth (Z-coordinate). This ensures that elements closer to the viewer (lower Z, assuming standard projection) are drawn later, correctly occluding elements farther away.</li>
+<li>Annotation elements (<code>BaseAnnotationElement</code>) usually override the depth calculation to return a very high value (e.g., <code>float('inf')</code>). This guarantees they are sorted last and therefore drawn <em>on top</em> of all structural elements.</li>
+</ul>
+</li>
+<li>
+<p><strong>Scene Element to SVG Mapping:</strong></p>
+<ul>
+<li>The renderer maps different <code>SceneElement</code> types to appropriate SVG tags:<ul>
+<li><code>HelixSceneElement</code>: Typically rendered as an SVG <code>&lt;path&gt;</code> or <code>&lt;polygon&gt;</code> representing the zigzag ribbon.</li>
+<li><code>SheetSceneElement</code>: Rendered as an SVG <code>&lt;polygon&gt;</code> forming the arrowhead shape.</li>
+<li><code>CoilSceneElement</code>: Rendered as an SVG <code>&lt;path&gt;</code> or <code>&lt;polyline&gt;</code> representing the smoothed line.</li>
+<li><code>PointAnnotation</code>: Rendered as an SVG <code>&lt;circle&gt;</code>, <code>&lt;rect&gt;</code>, or <code>&lt;path&gt;</code> depending on the <code>marker_shape</code> style, plus an SVG <code>&lt;text&gt;</code> element for the label.</li>
+<li><code>LineAnnotation</code>: Rendered as an SVG <code>&lt;line&gt;</code> or <code>&lt;path&gt;</code>, potentially with <code>&lt;circle&gt;</code> elements for connectors and <code>&lt;polygon&gt;</code> for arrowheads, plus an SVG <code>&lt;text&gt;</code> element for the label.</li>
+<li><code>AreaAnnotation</code>: Rendered as an SVG <code>&lt;path&gt;</code> or <code>&lt;polygon&gt;</code> representing the padded convex hull, plus an SVG <code>&lt;text&gt;</code> element for the label.</li>
+</ul>
+</li>
+<li>Elements are often grouped within SVG <code>&lt;g&gt;</code> tags for organization, potentially grouped by type or parent element in the scene graph.</li>
+</ul>
+</li>
+<li>
+<p><strong>Style Application:</strong></p>
+<ul>
+<li>Style attributes defined in the <code>BaseSceneStyle</code> and its derivatives (e.g., <code>HelixStyle</code>, <code>PointAnnotationStyle</code>) are translated into SVG presentation attributes.</li>
+<li>Examples:<ul>
+<li><code>color</code> or <code>fill_color</code> -&gt; <code>fill</code> attribute.</li>
+<li><code>stroke_color</code> or <code>line_color</code> -&gt; <code>stroke</code> attribute.</li>
+<li><code>stroke_width</code> -&gt; <code>stroke-width</code> attribute.</li>
+<li><code>opacity</code> or <code>fill_opacity</code> -&gt; <code>opacity</code> or <code>fill-opacity</code> attributes.</li>
+<li><code>line_style</code> or <code>linestyle</code> (tuple/array) -&gt; <code>stroke-dasharray</code> attribute.</li>
+<li>Label styles (<code>label_color</code>, <code>label_font_size</code>, etc.) -&gt; corresponding attributes on the <code>&lt;text&gt;</code> element.</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>
+<p><strong>Coordinate System &amp; Canvas:</strong></p>
+<ul>
+<li>The input <code>Scene</code> contains elements with coordinates already projected onto the 2D canvas (X, Y) plus depth (Z). The origin (0,0) is typically the top-left corner, consistent with SVG standards.</li>
+<li>The <code>width</code> and <code>height</code> provided to the renderer define the dimensions of the SVG canvas and its <code>viewBox</code>.</li>
+<li>The <code>project_structure_orthographically</code> utility function handles the scaling and centering of the protein coordinates within this canvas space before they reach the scene/renderer.</li>
+</ul>
+</li>
+<li>
+<p><strong>Focus on Static Output:</strong></p>
+<ul>
+<li>The current implementation focuses on generating static SVG images. It generally does not utilize advanced SVG features like animations, complex gradients, filters, or embedded scripts.</li>
+</ul>
+</li>
+</ol>
+<hr />
+<h2 id="renderer-classes">Renderer Classes</h2>
+
+
+<div class="doc doc-object doc-class">
+
+
+
+<a id="flatprot.renderers.svg_renderer.SVGRenderer"></a>
+    <div class="doc doc-contents first">
+
+
+        <p>Renders a Scene object to an SVG Drawing.</p>
+
+
+<table class="field-list">
+  <colgroup>
+    <col class="field-name" />
+    <col class="field-body" />
+  </colgroup>
+  <tbody valign="top">
+    <tr class="field">
+      <th class="field-name">Attributes:</th>
+      <td class="field-body">
+        <ul class="first simple">
+            <li>
+              <b><code>scene</code></b>
+              –
+              <div class="doc-md-description">
+                <p>The Scene object to render.</p>
+              </div>
+            </li>
+            <li>
+              <b><code>width</code></b>
+              –
+              <div class="doc-md-description">
+                <p>The width of the SVG canvas.</p>
+              </div>
+            </li>
+            <li>
+              <b><code>height</code></b>
+              –
+              <div class="doc-md-description">
+                <p>The height of the SVG canvas.</p>
+              </div>
+            </li>
+            <li>
+              <b><code>background_color</code></b>
+              –
+              <div class="doc-md-description">
+                <p>Optional background color for the SVG.</p>
+              </div>
+            </li>
+            <li>
+              <b><code>background_opacity</code></b>
+              –
+              <div class="doc-md-description">
+                <p>Opacity for the background color.</p>
+              </div>
+            </li>
+            <li>
+              <b><code>padding</code></b>
+              –
+              <div class="doc-md-description">
+                <p>Padding around the content within the viewBox.</p>
+              </div>
+            </li>
+        </ul>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+
+
+
+
+
+              <details class="quote">
+                <summary>Source code in <code>src/flatprot/renderers/svg_renderer.py</code></summary>
+                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 83</span>
+<span class="normal"> 84</span>
+<span class="normal"> 85</span>
+<span class="normal"> 86</span>
+<span class="normal"> 87</span>
+<span class="normal"> 88</span>
+<span class="normal"> 89</span>
+<span class="normal"> 90</span>
+<span class="normal"> 91</span>
+<span class="normal"> 92</span>
+<span class="normal"> 93</span>
+<span class="normal"> 94</span>
+<span class="normal"> 95</span>
+<span class="normal"> 96</span>
+<span class="normal"> 97</span>
+<span class="normal"> 98</span>
+<span class="normal"> 99</span>
+<span class="normal">100</span>
+<span class="normal">101</span>
+<span class="normal">102</span>
+<span class="normal">103</span>
+<span class="normal">104</span>
+<span class="normal">105</span>
+<span class="normal">106</span>
+<span class="normal">107</span>
+<span class="normal">108</span>
+<span class="normal">109</span>
+<span class="normal">110</span>
+<span class="normal">111</span>
+<span class="normal">112</span>
+<span class="normal">113</span>
+<span class="normal">114</span>
+<span class="normal">115</span>
+<span class="normal">116</span>
+<span class="normal">117</span>
+<span class="normal">118</span>
+<span class="normal">119</span>
+<span class="normal">120</span>
+<span class="normal">121</span>
+<span class="normal">122</span>
+<span class="normal">123</span>
+<span class="normal">124</span>
+<span class="normal">125</span>
+<span class="normal">126</span>
+<span class="normal">127</span>
+<span class="normal">128</span>
+<span class="normal">129</span>
+<span class="normal">130</span>
+<span class="normal">131</span>
+<span class="normal">132</span>
+<span class="normal">133</span>
+<span class="normal">134</span>
+<span class="normal">135</span>
+<span class="normal">136</span>
+<span class="normal">137</span>
+<span class="normal">138</span>
+<span class="normal">139</span>
+<span class="normal">140</span>
+<span class="normal">141</span>
+<span class="normal">142</span>
+<span class="normal">143</span>
+<span class="normal">144</span>
+<span class="normal">145</span>
+<span class="normal">146</span>
+<span class="normal">147</span>
+<span class="normal">148</span>
+<span class="normal">149</span>
+<span class="normal">150</span>
+<span class="normal">151</span>
+<span class="normal">152</span>
+<span class="normal">153</span>
+<span class="normal">154</span>
+<span class="normal">155</span>
+<span class="normal">156</span>
+<span class="normal">157</span>
+<span class="normal">158</span>
+<span class="normal">159</span>
+<span class="normal">160</span>
+<span class="normal">161</span>
+<span class="normal">162</span>
+<span class="normal">163</span>
+<span class="normal">164</span>
+<span class="normal">165</span>
+<span class="normal">166</span>
+<span class="normal">167</span>
+<span class="normal">168</span>
+<span class="normal">169</span>
+<span class="normal">170</span>
+<span class="normal">171</span>
+<span class="normal">172</span>
+<span class="normal">173</span>
+<span class="normal">174</span>
+<span class="normal">175</span>
+<span class="normal">176</span>
+<span class="normal">177</span>
+<span class="normal">178</span>
+<span class="normal">179</span>
+<span class="normal">180</span>
+<span class="normal">181</span>
+<span class="normal">182</span>
+<span class="normal">183</span>
+<span class="normal">184</span>
+<span class="normal">185</span>
+<span class="normal">186</span>
+<span class="normal">187</span>
+<span class="normal">188</span>
+<span class="normal">189</span>
+<span class="normal">190</span>
+<span class="normal">191</span>
+<span class="normal">192</span>
+<span class="normal">193</span>
+<span class="normal">194</span>
+<span class="normal">195</span>
+<span class="normal">196</span>
+<span class="normal">197</span>
+<span class="normal">198</span>
+<span class="normal">199</span>
+<span class="normal">200</span>
+<span class="normal">201</span>
+<span class="normal">202</span>
+<span class="normal">203</span>
+<span class="normal">204</span>
+<span class="normal">205</span>
+<span class="normal">206</span>
+<span class="normal">207</span>
+<span class="normal">208</span>
+<span class="normal">209</span>
+<span class="normal">210</span>
+<span class="normal">211</span>
+<span class="normal">212</span>
+<span class="normal">213</span>
+<span class="normal">214</span>
+<span class="normal">215</span>
+<span class="normal">216</span>
+<span class="normal">217</span>
+<span class="normal">218</span>
+<span class="normal">219</span>
+<span class="normal">220</span>
+<span class="normal">221</span>
+<span class="normal">222</span>
+<span class="normal">223</span>
+<span class="normal">224</span>
+<span class="normal">225</span>
+<span class="normal">226</span>
+<span class="normal">227</span>
+<span class="normal">228</span>
+<span class="normal">229</span>
+<span class="normal">230</span>
+<span class="normal">231</span>
+<span class="normal">232</span>
+<span class="normal">233</span>
+<span class="normal">234</span>
+<span class="normal">235</span>
+<span class="normal">236</span>
+<span class="normal">237</span>
+<span class="normal">238</span>
+<span class="normal">239</span>
+<span class="normal">240</span>
+<span class="normal">241</span>
+<span class="normal">242</span>
+<span class="normal">243</span>
+<span class="normal">244</span>
+<span class="normal">245</span>
+<span class="normal">246</span>
+<span class="normal">247</span>
+<span class="normal">248</span>
+<span class="normal">249</span>
+<span class="normal">250</span>
+<span class="normal">251</span>
+<span class="normal">252</span>
+<span class="normal">253</span>
+<span class="normal">254</span>
+<span class="normal">255</span>
+<span class="normal">256</span>
+<span class="normal">257</span>
+<span class="normal">258</span>
+<span class="normal">259</span>
+<span class="normal">260</span>
+<span class="normal">261</span>
+<span class="normal">262</span>
+<span class="normal">263</span>
+<span class="normal">264</span>
+<span class="normal">265</span>
+<span class="normal">266</span>
+<span class="normal">267</span>
+<span class="normal">268</span>
+<span class="normal">269</span>
+<span class="normal">270</span>
+<span class="normal">271</span>
+<span class="normal">272</span>
+<span class="normal">273</span>
+<span class="normal">274</span>
+<span class="normal">275</span>
+<span class="normal">276</span>
+<span class="normal">277</span>
+<span class="normal">278</span>
+<span class="normal">279</span>
+<span class="normal">280</span>
+<span class="normal">281</span>
+<span class="normal">282</span>
+<span class="normal">283</span>
+<span class="normal">284</span>
+<span class="normal">285</span>
+<span class="normal">286</span>
+<span class="normal">287</span>
+<span class="normal">288</span>
+<span class="normal">289</span>
+<span class="normal">290</span>
+<span class="normal">291</span>
+<span class="normal">292</span>
+<span class="normal">293</span>
+<span class="normal">294</span>
+<span class="normal">295</span>
+<span class="normal">296</span>
+<span class="normal">297</span>
+<span class="normal">298</span>
+<span class="normal">299</span>
+<span class="normal">300</span>
+<span class="normal">301</span>
+<span class="normal">302</span>
+<span class="normal">303</span>
+<span class="normal">304</span>
+<span class="normal">305</span>
+<span class="normal">306</span>
+<span class="normal">307</span>
+<span class="normal">308</span>
+<span class="normal">309</span>
+<span class="normal">310</span>
+<span class="normal">311</span>
+<span class="normal">312</span>
+<span class="normal">313</span>
+<span class="normal">314</span>
+<span class="normal">315</span>
+<span class="normal">316</span>
+<span class="normal">317</span>
+<span class="normal">318</span>
+<span class="normal">319</span>
+<span class="normal">320</span>
+<span class="normal">321</span>
+<span class="normal">322</span>
+<span class="normal">323</span>
+<span class="normal">324</span>
+<span class="normal">325</span>
+<span class="normal">326</span>
+<span class="normal">327</span>
+<span class="normal">328</span>
+<span class="normal">329</span>
+<span class="normal">330</span>
+<span class="normal">331</span>
+<span class="normal">332</span>
+<span class="normal">333</span>
+<span class="normal">334</span>
+<span class="normal">335</span>
+<span class="normal">336</span>
+<span class="normal">337</span>
+<span class="normal">338</span>
+<span class="normal">339</span>
+<span class="normal">340</span>
+<span class="normal">341</span>
+<span class="normal">342</span>
+<span class="normal">343</span>
+<span class="normal">344</span>
+<span class="normal">345</span>
+<span class="normal">346</span>
+<span class="normal">347</span>
+<span class="normal">348</span>
+<span class="normal">349</span>
+<span class="normal">350</span>
+<span class="normal">351</span>
+<span class="normal">352</span>
+<span class="normal">353</span>
+<span class="normal">354</span>
+<span class="normal">355</span>
+<span class="normal">356</span>
+<span class="normal">357</span>
+<span class="normal">358</span>
+<span class="normal">359</span>
+<span class="normal">360</span>
+<span class="normal">361</span>
+<span class="normal">362</span>
+<span class="normal">363</span>
+<span class="normal">364</span>
+<span class="normal">365</span>
+<span class="normal">366</span>
+<span class="normal">367</span>
+<span class="normal">368</span>
+<span class="normal">369</span>
+<span class="normal">370</span>
+<span class="normal">371</span>
+<span class="normal">372</span>
+<span class="normal">373</span>
+<span class="normal">374</span>
+<span class="normal">375</span>
+<span class="normal">376</span>
+<span class="normal">377</span>
+<span class="normal">378</span>
+<span class="normal">379</span>
+<span class="normal">380</span>
+<span class="normal">381</span>
+<span class="normal">382</span>
+<span class="normal">383</span>
+<span class="normal">384</span>
+<span class="normal">385</span>
+<span class="normal">386</span>
+<span class="normal">387</span>
+<span class="normal">388</span>
+<span class="normal">389</span>
+<span class="normal">390</span>
+<span class="normal">391</span>
+<span class="normal">392</span>
+<span class="normal">393</span>
+<span class="normal">394</span>
+<span class="normal">395</span>
+<span class="normal">396</span>
+<span class="normal">397</span>
+<span class="normal">398</span>
+<span class="normal">399</span>
+<span class="normal">400</span>
+<span class="normal">401</span>
+<span class="normal">402</span>
+<span class="normal">403</span>
+<span class="normal">404</span>
+<span class="normal">405</span>
+<span class="normal">406</span>
+<span class="normal">407</span>
+<span class="normal">408</span>
+<span class="normal">409</span>
+<span class="normal">410</span>
+<span class="normal">411</span>
+<span class="normal">412</span>
+<span class="normal">413</span>
+<span class="normal">414</span>
+<span class="normal">415</span>
+<span class="normal">416</span>
+<span class="normal">417</span>
+<span class="normal">418</span>
+<span class="normal">419</span>
+<span class="normal">420</span>
+<span class="normal">421</span>
+<span class="normal">422</span>
+<span class="normal">423</span>
+<span class="normal">424</span>
+<span class="normal">425</span>
+<span class="normal">426</span>
+<span class="normal">427</span>
+<span class="normal">428</span>
+<span class="normal">429</span>
+<span class="normal">430</span>
+<span class="normal">431</span>
+<span class="normal">432</span>
+<span class="normal">433</span>
+<span class="normal">434</span>
+<span class="normal">435</span>
+<span class="normal">436</span>
+<span class="normal">437</span>
+<span class="normal">438</span>
+<span class="normal">439</span>
+<span class="normal">440</span>
+<span class="normal">441</span>
+<span class="normal">442</span>
+<span class="normal">443</span>
+<span class="normal">444</span>
+<span class="normal">445</span>
+<span class="normal">446</span>
+<span class="normal">447</span>
+<span class="normal">448</span>
+<span class="normal">449</span>
+<span class="normal">450</span>
+<span class="normal">451</span>
+<span class="normal">452</span>
+<span class="normal">453</span>
+<span class="normal">454</span>
+<span class="normal">455</span>
+<span class="normal">456</span>
+<span class="normal">457</span>
+<span class="normal">458</span>
+<span class="normal">459</span>
+<span class="normal">460</span>
+<span class="normal">461</span>
+<span class="normal">462</span>
+<span class="normal">463</span>
+<span class="normal">464</span>
+<span class="normal">465</span>
+<span class="normal">466</span>
+<span class="normal">467</span>
+<span class="normal">468</span>
+<span class="normal">469</span>
+<span class="normal">470</span>
+<span class="normal">471</span>
+<span class="normal">472</span>
+<span class="normal">473</span>
+<span class="normal">474</span>
+<span class="normal">475</span>
+<span class="normal">476</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span> <span class="nc">SVGRenderer</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Renders a Scene object to an SVG Drawing.</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        scene: The Scene object to render.</span>
+<span class="sd">        width: The width of the SVG canvas.</span>
+<span class="sd">        height: The height of the SVG canvas.</span>
+<span class="sd">        background_color: Optional background color for the SVG.</span>
+<span class="sd">        background_opacity: Opacity for the background color.</span>
+<span class="sd">        padding: Padding around the content within the viewBox.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">DEFAULT_WIDTH</span> <span class="o">=</span> <span class="mi">600</span>
+    <span class="n">DEFAULT_HEIGHT</span> <span class="o">=</span> <span class="mi">400</span>
+    <span class="n">DEFAULT_BG_COLOR</span> <span class="o">=</span> <span class="s2">&quot;#FFFFFF&quot;</span>
+    <span class="n">DEFAULT_BG_OPACITY</span> <span class="o">=</span> <span class="mf">1.0</span>
+    <span class="n">DEFAULT_PADDING</span> <span class="o">=</span> <span class="mi">10</span>  <span class="c1"># Default padding in SVG units</span>
+
+    <span class="c1"># Map element types to their drawing functions</span>
+    <span class="n">DRAW_MAP</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="n">CoilSceneElement</span><span class="p">:</span> <span class="n">_draw_coil</span><span class="p">,</span>
+        <span class="n">HelixSceneElement</span><span class="p">:</span> <span class="n">_draw_helix</span><span class="p">,</span>
+        <span class="n">SheetSceneElement</span><span class="p">:</span> <span class="n">_draw_sheet</span><span class="p">,</span>
+        <span class="c1"># Annotations handled separately due to anchor calculation</span>
+    <span class="p">}</span>
+    <span class="n">ANNOTATION_DRAW_MAP</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="n">PointAnnotation</span><span class="p">:</span> <span class="n">_draw_point_annotation</span><span class="p">,</span>
+        <span class="n">LineAnnotation</span><span class="p">:</span> <span class="n">_draw_line_annotation</span><span class="p">,</span>
+        <span class="n">AreaAnnotation</span><span class="p">:</span> <span class="n">_draw_area_annotation</span><span class="p">,</span>
+    <span class="p">}</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">scene</span><span class="p">:</span> <span class="n">Scene</span><span class="p">,</span>
+        <span class="n">width</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">DEFAULT_WIDTH</span><span class="p">,</span>
+        <span class="n">height</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">DEFAULT_HEIGHT</span><span class="p">,</span>
+        <span class="n">background_color</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">DEFAULT_BG_COLOR</span><span class="p">,</span>
+        <span class="n">background_opacity</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">DEFAULT_BG_OPACITY</span><span class="p">,</span>
+        <span class="n">padding</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">DEFAULT_PADDING</span><span class="p">,</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Initializes the SVGRenderer.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            scene: The Scene object containing the elements to render.</span>
+<span class="sd">            width: Desired width of the SVG canvas.</span>
+<span class="sd">            height: Desired height of the SVG canvas.</span>
+<span class="sd">            background_color: Background color (CSS string, e.g., &#39;#FFFFFF&#39; or &#39;white&#39;). None for transparent.</span>
+<span class="sd">            background_opacity: Background opacity (0.0 to 1.0).</span>
+<span class="sd">            padding: Padding around the content within the viewBox.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">scene</span><span class="p">,</span> <span class="n">Scene</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;Renderer requires a valid Scene object.&quot;</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">scene</span> <span class="o">=</span> <span class="n">scene</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">width</span> <span class="o">=</span> <span class="n">width</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">height</span> <span class="o">=</span> <span class="n">height</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">background_color</span> <span class="o">=</span> <span class="n">background_color</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">background_opacity</span> <span class="o">=</span> <span class="n">background_opacity</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">padding</span> <span class="o">=</span> <span class="n">padding</span>  <span class="c1"># Store padding</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_element_map</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">BaseSceneElement</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">e</span><span class="o">.</span><span class="n">id</span><span class="p">:</span> <span class="n">e</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">scene</span><span class="o">.</span><span class="n">get_all_elements</span><span class="p">()</span>
+        <span class="p">}</span>
+
+    <span class="k">def</span> <span class="nf">_collect_and_sort_renderables</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span>
+        <span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">BaseStructureSceneElement</span><span class="p">]],</span>
+        <span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">BaseAnnotationElement</span><span class="p">]],</span>
+        <span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">Connection</span><span class="p">]],</span>
+    <span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Traverses scene, collects renderable leaf nodes, sorts them by Z-depth.&quot;&quot;&quot;</span>
+        <span class="n">structure_elements</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">BaseStructureSceneElement</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">annotation_elements</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">BaseAnnotationElement</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">connection_elements</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">Connection</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">structure</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">scene</span><span class="o">.</span><span class="n">structure</span>  <span class="c1"># Get structure once</span>
+
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;--- Starting _collect_and_sort_renderables ---&quot;</span><span class="p">)</span>  <span class="c1"># DEBUG</span>
+        <span class="k">for</span> <span class="n">element</span><span class="p">,</span> <span class="n">hierarchy_depth</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">scene</span><span class="o">.</span><span class="n">traverse</span><span class="p">():</span>  <span class="c1"># Use scene traverse</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Traversing: </span><span class="si">{</span><span class="n">element</span><span class="o">.</span><span class="n">id</span><span class="si">}</span><span class="s2"> (Type: </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">element</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">, Depth: </span><span class="si">{</span><span class="n">hierarchy_depth</span><span class="si">}</span><span class="s2">)&quot;</span>
+            <span class="p">)</span>
+
+            <span class="c1"># Skip invisible or group elements</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">element</span><span class="o">.</span><span class="n">style</span><span class="o">.</span><span class="n">visibility</span><span class="p">:</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Skipping </span><span class="si">{</span><span class="n">element</span><span class="o">.</span><span class="n">id</span><span class="si">}</span><span class="s2">: Invisible&quot;</span><span class="p">)</span>  <span class="c1"># DEBUG</span>
+                <span class="k">continue</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">element</span><span class="p">,</span> <span class="n">SceneGroup</span><span class="p">):</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Skipping </span><span class="si">{</span><span class="n">element</span><span class="o">.</span><span class="n">id</span><span class="si">}</span><span class="s2">: Is SceneGroup&quot;</span><span class="p">)</span>  <span class="c1"># DEBUG</span>
+                <span class="k">continue</span>
+
+            <span class="n">render_depth</span> <span class="o">=</span> <span class="n">element</span><span class="o">.</span><span class="n">get_depth</span><span class="p">(</span><span class="n">structure</span><span class="p">)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Calculated render_depth for </span><span class="si">{</span><span class="n">element</span><span class="o">.</span><span class="n">id</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">render_depth</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="p">)</span>  <span class="c1"># DEBUG</span>
+
+            <span class="k">if</span> <span class="n">render_depth</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;Element </span><span class="si">{</span><span class="n">element</span><span class="o">.</span><span class="n">id</span><span class="si">}</span><span class="s2"> (</span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">element</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">) has no rendering depth, skipping collection.&quot;</span>
+                <span class="p">)</span>  <span class="c1"># DEBUG: Changed message slightly</span>
+                <span class="k">continue</span>
+
+            <span class="c1"># Categorize and collect</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">element</span><span class="p">,</span> <span class="n">BaseStructureSceneElement</span><span class="p">):</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Collecting Structure Element: </span><span class="si">{</span><span class="n">element</span><span class="o">.</span><span class="n">id</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>  <span class="c1"># DEBUG</span>
+                <span class="n">structure_elements</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">render_depth</span><span class="p">,</span> <span class="n">element</span><span class="p">))</span>
+            <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">element</span><span class="p">,</span> <span class="n">BaseAnnotationElement</span><span class="p">):</span>
+                <span class="c1"># Depth is inf, but store it for consistency (sorting won&#39;t change)</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Collecting Annotation Element: </span><span class="si">{</span><span class="n">element</span><span class="o">.</span><span class="n">id</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>  <span class="c1"># DEBUG</span>
+                <span class="n">annotation_elements</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">render_depth</span><span class="p">,</span> <span class="n">element</span><span class="p">))</span>
+            <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">element</span><span class="p">,</span> <span class="n">Connection</span><span class="p">):</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Collecting Connection Element: </span><span class="si">{</span><span class="n">element</span><span class="o">.</span><span class="n">id</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>  <span class="c1"># DEBUG</span>
+                <span class="n">connection_elements</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">render_depth</span><span class="p">,</span> <span class="n">element</span><span class="p">))</span>
+            <span class="c1"># else: Ignore other potential non-group, non-renderable types</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;--- Finished _collect_and_sort_renderables ---&quot;</span><span class="p">)</span>  <span class="c1"># DEBUG</span>
+
+        <span class="c1"># Sort structure elements by depth (ascending)</span>
+        <span class="n">structure_elements</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">item</span><span class="p">:</span> <span class="n">item</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="c1"># Annotations are naturally last due to depth=inf, but explicit sort doesn&#39;t hurt</span>
+        <span class="n">annotation_elements</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">item</span><span class="p">:</span> <span class="n">item</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="c1"># Sort connections by depth (ascending) - based on average of connected elements</span>
+        <span class="n">connection_elements</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">item</span><span class="p">:</span> <span class="n">item</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+
+        <span class="k">return</span> <span class="n">structure_elements</span><span class="p">,</span> <span class="n">annotation_elements</span><span class="p">,</span> <span class="n">connection_elements</span>
+
+    <span class="k">def</span> <span class="nf">_build_svg_hierarchy</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">element</span><span class="p">:</span> <span class="n">BaseSceneElement</span><span class="p">,</span>
+        <span class="n">parent_svg_group</span><span class="p">:</span> <span class="n">Group</span><span class="p">,</span>
+        <span class="n">svg_group_map</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Group</span><span class="p">],</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Recursively builds SVG groups mirroring SceneGroups.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">element</span><span class="p">,</span> <span class="n">SceneGroup</span><span class="p">):</span>
+            <span class="k">return</span>  <span class="c1"># Only process groups</span>
+
+        <span class="n">svg_transform_str</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">element</span><span class="o">.</span><span class="n">transforms</span><span class="p">)</span>
+        <span class="n">current_svg_group</span> <span class="o">=</span> <span class="n">Group</span><span class="p">(</span><span class="nb">id</span><span class="o">=</span><span class="n">element</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="n">transform</span><span class="o">=</span><span class="n">svg_transform_str</span><span class="p">)</span>
+        <span class="n">svg_group_map</span><span class="p">[</span><span class="n">element</span><span class="o">.</span><span class="n">id</span><span class="p">]</span> <span class="o">=</span> <span class="n">current_svg_group</span>
+        <span class="n">parent_svg_group</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">current_svg_group</span><span class="p">)</span>
+
+        <span class="c1"># Recursively process children</span>
+        <span class="k">for</span> <span class="n">child</span> <span class="ow">in</span> <span class="n">element</span><span class="o">.</span><span class="n">children</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_build_svg_hierarchy</span><span class="p">(</span><span class="n">child</span><span class="p">,</span> <span class="n">current_svg_group</span><span class="p">,</span> <span class="n">svg_group_map</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_prepare_render_data</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span>
+        <span class="n">List</span><span class="p">[</span><span class="n">BaseStructureSceneElement</span><span class="p">],</span>  <span class="c1"># Ordered structure elements</span>
+        <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">],</span>  <span class="c1"># Element ID -&gt; coords_2d</span>
+    <span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Pre-calculates 2D coordinates and connection points for structure elements.&quot;&quot;&quot;</span>
+        <span class="c1"># ordered_elements: List[BaseStructureSceneElement] = [] # Keep type hint</span>
+        <span class="n">element_coords_cache</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">structure</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">scene</span><span class="o">.</span><span class="n">structure</span>
+
+        <span class="c1"># --- Get Sequentially Ordered Structure Elements --- #</span>
+        <span class="c1"># Uses the new method in Scene to get elements sorted by chain and residue index</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">ordered_elements</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">scene</span><span class="o">.</span><span class="n">get_sequential_structure_elements</span><span class="p">()</span>
+            <span class="c1"># Filter for visibility *after* getting the ordered list</span>
+            <span class="n">ordered_elements</span> <span class="o">=</span> <span class="p">[</span><span class="n">el</span> <span class="k">for</span> <span class="n">el</span> <span class="ow">in</span> <span class="n">ordered_elements</span> <span class="k">if</span> <span class="n">el</span><span class="o">.</span><span class="n">style</span><span class="o">.</span><span class="n">visibility</span><span class="p">]</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Error getting sequential structure elements: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">exc_info</span><span class="o">=</span><span class="kc">True</span>
+            <span class="p">)</span>
+            <span class="k">return</span> <span class="p">[],</span> <span class="p">{}</span>  <span class="c1"># Return empty if fetching/sorting failed</span>
+
+        <span class="c1"># --- Calculate Coordinates and Connection Points --- #</span>
+        <span class="k">for</span> <span class="n">element</span> <span class="ow">in</span> <span class="n">ordered_elements</span><span class="p">:</span>
+            <span class="n">element_id</span> <span class="o">=</span> <span class="n">element</span><span class="o">.</span><span class="n">id</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="c1"># CRITICAL ASSUMPTION: get_coordinates returns *final projected* 2D/3D coords.</span>
+                <span class="c1"># If it returns raw 3D, projection needs to happen here.</span>
+                <span class="n">coords</span> <span class="o">=</span> <span class="n">element</span><span class="o">.</span><span class="n">get_coordinates</span><span class="p">(</span><span class="n">structure</span><span class="p">)</span>
+
+                <span class="k">if</span> <span class="n">coords</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">coords</span><span class="o">.</span><span class="n">ndim</span> <span class="o">!=</span> <span class="mi">2</span> <span class="ow">or</span> <span class="n">coords</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">&lt;</span> <span class="mi">2</span><span class="p">:</span>
+                    <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                        <span class="sa">f</span><span class="s2">&quot;Element </span><span class="si">{</span><span class="n">element_id</span><span class="si">}</span><span class="s2"> provided invalid coordinates shape: </span><span class="si">{</span><span class="n">coords</span><span class="o">.</span><span class="n">shape</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="n">coords</span><span class="w"> </span><span class="ow">is</span><span class="w"> </span><span class="ow">not</span><span class="w"> </span><span class="kc">None</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="s1">&#39;None&#39;</span><span class="si">}</span><span class="s2">. Skipping.&quot;</span>
+                    <span class="p">)</span>
+                    <span class="c1"># Add placeholders to avoid key errors later if neighbors expect connections</span>
+                    <span class="n">element_coords_cache</span><span class="p">[</span><span class="n">element_id</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">((</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span>
+                    <span class="k">continue</span>
+
+                <span class="n">coords_2d</span> <span class="o">=</span> <span class="n">coords</span><span class="p">[:,</span> <span class="p">:</span><span class="mi">2</span><span class="p">]</span>  <span class="c1"># Ensure we only use X, Y</span>
+                <span class="n">element_coords_cache</span><span class="p">[</span><span class="n">element_id</span><span class="p">]</span> <span class="o">=</span> <span class="n">coords_2d</span>
+
+            <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;Error preparing render data for element </span><span class="si">{</span><span class="n">element_id</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+                    <span class="n">exc_info</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                <span class="p">)</span>
+                <span class="c1"># Add placeholders if preparation fails for an element</span>
+                <span class="n">element_coords_cache</span><span class="p">[</span><span class="n">element_id</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">((</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span>
+                <span class="k">continue</span>
+
+        <span class="k">return</span> <span class="n">ordered_elements</span><span class="p">,</span> <span class="n">element_coords_cache</span>
+
+    <span class="k">def</span> <span class="nf">render</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Drawing</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Renders the scene to a drawsvg.Drawing object.&quot;&quot;&quot;</span>
+        <span class="n">drawing</span> <span class="o">=</span> <span class="n">Drawing</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">width</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">height</span><span class="p">)</span>
+        <span class="n">svg_group_map</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Group</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="c1"># 1. Add Background</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">background_color</span><span class="p">:</span>
+            <span class="n">drawing</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="n">Rectangle</span><span class="p">(</span>
+                    <span class="mi">0</span><span class="p">,</span>
+                    <span class="mi">0</span><span class="p">,</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">width</span><span class="p">,</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">height</span><span class="p">,</span>
+                    <span class="n">fill</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">background_color</span><span class="p">,</span>
+                    <span class="n">opacity</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">background_opacity</span><span class="p">,</span>
+                    <span class="n">class_</span><span class="o">=</span><span class="s2">&quot;background&quot;</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+
+        <span class="c1"># 2. Build SVG Group Hierarchy</span>
+        <span class="n">root_group</span> <span class="o">=</span> <span class="n">Group</span><span class="p">(</span><span class="nb">id</span><span class="o">=</span><span class="s2">&quot;flatprot-root&quot;</span><span class="p">)</span>
+        <span class="n">drawing</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">root_group</span><span class="p">)</span>
+        <span class="n">svg_group_map</span><span class="p">[</span><span class="s2">&quot;flatprot-root&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">root_group</span>  <span class="c1"># Register root</span>
+
+        <span class="k">for</span> <span class="n">top_level_node</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">scene</span><span class="o">.</span><span class="n">top_level_nodes</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_build_svg_hierarchy</span><span class="p">(</span><span class="n">top_level_node</span><span class="p">,</span> <span class="n">root_group</span><span class="p">,</span> <span class="n">svg_group_map</span><span class="p">)</span>
+
+        <span class="c1"># 3. Prepare Render Data for Structure Elements</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="p">(</span>
+                <span class="n">_</span><span class="p">,</span>
+                <span class="n">element_coords_cache</span><span class="p">,</span>
+            <span class="p">)</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_prepare_render_data</span><span class="p">()</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Failed to prepare render data: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">exc_info</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">drawing</span>
+
+        <span class="c1"># 3.5 Collect and Sort All Renderable Elements</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="p">(</span>
+                <span class="n">sorted_structure_elements</span><span class="p">,</span>
+                <span class="n">sorted_annotations</span><span class="p">,</span>
+                <span class="n">sorted_connections</span><span class="p">,</span>
+            <span class="p">)</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_collect_and_sort_renderables</span><span class="p">()</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Failed to collect/sort renderables: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">exc_info</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">drawing</span>
+
+        <span class="c1"># 4. Draw Structure Elements (sorted by depth)</span>
+        <span class="k">for</span> <span class="n">depth</span><span class="p">,</span> <span class="n">element</span> <span class="ow">in</span> <span class="n">sorted_structure_elements</span><span class="p">:</span>
+            <span class="n">element_id</span> <span class="o">=</span> <span class="n">element</span><span class="o">.</span><span class="n">id</span>
+            <span class="n">element_type</span> <span class="o">=</span> <span class="nb">type</span><span class="p">(</span><span class="n">element</span><span class="p">)</span>
+
+            <span class="c1"># Get cached coordinates for the current element</span>
+            <span class="n">coords_2d</span> <span class="o">=</span> <span class="n">element_coords_cache</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">element_id</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">coords_2d</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">coords_2d</span><span class="o">.</span><span class="n">size</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;Skipping draw for </span><span class="si">{</span><span class="n">element_id</span><span class="si">}</span><span class="s2">: No valid cached 2D coordinates found.&quot;</span>
+                <span class="p">)</span>
+                <span class="k">continue</span>
+
+            <span class="c1"># Select and call the appropriate drawing function</span>
+            <span class="n">svg_shape</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">element</span><span class="p">,</span> <span class="n">CoilSceneElement</span><span class="p">):</span>
+                    <span class="n">svg_shape</span> <span class="o">=</span> <span class="n">_draw_coil</span><span class="p">(</span><span class="n">element</span><span class="p">,</span> <span class="n">coords_2d</span><span class="p">)</span>
+                <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">element</span><span class="p">,</span> <span class="n">HelixSceneElement</span><span class="p">):</span>
+                    <span class="n">svg_shape</span> <span class="o">=</span> <span class="n">_draw_helix</span><span class="p">(</span><span class="n">element</span><span class="p">,</span> <span class="n">coords_2d</span><span class="p">)</span>
+                <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">element</span><span class="p">,</span> <span class="n">SheetSceneElement</span><span class="p">):</span>
+                    <span class="n">svg_shape</span> <span class="o">=</span> <span class="n">_draw_sheet</span><span class="p">(</span><span class="n">element</span><span class="p">,</span> <span class="n">coords_2d</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                        <span class="sa">f</span><span class="s2">&quot;No specific draw function mapped for structure type: </span><span class="si">{</span><span class="n">element_type</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">. Skipping </span><span class="si">{</span><span class="n">element_id</span><span class="si">}</span><span class="s2">.&quot;</span>
+                    <span class="p">)</span>
+                    <span class="k">continue</span>
+            <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;Error calling draw function for </span><span class="si">{</span><span class="n">element_id</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">exc_info</span><span class="o">=</span><span class="kc">True</span>
+                <span class="p">)</span>
+                <span class="k">continue</span>
+
+            <span class="c1"># Append the generated shape to the correct SVG group</span>
+            <span class="k">if</span> <span class="n">svg_shape</span><span class="p">:</span>
+                <span class="n">parent_group_id</span> <span class="o">=</span> <span class="p">(</span>
+                    <span class="n">element</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">id</span> <span class="k">if</span> <span class="n">element</span><span class="o">.</span><span class="n">parent</span> <span class="k">else</span> <span class="s2">&quot;flatprot-root&quot;</span>
+                <span class="p">)</span>
+                <span class="n">target_svg_group</span> <span class="o">=</span> <span class="n">svg_group_map</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">parent_group_id</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">target_svg_group</span><span class="p">:</span>
+                    <span class="n">target_svg_group</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">svg_shape</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span>
+                        <span class="sa">f</span><span class="s2">&quot;Could not find target SVG group &#39;</span><span class="si">{</span><span class="n">parent_group_id</span><span class="si">}</span><span class="s2">&#39; for element </span><span class="si">{</span><span class="n">element_id</span><span class="si">}</span><span class="s2">&quot;</span>
+                    <span class="p">)</span>
+
+        <span class="c1"># 5. Draw Connection Elements (sorted by depth)</span>
+        <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">element</span> <span class="ow">in</span> <span class="n">sorted_connections</span><span class="p">:</span>
+            <span class="n">connection_line_svg</span> <span class="o">=</span> <span class="n">_draw_connection_element</span><span class="p">(</span>
+                <span class="n">element</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">scene</span><span class="o">.</span><span class="n">structure</span>
+            <span class="p">)</span>
+            <span class="k">if</span> <span class="n">connection_line_svg</span><span class="p">:</span>
+                <span class="c1"># Determine the parent group for the connection</span>
+                <span class="n">parent_group_id</span> <span class="o">=</span> <span class="p">(</span>
+                    <span class="n">element</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">id</span> <span class="k">if</span> <span class="n">element</span><span class="o">.</span><span class="n">parent</span> <span class="k">else</span> <span class="s2">&quot;flatprot-root&quot;</span>
+                <span class="p">)</span>
+                <span class="n">target_svg_group</span> <span class="o">=</span> <span class="n">svg_group_map</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">parent_group_id</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">target_svg_group</span><span class="p">:</span>
+                    <span class="n">target_svg_group</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">connection_line_svg</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="c1"># Log error if the parent group is not found in the map</span>
+                    <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span>
+                        <span class="sa">f</span><span class="s2">&quot;Could not find target SVG group &#39;</span><span class="si">{</span><span class="n">parent_group_id</span><span class="si">}</span><span class="s2">&#39; for connection element </span><span class="si">{</span><span class="n">element</span><span class="o">.</span><span class="n">id</span><span class="si">}</span><span class="s2">&quot;</span>
+                    <span class="p">)</span>
+
+        <span class="c1"># 6. Draw Annotation Elements (sorted by depth - effectively always last)</span>
+        <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">element</span> <span class="ow">in</span> <span class="n">sorted_annotations</span><span class="p">:</span>
+            <span class="n">element_type</span> <span class="o">=</span> <span class="nb">type</span><span class="p">(</span><span class="n">element</span><span class="p">)</span>
+            <span class="n">draw_func</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ANNOTATION_DRAW_MAP</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">element_type</span><span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">draw_func</span><span class="p">:</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;No drawing func for annotation type: </span><span class="si">{</span><span class="n">element_type</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">&quot;</span>
+                <span class="p">)</span>
+                <span class="k">continue</span>
+
+            <span class="k">try</span><span class="p">:</span>
+                <span class="c1"># Calculate coordinates using the annotation&#39;s own method + resolver</span>
+                <span class="n">rendered_coords</span> <span class="o">=</span> <span class="n">element</span><span class="o">.</span><span class="n">get_coordinates</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">scene</span><span class="o">.</span><span class="n">resolver</span><span class="p">)</span>
+            <span class="k">except</span> <span class="p">(</span>
+                <span class="n">CoordinateCalculationError</span><span class="p">,</span>
+                <span class="n">SceneError</span><span class="p">,</span>
+                <span class="ne">ValueError</span><span class="p">,</span>
+                <span class="n">TargetResidueNotFoundError</span><span class="p">,</span>
+            <span class="p">)</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="c1"># Catch expected errors during coordinate resolution/calculation</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;Could not get coordinates for annotation &#39;</span><span class="si">{</span><span class="n">element</span><span class="o">.</span><span class="n">id</span><span class="si">}</span><span class="s2">&#39;: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span>
+                <span class="p">)</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
+                <span class="k">continue</span>  <span class="c1"># Skip rendering this annotation</span>
+            <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="c1"># Catch unexpected errors</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;Unexpected error getting coordinates for annotation &#39;</span><span class="si">{</span><span class="n">element</span><span class="o">.</span><span class="n">id</span><span class="si">}</span><span class="s2">&#39;: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+                    <span class="n">exc_info</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                <span class="p">)</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
+                <span class="k">continue</span>  <span class="c1"># Skip rendering this annotation</span>
+
+            <span class="c1"># Basic validation (redundant with Scene checks, but safe)</span>
+            <span class="k">if</span> <span class="n">rendered_coords</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">rendered_coords</span><span class="o">.</span><span class="n">size</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;Skipping annotation </span><span class="si">{</span><span class="n">element</span><span class="o">.</span><span class="n">id</span><span class="si">}</span><span class="s2"> due to missing/empty resolved coordinates.&quot;</span>
+                <span class="p">)</span>
+                <span class="k">continue</span>
+
+            <span class="c1"># Call the drawing function with the resolved coordinates</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">svg_shapes</span> <span class="o">=</span> <span class="n">draw_func</span><span class="p">(</span><span class="n">element</span><span class="p">,</span> <span class="n">rendered_coords</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">svg_shapes</span><span class="p">:</span>
+                    <span class="c1"># Determine the parent group for the annotation</span>
+                    <span class="n">parent_group_id</span> <span class="o">=</span> <span class="p">(</span>
+                        <span class="n">element</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">id</span> <span class="k">if</span> <span class="n">element</span><span class="o">.</span><span class="n">parent</span> <span class="k">else</span> <span class="s2">&quot;flatprot-root&quot;</span>
+                    <span class="p">)</span>
+                    <span class="n">target_svg_group</span> <span class="o">=</span> <span class="n">svg_group_map</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">parent_group_id</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="n">target_svg_group</span><span class="p">:</span>
+                        <span class="n">target_svg_group</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">svg_shapes</span><span class="p">)</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="c1"># Log error if the parent group is not found</span>
+                        <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span>
+                            <span class="sa">f</span><span class="s2">&quot;Could not find target SVG group &#39;</span><span class="si">{</span><span class="n">parent_group_id</span><span class="si">}</span><span class="s2">&#39; for annotation element </span><span class="si">{</span><span class="n">element</span><span class="o">.</span><span class="n">id</span><span class="si">}</span><span class="s2">&quot;</span>
+                        <span class="p">)</span>
+            <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;Error drawing annotation &#39;</span><span class="si">{</span><span class="n">element</span><span class="o">.</span><span class="n">id</span><span class="si">}</span><span class="s2">&#39; (type </span><span class="si">{</span><span class="n">element_type</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">): </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+                    <span class="n">exc_info</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                <span class="p">)</span>
+
+            <span class="n">drawing</span><span class="o">.</span><span class="n">view_box</span> <span class="o">=</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">width</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">height</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">drawing</span>
+
+    <span class="k">def</span> <span class="nf">save_svg</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filename</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Renders the scene and saves it to an SVG file.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            filename: The path to the output SVG file.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">drawing</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">render</span><span class="p">()</span>
+        <span class="n">drawing</span><span class="o">.</span><span class="n">save_svg</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;SVG saved to </span><span class="si">{</span><span class="n">filename</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">get_svg_string</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Renders the scene and returns the SVG content as a string.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            The SVG content as a string.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">drawing</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">render</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">drawing</span><span class="o">.</span><span class="n">as_svg</span><span class="p">()</span>
+</code></pre></div></td></tr></table></div>
+              </details>
+
+
+
+  <div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-function">
+
+
+<h2 id="flatprot.renderers.svg_renderer.SVGRenderer.__init__" class="doc doc-heading">
+            <code class="highlight language-python"><span class="fm">__init__</span><span class="p">(</span><span class="n">scene</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="n">DEFAULT_WIDTH</span><span class="p">,</span> <span class="n">height</span><span class="o">=</span><span class="n">DEFAULT_HEIGHT</span><span class="p">,</span> <span class="n">background_color</span><span class="o">=</span><span class="n">DEFAULT_BG_COLOR</span><span class="p">,</span> <span class="n">background_opacity</span><span class="o">=</span><span class="n">DEFAULT_BG_OPACITY</span><span class="p">,</span> <span class="n">padding</span><span class="o">=</span><span class="n">DEFAULT_PADDING</span><span class="p">)</span></code>
+
+</h2>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Initializes the SVGRenderer.</p>
+
+
+<table class="field-list">
+  <colgroup>
+    <col class="field-name" />
+    <col class="field-body" />
+  </colgroup>
+  <tbody valign="top">
+    <tr class="field">
+      <th class="field-name">Parameters:</th>
+      <td class="field-body">
+        <ul class="first simple">
+            <li>
+              <b><code>scene</code></b>
+                  (<code><a class="autorefs autorefs-internal" title="flatprot.scene.Scene" href="../scene/#flatprot.scene.Scene">Scene</a></code>)
+              –
+              <div class="doc-md-description">
+                <p>The Scene object containing the elements to render.</p>
+              </div>
+            </li>
+            <li>
+              <b><code>width</code></b>
+                  (<code><span title="int">int</span></code>, default:
+                      <code><span title="flatprot.renderers.svg_renderer.SVGRenderer.DEFAULT_WIDTH">DEFAULT_WIDTH</span></code>
+)
+              –
+              <div class="doc-md-description">
+                <p>Desired width of the SVG canvas.</p>
+              </div>
+            </li>
+            <li>
+              <b><code>height</code></b>
+                  (<code><span title="int">int</span></code>, default:
+                      <code><span title="flatprot.renderers.svg_renderer.SVGRenderer.DEFAULT_HEIGHT">DEFAULT_HEIGHT</span></code>
+)
+              –
+              <div class="doc-md-description">
+                <p>Desired height of the SVG canvas.</p>
+              </div>
+            </li>
+            <li>
+              <b><code>background_color</code></b>
+                  (<code><span title="typing.Optional">Optional</span>[<span title="str">str</span>]</code>, default:
+                      <code><span title="flatprot.renderers.svg_renderer.SVGRenderer.DEFAULT_BG_COLOR">DEFAULT_BG_COLOR</span></code>
+)
+              –
+              <div class="doc-md-description">
+                <p>Background color (CSS string, e.g., '#FFFFFF' or 'white'). None for transparent.</p>
+              </div>
+            </li>
+            <li>
+              <b><code>background_opacity</code></b>
+                  (<code><span title="float">float</span></code>, default:
+                      <code><span title="flatprot.renderers.svg_renderer.SVGRenderer.DEFAULT_BG_OPACITY">DEFAULT_BG_OPACITY</span></code>
+)
+              –
+              <div class="doc-md-description">
+                <p>Background opacity (0.0 to 1.0).</p>
+              </div>
+            </li>
+            <li>
+              <b><code>padding</code></b>
+                  (<code><span title="int">int</span></code>, default:
+                      <code><span title="flatprot.renderers.svg_renderer.SVGRenderer.DEFAULT_PADDING">DEFAULT_PADDING</span></code>
+)
+              –
+              <div class="doc-md-description">
+                <p>Padding around the content within the viewBox.</p>
+              </div>
+            </li>
+        </ul>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+            <details class="quote">
+              <summary>Source code in <code>src/flatprot/renderers/svg_renderer.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">114</span>
+<span class="normal">115</span>
+<span class="normal">116</span>
+<span class="normal">117</span>
+<span class="normal">118</span>
+<span class="normal">119</span>
+<span class="normal">120</span>
+<span class="normal">121</span>
+<span class="normal">122</span>
+<span class="normal">123</span>
+<span class="normal">124</span>
+<span class="normal">125</span>
+<span class="normal">126</span>
+<span class="normal">127</span>
+<span class="normal">128</span>
+<span class="normal">129</span>
+<span class="normal">130</span>
+<span class="normal">131</span>
+<span class="normal">132</span>
+<span class="normal">133</span>
+<span class="normal">134</span>
+<span class="normal">135</span>
+<span class="normal">136</span>
+<span class="normal">137</span>
+<span class="normal">138</span>
+<span class="normal">139</span>
+<span class="normal">140</span>
+<span class="normal">141</span>
+<span class="normal">142</span>
+<span class="normal">143</span>
+<span class="normal">144</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+    <span class="bp">self</span><span class="p">,</span>
+    <span class="n">scene</span><span class="p">:</span> <span class="n">Scene</span><span class="p">,</span>
+    <span class="n">width</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">DEFAULT_WIDTH</span><span class="p">,</span>
+    <span class="n">height</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">DEFAULT_HEIGHT</span><span class="p">,</span>
+    <span class="n">background_color</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">DEFAULT_BG_COLOR</span><span class="p">,</span>
+    <span class="n">background_opacity</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">DEFAULT_BG_OPACITY</span><span class="p">,</span>
+    <span class="n">padding</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">DEFAULT_PADDING</span><span class="p">,</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Initializes the SVGRenderer.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        scene: The Scene object containing the elements to render.</span>
+<span class="sd">        width: Desired width of the SVG canvas.</span>
+<span class="sd">        height: Desired height of the SVG canvas.</span>
+<span class="sd">        background_color: Background color (CSS string, e.g., &#39;#FFFFFF&#39; or &#39;white&#39;). None for transparent.</span>
+<span class="sd">        background_opacity: Background opacity (0.0 to 1.0).</span>
+<span class="sd">        padding: Padding around the content within the viewBox.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">scene</span><span class="p">,</span> <span class="n">Scene</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;Renderer requires a valid Scene object.&quot;</span><span class="p">)</span>
+
+    <span class="bp">self</span><span class="o">.</span><span class="n">scene</span> <span class="o">=</span> <span class="n">scene</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">width</span> <span class="o">=</span> <span class="n">width</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">height</span> <span class="o">=</span> <span class="n">height</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">background_color</span> <span class="o">=</span> <span class="n">background_color</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">background_opacity</span> <span class="o">=</span> <span class="n">background_opacity</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">padding</span> <span class="o">=</span> <span class="n">padding</span>  <span class="c1"># Store padding</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_element_map</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">BaseSceneElement</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="n">e</span><span class="o">.</span><span class="n">id</span><span class="p">:</span> <span class="n">e</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">scene</span><span class="o">.</span><span class="n">get_all_elements</span><span class="p">()</span>
+    <span class="p">}</span>
+</code></pre></div></td></tr></table></div>
+            </details>
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h2 id="flatprot.renderers.svg_renderer.SVGRenderer.get_svg_string" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">get_svg_string</span><span class="p">()</span></code>
+
+</h2>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Renders the scene and returns the SVG content as a string.</p>
+
+
+<table class="field-list">
+  <colgroup>
+    <col class="field-name" />
+    <col class="field-body" />
+  </colgroup>
+  <tbody valign="top">
+    <tr class="field">
+      <th class="field-name">Returns:</th>
+      <td class="field-body">
+        <ul class="first simple">
+            <li>
+                  <code><span title="str">str</span></code>
+              –
+              <div class="doc-md-description">
+                <p>The SVG content as a string.</p>
+              </div>
+            </li>
+        </ul>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+            <details class="quote">
+              <summary>Source code in <code>src/flatprot/renderers/svg_renderer.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">469</span>
+<span class="normal">470</span>
+<span class="normal">471</span>
+<span class="normal">472</span>
+<span class="normal">473</span>
+<span class="normal">474</span>
+<span class="normal">475</span>
+<span class="normal">476</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">get_svg_string</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Renders the scene and returns the SVG content as a string.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        The SVG content as a string.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">drawing</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">render</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">drawing</span><span class="o">.</span><span class="n">as_svg</span><span class="p">()</span>
+</code></pre></div></td></tr></table></div>
+            </details>
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h2 id="flatprot.renderers.svg_renderer.SVGRenderer.render" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">render</span><span class="p">()</span></code>
+
+</h2>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Renders the scene to a drawsvg.Drawing object.</p>
+
+
+            <details class="quote">
+              <summary>Source code in <code>src/flatprot/renderers/svg_renderer.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">279</span>
+<span class="normal">280</span>
+<span class="normal">281</span>
+<span class="normal">282</span>
+<span class="normal">283</span>
+<span class="normal">284</span>
+<span class="normal">285</span>
+<span class="normal">286</span>
+<span class="normal">287</span>
+<span class="normal">288</span>
+<span class="normal">289</span>
+<span class="normal">290</span>
+<span class="normal">291</span>
+<span class="normal">292</span>
+<span class="normal">293</span>
+<span class="normal">294</span>
+<span class="normal">295</span>
+<span class="normal">296</span>
+<span class="normal">297</span>
+<span class="normal">298</span>
+<span class="normal">299</span>
+<span class="normal">300</span>
+<span class="normal">301</span>
+<span class="normal">302</span>
+<span class="normal">303</span>
+<span class="normal">304</span>
+<span class="normal">305</span>
+<span class="normal">306</span>
+<span class="normal">307</span>
+<span class="normal">308</span>
+<span class="normal">309</span>
+<span class="normal">310</span>
+<span class="normal">311</span>
+<span class="normal">312</span>
+<span class="normal">313</span>
+<span class="normal">314</span>
+<span class="normal">315</span>
+<span class="normal">316</span>
+<span class="normal">317</span>
+<span class="normal">318</span>
+<span class="normal">319</span>
+<span class="normal">320</span>
+<span class="normal">321</span>
+<span class="normal">322</span>
+<span class="normal">323</span>
+<span class="normal">324</span>
+<span class="normal">325</span>
+<span class="normal">326</span>
+<span class="normal">327</span>
+<span class="normal">328</span>
+<span class="normal">329</span>
+<span class="normal">330</span>
+<span class="normal">331</span>
+<span class="normal">332</span>
+<span class="normal">333</span>
+<span class="normal">334</span>
+<span class="normal">335</span>
+<span class="normal">336</span>
+<span class="normal">337</span>
+<span class="normal">338</span>
+<span class="normal">339</span>
+<span class="normal">340</span>
+<span class="normal">341</span>
+<span class="normal">342</span>
+<span class="normal">343</span>
+<span class="normal">344</span>
+<span class="normal">345</span>
+<span class="normal">346</span>
+<span class="normal">347</span>
+<span class="normal">348</span>
+<span class="normal">349</span>
+<span class="normal">350</span>
+<span class="normal">351</span>
+<span class="normal">352</span>
+<span class="normal">353</span>
+<span class="normal">354</span>
+<span class="normal">355</span>
+<span class="normal">356</span>
+<span class="normal">357</span>
+<span class="normal">358</span>
+<span class="normal">359</span>
+<span class="normal">360</span>
+<span class="normal">361</span>
+<span class="normal">362</span>
+<span class="normal">363</span>
+<span class="normal">364</span>
+<span class="normal">365</span>
+<span class="normal">366</span>
+<span class="normal">367</span>
+<span class="normal">368</span>
+<span class="normal">369</span>
+<span class="normal">370</span>
+<span class="normal">371</span>
+<span class="normal">372</span>
+<span class="normal">373</span>
+<span class="normal">374</span>
+<span class="normal">375</span>
+<span class="normal">376</span>
+<span class="normal">377</span>
+<span class="normal">378</span>
+<span class="normal">379</span>
+<span class="normal">380</span>
+<span class="normal">381</span>
+<span class="normal">382</span>
+<span class="normal">383</span>
+<span class="normal">384</span>
+<span class="normal">385</span>
+<span class="normal">386</span>
+<span class="normal">387</span>
+<span class="normal">388</span>
+<span class="normal">389</span>
+<span class="normal">390</span>
+<span class="normal">391</span>
+<span class="normal">392</span>
+<span class="normal">393</span>
+<span class="normal">394</span>
+<span class="normal">395</span>
+<span class="normal">396</span>
+<span class="normal">397</span>
+<span class="normal">398</span>
+<span class="normal">399</span>
+<span class="normal">400</span>
+<span class="normal">401</span>
+<span class="normal">402</span>
+<span class="normal">403</span>
+<span class="normal">404</span>
+<span class="normal">405</span>
+<span class="normal">406</span>
+<span class="normal">407</span>
+<span class="normal">408</span>
+<span class="normal">409</span>
+<span class="normal">410</span>
+<span class="normal">411</span>
+<span class="normal">412</span>
+<span class="normal">413</span>
+<span class="normal">414</span>
+<span class="normal">415</span>
+<span class="normal">416</span>
+<span class="normal">417</span>
+<span class="normal">418</span>
+<span class="normal">419</span>
+<span class="normal">420</span>
+<span class="normal">421</span>
+<span class="normal">422</span>
+<span class="normal">423</span>
+<span class="normal">424</span>
+<span class="normal">425</span>
+<span class="normal">426</span>
+<span class="normal">427</span>
+<span class="normal">428</span>
+<span class="normal">429</span>
+<span class="normal">430</span>
+<span class="normal">431</span>
+<span class="normal">432</span>
+<span class="normal">433</span>
+<span class="normal">434</span>
+<span class="normal">435</span>
+<span class="normal">436</span>
+<span class="normal">437</span>
+<span class="normal">438</span>
+<span class="normal">439</span>
+<span class="normal">440</span>
+<span class="normal">441</span>
+<span class="normal">442</span>
+<span class="normal">443</span>
+<span class="normal">444</span>
+<span class="normal">445</span>
+<span class="normal">446</span>
+<span class="normal">447</span>
+<span class="normal">448</span>
+<span class="normal">449</span>
+<span class="normal">450</span>
+<span class="normal">451</span>
+<span class="normal">452</span>
+<span class="normal">453</span>
+<span class="normal">454</span>
+<span class="normal">455</span>
+<span class="normal">456</span>
+<span class="normal">457</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">render</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Drawing</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Renders the scene to a drawsvg.Drawing object.&quot;&quot;&quot;</span>
+    <span class="n">drawing</span> <span class="o">=</span> <span class="n">Drawing</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">width</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">height</span><span class="p">)</span>
+    <span class="n">svg_group_map</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Group</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+
+    <span class="c1"># 1. Add Background</span>
+    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">background_color</span><span class="p">:</span>
+        <span class="n">drawing</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="n">Rectangle</span><span class="p">(</span>
+                <span class="mi">0</span><span class="p">,</span>
+                <span class="mi">0</span><span class="p">,</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">width</span><span class="p">,</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">height</span><span class="p">,</span>
+                <span class="n">fill</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">background_color</span><span class="p">,</span>
+                <span class="n">opacity</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">background_opacity</span><span class="p">,</span>
+                <span class="n">class_</span><span class="o">=</span><span class="s2">&quot;background&quot;</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+
+    <span class="c1"># 2. Build SVG Group Hierarchy</span>
+    <span class="n">root_group</span> <span class="o">=</span> <span class="n">Group</span><span class="p">(</span><span class="nb">id</span><span class="o">=</span><span class="s2">&quot;flatprot-root&quot;</span><span class="p">)</span>
+    <span class="n">drawing</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">root_group</span><span class="p">)</span>
+    <span class="n">svg_group_map</span><span class="p">[</span><span class="s2">&quot;flatprot-root&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">root_group</span>  <span class="c1"># Register root</span>
+
+    <span class="k">for</span> <span class="n">top_level_node</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">scene</span><span class="o">.</span><span class="n">top_level_nodes</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_build_svg_hierarchy</span><span class="p">(</span><span class="n">top_level_node</span><span class="p">,</span> <span class="n">root_group</span><span class="p">,</span> <span class="n">svg_group_map</span><span class="p">)</span>
+
+    <span class="c1"># 3. Prepare Render Data for Structure Elements</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="p">(</span>
+            <span class="n">_</span><span class="p">,</span>
+            <span class="n">element_coords_cache</span><span class="p">,</span>
+        <span class="p">)</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_prepare_render_data</span><span class="p">()</span>
+    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Failed to prepare render data: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">exc_info</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">drawing</span>
+
+    <span class="c1"># 3.5 Collect and Sort All Renderable Elements</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="p">(</span>
+            <span class="n">sorted_structure_elements</span><span class="p">,</span>
+            <span class="n">sorted_annotations</span><span class="p">,</span>
+            <span class="n">sorted_connections</span><span class="p">,</span>
+        <span class="p">)</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_collect_and_sort_renderables</span><span class="p">()</span>
+    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Failed to collect/sort renderables: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">exc_info</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">drawing</span>
+
+    <span class="c1"># 4. Draw Structure Elements (sorted by depth)</span>
+    <span class="k">for</span> <span class="n">depth</span><span class="p">,</span> <span class="n">element</span> <span class="ow">in</span> <span class="n">sorted_structure_elements</span><span class="p">:</span>
+        <span class="n">element_id</span> <span class="o">=</span> <span class="n">element</span><span class="o">.</span><span class="n">id</span>
+        <span class="n">element_type</span> <span class="o">=</span> <span class="nb">type</span><span class="p">(</span><span class="n">element</span><span class="p">)</span>
+
+        <span class="c1"># Get cached coordinates for the current element</span>
+        <span class="n">coords_2d</span> <span class="o">=</span> <span class="n">element_coords_cache</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">element_id</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">coords_2d</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">coords_2d</span><span class="o">.</span><span class="n">size</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Skipping draw for </span><span class="si">{</span><span class="n">element_id</span><span class="si">}</span><span class="s2">: No valid cached 2D coordinates found.&quot;</span>
+            <span class="p">)</span>
+            <span class="k">continue</span>
+
+        <span class="c1"># Select and call the appropriate drawing function</span>
+        <span class="n">svg_shape</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">element</span><span class="p">,</span> <span class="n">CoilSceneElement</span><span class="p">):</span>
+                <span class="n">svg_shape</span> <span class="o">=</span> <span class="n">_draw_coil</span><span class="p">(</span><span class="n">element</span><span class="p">,</span> <span class="n">coords_2d</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">element</span><span class="p">,</span> <span class="n">HelixSceneElement</span><span class="p">):</span>
+                <span class="n">svg_shape</span> <span class="o">=</span> <span class="n">_draw_helix</span><span class="p">(</span><span class="n">element</span><span class="p">,</span> <span class="n">coords_2d</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">element</span><span class="p">,</span> <span class="n">SheetSceneElement</span><span class="p">):</span>
+                <span class="n">svg_shape</span> <span class="o">=</span> <span class="n">_draw_sheet</span><span class="p">(</span><span class="n">element</span><span class="p">,</span> <span class="n">coords_2d</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;No specific draw function mapped for structure type: </span><span class="si">{</span><span class="n">element_type</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">. Skipping </span><span class="si">{</span><span class="n">element_id</span><span class="si">}</span><span class="s2">.&quot;</span>
+                <span class="p">)</span>
+                <span class="k">continue</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Error calling draw function for </span><span class="si">{</span><span class="n">element_id</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">exc_info</span><span class="o">=</span><span class="kc">True</span>
+            <span class="p">)</span>
+            <span class="k">continue</span>
+
+        <span class="c1"># Append the generated shape to the correct SVG group</span>
+        <span class="k">if</span> <span class="n">svg_shape</span><span class="p">:</span>
+            <span class="n">parent_group_id</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="n">element</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">id</span> <span class="k">if</span> <span class="n">element</span><span class="o">.</span><span class="n">parent</span> <span class="k">else</span> <span class="s2">&quot;flatprot-root&quot;</span>
+            <span class="p">)</span>
+            <span class="n">target_svg_group</span> <span class="o">=</span> <span class="n">svg_group_map</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">parent_group_id</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">target_svg_group</span><span class="p">:</span>
+                <span class="n">target_svg_group</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">svg_shape</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;Could not find target SVG group &#39;</span><span class="si">{</span><span class="n">parent_group_id</span><span class="si">}</span><span class="s2">&#39; for element </span><span class="si">{</span><span class="n">element_id</span><span class="si">}</span><span class="s2">&quot;</span>
+                <span class="p">)</span>
+
+    <span class="c1"># 5. Draw Connection Elements (sorted by depth)</span>
+    <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">element</span> <span class="ow">in</span> <span class="n">sorted_connections</span><span class="p">:</span>
+        <span class="n">connection_line_svg</span> <span class="o">=</span> <span class="n">_draw_connection_element</span><span class="p">(</span>
+            <span class="n">element</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">scene</span><span class="o">.</span><span class="n">structure</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="n">connection_line_svg</span><span class="p">:</span>
+            <span class="c1"># Determine the parent group for the connection</span>
+            <span class="n">parent_group_id</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="n">element</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">id</span> <span class="k">if</span> <span class="n">element</span><span class="o">.</span><span class="n">parent</span> <span class="k">else</span> <span class="s2">&quot;flatprot-root&quot;</span>
+            <span class="p">)</span>
+            <span class="n">target_svg_group</span> <span class="o">=</span> <span class="n">svg_group_map</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">parent_group_id</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">target_svg_group</span><span class="p">:</span>
+                <span class="n">target_svg_group</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">connection_line_svg</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="c1"># Log error if the parent group is not found in the map</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;Could not find target SVG group &#39;</span><span class="si">{</span><span class="n">parent_group_id</span><span class="si">}</span><span class="s2">&#39; for connection element </span><span class="si">{</span><span class="n">element</span><span class="o">.</span><span class="n">id</span><span class="si">}</span><span class="s2">&quot;</span>
+                <span class="p">)</span>
+
+    <span class="c1"># 6. Draw Annotation Elements (sorted by depth - effectively always last)</span>
+    <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">element</span> <span class="ow">in</span> <span class="n">sorted_annotations</span><span class="p">:</span>
+        <span class="n">element_type</span> <span class="o">=</span> <span class="nb">type</span><span class="p">(</span><span class="n">element</span><span class="p">)</span>
+        <span class="n">draw_func</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ANNOTATION_DRAW_MAP</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">element_type</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">draw_func</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;No drawing func for annotation type: </span><span class="si">{</span><span class="n">element_type</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="p">)</span>
+            <span class="k">continue</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="c1"># Calculate coordinates using the annotation&#39;s own method + resolver</span>
+            <span class="n">rendered_coords</span> <span class="o">=</span> <span class="n">element</span><span class="o">.</span><span class="n">get_coordinates</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">scene</span><span class="o">.</span><span class="n">resolver</span><span class="p">)</span>
+        <span class="k">except</span> <span class="p">(</span>
+            <span class="n">CoordinateCalculationError</span><span class="p">,</span>
+            <span class="n">SceneError</span><span class="p">,</span>
+            <span class="ne">ValueError</span><span class="p">,</span>
+            <span class="n">TargetResidueNotFoundError</span><span class="p">,</span>
+        <span class="p">)</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="c1"># Catch expected errors during coordinate resolution/calculation</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Could not get coordinates for annotation &#39;</span><span class="si">{</span><span class="n">element</span><span class="o">.</span><span class="n">id</span><span class="si">}</span><span class="s2">&#39;: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="p">)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
+            <span class="k">continue</span>  <span class="c1"># Skip rendering this annotation</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="c1"># Catch unexpected errors</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Unexpected error getting coordinates for annotation &#39;</span><span class="si">{</span><span class="n">element</span><span class="o">.</span><span class="n">id</span><span class="si">}</span><span class="s2">&#39;: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+                <span class="n">exc_info</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
+            <span class="k">continue</span>  <span class="c1"># Skip rendering this annotation</span>
+
+        <span class="c1"># Basic validation (redundant with Scene checks, but safe)</span>
+        <span class="k">if</span> <span class="n">rendered_coords</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">rendered_coords</span><span class="o">.</span><span class="n">size</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Skipping annotation </span><span class="si">{</span><span class="n">element</span><span class="o">.</span><span class="n">id</span><span class="si">}</span><span class="s2"> due to missing/empty resolved coordinates.&quot;</span>
+            <span class="p">)</span>
+            <span class="k">continue</span>
+
+        <span class="c1"># Call the drawing function with the resolved coordinates</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">svg_shapes</span> <span class="o">=</span> <span class="n">draw_func</span><span class="p">(</span><span class="n">element</span><span class="p">,</span> <span class="n">rendered_coords</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">svg_shapes</span><span class="p">:</span>
+                <span class="c1"># Determine the parent group for the annotation</span>
+                <span class="n">parent_group_id</span> <span class="o">=</span> <span class="p">(</span>
+                    <span class="n">element</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">id</span> <span class="k">if</span> <span class="n">element</span><span class="o">.</span><span class="n">parent</span> <span class="k">else</span> <span class="s2">&quot;flatprot-root&quot;</span>
+                <span class="p">)</span>
+                <span class="n">target_svg_group</span> <span class="o">=</span> <span class="n">svg_group_map</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">parent_group_id</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">target_svg_group</span><span class="p">:</span>
+                    <span class="n">target_svg_group</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">svg_shapes</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="c1"># Log error if the parent group is not found</span>
+                    <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span>
+                        <span class="sa">f</span><span class="s2">&quot;Could not find target SVG group &#39;</span><span class="si">{</span><span class="n">parent_group_id</span><span class="si">}</span><span class="s2">&#39; for annotation element </span><span class="si">{</span><span class="n">element</span><span class="o">.</span><span class="n">id</span><span class="si">}</span><span class="s2">&quot;</span>
+                    <span class="p">)</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Error drawing annotation &#39;</span><span class="si">{</span><span class="n">element</span><span class="o">.</span><span class="n">id</span><span class="si">}</span><span class="s2">&#39; (type </span><span class="si">{</span><span class="n">element_type</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">): </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+                <span class="n">exc_info</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="p">)</span>
+
+        <span class="n">drawing</span><span class="o">.</span><span class="n">view_box</span> <span class="o">=</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">width</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">height</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">drawing</span>
+</code></pre></div></td></tr></table></div>
+            </details>
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h2 id="flatprot.renderers.svg_renderer.SVGRenderer.save_svg" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">save_svg</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span></code>
+
+</h2>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Renders the scene and saves it to an SVG file.</p>
+
+
+<table class="field-list">
+  <colgroup>
+    <col class="field-name" />
+    <col class="field-body" />
+  </colgroup>
+  <tbody valign="top">
+    <tr class="field">
+      <th class="field-name">Parameters:</th>
+      <td class="field-body">
+        <ul class="first simple">
+            <li>
+              <b><code>filename</code></b>
+                  (<code><span title="str">str</span></code>)
+              –
+              <div class="doc-md-description">
+                <p>The path to the output SVG file.</p>
+              </div>
+            </li>
+        </ul>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+            <details class="quote">
+              <summary>Source code in <code>src/flatprot/renderers/svg_renderer.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">459</span>
+<span class="normal">460</span>
+<span class="normal">461</span>
+<span class="normal">462</span>
+<span class="normal">463</span>
+<span class="normal">464</span>
+<span class="normal">465</span>
+<span class="normal">466</span>
+<span class="normal">467</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">save_svg</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filename</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Renders the scene and saves it to an SVG file.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        filename: The path to the output SVG file.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">drawing</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">render</span><span class="p">()</span>
+    <span class="n">drawing</span><span class="o">.</span><span class="n">save_svg</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;SVG saved to </span><span class="si">{</span><span class="n">filename</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</code></pre></div></td></tr></table></div>
+            </details>
+    </div>
+
+</div>
+
+
+
+  </div>
+
+    </div>
+
+</div><p>options:
+show_root_heading: true
+members_order: source</p>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="../scene/" class="btn btn-neutral float-left" title="Scene"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../alignment/" class="btn btn-neutral float-right" title="DatabaseAlignment">Next <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+        <span>
+          <a href="https://github.com/t03i/FlatProt" class="fa fa-github" style="color: #fcfcfc"> GitHub</a>
+        </span>
+    
+    
+      <span><a href="../scene/" style="color: #fcfcfc">&laquo; Previous</a></span>
+    
+    
+      <span><a href="../alignment/" style="color: #fcfcfc">Next &raquo;</a></span>
+    
+  </span>
+</div>
+    <script src="../../js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = "../..";</script>
+    <script src="../../js/theme_extra.js"></script>
+    <script src="../../js/theme.js"></script>
+      <script src="../../search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>

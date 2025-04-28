@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><link rel="canonical" href="https://t03i.github.io/FlatProt/file_formats/style/" />
+      <link rel="shortcut icon" href="../../img/favicon.ico" />
+    <title>Style Files - FlatProt</title>
+    <link rel="stylesheet" href="../../css/theme.css" />
+    <link rel="stylesheet" href="../../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+        <link href="../../assets/_mkdocstrings.css" rel="stylesheet" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "Style Files";
+        var mkdocs_page_input_path = "file_formats/style.md";
+        var mkdocs_page_url = "/FlatProt/file_formats/style/";
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="../../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/languages/yaml.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/languages/python.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/languages/json.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/languages/toml.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/languages/bash.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/languages/numpy.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href="../.." class="icon icon-home"> FlatProt
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../..">Home</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../installation/">Installation</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../examples/">Examples</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Commands</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../commands/project/">Project</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../commands/align/">Align</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">File Formats</span></p>
+              <ul class="current">
+                  <li class="toctree-l1"><a class="reference internal" href="../matrix/">Matrix Files</a>
+                  </li>
+                  <li class="toctree-l1 current"><a class="reference internal current" href="#">Style Files</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#overview">Overview</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#file-format">File Format</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#example-style-file">Example Style File</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#style-sections">Style Sections</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#canvas-settings">Canvas Settings</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#secondary-structure-styles">Secondary Structure Styles</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#helix-style-helix">Helix Style ([helix])</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#sheet-style-sheet">Sheet Style ([sheet])</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#coil-style-coil">Coil Style ([coil])</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#annotation-styles">Annotation Styles</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#point-annotation-style">Point Annotation Style</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#line-annotation-style">Line Annotation Style</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#area-annotation-style">Area Annotation Style</a>
+    </li>
+        </ul>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#color-formats">Color Formats</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#default-styles">Default Styles</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#validation">Validation</a>
+    </li>
+    </ul>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../annotations/">Annotation Files</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">API Reference</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../api/io/">IO</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../api/core/">Core</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../api/transformation/">Transformation & Projection</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../api/scene/">Scene</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../api/rendering/">Rendering</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../api/alignment/">DatabaseAlignment</a>
+                  </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../..">FlatProt</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../.." class="icon icon-home" aria-label="Docs"></a></li>
+          <li class="breadcrumb-item">File Formats</li>
+      <li class="breadcrumb-item active">Style Files</li>
+    <li class="wy-breadcrumbs-aside">
+          <a href="https://github.com/t03i/FlatProt/edit/master/docs/file_formats/style.md" class="icon icon-github"> Edit on GitHub</a>
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="style-file-format">Style File Format</h1>
+<p>FlatProt uses TOML files for defining custom styles for protein visualizations. This document explains the format and options available for styling different elements of the visualization.</p>
+<h2 id="overview">Overview</h2>
+<p>Style files allow you to customize the appearance of various elements in the FlatProt visualization, including:</p>
+<ul>
+<li>Secondary structure elements (helices, sheets, coils)</li>
+<li>Annotations (points, lines, areas)</li>
+<li>Canvas properties</li>
+</ul>
+<h2 id="file-format">File Format</h2>
+<p>Style files use the <a href="https://toml.io/">TOML</a> format, with each section defining styles for a specific element type.</p>
+<h3 id="example-style-file">Example Style File</h3>
+<pre><code class="language-toml"># Canvas settings
+[canvas]
+width = 800
+height = 600
+background_color = &quot;#FFFFFF&quot;
+margin = 20
+
+# Secondary structure styles
+[helix]
+fill_color = &quot;#FF5733&quot;
+stroke_color = &quot;#000000&quot;
+stroke_width = 1.5
+amplitude = 0.5
+
+[sheet]
+fill_color = &quot;#33FF57&quot;
+stroke_color = &quot;#000000&quot;
+stroke_width = 1.0
+min_sheet_length = 3
+
+[coil]
+stroke_color = &quot;#888888&quot;
+stroke_width = 1.0
+
+# Annotation styles
+[point_annotation]
+fill_color = &quot;#3357FF&quot;
+stroke_color = &quot;#000000&quot;
+radius = 5.0
+
+[line_annotation]
+stroke_color = &quot;#FF33A8&quot;
+stroke_width = 2.0
+
+[area_annotation]
+fill_color = &quot;#FFFF33&quot;
+fill_opacity = 0.5
+stroke_color = &quot;#000000&quot;
+stroke_width = 1.0
+padding = 2.0
+smoothing_window = 3
+interpolation_points = 10
+</code></pre>
+<h2 id="style-sections">Style Sections</h2>
+<h3 id="canvas-settings">Canvas Settings</h3>
+<p>The <code>[canvas]</code> section defines the overall properties of the visualization.</p>
+<table>
+<thead>
+<tr>
+<th>Property</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>width</code></td>
+<td>Integer</td>
+<td>Width of the canvas in pixels</td>
+</tr>
+<tr>
+<td><code>height</code></td>
+<td>Integer</td>
+<td>Height of the canvas in pixels</td>
+</tr>
+<tr>
+<td><code>background_color</code></td>
+<td>Color</td>
+<td>Background color of the canvas</td>
+</tr>
+<tr>
+<td><code>margin</code></td>
+<td>Integer</td>
+<td>Margin around the visualization in pixels</td>
+</tr>
+</tbody>
+</table>
+<h3 id="secondary-structure-styles">Secondary Structure Styles</h3>
+<p>These sections define the appearance of secondary structure elements rendered in the visualization. Common properties like <code>color</code>, <code>stroke_color</code>, <code>stroke_width</code>, and <code>opacity</code> are inherited but can be overridden.</p>
+<h4 id="helix-style-helix">Helix Style (<code>[helix]</code>)</h4>
+<p>Defines the appearance of alpha helices, typically rendered as zigzag ribbons.</p>
+<table>
+<thead>
+<tr>
+<th>Property</th>
+<th>Type</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>color</code></td>
+<td>Color</td>
+<td><code>"#ff0000"</code></td>
+<td>Fill color for the helix ribbon (default red).</td>
+</tr>
+<tr>
+<td><code>stroke_color</code></td>
+<td>Color</td>
+<td><code>"#000000"</code></td>
+<td>Color for the outline/stroke (default black).</td>
+</tr>
+<tr>
+<td><code>stroke_width</code></td>
+<td>Float</td>
+<td><code>1.0</code></td>
+<td>Reference width; used as a base for other dimensions.</td>
+</tr>
+<tr>
+<td><code>opacity</code></td>
+<td>Float</td>
+<td><code>1.0</code></td>
+<td>Opacity of the helix element (0.0 to 1.0).</td>
+</tr>
+<tr>
+<td><code>ribbon_thickness</code></td>
+<td>Float</td>
+<td><code>8.0</code></td>
+<td>Thickness of the zigzag ribbon.</td>
+</tr>
+<tr>
+<td><code>wavelength</code></td>
+<td>Float</td>
+<td><code>10.0</code></td>
+<td>Length of one full zigzag cycle along the helix axis.</td>
+</tr>
+<tr>
+<td><code>amplitude</code></td>
+<td>Float</td>
+<td><code>3.0</code></td>
+<td>Height of the zigzag peaks/valleys from the center line.</td>
+</tr>
+<tr>
+<td><code>min_helix_length</code></td>
+<td>Integer</td>
+<td><code>4</code></td>
+<td>Minimum number of residues required to draw a zigzag shape instead of a simple line.</td>
+</tr>
+<tr>
+<td><code>simplified_width</code></td>
+<td>Float</td>
+<td><code>2.0</code></td>
+<td>Line width used when the helix is rendered as a simple line (below min_helix_length).</td>
+</tr>
+</tbody>
+</table>
+<h4 id="sheet-style-sheet">Sheet Style (<code>[sheet]</code>)</h4>
+<p>Defines the appearance of beta sheets, typically rendered as arrows.</p>
+<table>
+<thead>
+<tr>
+<th>Property</th>
+<th>Type</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>color</code></td>
+<td>Color</td>
+<td><code>"#0000ff"</code></td>
+<td>Fill color for the sheet arrow (default blue).</td>
+</tr>
+<tr>
+<td><code>stroke_color</code></td>
+<td>Color</td>
+<td><code>"#000000"</code></td>
+<td>Color for the outline/stroke (default black).</td>
+</tr>
+<tr>
+<td><code>stroke_width</code></td>
+<td>Float</td>
+<td><code>1.0</code></td>
+<td>Reference width; primarily defines the base width of the arrow body.</td>
+</tr>
+<tr>
+<td><code>opacity</code></td>
+<td>Float</td>
+<td><code>1.0</code></td>
+<td>Opacity of the sheet element (0.0 to 1.0).</td>
+</tr>
+<tr>
+<td><code>arrow_width</code></td>
+<td>Float</td>
+<td><code>8.0</code></td>
+<td>Width of the arrowhead base relative to the start point.</td>
+</tr>
+<tr>
+<td><code>min_sheet_length</code></td>
+<td>Integer</td>
+<td><code>3</code></td>
+<td>Minimum number of residues required to draw an arrow shape instead of a line.</td>
+</tr>
+<tr>
+<td><code>simplified_width</code></td>
+<td>Float</td>
+<td><code>2.0</code></td>
+<td>Line width used when the sheet is rendered as a simple line (below min_sheet_length).</td>
+</tr>
+</tbody>
+</table>
+<h4 id="coil-style-coil">Coil Style (<code>[coil]</code>)</h4>
+<p>Defines the appearance of coil regions, typically rendered as smoothed lines.</p>
+<table>
+<thead>
+<tr>
+<th>Property</th>
+<th>Type</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>color</code></td>
+<td>Color</td>
+<td><code>"#5b5859"</code></td>
+<td>Color used for the coil line (default light grey). This often isn't visible as coils usually only have a stroke.</td>
+</tr>
+<tr>
+<td><code>stroke_color</code></td>
+<td>Color</td>
+<td><code>"#000000"</code></td>
+<td>Color for the coil line (default black).</td>
+</tr>
+<tr>
+<td><code>stroke_width</code></td>
+<td>Float</td>
+<td><code>1.0</code></td>
+<td>Width of the coil line.</td>
+</tr>
+<tr>
+<td><code>opacity</code></td>
+<td>Float</td>
+<td><code>1.0</code></td>
+<td>Opacity of the coil line (0.0 to 1.0).</td>
+</tr>
+<tr>
+<td><code>smoothing_factor</code></td>
+<td>Float</td>
+<td><code>0.1</code></td>
+<td>Fraction of points to keep during smoothing (0.0=max smoothing, 1.0=no smoothing).</td>
+</tr>
+</tbody>
+</table>
+<h3 id="annotation-styles">Annotation Styles</h3>
+<h4 id="point-annotation-style">Point Annotation Style</h4>
+<p>The <code>[point_annotation]</code> section defines the appearance of point annotations.</p>
+<table>
+<thead>
+<tr>
+<th>Property</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>fill_color</code></td>
+<td>Color</td>
+<td>Fill color for point markers</td>
+</tr>
+<tr>
+<td><code>stroke_color</code></td>
+<td>Color</td>
+<td>Outline color for point markers</td>
+</tr>
+<tr>
+<td><code>radius</code></td>
+<td>Float</td>
+<td>Radius of point markers</td>
+</tr>
+</tbody>
+</table>
+<h4 id="line-annotation-style">Line Annotation Style</h4>
+<p>The <code>[line_annotation]</code> section defines the appearance of line annotations.</p>
+<table>
+<thead>
+<tr>
+<th>Property</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>stroke_color</code></td>
+<td>Color</td>
+<td>Color for line annotations</td>
+</tr>
+<tr>
+<td><code>stroke_width</code></td>
+<td>Float</td>
+<td>Width of line annotations</td>
+</tr>
+</tbody>
+</table>
+<h4 id="area-annotation-style">Area Annotation Style</h4>
+<p>The <code>[area_annotation]</code> section defines the appearance of area annotations.</p>
+<table>
+<thead>
+<tr>
+<th>Property</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>fill_color</code></td>
+<td>Color</td>
+<td>Fill color for area annotations</td>
+</tr>
+<tr>
+<td><code>fill_opacity</code></td>
+<td>Float</td>
+<td>Opacity for area fills (0.0-1.0)</td>
+</tr>
+<tr>
+<td><code>stroke_color</code></td>
+<td>Color</td>
+<td>Outline color for areas</td>
+</tr>
+<tr>
+<td><code>stroke_width</code></td>
+<td>Float</td>
+<td>Width of the area outline</td>
+</tr>
+<tr>
+<td><code>padding</code></td>
+<td>Float</td>
+<td>Padding around the area</td>
+</tr>
+<tr>
+<td><code>smoothing_window</code></td>
+<td>Integer</td>
+<td>Window size for smoothing the area outline</td>
+</tr>
+<tr>
+<td><code>interpolation_points</code></td>
+<td>Integer</td>
+<td>Number of points to use for interpolation</td>
+</tr>
+</tbody>
+</table>
+<h2 id="color-formats">Color Formats</h2>
+<p>Colors can be specified in any of the following formats:</p>
+<ul>
+<li>Hex codes: <code>"#FF5733"</code> (with or without the <code>#</code> prefix)</li>
+<li>RGB format: <code>"rgb(255, 87, 51)"</code></li>
+<li>RGBA format: <code>"rgba(255, 87, 51, 0.5)"</code></li>
+<li>Named colors: <code>"red"</code>, <code>"blue"</code>, <code>"green"</code>, etc.</li>
+</ul>
+<h2 id="default-styles">Default Styles</h2>
+<p>If a style file is not provided, or if certain properties are omitted, FlatProt will use default styles. You only need to specify the properties you want to customize.</p>
+<h2 id="validation">Validation</h2>
+<p>FlatProt validates style files to ensure they have the correct format and property types. If a style file is invalid, an error message will be displayed explaining the issue.</p>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="../matrix/" class="btn btn-neutral float-left" title="Matrix Files"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../annotations/" class="btn btn-neutral float-right" title="Annotation Files">Next <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+        <span>
+          <a href="https://github.com/t03i/FlatProt" class="fa fa-github" style="color: #fcfcfc"> GitHub</a>
+        </span>
+    
+    
+      <span><a href="../matrix/" style="color: #fcfcfc">&laquo; Previous</a></span>
+    
+    
+      <span><a href="../annotations/" style="color: #fcfcfc">Next &raquo;</a></span>
+    
+  </span>
+</div>
+    <script src="../../js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = "../..";</script>
+    <script src="../../js/theme_extra.js"></script>
+    <script src="../../js/theme.js"></script>
+      <script src="../../search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>

@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><link rel="canonical" href="https://t03i.github.io/FlatProt/file_formats/structure/" />
+      <link rel="shortcut icon" href="../../img/favicon.ico" />
+    <title>Structure File Format - FlatProt</title>
+    <link rel="stylesheet" href="../../css/theme.css" />
+    <link rel="stylesheet" href="../../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+        <link href="../../assets/_mkdocstrings.css" rel="stylesheet" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "Structure File Format";
+        var mkdocs_page_input_path = "file_formats/structure.md";
+        var mkdocs_page_url = "/FlatProt/file_formats/structure/";
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="../../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/languages/yaml.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/languages/python.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/languages/json.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/languages/toml.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/languages/bash.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/languages/numpy.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href="../.." class="icon icon-home"> FlatProt
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../..">Home</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../installation/">Installation</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../examples/">Examples</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Commands</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../commands/project/">Project</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../commands/align/">Align</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">File Formats</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../matrix/">Matrix Files</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../style/">Style Files</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../annotations/">Annotation Files</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">API Reference</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../api/io/">IO</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../api/core/">Core</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../api/transformation/">Transformation & Projection</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../api/scene/">Scene</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../api/rendering/">Rendering</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../api/alignment/">DatabaseAlignment</a>
+                  </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../..">FlatProt</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../.." class="icon icon-home" aria-label="Docs"></a></li>
+      <li class="breadcrumb-item active">Structure File Format</li>
+    <li class="wy-breadcrumbs-aside">
+          <a href="https://github.com/t03i/FlatProt/edit/master/docs/file_formats/structure.md" class="icon icon-github"> Edit on GitHub</a>
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="structure-file-format">Structure File Format</h1>
+<p>FlatProt accepts protein structure files in standard formats used in structural biology. This document explains the supported formats and requirements for structure files.</p>
+<div class="admonition note"></div>
+<p>We recomend supplying a mmCIF file containing secondary structure information.
+You can produce a valid mmCIF file containing secondary structure information using <a href="https://github.com/PDB-REDO/dssp">dssp &gt;= 4.4</a> command line tool.</p>
+<h2 id="supported-formats">Supported Formats</h2>
+<p>FlatProt supports the following structure file formats:</p>
+<ol>
+<li>
+<p><strong>mmCIF Format</strong> (recommended)</p>
+<ul>
+<li>File extensions: <code>.cif</code>, <code>.mmcif</code></li>
+<li>Can contain both structure and secondary structure information</li>
+<li>Preferred format for new structures</li>
+</ul>
+</li>
+<li>
+<p><strong>PDB Format</strong></p>
+<ul>
+<li>File extension: <code>.pdb</code></li>
+<li>Requires additional DSSP file for secondary structure information</li>
+<li>Legacy format, still widely used</li>
+</ul>
+</li>
+</ol>
+<h2 id="file-requirements">File Requirements</h2>
+<h3 id="mmcif-files">mmCIF Files</h3>
+<ul>
+<li>Must be valid mmCIF format</li>
+<li>Must contain atomic coordinates</li>
+<li>Should include secondary structure information</li>
+<li>Must include chain identifiers</li>
+<li>Must include residue numbers</li>
+</ul>
+<div class="admonition note"></div>
+<p>You can produce a valid mmCIF file containing secondary structure information using <a href="https://github.com/PDB-REDO/dssp">dssp &gt;= 4.4</a> command line tool.</p>
+<p>Example header of a valid mmCIF file:</p>
+<pre><code class="language-cif">data_
+#
+_entry.id   &quot;1ABC&quot;
+#
+loop_
+_atom_site.group_PDB
+_atom_site.id
+_atom_site.type_symbol
+_atom_site.label_atom_id
+_atom_site.label_alt_id
+_atom_site.label_comp_id
+_atom_site.label_asym_id
+_atom_site.label_entity_id
+_atom_site.label_seq_id
+_atom_site.pdbx_PDB_ins_code
+_atom_site.Cartn_x
+_atom_site.Cartn_y
+_atom_site.Cartn_z
+_atom_site.occupancy
+_atom_site.B_iso_or_equiv
+_atom_site.pdbx_formal_charge
+_atom_site.auth_seq_id
+_atom_site.auth_comp_id
+_atom_site.auth_asym_id
+_atom_site.auth_atom_id
+_atom_site.pdbx_PDB_model_num
+</code></pre>
+<h3 id="pdb-files">PDB Files</h3>
+<ul>
+<li>Must be valid PDB format</li>
+<li>Must contain atomic coordinates</li>
+<li>Must include chain identifiers</li>
+<li>Must include residue numbers</li>
+<li>Must have a valid header section</li>
+<li>Requires a companion DSSP file for secondary structure information</li>
+</ul>
+<p>Example header of a valid PDB file:</p>
+<pre><code class="language-pdb">HEADER    PROTEIN                                 01-JAN-20   1ABC
+TITLE     EXAMPLE PROTEIN STRUCTURE
+COMPND    MOL_ID: 1;
+COMPND    MOLECULE: PROTEIN;
+COMPND    CHAIN: A;
+SOURCE    MOL_ID: 1;
+SOURCE    ORGANISM_SCIENTIFIC: EXAMPLE ORGANISM;
+SOURCE    ORGANISM_TAXID: 9999;
+KEYWDS    PROTEIN, STRUCTURE
+EXPDTA    X-RAY DIFFRACTION
+AUTHOR    JOHN DOE
+REVDAT   1   01-JAN-20 1ABC    0
+JRNL        AUTH   J.DOE
+REMARK   2
+REMARK   2 RESOLUTION.    2.00 ANGSTROMS
+</code></pre>
+<h2 id="validation">Validation</h2>
+<p>FlatProt performs several validation checks on structure files:</p>
+<ol>
+<li>
+<p><strong>File Existence</strong></p>
+<ul>
+<li>Verifies that the specified file exists</li>
+<li>Checks file permissions</li>
+</ul>
+</li>
+<li>
+<p><strong>Format Validation</strong></p>
+<ul>
+<li>Validates file format based on extension</li>
+<li>Checks for required sections and headers</li>
+<li>Verifies coordinate data format</li>
+</ul>
+</li>
+<li>
+<p><strong>Content Validation</strong></p>
+<ul>
+<li>Checks for presence of atomic coordinates</li>
+<li>Verifies chain identifiers</li>
+<li>Validates residue numbering</li>
+<li>Checks for secondary structure information (mmCIF only)</li>
+</ul>
+</li>
+</ol>
+<h2 id="error-handling">Error Handling</h2>
+<p>Common errors and their solutions:</p>
+<ol>
+<li>
+<p><strong>File Not Found</strong></p>
+<ul>
+<li>Error: <code>StructureFileNotFoundError</code></li>
+<li>Solution: Verify file path and permissions</li>
+</ul>
+</li>
+<li>
+<p><strong>Invalid Format</strong></p>
+<ul>
+<li>Error: <code>InvalidStructureError</code></li>
+<li>Solution: Check file format and content</li>
+</ul>
+</li>
+<li>
+<p><strong>Missing Secondary Structure</strong></p>
+<ul>
+<li>Error: <code>SecondaryStructureError</code></li>
+<li>Solution: Provide DSSP file for PDB format or use mmCIF</li>
+</ul>
+</li>
+</ol>
+<h2 id="best-practices">Best Practices</h2>
+<ol>
+<li>
+<p><strong>Use mmCIF Format</strong></p>
+<ul>
+<li>More robust and complete than PDB format</li>
+<li>Includes secondary structure information</li>
+<li>Better handling of large structures</li>
+</ul>
+</li>
+<li>
+<p><strong>Include Headers</strong></p>
+<ul>
+<li>Provide complete header information</li>
+<li>Include experimental details</li>
+<li>Document structure source</li>
+</ul>
+</li>
+<li>
+<p><strong>Chain Identifiers</strong></p>
+<ul>
+<li>Use unique chain identifiers</li>
+<li>Document chain contents</li>
+<li>Maintain consistent numbering</li>
+</ul>
+</li>
+<li>
+<p><strong>Quality Control</strong></p>
+<ul>
+<li>Validate coordinates</li>
+<li>Check for missing atoms</li>
+<li>Verify secondary structure assignments</li>
+</ul>
+</li>
+</ol>
+              
+            </div>
+          </div><footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+        <span>
+          <a href="https://github.com/t03i/FlatProt" class="fa fa-github" style="color: #fcfcfc"> GitHub</a>
+        </span>
+    
+    
+    
+  </span>
+</div>
+    <script src="../../js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = "../..";</script>
+    <script src="../../js/theme_extra.js"></script>
+    <script src="../../js/theme.js"></script>
+      <script src="../../search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>
