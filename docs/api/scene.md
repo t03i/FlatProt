@@ -132,7 +132,7 @@ show_root_heading: true
 options:
 show_root_heading: true
 
-::: flatprot.utils.scene_utils.create_domain_aware_scene
+::: flatprot.utils.domain_utils.create_domain_aware_scene
 options:
 show_root_heading: true
 

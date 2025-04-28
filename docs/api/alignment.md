@@ -13,38 +13,42 @@ The alignment process in FlatProt serves to orient an input protein structure ac
 
 ---
 
-## Core Alignment Functions
+## Top-Level Alignment Functions
 
-These functions orchestrate the alignment process.
+These functions provide the main entry points for performing alignment using a database.
 
-::: flatprot.alignment.align_structure_database
+::: flatprot.alignment
+options:
+members: - align_structure_database - get_aligned_rotation_database
+show_root_heading: true
+show_root_toc_entry: false
+
+## Foldseek Interaction
+
+Classes and functions related to running Foldseek and parsing its results.
+
+::: flatprot.alignment.foldseek
 options:
 show_root_heading: true
+show_root_toc_entry: false
 
-::: flatprot.alignment.get_aligned_rotation_database
+## Alignment Database
+
+Class for interacting with the HDF5 alignment database containing pre-calculated matrices and the associated data entry structure.
+
+::: flatprot.alignment.db
 options:
 show_root_heading: true
+show_root_toc_entry: false
 
-## Database Interaction
+## Alignment Utilities
 
-Class for interacting with the HDF5 alignment database containing pre-calculated matrices.
+Utility functions used within the alignment module.
 
-::: flatprot.alignment.AlignmentDatabase
+::: flatprot.alignment.utils
 options:
 show_root_heading: true
-members_order: source
-
-## Data Structures
-
-Classes representing alignment results and database entries.
-
-::: flatprot.alignment.AlignmentResult
-options:
-show_root_heading: true
-
-::: flatprot.alignment.DatabaseEntry
-options:
-show_root_heading: true
+show_root_toc_entry: false
 
 ## Alignment Errors
 
@@ -53,3 +57,4 @@ Exceptions specific to the alignment process.
 ::: flatprot.alignment.errors
 options:
 show_root_heading: true
+show_root_toc_entry: false

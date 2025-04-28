@@ -65,14 +65,6 @@ Function for projecting a transformed 3D structure onto a 2D canvas.
 options:
 show_root_heading: true
 
-## Uniform Projection
-
-Function for projecting a transformed 3D structure onto a 2D canvas with a uniform scale factor.
-
-::: flatprot.utils.structure_utils.project_structure_uniformly
-options:
-show_root_heading: true
-
 ## Domain Transformation Utilities
 
 Classes and functions specifically for handling domain-based transformations.

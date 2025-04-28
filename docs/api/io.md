@@ -17,7 +17,7 @@ The IO module acts as the interface between FlatProt's internal data structures 
 
 Handles reading and parsing protein structure files (PDB, mmCIF).
 
-::: flatprot.io.parser.GemmiStructureParser
+::: flatprot.io.GemmiStructureParser
 options:
 show_root_heading: true
 members_order: source
@@ -44,11 +44,11 @@ members_order: source
 
 Utility functions for validating input files.
 
-::: flatprot.io.validation.validate_structure_file
+::: flatprot.io.validate_structure_file
 options:
 show_root_heading: true
 
-::: flatprot.io.validation.validate_optional_files
+::: flatprot.io.validate_optional_files
 options:
 show_root_heading: true
 

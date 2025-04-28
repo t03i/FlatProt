@@ -52,18 +52,7 @@ Several aspects define how the FlatProt rendering system, particularly the `SVGR
 
 ## Renderer Classes
 
-::: flatprot.renderers.base_renderer.BaseRenderer
-options:
-show_root_heading: true
-members_order: source
-
 ::: flatprot.renderers.svg_renderer.SVGRenderer
 options:
 show_root_heading: true
 members_order: source
-
-## Renderer Errors
-
-::: flatprot.renderers.errors
-options:
-show_root_heading: true

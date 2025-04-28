@@ -40,13 +40,9 @@ dev = [
     "jupytext>=1.17.0",
     "mkdocstrings[python]>=0.29.1",
 ]
-db-builder = [
-    "httpx-retries>=0.3.0",
-    "snakemake>=9.0.1",
-]
+db-builder = ["httpx-retries>=0.3.0", "snakemake>=9.0.1"]
 
 [project.urls]
 Repository = "https://github.com/t03i/FlatProt"
 Documentation = "https://t03i.github.io/FlatProt/"
-Zenodo = "https://doi.org/10.5281/zenodo.10674045"
-Example-Collab = "https://colab.research.google.com/drive/17u0twE81kYYspNFsdXUHrCyP33hj0dO6?usp=sharing"
+Zenodo = "https://doi.org/10.5281/zenodo.15264810"
