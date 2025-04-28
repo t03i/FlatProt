@@ -29,6 +29,12 @@ jobs:
               id: generate
               run: scripts/create-notebooks.sh
 
+            - name: Stage generated notebooks
+              run: |
+                  # Stage generated/updated notebooks, forcing past .gitignore
+                  # The create-pull-request action will commit them if changes exist.
+                  git add --force examples/*.ipynb
+
             - name: Create Pull Request
               uses: peter-evans/create-pull-request@v6
               with:
