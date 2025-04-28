@@ -14,7 +14,7 @@ from .base_element import BaseSceneElement, SceneGroupType, BaseSceneStyle
 class ConnectionStyle(BaseSceneStyle):
     """Defines the visual style for a connection between elements."""
 
-    color: Color = Field(default=Color("black"), description="Connection line color.")
+    color: Color = Field(default=Color("#5b5859"), description="Connection line color.")
     stroke_width: float = Field(
         default=1.0, ge=0.0, description="Connection line width."
     )
@@ -24,7 +24,7 @@ class ConnectionStyle(BaseSceneStyle):
         description="Connection line style ('solid', 'dashed', or 'dotted').",
     )
     opacity: float = Field(
-        default=0.8, ge=0.0, le=1.0, description="Connection line opacity."
+        default=1.0, ge=0.0, le=1.0, description="Connection line opacity."
     )
 
 

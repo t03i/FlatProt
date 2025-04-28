@@ -39,6 +39,7 @@ from IPython import get_ipython
 from IPython.core.magic import register_cell_magic
 from IPython.display import display, HTML
 
+
 # %%
 # Register pybash magic command if running in IPython
 ipython = get_ipython()
@@ -207,10 +208,10 @@ def create_cystine_bridge_annotations(
                 f"{chain2}:{res2}",
             ],  # Format: CHAIN:RESID
             "style": {
-                "stroke_color": "#32CD32",  # Lime green color
+                "line_color": "#32CD32",  # Lime green color
                 "stroke_width": 1.5,
                 "line_style": (4, 2),  # Dashed line
-                "marker_radius": 0.4,
+                "connector_radius": 0.4,
             },
         }
         annotations.append(annotation)
@@ -272,16 +273,32 @@ for structure_file in structure_files:
         print(f"    Annotation file created: {output_annotation.name}")
 
         # 3. Align Structure (only if in IPython)
-        alignment_successful = False
-        print("  Running alignment...")
-        align_cmd = "uv run flatprot align {structure_file} {output_matrix} {output_info} -d {db_path} --min-probability {min_p} --quiet"
-        f_locals_align = {
-            "structure_file": structure_file.resolve(),
-            "output_matrix": output_matrix.resolve(),
-            "output_info": output_info.resolve(),
-            "db_path": db_path,  # db_path is already resolved
-            "min_p": min_p,
-        }
+        alignment_successful = False  # Initialize alignment status
+        if ipython:
+            print("  Running alignment...")
+            align_cmd = "uv run flatprot align {structure_file} {output_matrix} {output_info} -d {db_path} --min-probability {min_p} --quiet"
+            f_locals_align = {
+                "structure_file": structure_file.resolve(),
+                "output_matrix": output_matrix.resolve(),
+                "output_info": output_info.resolve(),
+                "db_path": db_path,  # db_path is already resolved
+                "min_p": min_p,
+            }
+            try:
+                # Attempt to run the alignment command using bash magic
+                ipython.run_cell_magic("bash", "", align_cmd.format(**f_locals_align))
+                # Check if output files were created as a proxy for success
+                if output_matrix.exists() and output_info.exists():
+                    print(f"    Alignment likely successful for {structure_file.name}.")
+                    alignment_successful = True
+                else:
+                    print(
+                        f"    [WARN] Alignment command ran, but output files not found for {structure_file.name}."
+                    )
+            except Exception as e:
+                print(f"    [ERROR] Alignment failed for {structure_file.name}: {e}")
+        else:
+            print("  [WARN] Not in IPython environment. Skipping alignment.")
 
         # 4. Generate Projection (only if in IPython, annotations exist, and alignment was successful)
         if ipython and output_annotation.exists() and alignment_successful:
@@ -295,19 +312,37 @@ for structure_file in structure_files:
                 "output_annotation": output_annotation.resolve(),
                 "output_matrix": output_matrix.resolve(),  # Use the generated matrix
             }
-            ipython.run_cell_magic("bash", "", project_cmd.format(**f_locals_project))
-            print(f"    SVG projection saved: {output_svg.name}")
-            generated_svgs.append(output_svg)
+            try:
+                ipython.run_cell_magic(
+                    "bash", "", project_cmd.format(**f_locals_project)
+                )
+                if output_svg.exists():
+                    print(f"    SVG projection saved: {output_svg.name}")
+                    generated_svgs.append(output_svg)
+                else:
+                    print(
+                        f"    [WARN] Projection command ran, but output SVG not found for {structure_file.name}."
+                    )
+            except Exception as e:
+                print(f"    [ERROR] Projection failed for {structure_file.name}: {e}")
 
         elif not ipython:
             print("  [WARN] Not in IPython environment. Skipping projection.")
         elif not output_annotation.exists():
-            print("  [WARN] Annotation file missing. Skipping projection.")
+            print(
+                "  [WARN] Annotation file missing (should not happen if bridges were found). Skipping projection."
+            )
         elif not alignment_successful:
             print("  [WARN] Alignment failed or skipped. Skipping projection.")
 
-    except (FileNotFoundError, Exception) as e:
+    except FileNotFoundError as e:
         print(f"  [ERROR] Failed processing {structure_file.name}: {e}")
+    except (
+        Exception
+    ) as e:  # Catch other potential errors during bridge computation/annotation
+        print(
+            f"  [ERROR] An unexpected error occurred processing {structure_file.name}: {e}"
+        )
 
 
 # %% [markdown]
