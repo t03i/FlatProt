@@ -4,17 +4,6 @@
 
 FlatProt is a tool for 2D protein visualization aimed at improving the comparability of protein structures through standardized 2D visualizations. FlatProt focuses on creating highly comparable representations for same-family proteins. In this case FlatProt was used to generate comparable representations for 3 3FTx structures.
 
-## Contents
-
--   [Getting Started](#getting-started)
--   [First Experiences with Google Colab](#first-experiences-with-google-colab)
--   [Documentation](#documentation)
--   [Data](#data)
--   [Example Visualizations](#example-visualizations)
--   [Domain Annotation File Format](#domain-annotation-file-format)
--   [Runtime for Protein Sizes](#runtime-for-protein-sizes)
--   [Reference](#reference)
-
 ## Getting Started
 
 FlatProt needs python version: python= ">=3.11,<=3.13"

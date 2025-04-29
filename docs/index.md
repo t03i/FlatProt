@@ -7,6 +7,23 @@
 
 FlatProt is a Python package for protein structure and sequence analysis. It provides standardized 2D visualizations for enhanced protein comparability, combining efficient processing of proteins with user-friendly visualizations.
 
+## Standard Workflow on the command line
+
+FlatProt generates 2D projections of protein structures in three simple steps:
+
+1. Obtain the protein structure file (CIF or PDB format)
+    - From databases like PDB, AlphaFold, or your own modeling tools
+    - CIF format is recommended for better handling of complex structures
+2. Calculate secondary structure using DSSP
+    - Run: `mkdssp -i structure.cif -o structure.cif`
+    - This identifies α-helices, β-sheets, and other structural elements
+3. Generate the 2D projection with FlatProt
+    - Basic usage: `flatprot project structure.cif -o projection.svg`
+    - With pdb file: `flatprot project structure.pdb --dssp structure.dssp -o projection.svg`
+    - Customize with options like `--canvas-width 500 --canvas-height 400` for sizing
+
+The resulting SVG file contains a clean, publication-ready 2D representation of your protein structure that can be viewed in any web browser or vector graphics editor.
+
 ## Key Features
 
 -   Standardized 2D visualization approach for protein analysis
@@ -41,4 +58,6 @@ FlatProt offers multiple visualization types to suit different analysis needs:
 
 ## Citation
 
-[Citation placeholder]
+> FlatProt: 2D visualization eases protein structure comparison
+> Tobias Olenyi, Constantin Carl, Tobias Senoner, Ivan Koludarov, Burkhard Rost
+> bioRxiv 2025.04.22.650077; doi: [https://doi.org/10.1101/2025.04.22.650077](https://doi.org/10.1101/2025.04.22.650077)
