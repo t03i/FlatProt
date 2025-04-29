@@ -59,8 +59,14 @@ def ensure_database_available(
 
     # Download the database
     try:
-        # Run the async download function
-        asyncio.run(download_database(db_path))
+        # Run the async download function, handling existing event loops
+        try:
+            loop = asyncio.get_running_loop()
+            logger.debug("Existing asyncio loop detected, scheduling download.")
+            loop.run_until_complete(download_database(db_path))
+        except RuntimeError:  # No event loop running
+            logger.debug("No asyncio loop running, using asyncio.run for download.")
+            asyncio.run(download_database(db_path))
 
         if validate_database(db_path):
             logger.info(

@@ -162,7 +162,7 @@ print("[INFO] Imported libraries and FlatProt components.")
 # --- User Configuration ---
 
 # Input Structure Details
-structure_id: str = "1kt0"  # PDB ID or identifier for file naming
+structure_id: str = "1KT0"  # PDB ID or identifier for file naming
 
 # Use base paths defined after Colab check
 # Domain Definition File (from Chainsaw)
@@ -170,7 +170,7 @@ structure_dir: Path = data_dir_base / structure_id
 chainsaw_file: Path = structure_dir / f"{structure_id.lower()}-chainsaw-domains.tsv"
 
 # Primary Structure File (PDB or CIF)
-structure_file: Path = structure_dir / f"{structure_id}.cif"
+structure_file: Path = structure_dir / f"{structure_id.lower()}.cif"
 
 # Temporary Directory for Intermediate Files
 tmp_dir: Path = tmp_dir_base / "domain_alignment_projection"  # Specific tmp dir
