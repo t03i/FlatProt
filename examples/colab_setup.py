@@ -95,7 +95,7 @@ def setup_colab_environment():
             print(f"Added existing {foldseek_bin_path} to PATH")
 
     print("Verifying Foldseek installation by checking version...")
-    run_cmd([str(foldseek_executable), "--version"], capture=True)
+    run_cmd([str(foldseek_executable), "--help"], capture=True)
     print("[DONE] Foldseek installation step.")
 
     # --- 3. Install DSSP ---
