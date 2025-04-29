@@ -22,104 +22,75 @@
 # ---
 # ## Environment Setup for Google Colab
 #
-# The following cell checks if the notebook is running in Google Colab and installs the necessary dependencies and downloads required data:
-#
-# 1.  **FlatProt:** Installs the latest version directly from the GitHub repository using `pip`.
-# 2.  **Foldseek:** Downloads (`wget`) and extracts (`tar`) the Foldseek binary (for Linux AVX2) and adds it to the system `PATH`.
-# 3.  **DSSP:** Installs the `dssp` package (which provides `mkdssp`) using `apt`.
-# 4.  **Repository Data:** Downloads the repository archive, extracts it, and moves the `data/` and `out/` directories to the Colab environment's root.
-#
-# This setup ensures that the example can run successfully in a Colab environment. If not running in Colab, it assumes dependencies and relative data paths are already correct.
+# The following cell checks if the notebook is running in Google Colab,
+# downloads the shared setup script from GitHub, and runs it to install
+# dependencies and download data.
 
 # %%
-import os
 import sys
-from pathlib import Path # Ensure Path is imported here
+import subprocess
+from pathlib import Path
+import os  # Keep os import if needed elsewhere
 
-IN_COLAB = 'google.colab' in sys.modules
-COLAB_BASE_DIR = Path(".") # Base directory for Colab CWD (/content)
-REPO_DIR_NAME = "FlatProt-main" # Default dir name after unzip
-
+# Check if in Colab
+IN_COLAB = "google.colab" in sys.modules
 if IN_COLAB:
-    print("Running in Google Colab. Setting up environment and data...")
+    print("Running in Google Colab. Fetching and executing setup script...")
+    # URL to the raw colab_setup.py script on GitHub (adjust branch if necessary)
+    setup_script_url = (
+        "https://raw.githubusercontent.com/t03i/FlatProt/main/examples/colab_setup.py"
+    )
+    setup_script_local_path = Path("colab_setup.py")
 
-    # --- 1. Install FlatProt ---
-    print("\n[1/4] Installing FlatProt...")
-    !{sys.executable} -m pip install --quiet --upgrade git+https://github.com/t03i/FlatProt.git#egg=flatprot
-    print("FlatProt installation attempted.")
+    # Download the setup script using wget
+    print(f"Downloading {setup_script_url} to {setup_script_local_path}...")
+    subprocess.run(
+        ["wget", "-q", "-O", str(setup_script_local_path), setup_script_url],
+        check=True,
+    )
+    print("Download complete.")
 
-    # --- 2. Install Foldseek ---
-    print("\n[2/4] Installing Foldseek...")
-    foldseek_url = "https://mmseqs.com/foldseek/foldseek-linux-avx2.tar.gz"
-    foldseek_tar = "foldseek-linux-avx2.tar.gz"
-    foldseek_dir = "foldseek"
-    print(f"Downloading Foldseek from {foldseek_url}...")
-    !wget -q {foldseek_url} -O {foldseek_tar}
-    print("Extracting Foldseek...")
-    !tar -xzf {foldseek_tar}
-    foldseek_bin_path = os.path.join(os.getcwd(), foldseek_dir, "bin")
-    os.environ['PATH'] = f"{foldseek_bin_path}:{os.environ['PATH']}"
-    print(f"Added {foldseek_bin_path} to PATH")
-    print("Verifying Foldseek installation...")
-    !foldseek --help | head -n 5
-    print("Foldseek installation attempted.")
+    # Ensure the current directory is in the Python path
+    if str(Path.cwd()) not in sys.path:
+        sys.path.insert(0, str(Path.cwd()))
 
-    # --- 3. Install DSSP ---
-    print("\n[3/4] Installing DSSP...")
-    print("Updating apt package list...")
-    !sudo apt-get update -qq
-    print("Installing DSSP...")
-    !sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -qq dssp
-    print("Verifying DSSP installation...")
-    !mkdssp --version
-    print("DSSP installation attempted.")
+    # Import and run the setup function
+    if setup_script_local_path.exists():
+        # Import the downloaded script
+        import colab_setup
 
-    # --- 4. Download Repository Data ---
-    print("\n[4/4] Downloading repository data (data/ and out/)...")
-    repo_zip_url = "https://github.com/t03i/FlatProt/archive/refs/heads/main.zip"
-    repo_zip_file = "repo.zip"
-    repo_temp_dir = "repo_temp"
-
-    print(f"Downloading repository archive from {repo_zip_url}...")
-    !wget -q {repo_zip_url} -O {repo_zip_file}
-    print(f"Extracting archive to {repo_temp_dir}...")
-    !unzip -o -q {repo_zip_file} -d {repo_temp_dir}
-
-    extracted_repo_path = COLAB_BASE_DIR / repo_temp_dir / REPO_DIR_NAME
-    if extracted_repo_path.is_dir():
-         print(f"Moving data/ and out/ directories from {extracted_repo_path}...")
-         source_data_path = extracted_repo_path / "data"
-         if source_data_path.exists():
-             !mv -T {source_data_path} {COLAB_BASE_DIR}/data
-             print("Moved data/ directory.")
-         else:
-             print("[WARN] data/ directory not found in archive.")
-
-         source_out_path = extracted_repo_path / "out"
-         if source_out_path.exists():
-             !mv -T {source_out_path} {COLAB_BASE_DIR}/out
-             print("Moved out/ directory.")
-         else:
-             print("[INFO] out/ directory not found in archive, creating.")
-             (COLAB_BASE_DIR / "out").mkdir(exist_ok=True)
+        print("Running colab_setup.setup_colab_environment()...")
+        colab_setup.setup_colab_environment()
+        print("Colab setup script finished.")
+        # Optional: Clean up the downloaded script to keep the env clean
+        # setup_script_local_path.unlink(missing_ok=True)
     else:
-         print(f"[ERROR] Expected directory '{extracted_repo_path}' not found after extraction.")
+        # This should not happen if wget was successful
+        raise RuntimeError(
+            f"Setup script {setup_script_local_path} not found after download attempt."
+        )
 
-    print("Cleaning up downloaded files...")
-    !rm -rf {repo_temp_dir} {repo_zip_file}
 
-    print("\nEnvironment and data setup complete.")
-    base_dir = COLAB_BASE_DIR
+# Define base_dir (works for both Colab and local)
+# Assumes execution from the root of the repository or within examples/
+base_dir = Path(".")
 
 # --- Path Definitions ---
 print(f"[INFO] Using base directory: {base_dir.resolve()}")
+# Check if data exists after potential setup
 data_dir_base = base_dir / "data"
-tmp_dir_base = base_dir / "tmp"
-out_dir = base_dir / "out"
+if not data_dir_base.exists():
+    print(
+        f"[WARN] Data directory '{data_dir_base}' not found. Subsequent steps might fail.",
+        file=sys.stderr,
+    )
+    # Optionally create it to prevent errors later if needed:
+    # data_dir_base.mkdir(exist_ok=True)
 
-# Ensure base tmp/out directories exist
+tmp_dir_base = base_dir / "tmp"
+
+# Ensure base tmp directory exists
 tmp_dir_base.mkdir(parents=True, exist_ok=True)
-out_dir.mkdir(parents=True, exist_ok=True)
 
 
 # %%
@@ -127,7 +98,7 @@ out_dir.mkdir(parents=True, exist_ok=True)
 import collections
 import csv
 import xml.etree.ElementTree as ET
-import zipfile # Needed later
+import zipfile  # Needed later
 from typing import Union
 from IPython.display import SVG, display
 
@@ -139,8 +110,8 @@ from flatprot.core import logger
 print("\n[STEP 1] Setting up script paths and variables...")
 
 # Define script-specific directories and file paths using base paths
-tmp_dir = tmp_dir_base / "klk_overlay" # Specific tmp dir
-data_archive = data_dir_base / "KLK.zip" # Specific input archive
+tmp_dir = tmp_dir_base / "klk_overlay"  # Specific tmp dir
+data_archive = data_dir_base / "KLK.zip"  # Specific input archive
 
 # Create specific temporary directory if it doesn't exist
 os.makedirs(tmp_dir, exist_ok=True)
@@ -222,10 +193,44 @@ structures_dir_str = str(structures_dir)
 cluster_output_prefix_str = str(cluster_output_prefix)
 clustering_tmp_dir_str = str(clustering_tmp_dir)
 
-# Run foldseek easy-cluster using ! magic
-cluster_cmd = f"foldseek easy-cluster {structures_dir_str} {cluster_output_prefix_str} {clustering_tmp_dir_str} --min-seq-id 0.5 --c 0.9 --threads 4 -v 0 | cat"
-# Remove if ipython check
-!{cluster_cmd}
+# Run foldseek easy-cluster using subprocess
+cluster_cmd_list = [
+    "foldseek",
+    "easy-cluster",
+    structures_dir_str,
+    cluster_output_prefix_str,
+    clustering_tmp_dir_str,
+    "--min-seq-id",
+    "0.5",
+    "--c",
+    "0.9",
+    "--threads",
+    "4",
+    "-v",
+    "0",
+]
+
+
+# Define helper locally or assume it's available from imported colab_setup
+def run_local_cmd(cmd_list, check=True):
+    # Simplified local runner if needed
+    print(f" Running local command: {' '.join(cmd_list)}")
+    return subprocess.run(cmd_list, check=check, capture_output=True, text=True)
+
+
+try:
+    # Prefer run_cmd from colab_setup if available
+    if "colab_setup" in sys.modules and hasattr(colab_setup, "run_cmd"):
+        # Note: Foldseek easy-cluster can print a lot, capture=False might be better
+        # Or capture=True but don't print stdout in run_cmd helper
+        colab_setup.run_cmd(cluster_cmd_list, capture=False)
+    else:
+        run_local_cmd(cluster_cmd_list)  # Fallback
+except subprocess.CalledProcessError as e:
+    print(f"[ERROR] Foldseek clustering failed: {e}", file=sys.stderr)
+except Exception as e:
+    print(f"[ERROR] Failed to run Foldseek clustering: {e}", file=sys.stderr)
+
 
 # Parse the cluster results
 cluster_file = Path(f"{cluster_output_prefix_str}_cluster.tsv")
@@ -272,7 +277,6 @@ matrix_dir.mkdir(exist_ok=True)
 info_dir.mkdir(exist_ok=True)
 
 
-
 # %% [markdown]
 # Run `flatprot align` for each representative structure against the database.
 
@@ -281,17 +285,29 @@ for file in representative_files:
     matrix_path = matrix_dir / f"{file.stem}_matrix.npy"
     info_path = info_dir / f"{file.stem}_info.json"
 
-    # Convert paths to strings for the command line
-    file_str = str(file.resolve())
-    matrix_path_str = str(matrix_path.resolve())
-    info_path_str = str(info_path.resolve())
+    # Construct command list
+    align_cmd_list = [
+        "uv",
+        "run",
+        "flatprot",
+        "align",
+        str(file.resolve()),
+        str(matrix_path.resolve()),
+        str(info_path.resolve()),
+        "--target-db-id",
+        "3000114",  # SCOP ID for Trypsin-like serine proteases
+        "--quiet",
+    ]
 
-    align_cmd = (
-        f"uv run flatprot align {file_str} {matrix_path_str} {info_path_str} "
-        f"--target-db-id 3000114 --quiet"
-    )
-    # Remove if ipython check
-    !{align_cmd}
+    try:
+        if "colab_setup" in sys.modules and hasattr(colab_setup, "run_cmd"):
+            colab_setup.run_cmd(align_cmd_list)
+        else:
+            run_local_cmd(align_cmd_list)
+    except subprocess.CalledProcessError as e:
+        print(f"[ERROR] Alignment failed for {file.name}: {e}", file=sys.stderr)
+    except Exception as e:
+        print(f"[ERROR] Failed to run alignment for {file.name}: {e}", file=sys.stderr)
 
 
 # %% [markdown]
@@ -372,12 +388,34 @@ for file in representative_files:
 
     rep_base_name = file.stem  # Used as key
 
-    project_cmd = (
-        f"uv run flatprot project {file_str} --matrix {matrix_path} "
-        f"-o {svg_path} --quiet --canvas-width {CANVAS_WIDTH} --canvas-height {CANVAS_HEIGHT} --style {style_str}"
-    )
-    # Remove if ipython check
-    !{project_cmd}
+    project_cmd_list = [
+        "uv",
+        "run",
+        "flatprot",
+        "project",
+        file_str,
+        "--matrix",
+        matrix_path,
+        "-o",
+        svg_path,
+        "--quiet",
+        "--canvas-width",
+        str(CANVAS_WIDTH),
+        "--canvas-height",
+        str(CANVAS_HEIGHT),
+        "--style",
+        style_str,
+    ]
+
+    try:
+        if "colab_setup" in sys.modules and hasattr(colab_setup, "run_cmd"):
+            colab_setup.run_cmd(project_cmd_list)
+        else:
+            run_local_cmd(project_cmd_list)
+    except subprocess.CalledProcessError as e:
+        print(f"[ERROR] Projection failed for {file.name}: {e}", file=sys.stderr)
+    except Exception as e:
+        print(f"[ERROR] Failed to run projection for {file.name}: {e}", file=sys.stderr)
 
 print("Structure processing finished.")
 

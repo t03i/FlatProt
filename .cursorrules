@@ -40,4 +40,4 @@ Do not delete comments unless they are outdated or incorrect.
 
 When working with Cyclopts, be aware that it is fundamentally different to typer. It requires setup of helptext through the doc string and typically does not need Options or Argument annotations but rather regular type annotations. When in doubt, compare to the /src/flatprot/cli/commands.py file or ask me.
 
-All python files in examples/ should be valid python code for ruff linting but are intended to be converted to jupyter notebooks using jupytex. A good example is the klk_overlay.py or 3ftx_alignment.py files.
+All python files in examples/ will be converted to jupyter notebooks using jupytex. They are intended to be used as examples on how to use the tool and library. They are targeted to be run in Google Colab. They are automatically converted to notebooks in a github action.

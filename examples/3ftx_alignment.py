@@ -13,111 +13,87 @@
 # ---
 # ## Environment Setup for Google Colab
 #
-# The following cell checks if the notebook is running in Google Colab and installs the necessary dependencies and downloads required data:
-#
-# 1.  **FlatProt:** Installs the latest version directly from the GitHub repository using `pip`.
-# 2.  **Foldseek:** Downloads (`wget`) and extracts (`tar`) the Foldseek binary (for Linux AVX2) and adds it to the system `PATH`.
-# 3.  **DSSP:** Installs the `dssp` package (which provides `mkdssp`) using `apt`.
-# 4.  **Repository Data:** Downloads the repository archive, extracts it, and moves the `data/` and `out/` directories to the Colab environment's root.
-#
-# This setup ensures that the example can run successfully in a Colab environment. If not running in Colab, it assumes dependencies and relative data paths are already correct.
+# The following cell checks if the notebook is running in Google Colab
+# and runs the shared setup script (`colab_setup.py`) to install
+# dependencies and download data.
 
 # %%
-import os
 import sys
-from pathlib import Path # Ensure Path is imported here
+from pathlib import Path
+import os  # Keep os import if needed elsewhere
+import subprocess  # Keep subprocess import
 
-IN_COLAB = 'google.colab' in sys.modules
-COLAB_BASE_DIR = Path(".") # Base directory for Colab CWD (/content)
-REPO_DIR_NAME = "FlatProt-main" # Default dir name after unzip
-
+# Check if in Colab and run setup
+IN_COLAB = "google.colab" in sys.modules
 if IN_COLAB:
-    print("Running in Google Colab. Setting up environment and data...")
+    print("Running in Google Colab. Fetching and executing setup script...")
+    # URL to the raw colab_setup.py script on GitHub (adjust branch if necessary)
+    setup_script_url = (
+        "https://raw.githubusercontent.com/t03i/FlatProt/main/examples/colab_setup.py"
+    )
+    setup_script_local_path = Path("colab_setup.py")
 
-    # --- 1. Install FlatProt ---
-    print("\n[1/4] Installing FlatProt...")
-    !{sys.executable} -m pip install --quiet --upgrade git+https://github.com/t03i/FlatProt.git#egg=flatprot
-    print("FlatProt installation attempted.")
+    # Download the setup script using wget
+    print(f"Downloading {setup_script_url} to {setup_script_local_path}...")
+    subprocess.run(
+        ["wget", "-q", "-O", str(setup_script_local_path), setup_script_url],
+        check=True,
+    )
+    print("Download complete.")
 
-    # --- 2. Install Foldseek ---
-    print("\n[2/4] Installing Foldseek...")
-    foldseek_url = "https://mmseqs.com/foldseek/foldseek-linux-avx2.tar.gz"
-    foldseek_tar = "foldseek-linux-avx2.tar.gz"
-    foldseek_dir = "foldseek"
-    print(f"Downloading Foldseek from {foldseek_url}...")
-    !wget -q {foldseek_url} -O {foldseek_tar}
-    print("Extracting Foldseek...")
-    !tar -xzf {foldseek_tar}
-    foldseek_bin_path = os.path.join(os.getcwd(), foldseek_dir, "bin")
-    os.environ['PATH'] = f"{foldseek_bin_path}:{os.environ['PATH']}"
-    print(f"Added {foldseek_bin_path} to PATH")
-    print("Verifying Foldseek installation...")
-    !foldseek --help | head -n 5
-    print("Foldseek installation attempted.")
+    # Ensure the current directory is in the Python path
+    if str(Path.cwd()) not in sys.path:
+        sys.path.insert(0, str(Path.cwd()))
 
-    # --- 3. Install DSSP ---
-    print("\n[3/4] Installing DSSP...")
-    print("Updating apt package list...")
-    !sudo apt-get update -qq
-    print("Installing DSSP...")
-    !sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -qq dssp
-    print("Verifying DSSP installation...")
-    !mkdssp --version
-    print("DSSP installation attempted.")
+    # Import and run the setup function
+    if setup_script_local_path.exists():
+        # Import the downloaded script
+        import colab_setup
 
-    # --- 4. Download Repository Data ---
-    print("\n[4/4] Downloading repository data (data/ and out/)...")
-    repo_zip_url = "https://github.com/t03i/FlatProt/archive/refs/heads/main.zip"
-    repo_zip_file = "repo.zip"
-    repo_temp_dir = "repo_temp"
-
-    print(f"Downloading repository archive from {repo_zip_url}...")
-    !wget -q {repo_zip_url} -O {repo_zip_file}
-    print(f"Extracting archive to {repo_temp_dir}...")
-    !unzip -o -q {repo_zip_file} -d {repo_temp_dir}
-
-    extracted_repo_path = COLAB_BASE_DIR / repo_temp_dir / REPO_DIR_NAME
-    if extracted_repo_path.is_dir():
-         print(f"Moving data/ and out/ directories from {extracted_repo_path}...")
-         source_data_path = extracted_repo_path / "data"
-         if source_data_path.exists():
-             !mv -T {source_data_path} {COLAB_BASE_DIR}/data
-             print("Moved data/ directory.")
-         else:
-             print("[WARN] data/ directory not found in archive.")
-
-         source_out_path = extracted_repo_path / "out"
-         if source_out_path.exists():
-             !mv -T {source_out_path} {COLAB_BASE_DIR}/out
-             print("Moved out/ directory.")
-         else:
-             print("[INFO] out/ directory not found in archive, creating.")
-             (COLAB_BASE_DIR / "out").mkdir(exist_ok=True) # Ensure out exists even if not in archive
+        print("Running colab_setup.setup_colab_environment()...")
+        colab_setup.setup_colab_environment()
+        print("Colab setup script finished.")
+        # Optional: Clean up the downloaded script to keep the env clean
+        # setup_script_local_path.unlink(missing_ok=True)
     else:
-         print(f"[ERROR] Expected directory '{extracted_repo_path}' not found after extraction.")
+        # This should not happen if wget was successful
+        raise RuntimeError(
+            f"Setup script {setup_script_local_path} not found after download attempt."
+        )
 
-    print("Cleaning up downloaded files...")
-    !rm -rf {repo_temp_dir} {repo_zip_file}
-
-    print("\nEnvironment and data setup complete.")
-    base_dir = COLAB_BASE_DIR
+# Define base_dir (works for both Colab and local)
+base_dir = Path(".")
 
 # --- Path Definitions ---
 print(f"[INFO] Using base directory: {base_dir.resolve()}")
+# Check if data exists after potential setup
 data_dir_base = base_dir / "data"
-tmp_dir_base = base_dir / "tmp"
-out_dir = base_dir / "out"
+if not data_dir_base.exists():
+    print(
+        f"[WARN] Data directory '{data_dir_base}' not found. Subsequent steps might fail.",
+        file=sys.stderr,
+    )
+    # Optionally create it: data_dir_base.mkdir(exist_ok=True)
 
-# Ensure base tmp/out directories exist
+tmp_dir_base = base_dir / "tmp"
+
+# Ensure base tmp directory exists
 tmp_dir_base.mkdir(parents=True, exist_ok=True)
-out_dir.mkdir(parents=True, exist_ok=True) # Ensures out/ exists for db path
 
 
 # %%
 # Essential Imports (keep remaining imports here)
 from typing import List, Optional
+
 # IPython Specifics for Bash Magic and Display
-from IPython.display import display, HTML
+try:
+    from IPython.display import display, HTML
+except ImportError:
+    print("[WARN] IPython not found. SVG display will not work.", file=sys.stderr)
+    display, HTML = (
+        lambda x: print(f"Cannot display: {x}"),
+        lambda x: print(f"Cannot display HTML: {x}"),
+    )
 
 
 # %%
@@ -126,9 +102,8 @@ from IPython.display import display, HTML
 print("[STEP 1] Setting up paths and variables...")
 
 # Define script-specific directories using the base paths
-data_dir = data_dir_base / "3Ftx" # Specific data dir for this script
-tmp_dir = tmp_dir_base / "3ftx_alignment" # Specific tmp dir
-db_dir = out_dir  # Alignment DB expected in out/
+data_dir = data_dir_base / "3Ftx"  # Specific data dir for this script
+tmp_dir = tmp_dir_base / "3ftx_alignment"  # Specific tmp dir
 
 # Create specific temporary directory if it doesn't exist
 os.makedirs(tmp_dir, exist_ok=True)
@@ -145,7 +120,9 @@ if not data_dir.exists():
     # If we are here, it means base_dir/data/3Ftx doesn't exist
     print(f"[ERROR] Specific data directory not found: {data_dir}")
     if IN_COLAB:
-        print("      This might indicate an issue with the repository structure or download.")
+        print(
+            "      This might indicate an issue with the repository structure or download."
+        )
     raise FileNotFoundError(f"Data directory not found: {data_dir}")
 
 
@@ -183,21 +160,57 @@ print(f"  Min Probability: {min_p}")
 
 # %%
 print("\n[STEP 2] Running FlatProt Alignments...")
-# Remove if ipython check
+
+
+# Define helper locally or assume it's available from imported colab_setup
+def run_local_cmd(cmd_list, check=True):
+    # Simplified local runner if needed
+    print(f" Running local command: {' '.join(cmd_list)}")
+    return subprocess.run(cmd_list, check=check, capture_output=True, text=True)
+
+
+def run_flatprot_align(input_path, matrix_path, info_path, min_prob):
+    cmd = [
+        "uv",
+        "run",
+        "flatprot",
+        "align",
+        input_path,
+        matrix_path,
+        info_path,
+        "--min-probability",
+        str(min_prob),
+        "--quiet",
+    ]
+    print(f"  Running: {' '.join(cmd)}")
+    try:
+        # Prefer run_cmd from colab_setup if available
+        if "colab_setup" in sys.modules and hasattr(colab_setup, "run_cmd"):
+            colab_setup.run_cmd(cmd)
+        else:
+            run_local_cmd(cmd)  # Fallback
+    except subprocess.CalledProcessError as e:
+        print(
+            f"[ERROR] Alignment failed for {input_path} with code {e.returncode}",
+            file=sys.stderr,
+        )
+        if e.stderr:
+            print(f"Stderr: {e.stderr}", file=sys.stderr)
+    except Exception as e:
+        print(f"[ERROR] Alignment failed for {input_path}: {e}", file=sys.stderr)
+
+
 # Align Cobra
 print("Aligning Cobra...")
-cobra_align_cmd = f"uv run flatprot align {cobra_path} {cobra_matrix} {cobra_info}  --min-probability {min_p} --quiet"
-!{cobra_align_cmd}
+run_flatprot_align(cobra_path, cobra_matrix, cobra_info, min_p)
 
 # Align Krait
 print("Aligning Krait...")
-krait_align_cmd = f"uv run flatprot align {krait_path} {krait_matrix} {krait_info} --min-probability {min_p} --quiet"
-!{krait_align_cmd}
+run_flatprot_align(krait_path, krait_matrix, krait_info, min_p)
 
 # Align Snake
 print("Aligning Snake...")
-snake_align_cmd = f"uv run flatprot align {snake_path} {snake_matrix} {snake_info}  --min-probability {min_p} --quiet"
-!{snake_align_cmd}
+run_flatprot_align(snake_path, snake_matrix, snake_info, min_p)
 
 print("[INFO] Alignments complete. Matrices and info files generated.")
 
@@ -209,22 +222,54 @@ print("[INFO] Alignments complete. Matrices and info files generated.")
 
 # %%
 print("\n[STEP 3] Running FlatProt Projections...")
-# Remove if ipython check
-# Project Cobra
+
+
+def run_flatprot_project(input_path, output_path, matrix_path, canvas_args):
+    cmd = [
+        "uv",
+        "run",
+        "flatprot",
+        "project",
+        input_path,
+        "-o",
+        output_path,
+        "--matrix",
+        matrix_path,
+        "--quiet",
+    ]
+    # Parse canvas args like "--canvas-width 300 --canvas-height 200"
+    cmd.extend(canvas_args.split())
+    print(f"  Running: {' '.join(cmd)}")
+    try:
+        # Prefer run_cmd from colab_setup if available
+        if "colab_setup" in sys.modules and hasattr(colab_setup, "run_cmd"):
+            colab_setup.run_cmd(cmd)
+        else:
+            run_local_cmd(cmd)
+    except subprocess.CalledProcessError as e:
+        print(
+            f"[ERROR] Projection failed for {input_path} with code {e.returncode}",
+            file=sys.stderr,
+        )
+        if e.stderr:
+            print(f"Stderr: {e.stderr}", file=sys.stderr)
+    except Exception as e:
+        print(f"[ERROR] Projection failed for {input_path}: {e}", file=sys.stderr)
+
+
 canvas_args = "--canvas-width 300 --canvas-height 200"
+
+# Project Cobra
 print("Projecting Cobra...")
-cobra_project_cmd = f"uv run flatprot project {cobra_path} -o {cobra_out} --matrix {cobra_matrix} --quiet {canvas_args}"
-!{cobra_project_cmd}
+run_flatprot_project(cobra_path, cobra_out, cobra_matrix, canvas_args)
 
 # Project Krait
 print("Projecting Krait...")
-krait_project_cmd = f"uv run flatprot project {krait_path} -o {krait_out} --matrix {krait_matrix} --quiet {canvas_args}"
-!{krait_project_cmd}
+run_flatprot_project(krait_path, krait_out, krait_matrix, canvas_args)
 
 # Project Snake
 print("Projecting Snake...")
-snake_project_cmd = f"uv run flatprot project {snake_path} -o {snake_out} --matrix {snake_matrix} --quiet {canvas_args}"
-!{snake_project_cmd}
+run_flatprot_project(snake_path, snake_out, snake_matrix, canvas_args)
 
 print("[INFO] Projections complete. SVG files generated.")
 
