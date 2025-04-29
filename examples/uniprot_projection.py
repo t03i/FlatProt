@@ -185,7 +185,7 @@ display_header("Configuration", 1, "#27ae60")
 
 # --- Configuration ---
 # @markdown Enter the UniProt ID for the protein you want to project.
-UNIPROT_ID: str = "P0DTD1"  # @param {type:"string"} # Example: SARS-CoV-2 Spike protein
+UNIPROT_ID: str = "P69905"  # @param {type:"string"}
 # Examples:
 # P69905 = Human Hemoglobin subunit alpha
 # P02144 = Human Myoglobin
