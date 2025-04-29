@@ -202,7 +202,7 @@ cluster_cmd_list = [
     clustering_tmp_dir_str,
     "--min-seq-id",
     "0.5",
-    "--c",
+    "-c",
     "0.9",
     "-v",
     "0",
