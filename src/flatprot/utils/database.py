@@ -116,6 +116,9 @@ async def download_database(output_dir: Path) -> None:
                     f"Required 'alignment_db' directory not found in extracted archive at {extract_temp_path}"
                 )
 
+            # Ensure the final output directory exists right before moving files
+            output_dir.mkdir(parents=True, exist_ok=True)
+
             # Move contents from the source data directory to the final output directory
             logger.debug(f"Moving contents from {source_data_dir} to {output_dir}")
             item_count = 0

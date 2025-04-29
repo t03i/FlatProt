@@ -483,6 +483,7 @@ print(
 print("         Ensuring alignment database is available (will download if needed)...")
 try:
     # Call the utility function to get the validated/downloaded DB path
+    DEFAULT_DB_DIR.mkdir(parents=True, exist_ok=True)
     await download_database(DEFAULT_DB_DIR)
     validated_db_path = ensure_database_available()
     print(f"         Using database at: {validated_db_path.resolve()}")
