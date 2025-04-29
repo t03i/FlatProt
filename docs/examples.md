@@ -37,3 +37,9 @@ This example script demonstrates how to align KLK (Kallikrein) structures and ov
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/t03i/FlatProt/blob/notebooks/examples/runtime.ipynb)
 
 Runtime measurement script for FlatProt alignment and projection on human proteome. This script measures the runtime of FlatProt's structural alignment and projection functionality on AlphaFold predicted structures from the human proteome.
+
+## `uniprot_projection.py`
+
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/t03i/FlatProt/blob/notebooks/examples/uniprot_projection.ipynb)
+
+This notebook demonstrates how to fetch a protein structure from the AlphaFold Database (AFDB) using a UniProt ID, run DSSP to determine secondary structure, and then generate a 2D projection using FlatProt.

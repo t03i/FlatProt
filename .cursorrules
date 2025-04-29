@@ -43,3 +43,4 @@ When working with Cyclopts, be aware that it is fundamentally different to typer
 All python files in examples/ should be valid python code for ruff linting but are intended to be converted to jupyter notebooks using jupytex. A good example is the klk_overlay.py or 3ftx_alignment.py files.
 
 When creating PR requests, structure using semantic commits and output the text with markdown formatting characters.
+All python files in examples/ will be converted to jupyter notebooks using jupytex. They are intended to be used as examples on how to use the tool and library. They are targeted to be run in Google Colab. They are automatically converted to notebooks in a github action.

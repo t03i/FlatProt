@@ -86,6 +86,12 @@ This notebook demonstrates how to: Compute cystine (disulfide) bridges from a pr
 
 This example script demonstrates how to align KLK (Kallikrein) structures and overlay their FlatProt projections.
 
+### UniProt ID Projection Example
+
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/t03i/FlatProt/blob/notebooks/examples/uniprot_projection.ipynb)
+
+This notebook demonstrates how to fetch a protein structure from the AlphaFold Database (AFDB) using a UniProt ID, run DSSP, and generate a FlatProt projection.
+
 ## Documentation
 
 FlatProt's documentation can found here:
