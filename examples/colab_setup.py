@@ -6,12 +6,17 @@ from pathlib import Path
 
 
 # Define run_cmd at the module level so it can be imported
-def run_cmd(cmd_list, check=True, capture=False, env=None):
+def run_cmd(cmd_list, check=True, capture=False, env=None, shell=False):
     """Helper function to run subprocess commands and print status."""
-    print(f" $ {' '.join(cmd_list)}")  # Simulate shell command print
+    print(f" $ {cmd_list if isinstance(cmd_list, str) else ' '.join(cmd_list)}")
     try:
         result = subprocess.run(
-            cmd_list, check=check, capture_output=capture, text=True, env=env
+            cmd_list,
+            check=check,
+            capture_output=capture,
+            text=True,
+            env=env,
+            shell=shell,
         )
         # If capturing output, print some of it
         if capture and result.stdout:
@@ -111,8 +116,8 @@ def setup_colab_environment():
         # Set DEBIAN_FRONTEND via env for subprocess to avoid prompts
         dssp_env = os.environ.copy()
         dssp_env["DEBIAN_FRONTEND"] = "noninteractive"
-        # Use yes command to pipe 'y' answers to apt-get
-        run_cmd(["sudo", "apt-get", "install", "-y", "dssp"], env=dssp_env)
+        # Pipe 'yes' to handle potential prompts
+        run_cmd(["yes | sudo apt-get install -y dssp"], shell=True, env=dssp_env)
     else:
         print("DSSP (mkdssp) command already found in PATH.")
     print("Verifying DSSP installation by checking version...")
