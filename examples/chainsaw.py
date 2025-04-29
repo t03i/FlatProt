@@ -133,7 +133,11 @@ from flatprot.utils.domain_utils import (
 )
 
 # Import the database utility
-from flatprot.utils.database import ensure_database_available
+from flatprot.utils.database import (
+    ensure_database_available,
+    download_database,
+    DEFAULT_DB_DIR,
+)
 from flatprot.utils.scene_utils import (
     create_scene_from_structure,
 )
@@ -479,6 +483,7 @@ print(
 print("         Ensuring alignment database is available (will download if needed)...")
 try:
     # Call the utility function to get the validated/downloaded DB path
+    await download_database(DEFAULT_DB_DIR)
     validated_db_path = ensure_database_available()
     print(f"         Using database at: {validated_db_path.resolve()}")
 except RuntimeError as e:
