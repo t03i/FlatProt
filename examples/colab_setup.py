@@ -113,11 +113,11 @@ def setup_colab_environment():
         print("Updating apt package list (this may take a moment)...")
         run_cmd(["sudo", "apt-get", "update", "-qq"])
         print("Installing DSSP package...")
-        # Set DEBIAN_FRONTEND via env for subprocess to avoid prompts
-        dssp_env = os.environ.copy()
-        dssp_env["DEBIAN_FRONTEND"] = "noninteractive"
-        # Pipe 'yes' to handle potential prompts
-        run_cmd(["yes | sudo apt-get install -y dssp"], shell=True, env=dssp_env)
+        # Use the command that worked directly in the shell
+        run_cmd(
+            "sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -qq dssp",
+            shell=True,
+        )
     else:
         print("DSSP (mkdssp) command already found in PATH.")
     print("Verifying DSSP installation by checking version...")
