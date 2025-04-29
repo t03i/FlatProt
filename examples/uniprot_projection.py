@@ -21,16 +21,32 @@
 # </div>
 
 # %% [markdown]
-# <div style="background-color: #e8f4f8; padding: 15px; border-radius: 10px; border-left: 5px solid #2980b9; margin-bottom: 20px;">
-# <h2 style="color: #2c3e50; margin-top: 0;">Environment Setup for Google Colab</h2>
-# <p>The following cell checks if the notebook is running in Google Colab
-# and runs the shared setup script (<code>colab_setup.py</code>) to install
-# dependencies (including FlatProt and DSSP) and download necessary data.</p>
+# <div style="background-color: #e9f7ef; padding: 15px; border-radius: 10px; border-left: 5px solid #27ae60; margin-bottom: 20px;">
+# <h2 style="color: #2c3e50; margin-top: 0;">Configuration</h2>
+# <p>Enter the UniProt ID for the protein of interest in the box below. This will be used for the entire analysis.</p>
 # </div>
 
 # %%
-# %%capture
-# @title Environment Setup (Colab)
+# @title 📋 Enter UniProt ID {display-mode: "form"}
+# Enter the UniProt ID for the protein you want to project
+UNIPROT_ID = "P69905"  # @param {type:"string"}
+
+# Display some common examples as a guide
+print(f"Using UniProt ID: {UNIPROT_ID}")
+print("\nCommon examples:")
+print("• P69905 - Human Hemoglobin subunit alpha")
+print("• P02144 - Human Myoglobin")
+print("• P0DTD1 - SARS-CoV-2 Nsp3 protein")
+
+# %% [markdown]
+# <div style="background-color: #e8f4f8; padding: 15px; border-radius: 10px; border-left: 5px solid #2980b9; margin-bottom: 20px;">
+# <h2 style="color: #2c3e50; margin-top: 0;">Environment Setup for Google Colab</h2>
+# <p>The following cell sets up the required dependencies for this notebook.</p>
+# </div>
+
+# %%
+# @title 🔧 Environment Setup {display-mode: "form"}
+# @hidden
 import sys
 import subprocess
 from pathlib import Path
@@ -63,7 +79,6 @@ if IN_COLAB:
         print("Running colab_setup.setup_colab_environment()...")
         colab_setup.setup_colab_environment()
         print("Colab setup script finished.")
-        # Note: colab_setup should handle DSSP installation (e.g., sudo apt-get install dssp)
     else:
         raise RuntimeError(
             f"Setup script {setup_script_local_path} not found after download."
@@ -73,11 +88,13 @@ if IN_COLAB:
 base_dir = Path(".")
 
 # --- Path Definitions ---
-print(f"[INFO] Using base directory: {base_dir.resolve()}")
+print(f"Setting up directories...")
 tmp_dir_base = base_dir / "tmp"
 tmp_dir_base.mkdir(parents=True, exist_ok=True)  # Ensure base tmp exists
 
 # %%
+# @title 🧰 Helper Functions {display-mode: "form"}
+# @hidden
 # Essential Imports
 try:
     from IPython.display import display, HTML, clear_output
@@ -171,26 +188,10 @@ def show_progress(percent: float, width: int = 60) -> None:
     display(HTML(bar))
 
 
-# %% [markdown]
-# <div style="background-color: #f2f9f4; padding: 15px; border-radius: 10px; border-left: 5px solid #27ae60; margin-bottom: 20px;">
-# <h2 style="color: #2c3e50; margin-top: 0;">Step 1: Configuration</h2>
-# <p>Define the UniProt ID for the protein of interest using the text box below.
-# The script will then set up the directory structure for temporary files
-# (downloaded structure, DSSP output, SVG).</p>
-# </div>
-
 # %%
-# @title Step 1: Configure UniProt ID and Paths
+# @title 📝 Configure Paths {display-mode: "form"}
+# @hidden
 display_header("Configuration", 1, "#27ae60")
-
-# --- Configuration ---
-# @markdown Enter the UniProt ID for the protein you want to project.
-UNIPROT_ID: str = "P69905"  # @param {type:"string"}
-# Examples:
-# P69905 = Human Hemoglobin subunit alpha
-# P02144 = Human Myoglobin
-
-status_message(f"Using UniProt ID: {UNIPROT_ID}", "info")
 
 # Define script-specific directories using the base paths
 tmp_dir = tmp_dir_base / f"uniprot_{UNIPROT_ID}_projection"
@@ -225,12 +226,14 @@ status_message("Configuration complete!", "success")
 
 # %% [markdown]
 # <div style="background-color: #f9f4f8; padding: 15px; border-radius: 10px; border-left: 5px solid #8e44ad; margin-bottom: 20px;">
-# <h2 style="color: #2c3e50; margin-top: 0;">Step 2: Download Structure from AlphaFold DB</h2>
-# <p>Fetch the predicted protein structure in CIF format from the AlphaFold Database.</p>
+# <h2 style="color: #2c3e50; margin-top: 0;">Step 1: Download Structure from AlphaFold DB</h2>
+# <p>Fetching the predicted protein structure in CIF format from the AlphaFold Database.</p>
 # </div>
 
 # %%
-display_header("Downloading Structure from AlphaFold DB", 2, "#8e44ad")
+# @title 📥 Download AlphaFold Structure {display-mode: "form"}
+# @hidden
+display_header("Downloading Structure from AlphaFold DB", 1, "#8e44ad")
 
 
 def download_file(url: str, output_path: Path) -> bool:
@@ -250,7 +253,7 @@ def download_file(url: str, output_path: Path) -> bool:
         # Show a progress animation during download
         for i in range(5):
             clear_output(wait=True)
-            display_header("Downloading Structure from AlphaFold DB", 2, "#8e44ad")
+            display_header("Downloading Structure from AlphaFold DB", 1, "#8e44ad")
             status_message(f"Downloading from: {url}", "working")
             show_progress(i * 20)
             if i < 4:  # Skip sleep on last iteration
@@ -262,14 +265,14 @@ def download_file(url: str, output_path: Path) -> bool:
 
         # Final progress
         clear_output(wait=True)
-        display_header("Downloading Structure from AlphaFold DB", 2, "#8e44ad")
+        display_header("Downloading Structure from AlphaFold DB", 1, "#8e44ad")
         status_message(f"Downloading from: {url}", "info")
         show_progress(100)
         status_message(f"Successfully downloaded to: {output_path}", "success")
         return True
     except subprocess.CalledProcessError as e:
         clear_output(wait=True)
-        display_header("Downloading Structure from AlphaFold DB", 2, "#8e44ad")
+        display_header("Downloading Structure from AlphaFold DB", 1, "#8e44ad")
         status_message(f"Failed to download {url}. Error code: {e.returncode}", "error")
         if e.stderr:
             error_html = f"""
@@ -286,7 +289,7 @@ def download_file(url: str, output_path: Path) -> bool:
         return False
     except Exception as e:
         clear_output(wait=True)
-        display_header("Downloading Structure from AlphaFold DB", 2, "#8e44ad")
+        display_header("Downloading Structure from AlphaFold DB", 1, "#8e44ad")
         status_message(f"An unexpected error occurred during download: {e}", "error")
         output_path.unlink(missing_ok=True)
         return False
@@ -311,16 +314,14 @@ else:
 
 # %% [markdown]
 # <div style="background-color: #fff7e6; padding: 15px; border-radius: 10px; border-left: 5px solid #f39c12; margin-bottom: 20px;">
-# <h2 style="color: #2c3e50; margin-top: 0;">Step 3: Run DSSP</h2>
-# <p>Execute the <code>mkdssp</code> command to calculate secondary structure information
-# from the downloaded CIF file. The output is saved to a <code>.dssp</code> file.</p>
-# <p><b>Note:</b> <code>mkdssp</code> reads the input structure file (CIF) and generates a separate
-# output file (<code>.dssp</code>) containing the secondary structure information.
-# It does not modify the original CIF file. FlatProt then uses both files.</p>
+# <h2 style="color: #2c3e50; margin-top: 0;">Step 2: Run DSSP</h2>
+# <p>Calculating secondary structure information from the downloaded CIF file using the <code>mkdssp</code> tool.</p>
 # </div>
 
 # %%
-display_header("Running DSSP", 3, "#f39c12")
+# @title 🧬 Run DSSP Analysis {display-mode: "form"}
+# @hidden
+display_header("Running DSSP", 2, "#f39c12")
 
 
 def run_mkdssp(input_cif: Path, output_dssp: Path) -> bool:
@@ -422,14 +423,14 @@ if not dssp_successful:
 
 # %% [markdown]
 # <div style="background-color: #e8f6f3; padding: 15px; border-radius: 10px; border-left: 5px solid #16a085; margin-bottom: 20px;">
-# <h2 style="color: #2c3e50; margin-top: 0;">Step 4: Run FlatProt Projection</h2>
-# <p>Generate the 2D projection using <code>flatprot project</code>. We provide the input
-# structure file and, if DSSP ran successfully, the path to the DSSP output file
-# using the <code>--dssp</code> flag.</p>
+# <h2 style="color: #2c3e50; margin-top: 0;">Step 3: Run FlatProt Projection</h2>
+# <p>Generating the 2D projection of the protein structure using <code>flatprot project</code>.</p>
 # </div>
 
 # %%
-display_header("Running FlatProt Projection", 4, "#16a085")
+# @title 🎨 Generate FlatProt Projection {display-mode: "form"}
+# @hidden
+display_header("Running FlatProt Projection", 3, "#16a085")
 
 
 def run_flatprot_project(
@@ -540,12 +541,14 @@ if not projection_successful:
 
 # %% [markdown]
 # <div style="background-color: #eaf2f8; padding: 15px; border-radius: 10px; border-left: 5px solid #3498db; margin-bottom: 20px;">
-# <h2 style="color: #2c3e50; margin-top: 0;">Step 5: Display Result</h2>
-# <p>Load and display the generated SVG file in the notebook output.</p>
+# <h2 style="color: #2c3e50; margin-top: 0;">Results: 2D Protein Structure Visualization</h2>
+# <p>Displaying the generated 2D projection of the protein structure.</p>
 # </div>
 
 # %%
-display_header("Displaying Generated SVG", 5, "#3498db")
+# @title 🖼️ Display Results {display-mode: "form"}
+# @hidden
+display_header("Displaying Generated SVG", 4, "#3498db")
 
 
 def display_svg_files(
@@ -674,8 +677,8 @@ else:
 # Add a completion banner
 completion_html = """
 <div style="margin-top: 30px; padding: 15px; background-color: #e8f5e9; border-radius: 10px; text-align: center; border: 1px solid #81c784;">
-    <h2 style="color: #2e7d32; margin-top: 0;">✅ Notebook Execution Complete</h2>
-    <p style="color: #2c3e50;">All steps have been executed successfully.</p>
+    <h2 style="color: #2e7d32; margin-top: 0;">✅ Analysis Complete</h2>
+    <p style="color: #2c3e50;">Your protein structure has been successfully processed and visualized.</p>
 </div>
 """
 display(HTML(completion_html))

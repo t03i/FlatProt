@@ -56,6 +56,12 @@ _An example download workflow for usage can also be found in the google colab_
 For direct usage of FlatProt including all parameters the following Collabs provide functionalities for using FlatProt without locally downloading anything.
 The runtime of the Colab is way longer than local usage. Therefore we don't advise using it for big amounts of data:
 
+### UniProt ID Projection Example
+
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/t03i/FlatProt/blob/notebooks/examples/uniprot_projection.ipynb)
+
+This notebook demonstrates how to fetch a protein structure from the AlphaFold Database (AFDB) using a UniProt ID, run DSSP, and generate a FlatProt projection.
+
 ### Annotation and Style Example
 
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/t03i/FlatProt/blob/notebooks/examples/annotations.ipynb)
@@ -85,12 +91,6 @@ This notebook demonstrates how to: Compute cystine (disulfide) bridges from a pr
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/t03i/FlatProt/blob/notebooks/examples/klk_overlay.ipynb)
 
 This example script demonstrates how to align KLK (Kallikrein) structures and overlay their FlatProt projections.
-
-### UniProt ID Projection Example
-
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/t03i/FlatProt/blob/notebooks/examples/uniprot_projection.ipynb)
-
-This notebook demonstrates how to fetch a protein structure from the AlphaFold Database (AFDB) using a UniProt ID, run DSSP, and generate a FlatProt projection.
 
 ## Documentation
 
