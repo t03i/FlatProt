@@ -56,9 +56,7 @@ def setup_colab_environment():
 
     # --- 1. Install FlatProt ---
     print("\n[1/4] Installing FlatProt via pip...")
-    run_cmd(
-        [sys.executable, "-m", "pip", "install", "--quiet", "--upgrade", "flatprot"]
-    )
+    run_cmd(["uv", "tool", "install", "flatprot"])
     # Verify installation (optional, but good practice)
     # run_cmd([sys.executable, "-m", "pip", "show", "flatprot"])
     print("[DONE] FlatProt installation step.")
