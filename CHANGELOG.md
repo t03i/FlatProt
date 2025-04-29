@@ -1,6 +1,84 @@
 # CHANGELOG
 
 
+## v2.0.6 (2025-04-29)
+
+### Bug Fixes
+
+- Make database more robust for jupyter notebook
+  ([`804a8ff`](https://github.com/t03i/FlatProt/commit/804a8ffcd0d890458fff93639d36db96b28dddbf))
+
+### Chores
+
+- Add UniProt projection example tailed for Colab experience
+  ([#12](https://github.com/t03i/FlatProt/pull/12),
+  [`e287d01`](https://github.com/t03i/FlatProt/commit/e287d0167f13a1855868d1489c5e5dc717ea5e14))
+
+## Summary This PR significantly improves the aesthetics and user experience of the
+  uniprot_projection.py example when viewed as a Google Colab notebook. The changes focus on visual
+  enhancements and interactive elements while maintaining the same functionality. ## Changes - Added
+  styled section headers with custom backgrounds and borders - Implemented interactive progress bars
+  for processing steps - Added color-coded status messages with appropriate icons (✅, ⚠️, ℹ️, ❌) -
+  Improved error and warning displays with formatted message boxes - Enhanced SVG display with
+  additional protein information card - Added visual feedback during long-running operations -
+  Improved configuration display with formatted tables - Added completion banner at the end of
+  execution - Added professional footer with attribution - Fixed cell structure for proper Colab
+  execution
+
+## Motivation The notebook acts as a demonstration tool for FlatProt functionality. These visual
+  enhancements make it more professional-looking and easier to follow for users exploring the tool
+  through Colab. The interactive elements also provide better feedback during execution.
+
+## Testing Tested in Google Colab environment to ensure all visual enhancements render correctly and
+  all functionality remains intact.
+
+- Fix foldseek command test
+  ([`b88a168`](https://github.com/t03i/FlatProt/commit/b88a168ce29e4604a7e4dc2d0af89de4a1d84c9b))
+
+### Documentation
+
+- Add better workflow description
+  ([`8dc7a0a`](https://github.com/t03i/FlatProt/commit/8dc7a0a54cfd7194075185729f092a358ef02cfc))
+
+- Add PR rule to cursorrules
+  ([`0457605`](https://github.com/t03i/FlatProt/commit/04576056e395d4454d5f261c0f50b1d9e1517441))
+
+### Refactoring
+
+- Add forced yes and update UniprotID
+  ([`b5ae58d`](https://github.com/t03i/FlatProt/commit/b5ae58d12ba07d1fc420176161ade8ae6c6b7bef))
+
+- Add library install as well
+  ([`c246b8b`](https://github.com/t03i/FlatProt/commit/c246b8b4fdbc8702618154ba07f87b3d1eed9d15))
+
+- Change to atomic command
+  ([`5731223`](https://github.com/t03i/FlatProt/commit/5731223e836c3ac7a30aeba02d5ef855f74c5002))
+
+- Fix syntax issue
+  ([`d765ea3`](https://github.com/t03i/FlatProt/commit/d765ea3aaa631de7c3f55b6a58bab10b44cfdb2e))
+
+- Improve notebook style
+  ([`395975c`](https://github.com/t03i/FlatProt/commit/395975cefb1c336e6878ac40d8a585553d20a27b))
+
+- Pipe yes
+  ([`db5a8ce`](https://github.com/t03i/FlatProt/commit/db5a8ce0c4ae0bc7bc5a055bf926df614629fc13))
+
+- Remove -qq issue
+  ([`1385248`](https://github.com/t03i/FlatProt/commit/138524882feaea90645bdb2b181bacb8d1e6db38))
+
+- Remove potentially problematic quiet
+  ([`e730e9c`](https://github.com/t03i/FlatProt/commit/e730e9c116366f1937f20e90e810dab1aacf78c8))
+
+- Revert to debian non-interactive
+  ([`73c0057`](https://github.com/t03i/FlatProt/commit/73c0057d07f63a24c59f5ec9c00915225ece4242))
+
+- Shell dssp
+  ([`7019339`](https://github.com/t03i/FlatProt/commit/701933900ccd8de4672d2f631e4cec29224cb293))
+
+- Switch to uv install
+  ([`3a3f6cf`](https://github.com/t03i/FlatProt/commit/3a3f6cfed362585f11b18487b3ec2e69002f0979))
+
+
 ## v2.0.5 (2025-04-28)
 
 ### Bug Fixes
