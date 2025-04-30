@@ -34,12 +34,14 @@ build-backend = "hatchling.build"
 
 [dependency-groups]
 dev = [
-    "jupyterlab>=4.3.2",
+    "jupyterlab>=4.4.1",
     "mkdocs>=1.6.1",
     "pytest-mock>=3.14.0",
     "pytest>=8.3.4",
     "jupytext>=1.17.0",
     "mkdocstrings[python]>=0.29.1",
+    "matplotlib>=3.10.1",
+    "ipywidgets>=8.1.6",
 ]
 db-builder = ["httpx-retries>=0.3.0", "snakemake>=9.0.1"]
 
