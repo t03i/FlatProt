@@ -1,6 +1,30 @@
 # CHANGELOG
 
 
+## v2.1.0 (2025-04-30)
+
+### Chores
+
+- Add runtime analysis
+  ([`1847ea2`](https://github.com/t03i/FlatProt/commit/1847ea2bd30c2ca5411113add08cc01f29207417))
+
+### Features
+
+- Add runtime comparison script
+  ([`36775ed`](https://github.com/t03i/FlatProt/commit/36775ed4ca1aa08ee1c706b13233fd6dfd4291fa))
+
+### Refactoring
+
+- Ensure database path exists
+  ([`283ecb0`](https://github.com/t03i/FlatProt/commit/283ecb05f87733ac5f9fc1384fcbd383d1f767a1))
+
+- Fix parameter
+  ([`35c2621`](https://github.com/t03i/FlatProt/commit/35c2621c973cb3162505966d64bf80abeee0b458))
+
+- Remove threads
+  ([`c42db6d`](https://github.com/t03i/FlatProt/commit/c42db6d823e62e1bdb3af4d4bf0774e48b7e7562))
+
+
 ## v2.0.6 (2025-04-29)
 
 ### Bug Fixes
@@ -59,6 +83,9 @@
 
 - Improve notebook style
   ([`395975c`](https://github.com/t03i/FlatProt/commit/395975cefb1c336e6878ac40d8a585553d20a27b))
+
+- Make download jupyter compatible
+  ([`be416af`](https://github.com/t03i/FlatProt/commit/be416afc7ed9d0761ef2530bb9b3cc37a047059a))
 
 - Pipe yes
   ([`db5a8ce`](https://github.com/t03i/FlatProt/commit/db5a8ce0c4ae0bc7bc5a055bf926df614629fc13))
