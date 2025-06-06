@@ -8,6 +8,7 @@ FlatProt is a Python package for creating simplified 2D protein visualizations, 
 
 - `flatprot project` - Creates 2D SVG projections from protein structures
 - `flatprot align` - Aligns protein structures using rotation
+- `flatprot overlay` - Creates overlay visualizations from multiple protein structures
 
 ## Development Commands
 
@@ -37,6 +38,7 @@ FlatProt is a Python package for creating simplified 2D protein visualizations, 
 - `main.py` - Main CLI app using cyclopts framework
 - `project.py` - Implements `flatprot project` command for structure projection
 - `align.py` - Implements `flatprot align` command for structure alignment
+- `overlay.py` - Implements `flatprot overlay` command for multi-structure overlays
 
 **Core Layer** (`src/flatprot/core/`):
 - `structure.py` - Core protein structure representation
@@ -74,6 +76,11 @@ FlatProt is a Python package for creating simplified 2D protein visualizations, 
 - `foldseek.py` - Foldseek integration for structure alignment
 - `db.py` - Database operations for alignment
 
+**Utilities** (`src/flatprot/utils/`):
+- `overlay_utils.py` - Multi-structure overlay creation and clustering utilities
+- `structure_utils.py` - Structure transformation and projection utilities
+- `scene_utils.py` - Scene creation and annotation utilities
+
 ### Data Flow
 
 1. **Input Processing**: Structure files (PDB/CIF) are parsed via GEMMI adapter
@@ -102,7 +109,7 @@ FlatProt is a Python package for creating simplified 2D protein visualizations, 
 - **Input**: PDB, CIF structure files (require headers for predicted structures)
 - **Annotations**: TOML format for custom annotations
 - **Styles**: TOML format for visualization styling
-- **Output**: SVG format for 2D visualizations
+- **Output**: SVG, PNG, PDF formats for 2D visualizations (PNG/PDF require Cairo)
 
 ### Testing Structure
 
@@ -111,6 +118,8 @@ Tests are organized by component:
 - `tests/io/` - I/O operation tests
 - `tests/scene/` - Scene system tests
 - `tests/integration/` - End-to-end workflow tests
+- `tests/utils/` - Utility function tests
+- `tests/cli/` - CLI command tests
 
 ## CLI Commands Reference
 
@@ -161,6 +170,40 @@ flatprot align protein.pdb
 flatprot align protein.cif -m rotation.npy -i info.json --min-probability 0.7
 ```
 
+### flatprot overlay
+Creates overlay visualizations from multiple protein structures with opacity scaling based on clustering.
+
+**Usage**: `flatprot overlay FILE_PATTERNS [OPTIONS]`
+
+**Key Options**:
+- `--output/-o` - Output file path (default: overlay.png)
+- `--family` - SCOP family ID for fixed family alignment (e.g., "3000114")
+- `--alignment-mode` - Alignment strategy: `family-identity` (default) or `inertia`
+- `--style` - Custom style file (TOML format)
+- `--canvas-width/--canvas-height` - Canvas dimensions (default 1000x1000)
+- `--min-probability` - Alignment probability threshold (default 0.5)
+- `--dpi` - DPI for raster output formats (default 300)
+- `--no-clustering` - Disable automatic structure clustering
+
+**Output Formats**:
+- SVG (no Cairo required)
+- PNG/PDF (requires Cairo: `brew install cairo` on macOS)
+
+**Examples**:
+```bash
+# Basic overlay from glob pattern
+flatprot overlay "structures/*.cif" -o overlay.png
+
+# Multiple file patterns
+flatprot overlay file1.cif file2.cif folder/*.cif -o overlay.pdf
+
+# With family alignment and custom settings
+flatprot overlay "data/*.cif" --family 3000114 --dpi 600 -o high_res.png
+
+# Inertia-based alignment without clustering
+flatprot overlay "*.cif" --alignment-mode inertia --no-clustering -o simple.svg
+```
+
 ## File Formats
 
 ### Structure Files
@@ -205,6 +248,11 @@ Define highlighting features:
 1. Create style file defining colors, dimensions
 2. Create annotation file highlighting features
 3. Apply both: `flatprot project structure.cif --style custom.toml --annotations features.toml -o styled.svg`
+
+### Multi-Structure Overlay
+1. Collect related structures: `ls structures/*.cif`
+2. Create overlay: `flatprot overlay "structures/*.cif" -o overlay.png`
+3. Optional: Add family alignment: `flatprot overlay "*.cif" --family 3000114 -o aligned_overlay.pdf`
 
 ## Visualization Types
 - **Normal**: Standard detailed secondary structure representation
@@ -290,23 +338,34 @@ Structure Files → Feature Computation (GEMMI) → Annotation Generation → Al
 
 **Pattern**: Automated feature detection and visualization
 
-### 5. Clustering and Overlay (`klk_overlay.py`)
-**Use Case**: Create overlay visualizations of similar structures
+### 5. Multi-Structure Overlay (Built-in `flatprot overlay`)
+**Use Case**: Create overlay visualizations of multiple structures with automatic clustering
 
 **Data Flow**:
 ```
-Structure Archive → Clustering → Representative Selection → Alignment → Projection → SVG Overlay
+Multiple Structure Files → Clustering → Alignment → Individual Projections → Combined Overlay
 ```
 
 **Key Steps**:
-1. Extract structures from ZIP archive
-2. Cluster similar structures using `foldseek easy-cluster`
-3. Select representatives from clusters with multiple members
-4. Align to specific SCOP family: `flatprot align --target-db-id 3000114`
-5. Generate individual projections with custom styles
-6. Combine SVGs into overlay with opacity based on cluster size
+1. Provide multiple structure files via glob patterns: `flatprot overlay "structures/*.cif"`
+2. Automatic clustering using Foldseek (optional, can disable with `--no-clustering`)
+3. Align structures using family-identity or inertia modes
+4. Generate individual projections with opacity scaling based on cluster size
+5. Combine into single overlay image (PNG/PDF/SVG)
 
-**Pattern**: Clustering-based analysis with overlay visualization
+**Examples**:
+```bash
+# Basic overlay
+flatprot overlay "*.cif" -o overlay.png
+
+# Family-aligned overlay
+flatprot overlay "structures/*.cif" --family 3000114 -o family_overlay.pdf
+
+# High-resolution inertia-based overlay
+flatprot overlay file1.cif file2.cif file3.cif --alignment-mode inertia --dpi 600 -o overlay.png
+```
+
+**Pattern**: Built-in clustering and overlay visualization with configurable alignment strategies
 
 ### 6. External Database Integration (`uniprot_projection.py`)
 **Use Case**: Fetch structures from external databases and visualize
@@ -350,3 +409,4 @@ UniProt ID → AlphaFold Database → Structure Download → DSSP Analysis → P
 3. **Comparative Analysis**: Alignment-based processing for consistent orientations
 4. **Domain-Aware**: Multi-level processing with domain-specific operations
 5. **Clustering**: Similarity-based grouping and representative selection
+6. **Multi-Structure Overlay**: Automated clustering, alignment, and opacity-scaled combination

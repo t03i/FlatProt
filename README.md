@@ -40,6 +40,31 @@ Instructions for downloading dssp can be found here:
 
 _An example download workflow for usage can also be found in the google colab_
 
+### Install Cairo (Optional - Required for Overlay Command PNG/PDF Output)
+
+For PNG and PDF output from the `flatprot overlay` command, the Cairo graphics library is required:
+
+**macOS:**
+```bash
+brew install cairo
+```
+
+**Ubuntu/Debian:**
+```bash
+sudo apt-get install libcairo2-dev pkg-config
+```
+
+**Windows:**
+Install Cairo binaries or use conda:
+```bash
+conda install cairo
+```
+
+**Verification:**
+```bash
+python -c "import drawsvg; print('Cairo available:', hasattr(drawsvg, '_cairo_available') and drawsvg._cairo_available)"
+```
+
 ## First experiences with Google Colab
 
 For direct usage of FlatProt including all parameters the following Collabs provide functionalities for using FlatProt without locally downloading anything.
