@@ -9,6 +9,7 @@ FlatProt is a Python package for creating simplified 2D protein visualizations, 
 - `flatprot project` - Creates 2D SVG projections from protein structures
 - `flatprot align` - Aligns protein structures using rotation
 - `flatprot overlay` - Creates overlay visualizations from multiple protein structures
+- `flatprot split` - Extracts and aligns structural regions for comparative visualization
 
 ## Development Commands
 
@@ -39,6 +40,7 @@ FlatProt is a Python package for creating simplified 2D protein visualizations, 
 - `project.py` - Implements `flatprot project` command for structure projection
 - `align.py` - Implements `flatprot align` command for structure alignment
 - `overlay.py` - Implements `flatprot overlay` command for multi-structure overlays
+- `split.py` - Implements `flatprot split` command for region-based visualization
 
 **Core Layer** (`src/flatprot/core/`):
 - `structure.py` - Core protein structure representation
@@ -80,6 +82,7 @@ FlatProt is a Python package for creating simplified 2D protein visualizations, 
 - `overlay_utils.py` - Multi-structure overlay creation and clustering utilities
 - `structure_utils.py` - Structure transformation and projection utilities
 - `scene_utils.py` - Scene creation and annotation utilities
+- `domain_utils.py` - Domain/region extraction, transformation, and scene creation utilities
 
 ### Data Flow
 
@@ -204,6 +207,41 @@ flatprot overlay "data/*.cif" --family 3000114 --dpi 600 -o high_res.png
 flatprot overlay "*.cif" --alignment-mode inertia --no-clustering -o simple.svg
 ```
 
+### flatprot split
+Extracts specified structural regions, aligns them using Foldseek, and creates a combined SVG visualization with regions arranged spatially.
+
+**Usage**: `flatprot split STRUCTURE_FILE --regions "REGIONS" [OPTIONS]`
+
+**Key Options**:
+- `--regions/-r` - Comma-separated residue regions (e.g., "A:1-100,A:150-250,B:1-80")
+- `--output/-o` - Output SVG file path (default: split_output.svg)
+- `--alignment-mode` - Alignment strategy: `family-identity` (default) or `inertia`
+- `--layout` - Layout arrangement: `horizontal` (default), `vertical`, or `grid`
+- `--spacing` - Spacing between regions in pixels (default: 100)
+- `--style` - Custom style file (TOML format)
+- `--min-probability` - Minimum alignment probability threshold (default: 0.5)
+- `--canvas-width/--canvas-height` - Canvas dimensions (default: 1000x1000)
+- `--foldseek/-f` - Foldseek executable path
+- `--dssp` - DSSP file for PDB input (required for PDB files)
+
+**Examples**:
+```bash
+# Basic region splitting
+flatprot split protein.cif --regions "A:1-100,A:150-250" -o regions.svg
+
+# Multiple chains with custom layout
+flatprot split structure.cif --regions "A:1-100,B:50-150,A:200-300" --layout vertical --spacing 150 -o split.svg
+
+# PDB input with DSSP
+flatprot split protein.pdb --regions "A:1-100,A:150-200" --dssp protein.dssp -o output.svg
+
+# Inertia-based alignment with grid layout
+flatprot split structure.cif --regions "A:1-80,A:100-180,A:200-280" --alignment-mode inertia --layout grid -o grid.svg
+
+# Custom styling and alignment parameters
+flatprot split protein.cif --regions "A:10-110,A:130-230" --style custom.toml --min-probability 0.7 -o styled.svg
+```
+
 ## File Formats
 
 ### Structure Files
@@ -253,6 +291,11 @@ Define highlighting features:
 1. Collect related structures: `ls structures/*.cif`
 2. Create overlay: `flatprot overlay "structures/*.cif" -o overlay.png`
 3. Optional: Add family alignment: `flatprot overlay "*.cif" --family 3000114 -o aligned_overlay.pdf`
+
+### Region-Based Analysis
+1. Identify structural regions of interest (domains, motifs, etc.)
+2. Extract and align regions: `flatprot split protein.cif --regions "A:1-100,A:150-250" -o regions.svg`
+3. Optional: Compare with different layouts: `flatprot split protein.cif --regions "A:1-100,A:150-250" --layout vertical -o vertical.svg`
 
 ## Visualization Types
 - **Normal**: Standard detailed secondary structure representation
@@ -382,6 +425,36 @@ UniProt ID → AlphaFold Database → Structure Download → DSSP Analysis → P
 
 **Pattern**: External data integration and processing pipeline
 
+### 7. Region-Based Structural Analysis (Built-in `flatprot split`)
+**Use Case**: Extract and analyze specific structural regions (domains, motifs, binding sites) with alignment-based comparative visualization
+
+**Data Flow**:
+```
+Structure File + Region Specifications → Region Extraction → Individual Alignment → Scene Assembly → Combined Visualization
+```
+
+**Key Steps**:
+1. Define regions of interest using residue ranges: `"A:1-100,A:150-250,B:1-80"`
+2. Extract regions to temporary CIF files using GEMMI
+3. Align each region individually using Foldseek database search
+4. Apply transformations based on alignment mode (family-identity or inertia)
+5. Create combined scene with spatial layout (horizontal, vertical, or grid)
+6. Render final SVG with aligned regions
+
+**Examples**:
+```bash
+# Basic domain analysis
+flatprot split protein.cif --regions "A:1-100,A:150-250" -o domains.svg
+
+# Multi-chain motif comparison
+flatprot split structure.cif --regions "A:10-50,B:20-60,C:30-70" --layout grid -o motifs.svg
+
+# Family-aligned regions with custom spacing
+flatprot split protein.cif --regions "A:1-80,A:100-180,A:200-280" --alignment-mode family-identity --spacing 150 -o aligned.svg
+```
+
+**Pattern**: Region-specific extraction and alignment with flexible layout options for comparative analysis
+
 ## Core Data Flow Architecture
 
 ### Primary Data Transformations
@@ -410,3 +483,4 @@ UniProt ID → AlphaFold Database → Structure Download → DSSP Analysis → P
 4. **Domain-Aware**: Multi-level processing with domain-specific operations
 5. **Clustering**: Similarity-based grouping and representative selection
 6. **Multi-Structure Overlay**: Automated clustering, alignment, and opacity-scaled combination
+7. **Region-Based Splitting**: Extract, align, and visualize specific structural regions with flexible layouts

@@ -4,9 +4,12 @@
 """Utilities related to protein domain handling and transformations."""
 
 from dataclasses import dataclass
-from typing import Optional, List, Dict, Union
+from typing import Optional, List, Dict, Union, Tuple
+from pathlib import Path
+import os
 
 import numpy as np
+import gemmi
 
 from flatprot.core import Structure, logger
 from flatprot.core.coordinates import ResidueRange, ResidueRangeSet
@@ -20,6 +23,12 @@ from flatprot.scene import (
 from flatprot.utils.scene_utils import STRUCTURE_ELEMENT_MAP
 from flatprot.scene.connection import Connection, ConnectionStyle
 from flatprot.scene import AreaAnnotation, AreaAnnotationStyle
+from flatprot.alignment import (
+    AlignmentDatabase,
+    align_structure_database,
+    get_aligned_rotation_database,
+)
+from flatprot.utils.database import DEFAULT_DB_DIR
 
 
 @dataclass
@@ -409,3 +418,232 @@ def create_domain_aware_scene(
     print(f"Applied fixed layout transforms to {layout_applied_count} domain groups.")
 
     return scene
+
+
+def extract_structure_regions(
+    structure_file: Path, regions: List[ResidueRange], output_dir: Path
+) -> List[Tuple[Path, ResidueRange]]:
+    """Extract specified regions from a structure file to separate CIF files.
+
+    Args:
+        structure_file: Path to input structure file (PDB/CIF)
+        regions: List of ResidueRange objects defining regions to extract
+        output_dir: Directory to write extracted region files
+
+    Returns:
+        List of tuples (output_file_path, residue_range) for successfully extracted regions
+
+    Raises:
+        ValueError: If structure file cannot be read or regions are invalid
+        FileNotFoundError: If structure file does not exist
+    """
+    if not structure_file.exists():
+        raise FileNotFoundError(f"Structure file not found: {structure_file}")
+
+    if not regions:
+        raise ValueError("No regions provided for extraction")
+
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    try:
+        # Load structure using GEMMI
+        structure = gemmi.read_structure(
+            str(structure_file), merge_chain_parts=True, format=gemmi.CoorFormat.Detect
+        )
+    except Exception as e:
+        raise ValueError(f"Failed to read structure file {structure_file}: {e}")
+
+    extracted_files = []
+    structure_id = structure_file.stem
+
+    for i, region in enumerate(regions):
+        try:
+            # Create output filename
+            region_id = f"{region.chain_id}_{region.start}_{region.end}"
+            output_file = output_dir / f"{structure_id}_region_{region_id}.cif"
+
+            # Extract region using helper function
+            _extract_region_to_file(structure, region, output_file)
+
+            extracted_files.append((output_file, region))
+            logger.info(f"Extracted region {region} to {output_file.name}")
+
+        except Exception as e:
+            logger.warning(f"Failed to extract region {region}: {e}")
+            continue
+
+    if not extracted_files:
+        raise ValueError("No regions were successfully extracted")
+
+    logger.info(f"Successfully extracted {len(extracted_files)} regions")
+    return extracted_files
+
+
+def _extract_region_to_file(
+    structure: gemmi.Structure, region: ResidueRange, output_file: Path
+) -> None:
+    """Extract a single region from a GEMMI structure to a CIF file.
+
+    Args:
+        structure: GEMMI Structure object
+        region: ResidueRange defining the region to extract
+        output_file: Path where to write the extracted region
+
+    Raises:
+        ValueError: If chain not found or no residues in range
+    """
+    # Create new structure for the domain
+    domain_structure = gemmi.Structure()
+    domain_structure.name = output_file.stem.replace(":", "_").replace("-", "_")
+
+    # Create new model
+    model = gemmi.Model("1")
+
+    # Find the original chain
+    original_chain = None
+    if structure and len(structure) > 0:
+        for chain in structure[0]:
+            if chain.name == region.chain_id:
+                original_chain = chain
+                break
+
+    if original_chain is None:
+        raise ValueError(f"Chain '{region.chain_id}' not found in structure")
+
+    # Create new chain and extract residues
+    new_chain = gemmi.Chain(region.chain_id)
+    extracted_count = 0
+
+    for residue in original_chain:
+        seq_id = residue.seqid.num
+        if region.start <= seq_id <= region.end:
+            new_chain.add_residue(residue.clone())
+            extracted_count += 1
+
+    if extracted_count == 0:
+        raise ValueError(
+            f"No residues found in range {region.start}-{region.end} "
+            f"for chain '{region.chain_id}'"
+        )
+
+    # Assemble and write structure
+    model.add_chain(new_chain)
+    domain_structure.add_model(model)
+
+    output_file.parent.mkdir(parents=True, exist_ok=True)
+    domain_structure.make_mmcif_document().write_file(str(output_file))
+
+
+def align_regions_batch(
+    region_files: List[Tuple[Path, ResidueRange]],
+    region_ranges: List[ResidueRange],
+    foldseek_db_path: Path,
+    foldseek_executable: str,
+    min_probability: float,
+    alignment_mode: str = "family-identity",
+) -> List[DomainTransformation]:
+    """Align extracted regions using Foldseek and return transformations.
+
+    Args:
+        region_files: List of (file_path, residue_range) tuples from extract_structure_regions
+        region_ranges: Original list of ResidueRange objects for identification
+        foldseek_db_path: Path to Foldseek database
+        foldseek_executable: Path to Foldseek executable
+        min_probability: Minimum alignment probability threshold
+        alignment_mode: Alignment strategy ('family-identity' or 'inertia')
+
+    Returns:
+        List of DomainTransformation objects for successfully aligned regions
+
+    Raises:
+        ValueError: If no successful alignments found
+        RuntimeError: If alignment database is not accessible
+    """
+    if not region_files:
+        raise ValueError("No region files provided for alignment")
+
+    # Initialize alignment database
+    db_file_path = DEFAULT_DB_DIR / "alignments.h5"
+    if not db_file_path.exists():
+        raise RuntimeError(f"Alignment database not found: {db_file_path}")
+
+    try:
+        alignment_db = AlignmentDatabase(db_file_path)
+    except Exception as e:
+        raise RuntimeError(f"Failed to initialize alignment database: {e}")
+
+    domain_transformations = []
+    failed_regions = []
+
+    logger.info(f"Aligning {len(region_files)} regions using {alignment_mode} mode")
+
+    for file_path, region in region_files:
+        try:
+            region_id = f"{region.chain_id}:{region.start}-{region.end}"
+            logger.info(f"Aligning region {region_id} from {file_path.name}")
+
+            # Perform Foldseek alignment
+            alignment_result = align_structure_database(
+                file_path, foldseek_db_path, foldseek_executable, min_probability
+            )
+
+            logger.info(
+                f"Alignment hit for {region_id}: {alignment_result.db_id} "
+                f"(P={alignment_result.probability:.3f})"
+            )
+
+            # Get transformation matrix based on alignment mode
+            if alignment_mode == "family-identity":
+                # Get rotation matrix from database
+                matrix_result = get_aligned_rotation_database(
+                    alignment_result, alignment_db
+                )
+                transformation_matrix = matrix_result[0]
+                _db_entry = matrix_result[1]  # Unused but needed for API compatibility
+
+                if transformation_matrix is None:
+                    logger.warning(f"No transformation matrix found for {region_id}")
+                    failed_regions.append(region)
+                    continue
+
+                logger.info(f"Retrieved transformation matrix for {region_id}")
+
+            else:  # inertia mode
+                # Use identity matrix for inertia-based alignment
+                transformation_matrix = TransformationMatrix(
+                    rotation=np.eye(3), translation=np.zeros(3)
+                )
+                logger.info(f"Using identity matrix for inertia mode: {region_id}")
+
+            # Create DomainTransformation object
+            domain_transformation = DomainTransformation(
+                domain_range=region,
+                transformation_matrix=transformation_matrix,
+                domain_id=region_id,
+            )
+
+            domain_transformations.append(domain_transformation)
+            logger.info(f"Successfully processed region {region_id}")
+
+        except Exception as e:
+            logger.warning(f"Failed to align region {region}: {e}")
+            failed_regions.append(region)
+            continue
+
+        finally:
+            # Clean up temporary file
+            try:
+                if file_path.exists():
+                    os.remove(file_path)
+            except OSError as e:
+                logger.warning(f"Failed to clean up temporary file {file_path}: {e}")
+
+    if not domain_transformations:
+        raise ValueError("No regions were successfully aligned")
+
+    logger.info(
+        f"Batch alignment completed: {len(domain_transformations)} successful, "
+        f"{len(failed_regions)} failed"
+    )
+
+    return domain_transformations
