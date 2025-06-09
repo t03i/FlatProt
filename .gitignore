@@ -170,3 +170,6 @@ out/*
 
 .snakemake/*
 */**/.snakemake/*
+
+*/**/.DS_Store
+.DS_Store
