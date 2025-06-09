@@ -84,7 +84,7 @@ def create_overlay(
         logger.info(f"Exporting to {config.output_format.upper()}...")
 
     if config.output_format == "png":
-        combined_drawing.save_png(str(output_path), dpi=config.dpi)
+        combined_drawing.save_png(str(output_path))
     elif config.output_format == "pdf":
         combined_drawing.save_pdf(str(output_path))
     elif config.output_format == "svg":

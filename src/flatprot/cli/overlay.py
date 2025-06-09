@@ -11,12 +11,6 @@ from flatprot.core import logger
 from flatprot.utils.overlay_utils import create_overlay, OverlayConfig
 from .utils import set_logging_level, CommonParameters
 
-# Import drawsvg at module level for easier testing
-try:
-    import drawsvg
-except ImportError:
-    drawsvg = None
-
 
 app = cyclopts.App()
 
@@ -88,18 +82,6 @@ def overlay(
             logger.error(f"Unsupported output format: {output_format}")
             logger.error("Supported formats: svg, png, pdf")
             sys.exit(1)
-
-        # Check Cairo availability for raster formats
-        if output_format in ["png", "pdf"]:
-            if drawsvg is None:
-                logger.error("drawsvg library not available")
-                sys.exit(1)
-            if not hasattr(drawsvg, "_cairo_available") or not drawsvg._cairo_available:
-                logger.error("Cairo library not available for PNG/PDF output")
-                logger.error(
-                    "Install Cairo: brew install cairo (macOS) or sudo apt-get install libcairo2-dev (Ubuntu)"
-                )
-                sys.exit(1)
 
         # Configure overlay settings
         config = OverlayConfig(
