@@ -50,6 +50,14 @@
                 <li class="toctree-l1 current"><a class="reference internal current" href="#">Home</a>
     <ul class="current">
     <li class="toctree-l2"><a class="reference internal" href="#standard-workflow-on-the-command-line">Standard Workflow on the command line</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#single-structure-projection">Single Structure Projection</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#multi-structure-comparison">Multi-Structure Comparison</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#structure-alignment">Structure Alignment</a>
+    </li>
+        </ul>
     </li>
     <li class="toctree-l2"><a class="reference internal" href="#key-features">Key Features</a>
     </li>
@@ -79,6 +87,8 @@
                   <li class="toctree-l1"><a class="reference internal" href="commands/project/">Project</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="commands/align/">Align</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="commands/overlay/">Overlay</a>
                   </li>
               </ul>
               <p class="caption"><span class="caption-text">File Formats</span></p>
@@ -137,7 +147,9 @@
 <h1 id="about">About</h1>
 <p>FlatProt is a Python package for protein structure and sequence analysis. It provides standardized 2D visualizations for enhanced protein comparability, combining efficient processing of proteins with user-friendly visualizations.</p>
 <h2 id="standard-workflow-on-the-command-line">Standard Workflow on the command line</h2>
-<p>FlatProt generates 2D projections of protein structures in three simple steps:</p>
+<p>FlatProt provides three main commands for protein structure analysis:</p>
+<h3 id="single-structure-projection">Single Structure Projection</h3>
+<p>Generate 2D projections of individual protein structures in three simple steps:</p>
 <ol>
 <li>Obtain the protein structure file (CIF or PDB format)<ul>
 <li>From databases like PDB, AlphaFold, or your own modeling tools</li>
@@ -156,15 +168,29 @@
 </ul>
 </li>
 </ol>
-<p>The resulting SVG file contains a clean, publication-ready 2D representation of your protein structure that can be viewed in any web browser or vector graphics editor.</p>
+<h3 id="multi-structure-comparison">Multi-Structure Comparison</h3>
+<p>Create overlay visualizations to compare multiple related structures:</p>
+<ol>
+<li>Collect related structure files (same family or similar proteins)</li>
+<li>Generate family-aligned overlay: <code>flatprot overlay "structures/*.cif" -o comparison.png</code></li>
+<li>For consistent size comparison: <code>flatprot overlay "structures/*.cif" --disable-scaling -o overlay.png</code></li>
+</ol>
+<h3 id="structure-alignment">Structure Alignment</h3>
+<p>Align structures to known protein families:</p>
+<ol>
+<li>Find best matching family: <code>flatprot align structure.cif -i alignment_info.json</code></li>
+<li>Use alignment in projections: <code>flatprot project structure.cif --matrix alignment_matrix.npy -o aligned.svg</code></li>
+</ol>
+<p>The resulting files contain clean, publication-ready 2D representations that can be viewed in any web browser or vector graphics editor.</p>
 <h2 id="key-features">Key Features</h2>
 <ul>
-<li>Standardized 2D visualization approach for protein analysis</li>
-<li>Integration with Foldseek alignments for protein family mapping</li>
-<li>Efficient processing of proteins across varying sizes</li>
-<li>Fast response times even for large, complex structures</li>
-<li>Support for proteins up to 3,000 residues</li>
-<li>Clear and consistent visualizations for structure analysis</li>
+<li><strong>Single Structure Visualization</strong>: Standardized 2D projections of individual protein structures</li>
+<li><strong>Multi-Structure Overlays</strong>: Compare multiple structures with automatic clustering and alignment</li>
+<li><strong>Family-Based Alignment</strong>: Integration with Foldseek alignments for protein family mapping</li>
+<li><strong>Batch Processing</strong>: Efficient processing of proteins across varying sizes</li>
+<li><strong>High Performance</strong>: Fast response times even for large, complex structures</li>
+<li><strong>Scalable</strong>: Support for proteins up to 3,000 residues and datasets with 50+ structures</li>
+<li><strong>Publication Ready</strong>: Clear and consistent visualizations for structure analysis</li>
 </ul>
 <h2 id="visualization-options">Visualization Options</h2>
 <p>FlatProt offers multiple visualization types to suit different analysis needs:</p>
@@ -246,5 +272,5 @@ bioRxiv 2025.04.22.650077; doi: <a href="https://doi.org/10.1101/2025.04.22.6500
 
 <!--
 MkDocs version : 1.6.1
-Build Date UTC : 2025-04-30 15:41:34.452677+00:00
+Build Date UTC : 2025-06-10 10:27:50.553347+00:00
 -->

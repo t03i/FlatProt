@@ -64,6 +64,8 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../../commands/align/">Align</a>
                   </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../commands/overlay/">Overlay</a>
+                  </li>
               </ul>
               <p class="caption"><span class="caption-text">File Formats</span></p>
               <ul>
@@ -2164,6 +2166,17 @@ The coordinates of the returned Structure will be the projected (X, Y, Depth) va
        Defaults to [0, 1, 0] if None.</p>
               </div>
             </li>
+            <li>
+              <b><code>disable_scaling</code></b>
+                  (<code><span title="bool">bool</span></code>, default:
+                      <code>False</code>
+)
+              –
+              <div class="doc-md-description">
+                <p>If True, disables automatic scaling to fit canvas, useful for overlay
+            comparisons where consistent scales are needed across different structures.</p>
+              </div>
+            </li>
         </ul>
       </td>
     </tr>
@@ -2344,7 +2357,11 @@ The coordinates of the returned Structure will be the projected (X, Y, Depth) va
 <span class="normal">282</span>
 <span class="normal">283</span>
 <span class="normal">284</span>
-<span class="normal">285</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">project_structure_orthographically</span><span class="p">(</span>
+<span class="normal">285</span>
+<span class="normal">286</span>
+<span class="normal">287</span>
+<span class="normal">288</span>
+<span class="normal">289</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">project_structure_orthographically</span><span class="p">(</span>
     <span class="n">structure</span><span class="p">:</span> <span class="n">Structure</span><span class="p">,</span>
     <span class="n">width</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
     <span class="n">height</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
@@ -2354,6 +2371,7 @@ The coordinates of the returned Structure will be the projected (X, Y, Depth) va
     <span class="n">center_projection</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
     <span class="n">view_direction</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">up_vector</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">disable_scaling</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Structure</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Projects the coordinates of a Structure orthographically, returning a new Structure.</span>
 
@@ -2375,6 +2393,8 @@ The coordinates of the returned Structure will be the projected (X, Y, Depth) va
 <span class="sd">                        Defaults to [0, 0, 1] if None.</span>
 <span class="sd">        up_vector: Optional (3,) numpy array for the initial up vector.</span>
 <span class="sd">                   Defaults to [0, 1, 0] if None.</span>
+<span class="sd">        disable_scaling: If True, disables automatic scaling to fit canvas, useful for overlay</span>
+<span class="sd">                        comparisons where consistent scales are needed across different structures.</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        A new Structure object where the coordinates represent the projected data:</span>
@@ -2407,6 +2427,7 @@ The coordinates of the returned Structure will be the projected (X, Y, Depth) va
             <span class="s2">&quot;padding_y&quot;</span><span class="p">:</span> <span class="n">padding_y</span><span class="p">,</span>
             <span class="s2">&quot;maintain_aspect_ratio&quot;</span><span class="p">:</span> <span class="n">maintain_aspect_ratio</span><span class="p">,</span>
             <span class="s2">&quot;canvas_alignment&quot;</span><span class="p">:</span> <span class="s2">&quot;center&quot;</span> <span class="k">if</span> <span class="n">center_projection</span> <span class="k">else</span> <span class="s2">&quot;top_left&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;disable_scaling&quot;</span><span class="p">:</span> <span class="n">disable_scaling</span><span class="p">,</span>
         <span class="p">}</span>
         <span class="k">if</span> <span class="n">view_direction</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">param_kwargs</span><span class="p">[</span><span class="s2">&quot;view_direction&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">view_direction</span>
