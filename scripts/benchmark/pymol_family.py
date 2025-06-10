@@ -8,26 +8,17 @@
 # Copyright 2025 Rostlab.
 # SPDX-License-Identifier: Apache-2.0
 
+import argparse
 import sys
 from pathlib import Path
-from typing import Annotated, List
+from typing import List
 
-from cyclopts import App, Parameter
 from pymol import cmd
 
-app = App()
 
-
-@app.default
 def main(
-    output_file: Annotated[Path, Parameter(help="Path to save the output PNG image.")],
-    structure_files: Annotated[
-        List[Path],
-        Parameter(
-            exists=True,
-            help="One or more paths to input structure files (e.g., CIF, PDB).",
-        ),
-    ],
+    output_file: Path,
+    structure_files: List[Path],
 ) -> None:
     """Load multiple structures, align them, and save a PNG image using PyMOL.
 
@@ -50,12 +41,14 @@ def main(
         cmd.load(str(structure_file))
 
     # Align all to the first loaded structure
-    first_structure_name = structure_files[0].stem
-    cmd.align("all", first_structure_name)
+    object_names = cmd.get_names("objects")
+    if len(object_names) > 1:
+        target_object = object_names[0]
+        for mobile_object in object_names[1:]:
+            cmd.align(mobile_object, target_object)
 
     # Style the scene
-    getattr(cmd, "as")("cartoon")
-    cmd.color("spectrum", "all")
+    cmd.do("as cartoon")
     cmd.bg_color("white")
 
     # Ensure output directory exists
@@ -66,8 +59,27 @@ def main(
 
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser(
+        description="Load multiple structures, align them, and save a PNG image using PyMOL."
+    )
+    parser.add_argument(
+        "output_file",
+        type=Path,
+        help="Path to save the output PNG image.",
+    )
+    parser.add_argument(
+        "structure_files",
+        type=Path,
+        nargs="+",
+        help="One or more paths to input structure files (e.g., CIF, PDB).",
+    )
     try:
-        app()
+        args = parser.parse_args()
+        for f in args.structure_files:
+            if not f.exists():
+                print(f"Error: structure file not found: {f}", file=sys.stderr)
+                cmd.quit(1)
+        main(args.output_file, args.structure_files)
     except Exception as e:
         print(f"An error occurred: {e}", file=sys.stderr)
         cmd.quit(1)

@@ -10,6 +10,7 @@
 
 import csv
 import glob
+import shlex
 import shutil
 import subprocess
 import sys
@@ -133,14 +134,26 @@ def flatprot_single_cmd(structure: Path, temp_dir: Path) -> Optional[List[str]]:
 
 def flatprot_family_cmd(structures: List[Path], temp_dir: Path) -> Optional[List[str]]:
     """Return the command for running FlatProt on a family of structures."""
-    output_file = temp_dir / f"flatprot_overlay_{int(time.time())}.png"
+    output_file = temp_dir / f"flatprot_overlay_{int(time.time())}.svg"
+    if not structures:
+        return None
     return [
         "flatprot",
         "overlay",
         *[str(s) for s in structures],
-        "-o",
+        "--quiet",
+        "--family",
+        "3000114",
+        "--output",
         str(output_file),
     ]
+
+
+def flatprot_family_large_cmd(
+    structures: List[Path], temp_dir: Path
+) -> Optional[List[str]]:
+    """Return the command for running FlatProt on a large family of structures."""
+    return flatprot_family_cmd(structures, temp_dir)
 
 
 def pymol_single_cmd(structure: Path, temp_dir: Path) -> Optional[List[str]]:
@@ -149,7 +162,14 @@ def pymol_single_cmd(structure: Path, temp_dir: Path) -> Optional[List[str]]:
     script_path = get_script_dir() / "benchmark" / "pymol_single.py"
     if not script_path.exists():
         raise FileNotFoundError(f"PyMOL script not found: {script_path}")
-    return ["pymol", "-cr", str(script_path), str(structure), str(output_file)]
+    return [
+        "pymol",
+        "-cr",
+        str(script_path),
+        "--",
+        str(structure),
+        str(output_file),
+    ]
 
 
 def pymol_family_cmd(structures: List[Path], temp_dir: Path) -> Optional[List[str]]:
@@ -164,9 +184,17 @@ def pymol_family_cmd(structures: List[Path], temp_dir: Path) -> Optional[List[st
         "pymol",
         "-cr",
         str(script_path),
+        "--",
         str(output_file),
         *[str(s) for s in structures],
     ]
+
+
+def pymol_family_large_cmd(
+    structures: List[Path], temp_dir: Path
+) -> Optional[List[str]]:
+    """Return the command for running PyMOL on a large family of structures."""
+    return pymol_family_cmd(structures, temp_dir)
 
 
 def chimerax_single_cmd(structure: Path, temp_dir: Path) -> Optional[List[str]]:
@@ -181,7 +209,9 @@ def chimerax_single_cmd(structure: Path, temp_dir: Path) -> Optional[List[str]]:
     return [
         chimerax_executable,
         "--script",
-        f"{str(script_path)} {str(structure)} {str(output_file)}",
+        str(script_path),
+        str(structure),
+        str(output_file),
     ]
 
 
@@ -194,11 +224,22 @@ def chimerax_family_cmd(structures: List[Path], temp_dir: Path) -> Optional[List
     if not script_path.exists():
         raise FileNotFoundError(f"ChimeraX script not found: {script_path}")
     chimerax_executable = find_chimerax_executable()
+    if not structures:
+        return None
     return [
         chimerax_executable,
         "--script",
-        f"{str(script_path)} {str(output_file)} {' '.join(map(str, structures))}",
+        str(script_path),
+        str(output_file),
+        *map(str, structures),
     ]
+
+
+def chimerax_family_large_cmd(
+    structures: List[Path], temp_dir: Path
+) -> Optional[List[str]]:
+    """Return the command for running ChimeraX on a large family of structures."""
+    return chimerax_family_cmd(structures, temp_dir)
 
 
 def print_summary(results_file: Path):
@@ -243,8 +284,11 @@ def print_summary(results_file: Path):
 
 @app.default
 def benchmark(
-    structure_pattern: Annotated[
-        str, Parameter(help="Glob pattern for structure files (e.g., 'data/*/*.cif').")
+    small_structure_glob: Annotated[
+        str, Parameter(help="Glob pattern for 'small' and 'family' structure files.")
+    ],
+    large_structure_glob: Annotated[
+        str, Parameter(help="Glob pattern for 'family_large' structure files.")
     ],
     n_iterations: Annotated[
         int, Parameter(help="Number of iterations to run for each tool/method.")
@@ -252,23 +296,49 @@ def benchmark(
     output_file: Annotated[
         Path, Parameter(help="Path to save the CSV results.")
     ] = Path("benchmark_results.csv"),
+    print_commands: Annotated[
+        bool, Parameter(help="Print the example commands for generating images.")
+    ] = False,
 ):
     """Benchmark various protein visualization tools."""
-    structure_files = [Path(p) for p in glob.glob(structure_pattern, recursive=True)]
-    if not structure_files:
+    small_structure_files = [
+        Path(p) for p in glob.glob(small_structure_glob, recursive=True)
+    ]
+    if not small_structure_files:
         print(
-            f"Error: No structure files found matching pattern: {structure_pattern}",
+            f"Warning: No structure files found matching small glob: {small_structure_glob}",
+            file=sys.stderr,
+        )
+
+    large_structure_files = [
+        Path(p) for p in glob.glob(large_structure_glob, recursive=True)
+    ]
+    if not large_structure_files:
+        print(
+            f"Warning: No structure files found matching large glob: {large_structure_glob}",
+            file=sys.stderr,
+        )
+
+    if not small_structure_files and not large_structure_files:
+        print(
+            "Error: No structure files were found for either glob pattern. Exiting.",
             file=sys.stderr,
         )
         sys.exit(1)
-    print(f"Found {len(structure_files)} structure files.")
+
+    print(f"Found {len(small_structure_files)} files for small benchmarks.")
+    print(f"Found {len(large_structure_files)} files for large benchmarks.")
+
     tools_methods = [
         # ("flatprot", "single", flatprot_single_cmd),
         # ("flatprot", "family", flatprot_family_cmd),
-        # ("pymol", "single", pymol_single_cmd),
+        # ("flatprot", "family_large", flatprot_family_large_cmd),
+        ("pymol", "single", pymol_single_cmd),
         # ("pymol", "family", pymol_family_cmd),
-        ("chimerax", "single", chimerax_single_cmd),
-        ("chimerax", "family", chimerax_family_cmd),
+        # ("pymol", "family_large", pymol_family_large_cmd),
+        # ("chimerax", "single", chimerax_single_cmd),
+        # ("chimerax", "family", chimerax_family_cmd),
+        # ("chimerax", "family_large", chimerax_family_large_cmd),
     ]
     with tempfile.TemporaryDirectory() as temp_dir_str:
         temp_dir = Path(temp_dir_str)
@@ -289,6 +359,18 @@ def benchmark(
             )
             for tool, method, func in tools_methods:
                 print(f"Benchmarking {tool} ({method})...")
+
+                if method.endswith("_large"):
+                    structure_files = large_structure_files
+                else:
+                    structure_files = small_structure_files
+
+                if not structure_files:
+                    print(
+                        f"    Skipping {tool} ({method}) because no structure files were found."
+                    )
+                    continue
+
                 for iteration in range(1, n_iterations + 1):
                     print(f"  Iteration {iteration}/{n_iterations}")
                     if method == "single":
@@ -296,6 +378,8 @@ def benchmark(
                             print(f"    Processing {structure.name}")
                             cmd = func(structure, temp_dir)
                             if cmd:
+                                if print_commands:
+                                    print(f"      # Command: {shlex.join(cmd)}")
                                 (
                                     exec_time,
                                     memory,
@@ -314,9 +398,9 @@ def benchmark(
                                     error_msg,
                                     "N/A",
                                 )
-                    else:  # family
+                    else:  # family and family_large
                         print(
-                            f"    Processing family with {len(structure_files)} structures"
+                            f"    Processing {method} with {len(structure_files)} structures"
                         )
                         cmd_or_status = func(structure_files, temp_dir)
                         family_available = "error"
@@ -326,9 +410,11 @@ def benchmark(
                                 memory,
                                 exit_code,
                                 error_msg,
-                            ) = (0.0, 0.0, 2, f"{tool} family not supported")
+                            ) = (0.0, 0.0, 2, f"{tool} {method} not supported")
                             family_available = "false"
                         elif cmd_or_status:
+                            if print_commands:
+                                print(f"      # Command: {shlex.join(cmd_or_status)}")
                             (
                                 exec_time,
                                 memory,
