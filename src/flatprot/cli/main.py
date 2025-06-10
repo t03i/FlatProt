@@ -7,6 +7,7 @@ from cyclopts import App
 
 from .project import project_structure_svg
 from .align import align_structure_rotation
+from .overlay import overlay
 from flatprot import __version__
 
 
@@ -18,6 +19,10 @@ app.command(
 app.command(
     align_structure_rotation,
     "align",
+)
+app.command(
+    overlay,
+    "overlay",
 )
 
 

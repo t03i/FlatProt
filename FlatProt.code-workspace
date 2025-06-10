@@ -6,6 +6,7 @@
     ],
     "settings": {
         "licenser.author": "Rostlab",
-        "editor.defaultFormatter": "charliermarsh.ruff"
+        "editor.defaultFormatter": "charliermarsh.ruff",
+        "svg.preview.background": "transparent"
     }
 }

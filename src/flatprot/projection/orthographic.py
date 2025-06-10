@@ -23,6 +23,7 @@ class OrthographicProjectionParameters(BaseProjectionParameters):
     center_original_coordinates: bool = True
     view_direction: NDArray[Shape["3"], float] = np.array([0.0, 0.0, 1.0])
     up_vector: NDArray[Shape["3"], float] = np.array([0.0, 1.0, 0.0])
+    disable_scaling: bool = False
 
 
 class OrthographicProjection(BaseProjection[OrthographicProjectionParameters]):
@@ -110,25 +111,29 @@ class OrthographicProjection(BaseProjection[OrthographicProjectionParameters]):
             coords_2d_centered = coords_2d - coords_2d_mean
 
         # 4. Calculate scaling factors to fit within padded canvas dimensions
-        available_width = parameters.width * (1 - 2 * parameters.padding_x)
-        available_height = parameters.height * (1 - 2 * parameters.padding_y)
-
-        # Calculate the range (max - min) of the (potentially centered) 2D coordinates
-        coord_min = np.min(coords_2d_centered, axis=0)
-        coord_max = np.max(coords_2d_centered, axis=0)
-        coord_range = coord_max - coord_min
-
-        # Avoid division by zero if all points project to the same location (range is zero)
-        EPSILON = 1e-10
-        scale_x = available_width / max(coord_range[0], EPSILON)
-        scale_y = available_height / max(coord_range[1], EPSILON)
-
-        # Apply scaling (uniform or non-uniform)
-        if parameters.maintain_aspect_ratio:
-            scale = min(scale_x, scale_y)
-            coords_2d_scaled = coords_2d_centered * scale
+        if parameters.disable_scaling:
+            # Skip scaling for consistent cross-structure comparisons
+            coords_2d_scaled = coords_2d_centered
         else:
-            coords_2d_scaled = coords_2d_centered * np.array([scale_x, scale_y])
+            available_width = parameters.width * (1 - 2 * parameters.padding_x)
+            available_height = parameters.height * (1 - 2 * parameters.padding_y)
+
+            # Calculate the range (max - min) of the (potentially centered) 2D coordinates
+            coord_min = np.min(coords_2d_centered, axis=0)
+            coord_max = np.max(coords_2d_centered, axis=0)
+            coord_range = coord_max - coord_min
+
+            # Avoid division by zero if all points project to the same location (range is zero)
+            EPSILON = 1e-10
+            scale_x = available_width / max(coord_range[0], EPSILON)
+            scale_y = available_height / max(coord_range[1], EPSILON)
+
+            # Apply scaling (uniform or non-uniform)
+            if parameters.maintain_aspect_ratio:
+                scale = min(scale_x, scale_y)
+                coords_2d_scaled = coords_2d_centered * scale
+            else:
+                coords_2d_scaled = coords_2d_centered * np.array([scale_x, scale_y])
 
         # 5. Translate scaled coordinates to the final canvas position
         if parameters.canvas_alignment == "center":
