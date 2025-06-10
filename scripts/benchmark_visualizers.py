@@ -132,6 +132,21 @@ def flatprot_single_cmd(structure: Path, temp_dir: Path) -> Optional[List[str]]:
     return ["flatprot", "project", str(structure), "-o", str(output_file)]
 
 
+def flatprot_aligned_cmd(structure: Path, temp_dir: Path) -> Optional[List[str]]:
+    """Return the command for running FlatProt on a single structure with prior alignment."""
+    output_file = temp_dir / f"flatprot_aligned_{structure.name}.svg"
+    script_path = get_script_dir() / "benchmark" / "flatprot_aligned.py"
+    if not script_path.exists():
+        raise FileNotFoundError(f"FlatProt-aligned script not found: {script_path}")
+    return [
+        "uv",
+        "run",
+        str(script_path),
+        str(structure),
+        str(output_file),
+    ]
+
+
 def flatprot_family_cmd(structures: List[Path], temp_dir: Path) -> Optional[List[str]]:
     """Return the command for running FlatProt on a family of structures."""
     output_file = temp_dir / f"flatprot_overlay_{int(time.time())}.svg"
@@ -240,21 +255,6 @@ def chimerax_family_large_cmd(
 ) -> Optional[List[str]]:
     """Return the command for running ChimeraX on a large family of structures."""
     return chimerax_family_cmd(structures, temp_dir)
-
-
-def icn3d_single_cmd(structure: Path, temp_dir: Path) -> Optional[List[str]]:
-    """Return the command for running iCn3D on a single structure."""
-    output_file = temp_dir / f"icn3d_single_{structure.name}.png"
-    script_path = get_script_dir() / "benchmark" / "icn3d_single.py"
-    if not script_path.exists():
-        raise FileNotFoundError(f"iCn3D script not found: {script_path}")
-    return [
-        "uv",
-        "run",
-        str(script_path),
-        str(structure),
-        str(output_file),
-    ]
 
 
 def setup_ssdraw() -> Path:
@@ -502,18 +502,18 @@ def benchmark(
     print(f"Found {len(large_structure_files)} files for large benchmarks.")
 
     tools_methods = [
-        # ("flatprot", "single", flatprot_single_cmd),
-        # ("flatprot", "family", flatprot_family_cmd),
-        # ("flatprot", "family_large", flatprot_family_large_cmd),
-        # ("pymol", "single", pymol_single_cmd),
-        # ("pymol", "family", pymol_family_cmd),
-        # ("pymol", "family_large", pymol_family_large_cmd),
-        # ("chimerax", "single", chimerax_single_cmd),
-        # ("chimerax", "family", chimerax_family_cmd),
-        # ("chimerax", "family_large", chimerax_family_large_cmd),
-        # ("icn3d", "single", icn3d_single_cmd),
-        # ("ssdraw", "single", ssdraw_single_cmd),
-        ("proorigami", "single", proorigami_single_cmd),
+        ("flatprot", "single", flatprot_single_cmd),
+        ("flatprot", "aligned", flatprot_aligned_cmd),
+        ("flatprot", "family", flatprot_family_cmd),
+        ("flatprot", "family_large", flatprot_family_large_cmd),
+        ("pymol", "single", pymol_single_cmd),
+        ("pymol", "family", pymol_family_cmd),
+        ("pymol", "family_large", pymol_family_large_cmd),
+        ("chimerax", "single", chimerax_single_cmd),
+        ("chimerax", "family", chimerax_family_cmd),
+        ("chimerax", "family_large", chimerax_family_large_cmd),
+        ("ssdraw", "single", ssdraw_single_cmd),
+        # ("proorigami", "single", proorigami_single_cmd),
     ]
 
     # Setup SSDraw if needed for benchmarking
@@ -580,7 +580,7 @@ def benchmark(
 
                     for iteration in range(1, n_iterations + 1):
                         print(f"  Iteration {iteration}/{n_iterations}")
-                        if method == "single":
+                        if method in ("single", "aligned"):
                             for structure in structure_files:
                                 print(f"    Processing {structure.name}")
                                 cmd = func(structure, temp_dir)
