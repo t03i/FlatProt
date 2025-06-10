@@ -339,11 +339,6 @@ if __name__ == "__main__":
     parser.add_argument(
         "output_file", type=Path, help="Path to save the output PNG image."
     )
-    parser.add_argument(
-        "--proorigami-path",
-        type=Path,
-        help="Path to pro-origami directory (if provided, skips auto-detection)",
-    )
 
     try:
         args = parser.parse_args()
@@ -353,7 +348,7 @@ if __name__ == "__main__":
                 file=sys.stderr,
             )
             sys.exit(1)
-        main(args.structure_file, args.output_file, args.proorigami_path)
+        main(args.structure_file, args.output_file)
     except Exception as e:
         print(f"An error occurred: {e}", file=sys.stderr)
         sys.exit(1)
