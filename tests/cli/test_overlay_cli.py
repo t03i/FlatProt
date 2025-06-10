@@ -14,15 +14,11 @@ class TestOverlayCommandParameters:
 
     @patch("flatprot.cli.overlay.create_overlay")
     @patch("flatprot.cli.overlay.resolve_input_files")
-    @patch("flatprot.cli.overlay.drawsvg")
-    def test_all_parameters_passed_correctly(
-        self, mock_drawsvg, mock_resolve, mock_create
-    ):
+    def test_all_parameters_passed_correctly(self, mock_resolve, mock_create):
         """Test that all CLI parameters are passed correctly."""
         test_files = [Path("file1.cif"), Path("file2.cif")]
         mock_resolve.return_value = test_files
         mock_create.return_value = Path("output.svg")
-        mock_drawsvg._cairo_available = True
 
         overlay(
             file_patterns=["file1.cif", "file2.cif"],
@@ -34,6 +30,7 @@ class TestOverlayCommandParameters:
             min_probability=0.7,
             dpi=600,
             no_clustering=True,
+            disable_scaling=True,
             common=CommonParameters(quiet=True),
         )
 
@@ -48,6 +45,7 @@ class TestOverlayCommandParameters:
         assert config.min_probability == 0.7
         assert config.dpi == 600
         assert config.clustering_enabled is False
+        assert config.disable_scaling is True
         assert config.quiet is True
 
 

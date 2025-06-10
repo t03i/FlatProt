@@ -28,6 +28,7 @@ def overlay(
     min_probability: float = 0.5,
     dpi: int = 300,
     no_clustering: bool = False,
+    disable_scaling: bool = False,
     common: CommonParameters | None = None,
 ) -> None:
     """Create overlay visualization from multiple protein structures.
@@ -52,6 +53,7 @@ def overlay(
         min_probability: Minimum alignment probability threshold
         dpi: DPI for raster output formats
         no_clustering: Disable automatic structure clustering
+        disable_scaling: Disable automatic scaling for consistent size comparisons
         common: Common CLI parameters (quiet/verbose)
 
     Examples:
@@ -95,6 +97,7 @@ def overlay(
             output_format=output_format,
             dpi=dpi,
             quiet=bool(common and common.quiet),
+            disable_scaling=disable_scaling,
         )
 
         # Create overlay

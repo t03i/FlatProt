@@ -18,6 +18,12 @@ from flatprot.utils.scene_utils import create_scene_from_structure
 from flatprot.utils.structure_utils import (
     project_structure_orthographically,
     transform_structure_with_inertia,
+    transform_structure_with_matrix,
+)
+from flatprot.utils.database import ensure_database_available
+from flatprot.alignment import (
+    FoldseekAligner,
+    align_structure_database,
 )
 
 
@@ -36,6 +42,9 @@ class OverlayConfig:
     output_format: str = "png"
     dpi: int = 300
     quiet: bool = False
+    disable_scaling: bool = (
+        False  # Disable automatic scaling for consistent size comparisons
+    )
 
 
 def create_overlay(
@@ -54,21 +63,30 @@ def create_overlay(
                 f"Clustering reduced {len(input_files)} structures to {len(representatives)} representatives"
             )
     else:
-        representatives = [(f, 1.0) for f in input_files]  # (file, opacity)
+        representatives = [
+            (f, 0.1) for f in input_files
+        ]  # (file, opacity) - default 10%
 
     # Step 2: Generate individual drawings with alignment
     if not config.quiet:
         logger.info("Generating aligned projections...")
 
-    drawings_with_opacity = []
-    for file_path, base_opacity in representatives:
-        try:
-            drawing = generate_aligned_drawing(file_path, config)
-            drawings_with_opacity.append((drawing, base_opacity, file_path.stem))
-        except Exception as e:
-            if not config.quiet:
-                logger.warning(f"Failed to generate drawing for {file_path.name}: {e}")
-            continue
+    # Try batch alignment for better performance if using family-identity mode
+    if config.alignment_mode == "family-identity" and len(representatives) > 1:
+        drawings_with_opacity = generate_batch_aligned_drawings(representatives, config)
+    else:
+        # Use individual alignment for single structures or inertia mode
+        drawings_with_opacity = []
+        for file_path, base_opacity in representatives:
+            try:
+                drawing = generate_aligned_drawing(file_path, config)
+                drawings_with_opacity.append((drawing, base_opacity, file_path.stem))
+            except Exception as e:
+                if not config.quiet:
+                    logger.warning(
+                        f"Failed to generate drawing for {file_path.name}: {e}"
+                    )
+                continue
 
     if not drawings_with_opacity:
         raise RuntimeError("No drawings could be generated successfully")
@@ -84,7 +102,12 @@ def create_overlay(
         logger.info(f"Exporting to {config.output_format.upper()}...")
 
     if config.output_format == "png":
-        combined_drawing.save_png(str(output_path))
+        # Note: drawsvg save_png may not support dpi parameter
+        try:
+            combined_drawing.save_png(str(output_path), dpi=config.dpi)
+        except TypeError:
+            # Fallback if dpi parameter not supported
+            combined_drawing.save_png(str(output_path))
     elif config.output_format == "pdf":
         combined_drawing.save_pdf(str(output_path))
     elif config.output_format == "svg":
@@ -93,6 +116,113 @@ def create_overlay(
         raise ValueError(f"Unsupported output format: {config.output_format}")
 
     return output_path
+
+
+def generate_batch_aligned_drawings(
+    representatives: List[Tuple[Path, float]], config: OverlayConfig
+) -> List[Tuple[draw.Drawing, float, str]]:
+    """Generate aligned drawings for multiple structures using batched foldseek alignment."""
+
+    if not config.quiet:
+        logger.info(f"Running batch alignment for {len(representatives)} structures...")
+
+    # Extract file paths for batch processing
+    file_paths = [file_path for file_path, _ in representatives]
+
+    try:
+        # Get database and set up batch aligner
+        db_path = ensure_database_available()
+        foldseek_db_path = db_path / "foldseek" / "db"
+
+        aligner = FoldseekAligner("foldseek", foldseek_db_path)
+
+        # Run batch alignment
+        batch_results = aligner.align_structures_batch(
+            file_paths, config.min_probability, config.target_family
+        )
+
+        # Process each structure with its alignment result
+        drawings_with_opacity = []
+        for file_path, base_opacity in representatives:
+            try:
+                # Parse structure
+                validate_structure_file(file_path)
+                parser = GemmiStructureParser()
+                structure = parser.parse_structure(file_path)
+
+                # Get alignment result for this structure
+                alignment_result = batch_results.get(file_path)
+
+                if alignment_result is not None:
+                    # Apply family-identity transformation (use direct alignment result, not combined)
+                    transformation_matrix = alignment_result.rotation_matrix
+
+                    # Apply transformation using matrix transformer
+                    with tempfile.TemporaryDirectory() as temp_dir:
+                        temp_matrix_file = Path(temp_dir) / "temp_matrix.npy"
+                        import numpy as np
+
+                        np.save(temp_matrix_file, transformation_matrix.to_array())
+                        transformed_structure = transform_structure_with_matrix(
+                            structure, temp_matrix_file
+                        )
+                else:
+                    if not config.quiet:
+                        logger.warning(
+                            f"No alignment found for {file_path.name}, using inertia transformation"
+                        )
+                    # Fallback to inertia transformation
+                    transformed_structure = transform_structure_with_inertia(structure)
+
+                # Project to 2D
+                projected_structure = project_structure_orthographically(
+                    transformed_structure,
+                    config.canvas_width,
+                    config.canvas_height,
+                    disable_scaling=config.disable_scaling,
+                )
+
+                # Load styles and create scene
+                styles_dict = (
+                    load_styles(config.style_file) if config.style_file else None
+                )
+                scene = create_scene_from_structure(projected_structure, styles_dict)
+
+                # Render drawing without background for overlay
+                renderer = SVGRenderer(
+                    scene,
+                    config.canvas_width,
+                    config.canvas_height,
+                    background_color=None,
+                )
+                drawing = renderer.render()
+
+                drawings_with_opacity.append((drawing, base_opacity, file_path.stem))
+
+            except Exception as e:
+                if not config.quiet:
+                    logger.warning(f"Failed to process {file_path.name} in batch: {e}")
+                continue
+
+    except Exception as e:
+        if not config.quiet:
+            logger.warning(f"Batch alignment failed: {e}")
+            logger.warning("Falling back to individual processing")
+
+        # Fallback to individual processing
+        drawings_with_opacity = []
+        for file_path, base_opacity in representatives:
+            try:
+                drawing = generate_aligned_drawing(file_path, config)
+                drawings_with_opacity.append((drawing, base_opacity, file_path.stem))
+            except Exception as e:
+                if not config.quiet:
+                    logger.warning(
+                        f"Failed to generate drawing for {file_path.name}: {e}"
+                    )
+                continue
+
+    return drawings_with_opacity
 
 
 def generate_aligned_drawing(file_path: Path, config: OverlayConfig) -> draw.Drawing:
@@ -104,31 +234,53 @@ def generate_aligned_drawing(file_path: Path, config: OverlayConfig) -> draw.Dra
     structure = parser.parse_structure(file_path)
 
     # Apply alignment based on mode
-    if config.alignment_mode == "family-identity" and config.target_family:
-        # Use existing alignment workflow
-        # db_path = ensure_database_available()
-        # alignment_db = AlignmentDatabase(db_path / "alignments.h5")
-        # foldseek_db_path = db_path / "foldseek" / "db"
+    if config.alignment_mode == "family-identity":
+        try:
+            # Get database and alignment components
+            db_path = ensure_database_available()
+            foldseek_db_path = db_path / "foldseek" / "db"
 
-        # Align to specific family
-        # alignment_result = align_structure_database(
-        #     file_path, foldseek_db_path, "foldseek", config.min_probability
-        # )
+            # Align to specific family or find best match
+            alignment_result = align_structure_database(
+                file_path,
+                foldseek_db_path,
+                "foldseek",
+                config.min_probability,
+                config.target_family,
+            )
 
-        # Get transformation matrix
-        # matrix_result = get_aligned_rotation_database(alignment_result, alignment_db)
-        # transformation_matrix = matrix_result[0]  # TODO: implement matrix application
+            # Get transformation matrix (use direct alignment result for family-identity)
+            transformation_matrix = alignment_result.rotation_matrix
 
-        # Apply transformation (this would need proper implementation in the transformation module)
-        # For now, we'll use inertia transformation as fallback
-        transformed_structure = transform_structure_with_inertia(structure)
+            # Apply transformation using matrix transformer
+            with tempfile.TemporaryDirectory() as temp_dir:
+                temp_matrix_file = Path(temp_dir) / "temp_matrix.npy"
+                # Save matrix to temporary file for loading
+                import numpy as np
+
+                np.save(temp_matrix_file, transformation_matrix.to_array())
+                transformed_structure = transform_structure_with_matrix(
+                    structure, temp_matrix_file
+                )
+
+        except Exception as e:
+            if not config.quiet:
+                logger.warning(
+                    f"Family-identity alignment failed for {file_path.name}: {e}"
+                )
+                logger.warning("Falling back to inertia-based alignment")
+            # Fallback to inertia transformation
+            transformed_structure = transform_structure_with_inertia(structure)
     else:
         # Use inertia-based alignment
         transformed_structure = transform_structure_with_inertia(structure)
 
     # Project to 2D using existing utilities
     projected_structure = project_structure_orthographically(
-        transformed_structure, config.canvas_width, config.canvas_height
+        transformed_structure,
+        config.canvas_width,
+        config.canvas_height,
+        disable_scaling=config.disable_scaling,
     )
 
     # Load styles if provided
@@ -137,8 +289,10 @@ def generate_aligned_drawing(file_path: Path, config: OverlayConfig) -> draw.Dra
     # Create scene using existing utilities
     scene = create_scene_from_structure(projected_structure, styles_dict)
 
-    # Render using existing SVGRenderer and return Drawing object
-    renderer = SVGRenderer(scene, config.canvas_width, config.canvas_height)
+    # Render using existing SVGRenderer without background for overlay
+    renderer = SVGRenderer(
+        scene, config.canvas_width, config.canvas_height, background_color=None
+    )
     return renderer.render()  # This returns the drawsvg.Drawing object
 
 
@@ -186,14 +340,14 @@ def cluster_and_select_representatives(
         except subprocess.CalledProcessError as e:
             if not config.quiet:
                 logger.warning(f"Clustering failed, using all structures: {e}")
-            return [(f, 1.0) for f in files]
+            return [(f, 0.1) for f in files]
 
         # Parse cluster results
         cluster_file = Path(f"{cluster_output_prefix}_cluster.tsv")
         if not cluster_file.exists():
             if not config.quiet:
                 logger.warning("Cluster file not found, using all structures")
-            return [(f, 1.0) for f in files]
+            return [(f, 0.1) for f in files]
 
         clusters = collections.defaultdict(list)
         with open(cluster_file, "r") as f:
@@ -211,8 +365,8 @@ def cluster_and_select_representatives(
         }
 
         if not large_clusters:
-            # No clustering benefit, use all structures
-            return [(f, 1.0) for f in files]
+            # No clustering benefit, use all structures with default opacity
+            return [(f, 0.1) for f in files]
 
         # Calculate opacities based on cluster sizes
         cluster_counts = {rep: len(members) for rep, members in large_clusters.items()}
@@ -230,7 +384,7 @@ def cluster_and_select_representatives(
 
 
 def calculate_opacity(
-    cluster_counts: Dict[str, int], min_opacity: float = 0.1, max_opacity: float = 1.0
+    cluster_counts: Dict[str, int], min_opacity: float = 0.05, max_opacity: float = 0.3
 ) -> Dict[str, float]:
     """Calculate opacity for each representative based on cluster size."""
     if not cluster_counts:
@@ -273,6 +427,14 @@ def combine_drawings(
             # Skip background rectangles and defs elements
             if (hasattr(element, "class_") and element.class_ == "background") or (
                 hasattr(element, "tag") and element.tag == "defs"
+            ):
+                continue
+            # Also skip rect elements with id="background" (additional safety)
+            if (
+                hasattr(element, "tag")
+                and element.tag == "rect"
+                and hasattr(element, "id")
+                and element.id == "background"
             ):
                 continue
 
