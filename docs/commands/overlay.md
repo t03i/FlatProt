@@ -42,11 +42,16 @@ flatprot overlay FILE_PATTERNS [OPTIONS]
   - `inertia`: Use principal component analysis alignment
 - `--min-probability` - Minimum alignment probability threshold [default: 0.5]
 
+### Clustering Options
+- `--clustering / --no-clustering` - Enable/disable clustering (auto-enabled at 100+ structures)
+- `--clustering-auto-threshold` - Number of structures to auto-enable clustering [default: 100]
+- `--clustering-min-seq-id` - Minimum sequence identity for clustering (0.0-1.0) [default: 0.5]
+- `--clustering-coverage` - Coverage threshold for clustering (0.0-1.0) [default: 0.9]
+
 ### Visualization Options
 - `--style` - Custom style TOML file path
 - `--canvas-width` - Canvas width in pixels [default: 1000]
 - `--canvas-height` - Canvas height in pixels [default: 1000]
-- `--no-clustering` - Disable automatic structure clustering
 - `--disable-scaling` - Disable automatic scaling for consistent size comparisons
 
 ### General Options
@@ -89,21 +94,32 @@ flatprot overlay "structures/*.cif" --alignment-mode inertia
 Automatic clustering reduces visual complexity by grouping similar structures:
 
 ### Default Behavior
-- **Enabled by default** for datasets with multiple structures
+- **Auto-enabled** for datasets with 100+ structures
 - Uses FoldSeek to identify structural similarity
 - Selects representative structures from each cluster
 - Scales opacity based on cluster size (larger clusters = higher opacity)
 
 ### Configuration
-- **Disable**: Use `--no-clustering` to include all structures
-- **Similarity Threshold**: Controlled by internal parameters (seq-id 0.5, coverage 0.9)
+- **Manual Control**: Use `--clustering` / `--no-clustering` to force enable/disable
+- **Auto-threshold**: Adjust when clustering auto-enables with `--clustering-auto-threshold`
+- **Similarity Thresholds**: Configure clustering sensitivity:
+  - `--clustering-min-seq-id` (0.0-1.0): Lower = more permissive clustering
+  - `--clustering-coverage` (0.0-1.0): Lower = more permissive clustering
 
 ```bash
-# Enable clustering (default)
-flatprot overlay "large_dataset/*.cif"
+# Auto-clustering (default) - enables at 100+ structures
+flatprot overlay "small_set/*.cif"  # No clustering (< 100 files)
+flatprot overlay "large_dataset/*.cif"  # Auto-clustering (≥ 100 files)
 
-# Disable clustering
-flatprot overlay "structures/*.cif" --no-clustering
+# Manual control
+flatprot overlay "structures/*.cif" --clustering  # Force enable
+flatprot overlay "structures/*.cif" --no-clustering  # Force disable
+
+# Custom auto-threshold
+flatprot overlay "structures/*.cif" --clustering-auto-threshold 50
+
+# Custom clustering parameters
+flatprot overlay "structures/*.cif" --clustering-min-seq-id 0.8 --clustering-coverage 0.95
 ```
 
 ## Scaling Options
@@ -182,6 +198,28 @@ flatprot overlay "toxins/*.cif" --family 3000114 --alignment-mode family-identit
 **High-confidence alignments only:**
 ```bash
 flatprot overlay "structures/*.cif" --min-probability 0.8 --alignment-mode family-identity
+```
+
+### Clustering Configuration
+
+**Strict clustering (more representatives):**
+```bash
+flatprot overlay "structures/*.cif" --clustering-min-seq-id 0.8 --clustering-coverage 0.95
+```
+
+**Permissive clustering (fewer representatives):**
+```bash
+flatprot overlay "structures/*.cif" --clustering-min-seq-id 0.3 --clustering-coverage 0.7
+```
+
+**Force clustering on small datasets:**
+```bash
+flatprot overlay file1.cif file2.cif file3.cif --clustering
+```
+
+**Custom auto-threshold for medium datasets:**
+```bash
+flatprot overlay "medium_set/*.cif" --clustering-auto-threshold 20
 ```
 
 ### Size Comparison Studies

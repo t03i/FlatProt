@@ -29,7 +29,10 @@ class TestOverlayCommandParameters:
             canvas_height=1200,
             min_probability=0.7,
             dpi=600,
-            no_clustering=True,
+            clustering=False,
+            clustering_auto_threshold=50,
+            clustering_min_seq_id=0.8,
+            clustering_coverage=0.95,
             disable_scaling=True,
             common=CommonParameters(quiet=True),
         )
@@ -45,8 +48,35 @@ class TestOverlayCommandParameters:
         assert config.min_probability == 0.7
         assert config.dpi == 600
         assert config.clustering_enabled is False
+        assert config.clustering_auto_threshold == 50
+        assert config.clustering_min_seq_id == 0.8
+        assert config.clustering_coverage == 0.95
         assert config.disable_scaling is True
         assert config.quiet is True
+
+    @patch("flatprot.cli.overlay.create_overlay")
+    @patch("flatprot.cli.overlay.resolve_input_files")
+    def test_auto_clustering_parameters(self, mock_resolve, mock_create):
+        """Test that auto-clustering parameters work correctly."""
+        test_files = [Path(f"file{i}.cif") for i in range(5)]
+        mock_resolve.return_value = test_files
+        mock_create.return_value = Path("output.svg")
+
+        # Test with auto-clustering (clustering=None)
+        overlay(
+            file_patterns=["*.cif"],
+            output="output.svg",
+            clustering=None,  # Auto-decide
+            clustering_auto_threshold=100,
+            common=CommonParameters(quiet=True),
+        )
+
+        # Verify create_overlay was called with correct config
+        mock_create.assert_called_once()
+        config = mock_create.call_args[0][2]
+
+        assert config.clustering_enabled is None  # Should be None for auto-decision
+        assert config.clustering_auto_threshold == 100
 
 
 class TestOverlayWithRealFileSystem:

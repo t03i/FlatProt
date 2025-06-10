@@ -29,7 +29,10 @@ class TestOverlayConfig:
         assert config.alignment_mode == "family-identity"
         assert config.target_family is None
         assert config.min_probability == 0.5
-        assert config.clustering_enabled is True
+        assert config.clustering_enabled is None  # Auto-decision
+        assert config.clustering_auto_threshold == 100
+        assert config.clustering_min_seq_id == 0.5
+        assert config.clustering_coverage == 0.9
         assert config.opacity_scaling is True
         assert config.canvas_width == 1000
         assert config.canvas_height == 1000
@@ -45,6 +48,9 @@ class TestOverlayConfig:
             target_family="3000114",
             min_probability=0.7,
             clustering_enabled=False,
+            clustering_auto_threshold=50,
+            clustering_min_seq_id=0.8,
+            clustering_coverage=0.95,
             canvas_width=1500,
             output_format="svg",
         )
@@ -53,8 +59,25 @@ class TestOverlayConfig:
         assert config.target_family == "3000114"
         assert config.min_probability == 0.7
         assert config.clustering_enabled is False
+        assert config.clustering_auto_threshold == 50
+        assert config.clustering_min_seq_id == 0.8
+        assert config.clustering_coverage == 0.95
         assert config.canvas_width == 1500
         assert config.output_format == "svg"
+
+    def test_clustering_auto_config(self):
+        """Test auto-clustering configuration."""
+        config = OverlayConfig(
+            clustering_enabled=None,  # Auto-decision
+            clustering_auto_threshold=25,
+            clustering_min_seq_id=0.3,
+            clustering_coverage=0.7,
+        )
+
+        assert config.clustering_enabled is None
+        assert config.clustering_auto_threshold == 25
+        assert config.clustering_min_seq_id == 0.3
+        assert config.clustering_coverage == 0.7
 
 
 class TestCalculateOpacity:
@@ -228,7 +251,7 @@ class TestGenerateAlignedDrawing:
         mock_parser.parse_structure.assert_called_once_with(file_path)
         mock_transform.assert_called_once_with(mock_structure)
         mock_project.assert_called_once_with(
-            mock_transformed, 1000, 1000, disable_scaling=False
+            mock_transformed, 1000, 1000, disable_scaling=True
         )
         mock_create_scene.assert_called_once_with(mock_projected, None)
         mock_renderer_class.assert_called_once_with(

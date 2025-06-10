@@ -34,7 +34,12 @@ class OverlayConfig:
     alignment_mode: str = "family-identity"  # or "inertia"
     target_family: Optional[str] = None  # SCOP ID for fixed family
     min_probability: float = 0.5
-    clustering_enabled: bool = True  # Auto-cluster similar structures
+    clustering_enabled: Optional[bool] = None  # None = auto-decide based on threshold
+    clustering_auto_threshold: int = (
+        100  # Auto-enable clustering at this many structures
+    )
+    clustering_min_seq_id: float = 0.5  # Minimum sequence identity (0.0-1.0)
+    clustering_coverage: float = 0.9  # Coverage threshold (0.0-1.0)
     opacity_scaling: bool = True  # Scale opacity by cluster size
     canvas_width: int = 1000
     canvas_height: int = 1000
@@ -42,9 +47,7 @@ class OverlayConfig:
     output_format: str = "png"
     dpi: int = 300
     quiet: bool = False
-    disable_scaling: bool = (
-        False  # Disable automatic scaling for consistent size comparisons
-    )
+    disable_scaling: bool = True
 
 
 def create_overlay(
@@ -55,8 +58,16 @@ def create_overlay(
     if not config.quiet:
         logger.info(f"Creating overlay from {len(input_files)} structures")
 
-    # Step 1: Optional clustering to reduce visual clutter
-    if config.clustering_enabled and len(input_files) > 5:
+    # Step 1: Determine if clustering should be enabled
+    if config.clustering_enabled is None:
+        # Auto-decide based on threshold
+        clustering_enabled = len(input_files) >= config.clustering_auto_threshold
+    else:
+        # Use explicit setting
+        clustering_enabled = config.clustering_enabled
+
+    # Step 2: Optional clustering to reduce visual clutter
+    if clustering_enabled:
         representatives = cluster_and_select_representatives(input_files, config)
         if not config.quiet:
             logger.info(
@@ -67,7 +78,7 @@ def create_overlay(
             (f, 0.1) for f in input_files
         ]  # (file, opacity) - default 10%
 
-    # Step 2: Generate individual drawings with alignment
+    # Step 3: Generate individual drawings with alignment
     if not config.quiet:
         logger.info("Generating aligned projections...")
 
@@ -91,13 +102,13 @@ def create_overlay(
     if not drawings_with_opacity:
         raise RuntimeError("No drawings could be generated successfully")
 
-    # Step 3: Combine drawings using drawsvg directly
+    # Step 4: Combine drawings using drawsvg directly
     if not config.quiet:
         logger.info("Combining drawings into overlay...")
 
     combined_drawing = combine_drawings(drawings_with_opacity, config)
 
-    # Step 4: Export in target format using drawsvg's built-in methods
+    # Step 5: Export in target format using drawsvg's built-in methods
     if not config.quiet:
         logger.info(f"Exporting to {config.output_format.upper()}...")
 
@@ -328,9 +339,9 @@ def cluster_and_select_representatives(
             str(cluster_output_prefix),
             str(clustering_tmp_dir),
             "--min-seq-id",
-            "0.5",
+            str(config.clustering_min_seq_id),
             "-c",
-            "0.9",
+            str(config.clustering_coverage),
             "-v",
             "0",
         ]

@@ -27,7 +27,10 @@ def overlay(
     canvas_height: int = 1000,
     min_probability: float = 0.5,
     dpi: int = 300,
-    no_clustering: bool = False,
+    clustering: Optional[bool] = None,
+    clustering_auto_threshold: int = 100,
+    clustering_min_seq_id: float = 0.5,
+    clustering_coverage: float = 0.9,
     disable_scaling: bool = False,
     common: CommonParameters | None = None,
 ) -> None:
@@ -52,7 +55,10 @@ def overlay(
         canvas_height: Canvas height in pixels
         min_probability: Minimum alignment probability threshold
         dpi: DPI for raster output formats
-        no_clustering: Disable automatic structure clustering
+        clustering: Enable/disable clustering (None=auto-decide, True=force enable, False=disable)
+        clustering_auto_threshold: Number of structures to auto-enable clustering (default: 100)
+        clustering_min_seq_id: Minimum sequence identity for clustering (0.0-1.0, default: 0.5)
+        clustering_coverage: Coverage threshold for clustering (0.0-1.0, default: 0.9)
         disable_scaling: Disable automatic scaling for consistent size comparisons
         common: Common CLI parameters (quiet/verbose)
 
@@ -60,6 +66,8 @@ def overlay(
         flatprot overlay "structures/*.cif" -o overlay.png
         flatprot overlay file1.cif file2.cif --family 3000114 -o result.pdf
         flatprot overlay "data/*.cif" --alignment-mode inertia --dpi 600
+        flatprot overlay "structures/*.cif" --clustering-min-seq-id 0.8 --clustering-coverage 0.95
+        flatprot overlay "large_dataset/*.cif" --clustering-auto-threshold 50
     """
     # Configure logging
     set_logging_level(common)
@@ -90,7 +98,10 @@ def overlay(
             alignment_mode=alignment_mode,
             target_family=family,
             min_probability=min_probability,
-            clustering_enabled=not no_clustering,
+            clustering_enabled=clustering,
+            clustering_auto_threshold=clustering_auto_threshold,
+            clustering_min_seq_id=clustering_min_seq_id,
+            clustering_coverage=clustering_coverage,
             canvas_width=canvas_width,
             canvas_height=canvas_height,
             style_file=style,
