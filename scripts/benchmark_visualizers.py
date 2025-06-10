@@ -242,6 +242,178 @@ def chimerax_family_large_cmd(
     return chimerax_family_cmd(structures, temp_dir)
 
 
+def icn3d_single_cmd(structure: Path, temp_dir: Path) -> Optional[List[str]]:
+    """Return the command for running iCn3D on a single structure."""
+    output_file = temp_dir / f"icn3d_single_{structure.name}.png"
+    script_path = get_script_dir() / "benchmark" / "icn3d_single.py"
+    if not script_path.exists():
+        raise FileNotFoundError(f"iCn3D script not found: {script_path}")
+    return [
+        "uv",
+        "run",
+        str(script_path),
+        str(structure),
+        str(output_file),
+    ]
+
+
+def setup_ssdraw() -> Path:
+    """Setup SSDraw in the benchmark directory. Returns path to SSDraw script."""
+    benchmark_dir = get_script_dir() / "benchmark"
+    ssdraw_dir = benchmark_dir / "SSDraw"
+    ssdraw_script = ssdraw_dir / "SSDraw" / "SSDraw.py"
+
+    if not ssdraw_script.exists():
+        print("Setting up SSDraw for benchmarking...")
+
+        # Clone SSDraw to benchmark directory
+        clone_cmd = [
+            "git",
+            "clone",
+            "https://github.com/ncbi/SSDraw.git",
+            str(ssdraw_dir),
+        ]
+        result = subprocess.run(clone_cmd, capture_output=True, text=True)
+        if result.returncode != 0:
+            raise RuntimeError(f"Failed to setup SSDraw: {result.stderr}")
+
+        print(f"SSDraw setup complete: {ssdraw_script}")
+    else:
+        print(f"Using existing SSDraw setup: {ssdraw_script}")
+
+    return ssdraw_script
+
+
+def cleanup_ssdraw():
+    """Remove SSDraw from the benchmark directory."""
+    benchmark_dir = get_script_dir() / "benchmark"
+    ssdraw_dir = benchmark_dir / "SSDraw"
+
+    if ssdraw_dir.exists():
+        shutil.rmtree(ssdraw_dir)
+        print(f"Cleaned up SSDraw: {ssdraw_dir}")
+
+
+def setup_proorigami() -> Path:
+    """Setup pro-origami Docker image for benchmarking. Returns path to benchmark directory."""
+    benchmark_dir = get_script_dir() / "benchmark"
+    dockerfile_path = benchmark_dir / "Dockerfile.proorigami"
+
+    # Check if Docker is available
+    try:
+        docker_check = subprocess.run(
+            ["docker", "--version"], capture_output=True, text=True
+        )
+        if docker_check.returncode != 0:
+            raise RuntimeError(
+                "Docker not available. pro-origami requires Docker to run."
+            )
+    except FileNotFoundError:
+        raise RuntimeError("Docker not installed. pro-origami requires Docker to run.")
+
+    # Check if Docker image exists
+    image_name = "proorigami:latest"
+    image_check = subprocess.run(
+        ["docker", "images", "-q", image_name], capture_output=True, text=True
+    )
+
+    if not image_check.stdout.strip():
+        print("Building pro-origami Docker image for benchmarking...")
+
+        if not dockerfile_path.exists():
+            raise FileNotFoundError(f"Dockerfile not found: {dockerfile_path}")
+
+        # Build Docker image
+        build_cmd = [
+            "docker",
+            "build",
+            "-f",
+            str(dockerfile_path),
+            "-t",
+            image_name,
+            str(benchmark_dir),
+        ]
+
+        result = subprocess.run(build_cmd, capture_output=True, text=True)
+        if result.returncode != 0:
+            print(f"Docker build stdout: {result.stdout}")
+            print(f"Docker build stderr: {result.stderr}")
+            raise RuntimeError(
+                f"Failed to build pro-origami Docker image: {result.stderr}"
+            )
+
+        print("pro-origami Docker image built successfully")
+    else:
+        print("Using existing pro-origami Docker image")
+
+    return benchmark_dir
+
+
+def cleanup_proorigami():
+    """Remove pro-origami Docker image and files."""
+    try:
+        # Remove Docker image
+        image_name = "proorigami:latest"
+
+        # Check if image exists and remove it
+        image_check = subprocess.run(
+            ["docker", "images", "-q", image_name], capture_output=True, text=True
+        )
+
+        if image_check.stdout.strip():
+            remove_cmd = ["docker", "rmi", image_name]
+            result = subprocess.run(remove_cmd, capture_output=True, text=True)
+            if result.returncode == 0:
+                print(f"Cleaned up pro-origami Docker image: {image_name}")
+            else:
+                print(
+                    f"Warning: Failed to remove Docker image {image_name}: {result.stderr}"
+                )
+
+        print("pro-origami cleanup complete")
+    except FileNotFoundError:
+        print("Docker not available - no pro-origami cleanup needed")
+
+
+def ssdraw_single_cmd(structure: Path, temp_dir: Path) -> Optional[List[str]]:
+    """Return the command for running SSDraw on a single structure."""
+    output_file = temp_dir / f"ssdraw_single_{structure.name}.png"
+    script_path = get_script_dir() / "benchmark" / "ssdraw_single.py"
+    if not script_path.exists():
+        raise FileNotFoundError(f"SSDraw script not found: {script_path}")
+
+    # Get SSDraw path from local benchmark directory
+    benchmark_dir = get_script_dir() / "benchmark"
+    ssdraw_script = benchmark_dir / "SSDraw" / "SSDraw" / "SSDraw.py"
+
+    return [
+        "uv",
+        "run",
+        str(script_path),
+        str(structure),
+        str(output_file),
+        "--ssdraw-path",
+        str(ssdraw_script),  # Pass SSDraw path directly
+    ]
+
+
+def proorigami_single_cmd(structure: Path, temp_dir: Path) -> Optional[List[str]]:
+    """Return the command for running pro-origami on a single structure."""
+    output_file = temp_dir / f"proorigami_single_{structure.name}.png"
+    script_path = get_script_dir() / "benchmark" / "proorigami_single.py"
+    if not script_path.exists():
+        raise FileNotFoundError(f"pro-origami script not found: {script_path}")
+
+    # For Docker-based pro-origami, we don't need to pass a specific path
+    return [
+        "uv",
+        "run",
+        str(script_path),
+        str(structure),
+        str(output_file),
+    ]
+
+
 def print_summary(results_file: Path):
     """Print a quick summary of the benchmark results using Polars."""
     if not results_file.exists():
@@ -333,115 +505,161 @@ def benchmark(
         # ("flatprot", "single", flatprot_single_cmd),
         # ("flatprot", "family", flatprot_family_cmd),
         # ("flatprot", "family_large", flatprot_family_large_cmd),
-        ("pymol", "single", pymol_single_cmd),
+        # ("pymol", "single", pymol_single_cmd),
         # ("pymol", "family", pymol_family_cmd),
         # ("pymol", "family_large", pymol_family_large_cmd),
         # ("chimerax", "single", chimerax_single_cmd),
         # ("chimerax", "family", chimerax_family_cmd),
         # ("chimerax", "family_large", chimerax_family_large_cmd),
+        # ("icn3d", "single", icn3d_single_cmd),
+        # ("ssdraw", "single", ssdraw_single_cmd),
+        ("proorigami", "single", proorigami_single_cmd),
     ]
-    with tempfile.TemporaryDirectory() as temp_dir_str:
-        temp_dir = Path(temp_dir_str)
-        with open(output_file, "w", newline="") as csvfile:
-            writer = csv.writer(csvfile)
-            writer.writerow(
-                [
-                    "tool",
-                    "method",
-                    "structure_file",
-                    "iteration",
-                    "execution_time_seconds",
-                    "memory_mb",
-                    "exit_code",
-                    "error_message",
-                    "family_available",
-                ]
-            )
-            for tool, method, func in tools_methods:
-                print(f"Benchmarking {tool} ({method})...")
 
-                if method.endswith("_large"):
-                    structure_files = large_structure_files
-                else:
-                    structure_files = small_structure_files
+    # Setup SSDraw if needed for benchmarking
+    ssdraw_tools = [tool for tool, method, func in tools_methods if tool == "ssdraw"]
+    if ssdraw_tools:
+        try:
+            setup_ssdraw()
+        except Exception as e:
+            print(f"Warning: Failed to setup SSDraw: {e}")
+            # Remove SSDraw from tools_methods if setup failed
+            tools_methods = [
+                (tool, method, func)
+                for tool, method, func in tools_methods
+                if tool != "ssdraw"
+            ]
 
-                if not structure_files:
-                    print(
-                        f"    Skipping {tool} ({method}) because no structure files were found."
-                    )
-                    continue
+    # Setup pro-origami if needed for benchmarking
+    proorigami_tools = [
+        tool for tool, method, func in tools_methods if tool == "proorigami"
+    ]
+    if proorigami_tools:
+        try:
+            setup_proorigami()
+        except Exception as e:
+            print(f"Warning: Failed to setup pro-origami: {e}")
+            # Remove pro-origami from tools_methods if setup failed
+            tools_methods = [
+                (tool, method, func)
+                for tool, method, func in tools_methods
+                if tool != "proorigami"
+            ]
 
-                for iteration in range(1, n_iterations + 1):
-                    print(f"  Iteration {iteration}/{n_iterations}")
-                    if method == "single":
-                        for structure in structure_files:
-                            print(f"    Processing {structure.name}")
-                            cmd = func(structure, temp_dir)
-                            if cmd:
-                                if print_commands:
-                                    print(f"      # Command: {shlex.join(cmd)}")
+    try:
+        with tempfile.TemporaryDirectory() as temp_dir_str:
+            temp_dir = Path(temp_dir_str)
+            with open(output_file, "w", newline="") as csvfile:
+                writer = csv.writer(csvfile)
+                writer.writerow(
+                    [
+                        "tool",
+                        "method",
+                        "structure_file",
+                        "iteration",
+                        "execution_time_seconds",
+                        "memory_mb",
+                        "exit_code",
+                        "error_message",
+                        "family_available",
+                    ]
+                )
+                for tool, method, func in tools_methods:
+                    print(f"Benchmarking {tool} ({method})...")
+
+                    if method.endswith("_large"):
+                        structure_files = large_structure_files
+                    else:
+                        structure_files = small_structure_files
+
+                    if not structure_files:
+                        print(
+                            f"    Skipping {tool} ({method}) because no structure files were found."
+                        )
+                        continue
+
+                    for iteration in range(1, n_iterations + 1):
+                        print(f"  Iteration {iteration}/{n_iterations}")
+                        if method == "single":
+                            for structure in structure_files:
+                                print(f"    Processing {structure.name}")
+                                cmd = func(structure, temp_dir)
+                                if cmd:
+                                    if print_commands:
+                                        print(f"      # Command: {shlex.join(cmd)}")
+                                    (
+                                        exec_time,
+                                        memory,
+                                        exit_code,
+                                        error_msg,
+                                    ) = measure_execution(cmd)
+                                    log_result(
+                                        writer,
+                                        tool,
+                                        method,
+                                        structure.name,
+                                        iteration,
+                                        exec_time,
+                                        memory,
+                                        exit_code,
+                                        error_msg,
+                                        "N/A",
+                                    )
+                        else:  # family and family_large
+                            print(
+                                f"    Processing {method} with {len(structure_files)} structures"
+                            )
+                            cmd_or_status = func(structure_files, temp_dir)
+                            family_available = "error"
+                            if cmd_or_status == "UNSUPPORTED":
                                 (
                                     exec_time,
                                     memory,
                                     exit_code,
                                     error_msg,
-                                ) = measure_execution(cmd)
-                                log_result(
-                                    writer,
-                                    tool,
-                                    method,
-                                    structure.name,
-                                    iteration,
+                                ) = (0.0, 0.0, 2, f"{tool} {method} not supported")
+                                family_available = "false"
+                            elif cmd_or_status:
+                                if print_commands:
+                                    print(
+                                        f"      # Command: {shlex.join(cmd_or_status)}"
+                                    )
+                                (
                                     exec_time,
                                     memory,
                                     exit_code,
                                     error_msg,
-                                    "N/A",
+                                ) = measure_execution(cmd_or_status)
+                                if exit_code == 0:
+                                    family_available = "true"
+                            else:
+                                (exec_time, memory, exit_code, error_msg) = (
+                                    0.0,
+                                    0.0,
+                                    1,
+                                    f"Could not create command for {tool} {method}",
                                 )
-                    else:  # family and family_large
-                        print(
-                            f"    Processing {method} with {len(structure_files)} structures"
-                        )
-                        cmd_or_status = func(structure_files, temp_dir)
-                        family_available = "error"
-                        if cmd_or_status == "UNSUPPORTED":
-                            (
+                            log_result(
+                                writer,
+                                tool,
+                                method,
+                                "multiple_structures",
+                                iteration,
                                 exec_time,
                                 memory,
                                 exit_code,
                                 error_msg,
-                            ) = (0.0, 0.0, 2, f"{tool} {method} not supported")
-                            family_available = "false"
-                        elif cmd_or_status:
-                            if print_commands:
-                                print(f"      # Command: {shlex.join(cmd_or_status)}")
-                            (
-                                exec_time,
-                                memory,
-                                exit_code,
-                                error_msg,
-                            ) = measure_execution(cmd_or_status)
-                            if exit_code == 0:
-                                family_available = "true"
-                        else:
-                            (exec_time, memory, exit_code, error_msg) = (
-                                0.0,
-                                0.0,
-                                1,
-                                f"Could not create command for {tool} {method}",
+                                family_available,
                             )
-                        log_result(
-                            writer,
-                            tool,
-                            method,
-                            "multiple_structures",
-                            iteration,
-                            exec_time,
-                            memory,
-                            exit_code,
-                            error_msg,
-                            family_available,
-                        )
+    finally:
+        # Cleanup SSDraw if it was setup for benchmarking
+        if ssdraw_tools:
+            cleanup_ssdraw()
+
+        # Cleanup pro-origami if it was setup for benchmarking
+        if proorigami_tools:
+            cleanup_proorigami()
+
     print(f"\nBenchmark completed. Results saved to: {output_file}")
     print_summary(output_file)
 
