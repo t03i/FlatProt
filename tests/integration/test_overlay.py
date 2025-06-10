@@ -2,7 +2,7 @@
 
 import tempfile
 from pathlib import Path
-from unittest.mock import patch
+from unittest.mock import patch, MagicMock
 import pytest
 
 from flatprot.cli.overlay import overlay, resolve_input_files
@@ -76,8 +76,7 @@ class TestOverlayCommand:
 
     @patch("flatprot.cli.overlay.create_overlay")
     @patch("flatprot.cli.overlay.resolve_input_files")
-    @patch("flatprot.cli.overlay.drawsvg")
-    def test_overlay_basic_success(self, mock_drawsvg, mock_resolve, mock_create):
+    def test_overlay_basic_success(self, mock_resolve, mock_create):
         """Test basic successful overlay creation."""
         # Setup mocks
         test_files = [Path("file1.cif"), Path("file2.cif")]
@@ -85,9 +84,6 @@ class TestOverlayCommand:
 
         output_path = Path("overlay.png")
         mock_create.return_value = output_path
-
-        # Mock drawsvg with Cairo available
-        mock_drawsvg._cairo_available = True
 
         # Test
         overlay(
@@ -148,13 +144,11 @@ class TestOverlayCommand:
 
     @patch("flatprot.cli.overlay.create_overlay")
     @patch("flatprot.cli.overlay.resolve_input_files")
-    @patch("flatprot.cli.overlay.drawsvg")
-    def test_overlay_custom_config(self, mock_drawsvg, mock_resolve, mock_create):
+    def test_overlay_custom_config(self, mock_resolve, mock_create):
         """Test overlay with custom configuration."""
         test_files = [Path("file1.cif"), Path("file2.cif")]
         mock_resolve.return_value = test_files
         mock_create.return_value = Path("custom.png")
-        mock_drawsvg._cairo_available = True
 
         overlay(
             file_patterns=["*.cif"],
@@ -165,7 +159,7 @@ class TestOverlayCommand:
             canvas_height=1200,
             min_probability=0.7,
             dpi=600,
-            no_clustering=True,
+            clustering=False,
             common=CommonParameters(quiet=True),
         )
 
@@ -182,15 +176,17 @@ class TestOverlayCommand:
 class TestCairoAvailability:
     """Test Cairo availability detection."""
 
+    @patch("flatprot.utils.overlay_utils.combine_drawings")
     @patch("flatprot.cli.overlay.resolve_input_files")
-    @patch("flatprot.cli.overlay.drawsvg")
-    def test_cairo_check_png_output(self, mock_drawsvg, mock_resolve):
+    def test_cairo_check_png_output(self, mock_resolve, mock_combine_drawings):
         """Test Cairo availability check for PNG output."""
         test_files = [Path("file1.cif"), Path("file2.cif")]
         mock_resolve.return_value = test_files
 
-        # Mock drawsvg without Cairo
-        mock_drawsvg._cairo_available = False
+        # Mock a drawing object that will fail when save_png is called
+        mock_drawing = MagicMock()
+        mock_drawing.save_png.side_effect = RuntimeError("Cairo not available")
+        mock_combine_drawings.return_value = mock_drawing
 
         with pytest.raises(SystemExit):
             overlay(
@@ -233,13 +229,11 @@ class TestOverlayErrorHandling:
 
     @patch("flatprot.cli.overlay.create_overlay")
     @patch("flatprot.cli.overlay.resolve_input_files")
-    @patch("flatprot.cli.overlay.drawsvg")
-    def test_overlay_creation_error(self, mock_drawsvg, mock_resolve, mock_create):
+    def test_overlay_creation_error(self, mock_resolve, mock_create):
         """Test handling of overlay creation errors."""
         test_files = [Path("file1.cif"), Path("file2.cif")]
         mock_resolve.return_value = test_files
         mock_create.side_effect = RuntimeError("Creation failed")
-        mock_drawsvg._cairo_available = True
 
         with pytest.raises(SystemExit):
             overlay(
@@ -262,13 +256,11 @@ class TestOverlayCommandLineInterface:
 
     @patch("flatprot.cli.overlay.create_overlay")
     @patch("flatprot.cli.overlay.resolve_input_files")
-    @patch("flatprot.cli.overlay.drawsvg")
-    def test_style_file_passed_to_config(self, mock_drawsvg, mock_resolve, mock_create):
+    def test_style_file_passed_to_config(self, mock_resolve, mock_create):
         """Test that style file is passed to config."""
         test_files = [Path("file1.cif"), Path("file2.cif")]
         mock_resolve.return_value = test_files
         mock_create.return_value = Path("test.png")
-        mock_drawsvg._cairo_available = True
 
         style_path = Path("custom.toml")
 
@@ -284,15 +276,11 @@ class TestOverlayCommandLineInterface:
     @patch("flatprot.cli.overlay.create_overlay")
     @patch("flatprot.cli.overlay.resolve_input_files")
     @patch("flatprot.cli.overlay.set_logging_level")
-    @patch("flatprot.cli.overlay.drawsvg")
-    def test_verbose_logging(
-        self, mock_drawsvg, mock_set_logging, mock_resolve, mock_create
-    ):
+    def test_verbose_logging(self, mock_set_logging, mock_resolve, mock_create):
         """Test verbose logging configuration."""
         test_files = [Path("file1.cif"), Path("file2.cif")]
         mock_resolve.return_value = test_files
         mock_create.return_value = Path("test.png")
-        mock_drawsvg._cairo_available = True
 
         # Test with verbose=True
         overlay(file_patterns=["*.cif"], common=CommonParameters(verbose=True))
@@ -302,15 +290,11 @@ class TestOverlayCommandLineInterface:
     @patch("flatprot.cli.overlay.create_overlay")
     @patch("flatprot.cli.overlay.resolve_input_files")
     @patch("flatprot.cli.overlay.set_logging_level")
-    @patch("flatprot.cli.overlay.drawsvg")
-    def test_quiet_logging(
-        self, mock_drawsvg, mock_set_logging, mock_resolve, mock_create
-    ):
+    def test_quiet_logging(self, mock_set_logging, mock_resolve, mock_create):
         """Test quiet logging configuration."""
         test_files = [Path("file1.cif"), Path("file2.cif")]
         mock_resolve.return_value = test_files
         mock_create.return_value = Path("test.png")
-        mock_drawsvg._cairo_available = True
 
         # Test with quiet=True
         overlay(file_patterns=["*.cif"], common=CommonParameters(quiet=True))
