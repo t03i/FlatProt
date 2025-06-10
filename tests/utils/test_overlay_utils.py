@@ -29,7 +29,10 @@ class TestOverlayConfig:
         assert config.alignment_mode == "family-identity"
         assert config.target_family is None
         assert config.min_probability == 0.5
-        assert config.clustering_enabled is True
+        assert config.clustering_enabled is None  # Auto-decision
+        assert config.clustering_auto_threshold == 100
+        assert config.clustering_min_seq_id == 0.5
+        assert config.clustering_coverage == 0.9
         assert config.opacity_scaling is True
         assert config.canvas_width == 1000
         assert config.canvas_height == 1000
@@ -45,6 +48,9 @@ class TestOverlayConfig:
             target_family="3000114",
             min_probability=0.7,
             clustering_enabled=False,
+            clustering_auto_threshold=50,
+            clustering_min_seq_id=0.8,
+            clustering_coverage=0.95,
             canvas_width=1500,
             output_format="svg",
         )
@@ -53,8 +59,25 @@ class TestOverlayConfig:
         assert config.target_family == "3000114"
         assert config.min_probability == 0.7
         assert config.clustering_enabled is False
+        assert config.clustering_auto_threshold == 50
+        assert config.clustering_min_seq_id == 0.8
+        assert config.clustering_coverage == 0.95
         assert config.canvas_width == 1500
         assert config.output_format == "svg"
+
+    def test_clustering_auto_config(self):
+        """Test auto-clustering configuration."""
+        config = OverlayConfig(
+            clustering_enabled=None,  # Auto-decision
+            clustering_auto_threshold=25,
+            clustering_min_seq_id=0.3,
+            clustering_coverage=0.7,
+        )
+
+        assert config.clustering_enabled is None
+        assert config.clustering_auto_threshold == 25
+        assert config.clustering_min_seq_id == 0.3
+        assert config.clustering_coverage == 0.7
 
 
 class TestCalculateOpacity:
@@ -71,7 +94,9 @@ class TestCalculateOpacity:
         result = calculate_opacity(cluster_counts)
 
         assert len(result) == 1
-        assert result["cluster1"] == 1.0  # Single cluster gets max opacity
+        assert (
+            result["cluster1"] == 0.3
+        )  # Single cluster gets max opacity (updated range)
 
     def test_multiple_clusters(self):
         """Test with multiple clusters of different sizes."""
@@ -80,7 +105,7 @@ class TestCalculateOpacity:
 
         assert len(result) == 3
         assert result["small"] < result["medium"] < result["large"]
-        assert result["small"] >= 0.1  # Min opacity
+        assert result["small"] >= 0.05  # Min opacity (updated range)
         assert result["large"] <= 1.0  # Max opacity
 
     def test_custom_opacity_range(self):
@@ -225,9 +250,13 @@ class TestGenerateAlignedDrawing:
         mock_parser_class.assert_called_once()
         mock_parser.parse_structure.assert_called_once_with(file_path)
         mock_transform.assert_called_once_with(mock_structure)
-        mock_project.assert_called_once_with(mock_transformed, 1000, 1000)
+        mock_project.assert_called_once_with(
+            mock_transformed, 1000, 1000, disable_scaling=True
+        )
         mock_create_scene.assert_called_once_with(mock_projected, None)
-        mock_renderer_class.assert_called_once_with(mock_scene, 1000, 1000)
+        mock_renderer_class.assert_called_once_with(
+            mock_scene, 1000, 1000, background_color=None
+        )
         mock_renderer.render.assert_called_once()
 
         assert result == mock_drawing
@@ -306,7 +335,7 @@ class TestClusterAndSelectRepresentatives:
         result = cluster_and_select_representatives(test_files, config)
 
         assert len(result) == len(test_files)
-        assert all(opacity == 1.0 for _, opacity in result)
+        assert all(opacity == 0.1 for _, opacity in result)  # Updated default opacity
 
 
 # Removed mock_open_cluster_file helper function as it's no longer needed

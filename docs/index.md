@@ -9,7 +9,10 @@ FlatProt is a Python package for protein structure and sequence analysis. It pro
 
 ## Standard Workflow on the command line
 
-FlatProt generates 2D projections of protein structures in three simple steps:
+FlatProt provides three main commands for protein structure analysis:
+
+### Single Structure Projection
+Generate 2D projections of individual protein structures in three simple steps:
 
 1. Obtain the protein structure file (CIF or PDB format)
     - From databases like PDB, AlphaFold, or your own modeling tools
@@ -22,16 +25,30 @@ FlatProt generates 2D projections of protein structures in three simple steps:
     - With pdb file: `flatprot project structure.pdb --dssp structure.dssp -o projection.svg`
     - Customize with options like `--canvas-width 500 --canvas-height 400` for sizing
 
-The resulting SVG file contains a clean, publication-ready 2D representation of your protein structure that can be viewed in any web browser or vector graphics editor.
+### Multi-Structure Comparison
+Create overlay visualizations to compare multiple related structures:
+
+1. Collect related structure files (same family or similar proteins)
+2. Generate family-aligned overlay: `flatprot overlay "structures/*.cif" -o comparison.png`
+3. For consistent size comparison: `flatprot overlay "structures/*.cif" --disable-scaling -o overlay.png`
+
+### Structure Alignment
+Align structures to known protein families:
+
+1. Find best matching family: `flatprot align structure.cif -i alignment_info.json`
+2. Use alignment in projections: `flatprot project structure.cif --matrix alignment_matrix.npy -o aligned.svg`
+
+The resulting files contain clean, publication-ready 2D representations that can be viewed in any web browser or vector graphics editor.
 
 ## Key Features
 
--   Standardized 2D visualization approach for protein analysis
--   Integration with Foldseek alignments for protein family mapping
--   Efficient processing of proteins across varying sizes
--   Fast response times even for large, complex structures
--   Support for proteins up to 3,000 residues
--   Clear and consistent visualizations for structure analysis
+-   **Single Structure Visualization**: Standardized 2D projections of individual protein structures
+-   **Multi-Structure Overlays**: Compare multiple structures with automatic clustering and alignment
+-   **Family-Based Alignment**: Integration with Foldseek alignments for protein family mapping
+-   **Batch Processing**: Efficient processing of proteins across varying sizes
+-   **High Performance**: Fast response times even for large, complex structures
+-   **Scalable**: Support for proteins up to 3,000 residues and datasets with 50+ structures
+-   **Publication Ready**: Clear and consistent visualizations for structure analysis
 
 ## Visualization Options
 

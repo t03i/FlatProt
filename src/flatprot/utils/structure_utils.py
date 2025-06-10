@@ -201,6 +201,7 @@ def project_structure_orthographically(
     center_projection: bool = True,
     view_direction: Optional[np.ndarray] = None,
     up_vector: Optional[np.ndarray] = None,
+    disable_scaling: bool = False,
 ) -> Structure:
     """Projects the coordinates of a Structure orthographically, returning a new Structure.
 
@@ -222,6 +223,8 @@ def project_structure_orthographically(
                         Defaults to [0, 0, 1] if None.
         up_vector: Optional (3,) numpy array for the initial up vector.
                    Defaults to [0, 1, 0] if None.
+        disable_scaling: If True, disables automatic scaling to fit canvas, useful for overlay
+                        comparisons where consistent scales are needed across different structures.
 
     Returns:
         A new Structure object where the coordinates represent the projected data:
@@ -254,6 +257,7 @@ def project_structure_orthographically(
             "padding_y": padding_y,
             "maintain_aspect_ratio": maintain_aspect_ratio,
             "canvas_alignment": "center" if center_projection else "top_left",
+            "disable_scaling": disable_scaling,
         }
         if view_direction is not None:
             param_kwargs["view_direction"] = view_direction
