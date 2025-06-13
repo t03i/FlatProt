@@ -224,9 +224,7 @@ def chimerax_single_cmd(structure: Path, temp_dir: Path) -> Optional[List[str]]:
     return [
         chimerax_executable,
         "--script",
-        str(script_path),
-        str(structure),
-        str(output_file),
+        f"{str(script_path)} {str(structure)} {str(output_file)}",
     ]
 
 
@@ -244,9 +242,7 @@ def chimerax_family_cmd(structures: List[Path], temp_dir: Path) -> Optional[List
     return [
         chimerax_executable,
         "--script",
-        str(script_path),
-        str(output_file),
-        *map(str, structures),
+        f"{str(script_path)} {str(output_file)} {" ".join(map(str, structures))}",
     ]
 
 
