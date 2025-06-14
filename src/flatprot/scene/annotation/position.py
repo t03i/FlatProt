@@ -6,6 +6,7 @@ from enum import Enum
 
 import numpy as np
 from pydantic import Field
+from pydantic_extra_types.color import Color
 
 from flatprot.core import (
     ResidueCoordinate,
@@ -70,6 +71,14 @@ class PositionAnnotationStyle(BaseAnnotationStyle):
     terminus_font_weight: str = Field(
         default="bold",
         description="Font weight for N/C terminus labels.",
+    )
+    font_color: Color = Field(
+        default=Color((0.5, 0.5, 0.5)),  # Gray for residue numbers
+        description="Font color for residue numbers.",
+    )
+    terminus_font_color: Color = Field(
+        default=Color((0.0, 0.0, 0.0)),  # Black for N/C terminus
+        description="Font color for N/C terminus labels.",
     )
 
 
@@ -183,6 +192,7 @@ class PositionAnnotation(BaseAnnotationElement[PositionAnnotationStyle]):
                 "font_size": self.style.terminus_font_size,
                 "font_weight": self.style.terminus_font_weight,
                 "font_family": self.style.font_family,
+                "font_color": self.style.terminus_font_color,
                 "text": self.text,
                 "offset": self.style.text_offset,
             }
@@ -191,6 +201,7 @@ class PositionAnnotation(BaseAnnotationElement[PositionAnnotationStyle]):
                 "font_size": self.style.font_size,
                 "font_weight": self.style.font_weight,
                 "font_family": self.style.font_family,
+                "font_color": self.style.font_color,
                 "text": self.text,
                 "offset": self.style.text_offset,
             }

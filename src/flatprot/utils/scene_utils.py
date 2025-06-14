@@ -308,7 +308,7 @@ def add_position_annotations_to_scene(
             logger.error(f"Failed to add C-terminus annotation: {e}")
             raise SceneCreationError(f"Failed to add C-terminus annotation: {e}") from e
 
-    # Add residue number annotations for helices and sheets
+    # Add residue number annotations for helices and sheets only
     if show_residue_numbers:
         for element in structure_elements:
             # Only add residue numbers for helices and sheets, not coils

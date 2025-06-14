@@ -271,7 +271,7 @@ def _draw_position_annotation(
         font_size=display_props["font_size"],
         font_family=display_props["font_family"],
         font_weight=display_props["font_weight"],
-        fill=style.color.as_hex(),
+        fill=display_props["font_color"].as_hex(),
         opacity=style.opacity,
         x=x,
         y=y,

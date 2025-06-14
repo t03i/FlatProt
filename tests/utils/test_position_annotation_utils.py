@@ -154,7 +154,7 @@ class TestAddPositionAnnotationsToScene:
 
         assert len(n_terminus) == 0  # Should be none
         assert len(c_terminus) == 0  # Should be none
-        assert len(residue_numbers) == 4  # 2 for helix + 2 for sheet
+        assert len(residue_numbers) == 6  # 2 for helix + 2 for coil + 2 for sheet
 
     def test_add_position_annotations_no_annotations(self, mocker):
         """Test that no annotations are added when both options are disabled."""
@@ -240,8 +240,8 @@ class TestAddPositionAnnotationsToScene:
         ):
             add_position_annotations_to_scene(scene)
 
-    def test_residue_number_annotations_skip_coils(self, mocker):
-        """Test that residue number annotations are not added for coil elements."""
+    def test_residue_number_annotations_include_all_elements(self, mocker):
+        """Test that residue number annotations are added for all secondary structure elements."""
         scene, mock_elements = self.create_mock_scene(mocker)
 
         # Call function with only residue numbers enabled
@@ -249,7 +249,7 @@ class TestAddPositionAnnotationsToScene:
             scene, show_terminus=False, show_residue_numbers=True
         )
 
-        # Check that only helix and sheet get residue numbers, not coil
+        # Check that helix, coil, and sheet all get residue numbers
         calls = scene.add_element.call_args_list
         added_annotations = [call[0][0] for call in calls]
         residue_number_annotations = [
@@ -258,8 +258,8 @@ class TestAddPositionAnnotationsToScene:
             if ann.position_type == PositionType.RESIDUE_NUMBER
         ]
 
-        # Should be 4 annotations: 2 for helix + 2 for sheet (no coil)
-        assert len(residue_number_annotations) == 4
+        # Should be 6 annotations: 2 for helix + 2 for coil + 2 for sheet
+        assert len(residue_number_annotations) == 6
 
     def test_residue_number_single_residue_element(self, mocker):
         """Test handling of single-residue elements (no end annotation)."""

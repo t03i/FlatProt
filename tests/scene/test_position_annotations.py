@@ -29,7 +29,7 @@ class TestPositionAnnotationStyle:
         assert style.font_size == 8.0
         assert style.font_weight == "normal"
         assert style.font_family == "Arial, sans-serif"
-        assert style.text_offset == 3.0
+        assert style.text_offset == 5.0
         assert style.show_terminus is True
         assert style.show_residue_numbers is True
         assert style.terminus_font_size == 10.0
