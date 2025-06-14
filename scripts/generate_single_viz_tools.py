@@ -110,7 +110,7 @@ def run_chimerax_visualization(
     Tuple of (success, message).
     """
     output_file = output_dir / f"chimerax_{structure_file.stem}.png"
-    script_path = get_script_dir() / "benchmark" / "chimerax_single.py"
+    script_path = get_script_dir() / "tool_benchmark" / "chimerax_single.py"
 
     if not script_path.exists():
         return False, f"ChimeraX script not found: {script_path}"
@@ -146,7 +146,7 @@ def run_pymol_visualization(structure_file: Path, output_dir: Path) -> Tuple[boo
     Tuple of (success, message).
     """
     output_file = output_dir / f"pymol_{structure_file.stem}.png"
-    script_path = get_script_dir() / "benchmark" / "pymol_single.py"
+    script_path = get_script_dir() / "tool_benchmark" / "pymol_single.py"
 
     if not script_path.exists():
         return False, f"PyMOL script not found: {script_path}"
@@ -175,7 +175,7 @@ def setup_ssdraw() -> bool:
     Returns:
         True if setup successful, False otherwise.
     """
-    benchmark_dir = get_script_dir() / "benchmark"
+    benchmark_dir = get_script_dir() / "tool_benchmark"
     ssdraw_dir = benchmark_dir / "SSDraw"
     ssdraw_script = ssdraw_dir / "SSDraw" / "SSDraw.py"
 
@@ -218,7 +218,7 @@ def run_ssdraw_visualization(
     Tuple of (success, message).
     """
     output_file = output_dir / f"ssdraw_{structure_file.stem}.png"
-    script_path = get_script_dir() / "benchmark" / "ssdraw_single.py"
+    script_path = get_script_dir() / "tool_benchmark" / "ssdraw_single.py"
 
     if not script_path.exists():
         return False, f"SSDraw script not found: {script_path}"
@@ -228,7 +228,7 @@ def run_ssdraw_visualization(
         return False, "Failed to setup SSDraw"
 
     # Get SSDraw path from benchmark directory
-    benchmark_dir = get_script_dir() / "benchmark"
+    benchmark_dir = get_script_dir() / "tool_benchmark"
     ssdraw_script = benchmark_dir / "SSDraw" / "SSDraw" / "SSDraw.py"
 
     cmd = [
@@ -256,7 +256,7 @@ def setup_proorigami() -> bool:
     Returns:
         True if setup successful, False otherwise.
     """
-    benchmark_dir = get_script_dir() / "benchmark"
+    benchmark_dir = get_script_dir() / "tool_benchmark"
     dockerfile_path = benchmark_dir / "Dockerfile.proorigami"
 
     # Check if Docker is available
@@ -324,7 +324,7 @@ def run_proorigami_visualization(
     Tuple of (success, message).
     """
     output_file = output_dir / f"proorigami_{structure_file.stem}.png"
-    script_path = get_script_dir() / "benchmark" / "proorigami_single.py"
+    script_path = get_script_dir() / "tool_benchmark" / "proorigami_single.py"
 
     if not script_path.exists():
         return False, f"Pro-origami script not found: {script_path}"
