@@ -8,6 +8,7 @@ from flatprot.core import (
     Structure,
     ResidueRange,
     ResidueRangeSet,
+    ResidueCoordinate,
     SecondaryStructureType,
     logger,
     CoordinateCalculationError,
@@ -325,9 +326,16 @@ def add_position_annotations_to_scene(
             # Add start position annotation
             start_id = f"pos_start_{element.id}"
             try:
+                # Create specific coordinate for start position
+                start_coord = ResidueCoordinate(
+                    residue_range.chain_id,
+                    residue_range.start,
+                    None,  # residue_type not needed
+                    0,  # coordinate_index
+                )
                 start_annotation = PositionAnnotation(
                     id=start_id,
-                    target=residue_range,
+                    target=start_coord,
                     position_type=PositionType.RESIDUE_NUMBER,
                     text=str(residue_range.start),
                     style=style,
@@ -345,9 +353,16 @@ def add_position_annotations_to_scene(
             if residue_range.end != residue_range.start:
                 end_id = f"pos_end_{element.id}"
                 try:
+                    # Create specific coordinate for end position
+                    end_coord = ResidueCoordinate(
+                        residue_range.chain_id,
+                        residue_range.end,
+                        None,  # residue_type not needed
+                        0,  # coordinate_index
+                    )
                     end_annotation = PositionAnnotation(
                         id=end_id,
-                        target=residue_range,
+                        target=end_coord,
                         position_type=PositionType.RESIDUE_NUMBER,
                         text=str(residue_range.end),
                         style=style,

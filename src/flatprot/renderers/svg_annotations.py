@@ -261,9 +261,9 @@ def _draw_position_annotation(
     style = annotation.style
     display_props = annotation.get_display_properties()
 
-    # Use the first anchor point and apply offset
-    x = anchor_coords[0, 0] + style.offset[0]
-    y = anchor_coords[0, 1] + style.offset[1]
+    # Use the first anchor point and apply position-specific offset (x-axis only)
+    x = anchor_coords[0, 0] + display_props["offset"]
+    y = anchor_coords[0, 1]  # No y-axis offset for position annotations
 
     # Create text element with position-specific styling
     text_element = Text(
