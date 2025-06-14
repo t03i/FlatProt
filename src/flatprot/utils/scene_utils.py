@@ -8,6 +8,7 @@ from flatprot.core import (
     Structure,
     ResidueRange,
     ResidueRangeSet,
+    ResidueCoordinate,
     SecondaryStructureType,
     logger,
     CoordinateCalculationError,
@@ -27,6 +28,9 @@ from flatprot.scene import (
     SheetStyle,
     CoilStyle,
     BaseAnnotationElement,  # Import base for type hinting
+    PositionAnnotation,
+    PositionAnnotationStyle,
+    PositionType,
 )
 
 # Import the refactored AnnotationParser and its errors
@@ -228,3 +232,150 @@ def add_annotations_to_scene(annotations_path: Path, scene: Scene) -> None:
         logger.error(f"An unexpected error occurred while adding annotations: {str(e)}")
         # Re-raise unexpected errors
         raise
+
+
+def add_position_annotations_to_scene(
+    scene: Scene,
+    style: Optional[PositionAnnotationStyle] = None,
+    show_terminus: bool = True,
+    show_residue_numbers: bool = True,
+) -> None:
+    """Adds position annotations (N/C terminus and residue numbers) to the scene.
+
+    Args:
+        scene: The Scene object to add position annotations to.
+        style: Optional custom style for position annotations.
+        show_terminus: Whether to show N/C terminus labels.
+        show_residue_numbers: Whether to show residue numbers on secondary structures.
+
+    Raises:
+        SceneCreationError: If adding an element to the scene fails.
+    """
+    if style is None:
+        style = PositionAnnotationStyle()
+
+    # Override style settings based on parameters
+    style.show_terminus = show_terminus
+    style.show_residue_numbers = show_residue_numbers
+
+    # Get all structure elements in sequence
+    try:
+        structure_elements = scene.get_sequential_structure_elements()
+    except Exception as e:
+        logger.error(f"Failed to get sequential structure elements: {e}")
+        raise SceneCreationError(
+            f"Failed to get structure elements for position annotations: {e}"
+        ) from e
+
+    if not structure_elements:
+        logger.warning("No structure elements found for position annotations")
+        return
+
+    # Add N-terminus annotation
+    if show_terminus and structure_elements:
+        first_element = structure_elements[0]
+        n_terminus_id = f"pos_n_terminus_{first_element.id}"
+
+        try:
+            n_terminus = PositionAnnotation(
+                id=n_terminus_id,
+                target=first_element.residue_range_set,
+                position_type=PositionType.N_TERMINUS,
+                text="N",
+                style=style,
+            )
+            scene.add_element(n_terminus)
+            logger.debug(f"Added N-terminus annotation: {n_terminus_id}")
+        except Exception as e:
+            logger.error(f"Failed to add N-terminus annotation: {e}")
+            raise SceneCreationError(f"Failed to add N-terminus annotation: {e}") from e
+
+    # Add C-terminus annotation
+    if show_terminus and structure_elements:
+        last_element = structure_elements[-1]
+        c_terminus_id = f"pos_c_terminus_{last_element.id}"
+
+        try:
+            c_terminus = PositionAnnotation(
+                id=c_terminus_id,
+                target=last_element.residue_range_set,
+                position_type=PositionType.C_TERMINUS,
+                text="C",
+                style=style,
+            )
+            scene.add_element(c_terminus)
+            logger.debug(f"Added C-terminus annotation: {c_terminus_id}")
+        except Exception as e:
+            logger.error(f"Failed to add C-terminus annotation: {e}")
+            raise SceneCreationError(f"Failed to add C-terminus annotation: {e}") from e
+
+    # Add residue number annotations for helices and sheets only
+    if show_residue_numbers:
+        for element in structure_elements:
+            # Only add residue numbers for helices and sheets, not coils
+            if not isinstance(element, (HelixSceneElement, SheetSceneElement)):
+                continue
+
+            if not element.residue_range_set.ranges:
+                logger.warning(f"Element {element.id} has no residue ranges")
+                continue
+
+            # Get the first range (assuming single range per element)
+            residue_range = element.residue_range_set.ranges[0]
+
+            # Add start position annotation
+            start_id = f"pos_start_{element.id}"
+            try:
+                # Create specific coordinate for start position
+                start_coord = ResidueCoordinate(
+                    residue_range.chain_id,
+                    residue_range.start,
+                    None,  # residue_type not needed
+                    0,  # coordinate_index
+                )
+                start_annotation = PositionAnnotation(
+                    id=start_id,
+                    target=start_coord,
+                    position_type=PositionType.RESIDUE_NUMBER,
+                    text=str(residue_range.start),
+                    style=style,
+                )
+                scene.add_element(start_annotation)
+                logger.debug(f"Added start position annotation: {start_id}")
+            except Exception as e:
+                logger.error(
+                    f"Failed to add start position annotation for {element.id}: {e}"
+                )
+                # Continue with other annotations even if one fails
+                continue
+
+            # Add end position annotation (only if range has more than one residue)
+            if residue_range.end != residue_range.start:
+                end_id = f"pos_end_{element.id}"
+                try:
+                    # Create specific coordinate for end position
+                    end_coord = ResidueCoordinate(
+                        residue_range.chain_id,
+                        residue_range.end,
+                        None,  # residue_type not needed
+                        0,  # coordinate_index
+                    )
+                    end_annotation = PositionAnnotation(
+                        id=end_id,
+                        target=end_coord,
+                        position_type=PositionType.RESIDUE_NUMBER,
+                        text=str(residue_range.end),
+                        style=style,
+                    )
+                    scene.add_element(end_annotation)
+                    logger.debug(f"Added end position annotation: {end_id}")
+                except Exception as e:
+                    logger.error(
+                        f"Failed to add end position annotation for {element.id}: {e}"
+                    )
+                    # Continue with other annotations even if one fails
+                    continue
+
+    logger.info(
+        f"Added position annotations to scene (terminus: {show_terminus}, residue_numbers: {show_residue_numbers})"
+    )

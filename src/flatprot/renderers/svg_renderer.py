@@ -18,6 +18,7 @@ from flatprot.scene import (
     SceneError,
     LineAnnotation,
     AreaAnnotation,
+    PositionAnnotation,
     BaseAnnotationElement,
     BaseStructureSceneElement,
     TargetResidueNotFoundError,
@@ -35,6 +36,7 @@ from .svg_annotations import (
     _draw_point_annotation,
     _draw_line_annotation,
     _draw_area_annotation,
+    _draw_position_annotation,
 )
 
 # --- Helper Functions --- #
@@ -109,6 +111,7 @@ class SVGRenderer:
         PointAnnotation: _draw_point_annotation,
         LineAnnotation: _draw_line_annotation,
         AreaAnnotation: _draw_area_annotation,
+        PositionAnnotation: _draw_position_annotation,
     }
 
     def __init__(
