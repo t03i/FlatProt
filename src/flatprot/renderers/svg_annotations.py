@@ -8,6 +8,7 @@ from flatprot.scene import (
     PointAnnotation,
     LineAnnotation,
     AreaAnnotation,
+    PositionAnnotation,
     BaseAnnotationElement,
 )
 from flatprot.core.logger import logger
@@ -237,3 +238,47 @@ def _draw_area_annotation(
         group.append(label_element)
 
     return group if group.children else None
+
+
+def _draw_position_annotation(
+    annotation: PositionAnnotation, anchor_coords: np.ndarray
+) -> Optional[Text]:
+    """Draws a PositionAnnotation as text at the specified coordinates.
+
+    Args:
+        annotation: The PositionAnnotation element to render.
+        anchor_coords: Coordinates where the text should be placed.
+
+    Returns:
+        A drawsvg.Text element or None if rendering fails.
+    """
+    if anchor_coords is None or len(anchor_coords) == 0:
+        logger.warning(
+            f"Skipping PositionAnnotation {annotation.id}: No anchor coordinates."
+        )
+        return None
+
+    style = annotation.style
+    display_props = annotation.get_display_properties()
+
+    # Use the first anchor point and apply offset
+    x = anchor_coords[0, 0] + style.offset[0]
+    y = anchor_coords[0, 1] + style.offset[1]
+
+    # Create text element with position-specific styling
+    text_element = Text(
+        text=display_props["text"],
+        font_size=display_props["font_size"],
+        font_family=display_props["font_family"],
+        font_weight=display_props["font_weight"],
+        fill=style.color.as_hex(),
+        opacity=style.opacity,
+        x=x,
+        y=y,
+        text_anchor="middle",  # Center the text on the coordinate
+        dominant_baseline="middle",
+        class_="annotation position-annotation",
+        id=annotation.id,
+    )
+
+    return text_element

@@ -24,6 +24,7 @@ from flatprot.utils.structure_utils import (
 from flatprot.utils.scene_utils import (
     create_scene_from_structure,
     add_annotations_to_scene,
+    add_position_annotations_to_scene,
 )
 from flatprot.renderers import SVGRenderer
 from .errors import error_handler
@@ -40,6 +41,7 @@ def project_structure_svg(
     dssp: Optional[Path] = None,
     canvas_width: int = 1000,
     canvas_height: int = 1000,
+    show_positions: bool = False,
     *,
     common: CommonParameters | None = None,
 ) -> int:
@@ -74,6 +76,7 @@ def project_structure_svg(
             Required for PDB files, as they don't contain secondary structure information.
         canvas_width: Width of the canvas in pixels.
         canvas_height: Height of the canvas in pixels.
+        show_positions: Whether to show position annotations (N/C terminus and residue numbers).
     Returns:
         int: 0 for success, 1 for errors.
     Examples:
@@ -163,6 +166,13 @@ def project_structure_svg(
 
         if annotations is not None:
             add_annotations_to_scene(annotations, scene)
+
+        # Add position annotations if requested
+        if show_positions:
+            position_style = None
+            if styles_dict and "position_annotation" in styles_dict:
+                position_style = styles_dict["position_annotation"]
+            add_position_annotations_to_scene(scene, position_style)
 
         # Log coordinate shape from scene before rendering
         if (
