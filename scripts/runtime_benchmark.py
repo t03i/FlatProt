@@ -11,27 +11,23 @@ USAGE:
 
 QUICK START:
     # Basic benchmark (both project and align)
-    python scripts/runtime_benchmark.py data/benchmark_structures \\
-        --output-dir results/benchmark_results
+    python scripts/runtime_benchmark.py data/benchmark_structures
 
     # Project command only (faster)
     python scripts/runtime_benchmark.py data/benchmark_structures \\
-        --skip-align \\
-        --output-dir results/project_benchmark
+        --skip-align
 
-    # Limit to first 50 structures
+    # Limit to first 50 structures with custom results file
     python scripts/runtime_benchmark.py data/benchmark_structures \\
         --max-structures 50 \\
-        --output-dir results/small_benchmark
+        --results-tsv small_benchmark_results.tsv
 
 INPUT:
     Directory containing structure files (.cif, .pdb, .mmcif)
     The script will automatically find and process all structure files in the directory.
 
 OPTIONS:
-    --output-dir PATH         Output directory (default: tmp/runtime_benchmark_folder)
-    --results-tsv PATH        TSV results file (default: output_dir/runtime_results.tsv)
-    --results-json PATH       JSON results file (default: output_dir/runtime_results.json)
+    --results-tsv PATH        TSV results file (default: runtime_results.tsv)
     --extensions EXT [EXT]    File extensions (default: .cif .pdb .mmcif)
     --max-structures INT      Max structures to process (default: all)
     --skip-project           Skip testing project command
@@ -39,10 +35,8 @@ OPTIONS:
     --continue-on-error      Continue even if structures fail
 
 OUTPUT FILES:
-    - runtime_results.tsv: Benchmark results in tabular format
-    - runtime_results.json: Benchmark results in JSON format
-    - {PROTEIN_ID}_projection.svg: Generated projections (if project command tested)
-    - {PROTEIN_ID}_alignment_matrix.npy: Alignment matrices (if align command tested)
+    - runtime_results.tsv: Benchmark results in tabular format only
+    Note: SVG and matrix files are created temporarily for size measurement then deleted
 
 RESULT COLUMNS:
     - protein_id: Extracted protein identifier
@@ -50,14 +44,15 @@ RESULT COLUMNS:
     - structure_file_path: Full path to structure file
     - protein_length: Number of residues
     - structure_file_size: Input file size in bytes
-    - project_runtime: Project command runtime in seconds
+    - project_runtime: Project command (inertia-based) runtime in seconds
     - project_success: Whether project command succeeded
-    - svg_file_size: Output SVG file size in bytes
+    - svg_file_size: Output SVG file size in bytes (from project)
     - project_error: Error message if project failed
-    - align_runtime: Align command runtime in seconds
-    - align_success: Whether align command succeeded
+    - align_runtime: Align + project with matrix combined runtime in seconds
+    - align_success: Whether align+project commands succeeded
     - matrix_file_size: Output matrix file size in bytes
-    - align_error: Error message if align failed
+    - align_svg_file_size: Output SVG file size in bytes (from align+project)
+    - align_error: Error message if align+project failed
     - timestamp: When the benchmark was run
 
 EXAMPLE WORKFLOW:
@@ -68,11 +63,11 @@ EXAMPLE WORKFLOW:
 
     # 2. Run benchmark
     python scripts/runtime_benchmark.py data/human_proteome_200 \\
-        --output-dir results/human_proteome_benchmark \\
-        --continue-on-error
+        --continue-on-error \\
+        --results-tsv human_proteome_benchmark_results.tsv
 
     # 3. Analyze results
-    head results/human_proteome_benchmark/runtime_results.tsv
+    head human_proteome_benchmark_results.tsv
 
 PERFORMANCE NOTES:
     - Each structure takes ~1-10 seconds to process depending on size
@@ -105,7 +100,6 @@ from datetime import datetime
 from typing import List, Dict, Tuple, Optional
 import argparse
 import csv
-import json
 
 # Setup logging
 logging.basicConfig(
@@ -244,60 +238,95 @@ def run_flatprot_project(
         return runtime, False, 0, error_msg
 
 
-def run_flatprot_align(
-    structure_file: Path, matrix_file: Path, extra_args: List[str] = None
-) -> Tuple[float, bool, int, str]:
+def run_flatprot_align_and_project(
+    structure_file: Path,
+    matrix_file: Path,
+    svg_file: Path,
+    extra_args: List[str] = None,
+) -> Tuple[float, bool, int, int, str]:
     """
-    Run flatprot align command and measure runtime.
+    Run flatprot align command followed by project command with the matrix, measuring combined runtime.
 
     Args:
         structure_file: Input structure file
         matrix_file: Output matrix file
+        svg_file: Output SVG file for project command
         extra_args: Additional command line arguments
 
     Returns:
-        (runtime_seconds, success, matrix_file_size, error_message)
+        (runtime_seconds, success, matrix_file_size, svg_file_size, error_message)
     """
-    cmd = ["flatprot", "align", str(structure_file), "-m", str(matrix_file)]
+    align_cmd = [
+        "flatprot",
+        "align",
+        str(structure_file),
+        "-m",
+        str(matrix_file),
+        "-p",
+        "0.1",
+    ]
+    project_cmd = [
+        "flatprot",
+        "project",
+        str(structure_file),
+        "-o",
+        str(svg_file),
+        "--matrix",
+        str(matrix_file),
+    ]
 
     if extra_args:
-        cmd.extend(extra_args)
+        align_cmd.extend(extra_args)
+        project_cmd.extend(extra_args)
 
     start_time = time.perf_counter()
     try:
+        # Run align command
         _ = subprocess.run(
-            cmd,
+            align_cmd,
             capture_output=True,
             text=True,
             timeout=300,  # 5 minute timeout
             check=True,
         )
+
+        # Run project command with matrix
+        _ = subprocess.run(
+            project_cmd,
+            capture_output=True,
+            text=True,
+            timeout=300,  # 5 minute timeout
+            check=True,
+        )
+
         end_time = time.perf_counter()
         runtime = end_time - start_time
         matrix_size = get_file_size(matrix_file)
-        return runtime, True, matrix_size, ""
+        svg_size = get_file_size(svg_file)
+        return runtime, True, matrix_size, svg_size, ""
 
     except subprocess.CalledProcessError as e:
         end_time = time.perf_counter()
         runtime = end_time - start_time
         error_msg = f"Exit code {e.returncode}: {e.stderr.strip()}"
-        log.error(f"FlatProt align failed for {structure_file.name}: {error_msg}")
-        return runtime, False, 0, error_msg
+        log.error(
+            f"FlatProt align+project failed for {structure_file.name}: {error_msg}"
+        )
+        return runtime, False, 0, 0, error_msg
     except subprocess.TimeoutExpired:
         error_msg = "Command timed out after 300 seconds"
-        log.error(f"FlatProt align timed out for {structure_file.name}")
-        return 300.0, False, 0, error_msg
+        log.error(f"FlatProt align+project timed out for {structure_file.name}")
+        return 300.0, False, 0, 0, error_msg
     except Exception as e:
         end_time = time.perf_counter()
         runtime = end_time - start_time
         error_msg = f"Unexpected error: {str(e)}"
         log.error(f"Unexpected error for {structure_file.name}: {error_msg}")
-        return runtime, False, 0, error_msg
+        return runtime, False, 0, 0, error_msg
 
 
 def benchmark_structure(
     structure_file: Path,
-    output_dir: Path,
     test_project: bool = True,
     test_align: bool = True,
 ) -> Dict:
@@ -306,7 +335,6 @@ def benchmark_structure(
 
     Args:
         structure_file: Path to structure file
-        output_dir: Directory for output files
         test_project: Whether to test project command
         test_align: Whether to test align command
 
@@ -331,7 +359,10 @@ def benchmark_structure(
 
     # Test project command
     if test_project:
-        svg_output = output_dir / f"{protein_id}_projection.svg"
+        import tempfile
+
+        with tempfile.NamedTemporaryFile(suffix=".svg", delete=False) as tmp_file:
+            svg_output = Path(tmp_file.name)
         (
             project_runtime,
             project_success,
@@ -347,6 +378,10 @@ def benchmark_structure(
                 "project_error": project_error,
             }
         )
+
+        # Delete SVG file after measuring size
+        if svg_output.exists():
+            svg_output.unlink()
     else:
         result.update(
             {
@@ -357,11 +392,23 @@ def benchmark_structure(
             }
         )
 
-    # Test align command
+    # Test align command (align + project with matrix)
     if test_align:
-        matrix_output = output_dir / f"{protein_id}_alignment_matrix.npy"
-        align_runtime, align_success, matrix_size, align_error = run_flatprot_align(
-            structure_file, matrix_output
+        import tempfile
+
+        with tempfile.NamedTemporaryFile(suffix=".npy", delete=False) as tmp_matrix:
+            matrix_output = Path(tmp_matrix.name)
+        with tempfile.NamedTemporaryFile(suffix=".svg", delete=False) as tmp_svg:
+            align_svg_output = Path(tmp_svg.name)
+
+        (
+            align_runtime,
+            align_success,
+            matrix_size,
+            align_svg_size,
+            align_error,
+        ) = run_flatprot_align_and_project(
+            structure_file, matrix_output, align_svg_output
         )
 
         result.update(
@@ -369,15 +416,23 @@ def benchmark_structure(
                 "align_runtime": align_runtime,
                 "align_success": align_success,
                 "matrix_file_size": matrix_size,
+                "align_svg_file_size": align_svg_size,
                 "align_error": align_error,
             }
         )
+
+        # Delete temporary files after measuring sizes
+        if matrix_output.exists():
+            matrix_output.unlink()
+        if align_svg_output.exists():
+            align_svg_output.unlink()
     else:
         result.update(
             {
                 "align_runtime": 0.0,
                 "align_success": False,
                 "matrix_file_size": 0,
+                "align_svg_file_size": 0,
                 "align_error": "Skipped",
             }
         )
@@ -397,19 +452,6 @@ def save_results_tsv(results: List[Dict], output_file: Path):
             writer = csv.DictWriter(f, fieldnames=results[0].keys(), delimiter="\t")
             writer.writeheader()
             writer.writerows(results)
-
-    log.info(f"Results saved to {output_file}")
-
-
-def save_results_json(results: List[Dict], output_file: Path):
-    """Save benchmark results to JSON file."""
-    if not results:
-        return
-
-    output_file.parent.mkdir(parents=True, exist_ok=True)
-
-    with open(output_file, "w", encoding="utf-8") as f:
-        json.dump(results, f, indent=2, ensure_ascii=False)
 
     log.info(f"Results saved to {output_file}")
 
@@ -438,6 +480,11 @@ def print_summary(results: List[Dict]):
     total_svg_size = sum(
         r.get("svg_file_size", 0) for r in results if r.get("project_success", False)
     )
+    total_align_svg_size = sum(
+        r.get("align_svg_file_size", 0)
+        for r in results
+        if r.get("align_success", False)
+    )
     total_matrix_size = sum(
         r.get("matrix_file_size", 0) for r in results if r.get("align_success", False)
     )
@@ -453,19 +500,20 @@ def print_summary(results: List[Dict]):
     log.info("=" * 60)
     log.info(f"Total structures processed: {total_structures}")
     log.info("")
-    log.info("PROJECT COMMAND:")
+    log.info("PROJECT COMMAND (inertia-based):")
     log.info(
         f"  Successful: {successful_projects}/{total_structures} ({successful_projects/total_structures*100:.1f}%)"
     )
     log.info(f"  Average time: {avg_project_time:.3f}s")
     log.info(f"  Total SVG size: {total_svg_size / (1024*1024):.1f} MB")
     log.info("")
-    log.info("ALIGN COMMAND:")
+    log.info("ALIGN + PROJECT COMMAND (with matrix):")
     log.info(
         f"  Successful: {successful_aligns}/{total_structures} ({successful_aligns/total_structures*100:.1f}%)"
     )
     log.info(f"  Average time: {avg_align_time:.3f}s")
     log.info(f"  Total matrix size: {total_matrix_size / (1024*1024):.1f} MB")
+    log.info(f"  Total SVG size: {total_align_svg_size / (1024*1024):.1f} MB")
     log.info("")
     log.info("PROTEIN STATISTICS:")
     log.info(f"  Average length: {avg_length:.0f} residues")
@@ -482,22 +530,10 @@ def main():
         "structures_dir", type=Path, help="Directory containing structure files"
     )
     parser.add_argument(
-        "--output-dir",
-        type=Path,
-        default=Path("tmp/runtime_benchmark_folder"),
-        help="Directory for benchmark outputs (default: tmp/runtime_benchmark_folder)",
-    )
-    parser.add_argument(
         "--results-tsv",
         type=Path,
         default=None,
-        help="TSV file for results (default: output_dir/runtime_results.tsv)",
-    )
-    parser.add_argument(
-        "--results-json",
-        type=Path,
-        default=None,
-        help="JSON file for results (default: output_dir/runtime_results.json)",
+        help="TSV file for results (default: runtime_results.tsv)",
     )
     parser.add_argument(
         "--extensions",
@@ -530,19 +566,14 @@ def main():
         log.error("Cannot skip both project and align commands")
         return 1
 
-    # Setup directories
-    args.output_dir.mkdir(parents=True, exist_ok=True)
-
     if args.results_tsv is None:
-        args.results_tsv = args.output_dir / "runtime_results.tsv"
-    if args.results_json is None:
-        args.results_json = args.output_dir / "runtime_results.json"
+        args.results_tsv = Path("runtime_results.tsv")
 
     log.info("=" * 60)
     log.info("FLATPROT FOLDER BENCHMARK")
     log.info("=" * 60)
     log.info(f"Structures directory: {args.structures_dir}")
-    log.info(f"Output directory: {args.output_dir}")
+    log.info(f"Results file: {args.results_tsv}")
     log.info(f"Extensions: {args.extensions}")
     log.info(f"Test project: {not args.skip_project}")
     log.info(f"Test align: {not args.skip_align}")
@@ -572,7 +603,6 @@ def main():
         try:
             result = benchmark_structure(
                 structure_file,
-                args.output_dir,
                 test_project=not args.skip_project,
                 test_align=not args.skip_align,
             )
@@ -620,7 +650,6 @@ def main():
     # Save results
     if results:
         save_results_tsv(results, args.results_tsv)
-        save_results_json(results, args.results_json)
         print_summary(results)
     else:
         log.error("No results to save")
