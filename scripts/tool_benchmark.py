@@ -135,7 +135,7 @@ def flatprot_single_cmd(structure: Path, temp_dir: Path) -> Optional[List[str]]:
 def flatprot_aligned_cmd(structure: Path, temp_dir: Path) -> Optional[List[str]]:
     """Return the command for running FlatProt on a single structure with prior alignment."""
     output_file = temp_dir / f"flatprot_aligned_{structure.name}.svg"
-    script_path = get_script_dir() / "benchmark" / "flatprot_aligned.py"
+    script_path = get_script_dir() / "tool_benchmark" / "flatprot_aligned.py"
     if not script_path.exists():
         raise FileNotFoundError(f"FlatProt-aligned script not found: {script_path}")
     return [
@@ -174,7 +174,7 @@ def flatprot_family_large_cmd(
 def pymol_single_cmd(structure: Path, temp_dir: Path) -> Optional[List[str]]:
     """Return the command for running PyMOL on a single structure."""
     output_file = temp_dir / f"pymol_single_{structure.name}.png"
-    script_path = get_script_dir() / "benchmark" / "pymol_single.py"
+    script_path = get_script_dir() / "tool_benchmark" / "pymol_single.py"
     if not script_path.exists():
         raise FileNotFoundError(f"PyMOL script not found: {script_path}")
     return [
@@ -190,7 +190,7 @@ def pymol_single_cmd(structure: Path, temp_dir: Path) -> Optional[List[str]]:
 def pymol_family_cmd(structures: List[Path], temp_dir: Path) -> Optional[List[str]]:
     """Return the command for running PyMOL on a family of structures."""
     output_file = temp_dir / f"pymol_family_{int(time.time())}.png"
-    script_path = get_script_dir() / "benchmark" / "pymol_family.py"
+    script_path = get_script_dir() / "tool_benchmark" / "pymol_family.py"
     if not script_path.exists():
         raise FileNotFoundError(f"PyMOL script not found: {script_path}")
     if not structures:
@@ -215,9 +215,9 @@ def pymol_family_large_cmd(
 def chimerax_single_cmd(structure: Path, temp_dir: Path) -> Optional[List[str]]:
     """Return the command for running ChimeraX on a single structure."""
     output_file = temp_dir / f"chimerax_single_{structure.name}.png"
-    script_path = (get_script_dir() / "benchmark" / "chimerax_single.py").relative_to(
-        get_script_dir().parent
-    )
+    script_path = (
+        get_script_dir() / "tool_benchmark" / "chimerax_single.py"
+    ).relative_to(get_script_dir().parent)
     if not script_path.exists():
         raise FileNotFoundError(f"ChimeraX script not found: {script_path}")
     chimerax_executable = find_chimerax_executable()
@@ -231,9 +231,9 @@ def chimerax_single_cmd(structure: Path, temp_dir: Path) -> Optional[List[str]]:
 def chimerax_family_cmd(structures: List[Path], temp_dir: Path) -> Optional[List[str]]:
     """Return the command for running ChimeraX on a family of structures."""
     output_file = temp_dir / f"chimerax_family_{int(time.time())}.png"
-    script_path = (get_script_dir() / "benchmark" / "chimerax_family.py").relative_to(
-        get_script_dir().parent
-    )
+    script_path = (
+        get_script_dir() / "tool_benchmark" / "chimerax_family.py"
+    ).relative_to(get_script_dir().parent)
     if not script_path.exists():
         raise FileNotFoundError(f"ChimeraX script not found: {script_path}")
     chimerax_executable = find_chimerax_executable()
@@ -255,7 +255,7 @@ def chimerax_family_large_cmd(
 
 def setup_ssdraw() -> Path:
     """Setup SSDraw in the benchmark directory. Returns path to SSDraw script."""
-    benchmark_dir = get_script_dir() / "benchmark"
+    benchmark_dir = get_script_dir() / "tool_benchmark"
     ssdraw_dir = benchmark_dir / "SSDraw"
     ssdraw_script = ssdraw_dir / "SSDraw" / "SSDraw.py"
 
@@ -282,7 +282,7 @@ def setup_ssdraw() -> Path:
 
 def cleanup_ssdraw():
     """Remove SSDraw from the benchmark directory."""
-    benchmark_dir = get_script_dir() / "benchmark"
+    benchmark_dir = get_script_dir() / "tool_benchmark"
     ssdraw_dir = benchmark_dir / "SSDraw"
 
     if ssdraw_dir.exists():
@@ -292,7 +292,7 @@ def cleanup_ssdraw():
 
 def setup_proorigami() -> Path:
     """Setup pro-origami Docker image for benchmarking. Returns path to benchmark directory."""
-    benchmark_dir = get_script_dir() / "benchmark"
+    benchmark_dir = get_script_dir() / "tool_benchmark"
     dockerfile_path = benchmark_dir / "Dockerfile.proorigami"
 
     # Check if Docker is available
@@ -374,12 +374,12 @@ def cleanup_proorigami():
 def ssdraw_single_cmd(structure: Path, temp_dir: Path) -> Optional[List[str]]:
     """Return the command for running SSDraw on a single structure."""
     output_file = temp_dir / f"ssdraw_single_{structure.name}.png"
-    script_path = get_script_dir() / "benchmark" / "ssdraw_single.py"
+    script_path = get_script_dir() / "tool_benchmark" / "ssdraw_single.py"
     if not script_path.exists():
         raise FileNotFoundError(f"SSDraw script not found: {script_path}")
 
     # Get SSDraw path from local benchmark directory
-    benchmark_dir = get_script_dir() / "benchmark"
+    benchmark_dir = get_script_dir() / "tool_benchmark"
     ssdraw_script = benchmark_dir / "SSDraw" / "SSDraw" / "SSDraw.py"
 
     return [
@@ -396,7 +396,7 @@ def ssdraw_single_cmd(structure: Path, temp_dir: Path) -> Optional[List[str]]:
 def proorigami_single_cmd(structure: Path, temp_dir: Path) -> Optional[List[str]]:
     """Return the command for running pro-origami on a single structure."""
     output_file = temp_dir / f"proorigami_single_{structure.name}.png"
-    script_path = get_script_dir() / "benchmark" / "proorigami_single.py"
+    script_path = get_script_dir() / "tool_benchmark" / "proorigami_single.py"
     if not script_path.exists():
         raise FileNotFoundError(f"pro-origami script not found: {script_path}")
 
