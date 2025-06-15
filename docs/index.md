@@ -9,7 +9,7 @@ FlatProt is a Python package for protein structure and sequence analysis. It pro
 
 ## Standard Workflow on the command line
 
-FlatProt provides three main commands for protein structure analysis:
+FlatProt provides four main commands for protein structure analysis:
 
 ### Single Structure Projection
 Generate 2D projections of individual protein structures in three simple steps:
@@ -38,13 +38,22 @@ Align structures to known protein families:
 1. Find best matching family: `flatprot align structure.cif -i alignment_info.json`
 2. Use alignment in projections: `flatprot project structure.cif --matrix alignment_matrix.npy -o aligned.svg`
 
+### Region-Based Analysis
+Extract and visualize specific structural regions with comparative alignment:
+
+1. Define regions of interest: `flatprot split protein.cif --regions "A:1-100,A:150-250" -o regions.svg`
+2. With database alignment: `flatprot split protein.cif --regions "A:1-100,A:150-250" --show-database-alignment -o aligned_regions.svg`
+3. Custom layouts: `flatprot split protein.cif --regions "A:1-100,A:150-250" --layout vertical --spacing 150 -o layout.svg`
+
 The resulting files contain clean, publication-ready 2D representations that can be viewed in any web browser or vector graphics editor.
 
 ## Key Features
 
 -   **Single Structure Visualization**: Standardized 2D projections of individual protein structures
 -   **Multi-Structure Overlays**: Compare multiple structures with automatic clustering and alignment
--   **Family-Based Alignment**: Integration with Foldseek alignments for protein family mapping
+-   **Region-Based Analysis**: Extract and visualize specific domains, motifs, or binding sites with comparative alignment
+-   **Family-Based Alignment**: Integration with Foldseek alignments for protein family mapping with rotation-only transformations
+-   **Database Annotations**: Automatic SCOP family identification and alignment probability display
 -   **Batch Processing**: Efficient processing of proteins across varying sizes
 -   **High Performance**: Fast response times even for large, complex structures
 -   **Scalable**: Support for proteins up to 3,000 residues and datasets with 50+ structures
@@ -68,7 +77,12 @@ FlatProt offers multiple visualization types to suit different analysis needs:
 ## Advanced Features
 
 -   **Multi-chain Support**: Automatic handling and visualization of multiple protein chains
--   **Domain Analysis**: Support for domain-split visualization with optional domain annotations
+-   **Region-Specific Extraction**: Precise extraction of structural domains, motifs, and binding sites
+-   **Database-Driven Alignment**: Integration with FoldSeek for family-specific structural alignment
+-   **Rotation-Only Transformations**: Align region orientations while preserving spatial relationships
+-   **SCOP Family Annotations**: Automatic identification and display of structural classification annotations
+-   **Alignment Quality Metrics**: Display of alignment probabilities and confidence scores
+-   **Flexible Layout Systems**: Horizontal, vertical, and grid arrangements for comparative visualization
 -   **LDDT Score Visualization**: Color-coded representation of local distance difference test scores
 -   **Residue Annotations**: Optional display of amino acid annotations and chain positions
 -   **Custom Highlighting**: Support for manual residue and bond highlighting through JSON configuration
