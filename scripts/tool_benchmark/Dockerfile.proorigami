@@ -1,0 +1,63 @@
+# Dockerfile for pro-origami CDE package
+# Use Ubuntu 22.04 like MyBinder for CDE compatibility
+FROM --platform=linux/amd64 ubuntu:22.04
+
+# Set environment for non-interactive install
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Install minimal packages needed for CDE
+RUN apt-get update && apt-get install -y \
+    curl \
+    tar \
+    gzip \
+    && rm -rf /var/lib/apt/lists/*
+
+# Set working directory
+WORKDIR /proorigami
+
+# Download and extract pro-origami CDE package (same as Jupyter notebook)
+RUN curl -OL https://stivalaa.github.io/AcademicWebsite/software/proorigami-cde-package.tar.gz \
+    && tar zxf proorigami-cde-package.tar.gz \
+    && rm proorigami-cde-package.tar.gz
+
+# Change to the pro-origami working directory (same as Jupyter notebook)
+WORKDIR /proorigami/proorigami-cde-package/cde-root/home/proorigami
+
+# Create simple entrypoint script (mimicking Jupyter notebook exactly)
+RUN echo '#!/bin/bash\n\
+set -e\n\
+\n\
+if [ $# -eq 0 ]; then\n\
+    echo "Usage: docker run proorigami <pdb_file>"\n\
+    exit 1\n\
+fi\n\
+\n\
+echo "Processing file: $1"\n\
+\n\
+# Copy input file to working directory (input.pdb like in notebook)\n\
+cp "$1" ./input.pdb\n\
+echo "Input file copied, size: $(wc -c < ./input.pdb) bytes"\n\
+\n\
+# Show what we have (like notebook)\n\
+echo "Current directory contents:"\n\
+ls -la\n\
+\n\
+# Run CDE exactly like in Jupyter notebook: ./make_cartoon.sh.cde input.pdb\n\
+echo "Running: ./make_cartoon.sh.cde ./input.pdb"\n\
+./make_cartoon.sh.cde ./input.pdb 2>&1\n\
+\n\
+# List results\n\
+echo "Files after processing:"\n\
+ls -la *.png *.svg 2>/dev/null || echo "No PNG/SVG files generated"\n\
+\n\
+# Copy output files to output directory\n\
+if [ -d "/output" ]; then\n\
+    cp *.png /output/ 2>/dev/null || true\n\
+    cp *.svg /output/ 2>/dev/null || true\n\
+    echo "Output files copied to /output/"\n\
+    ls -la /output/ 2>/dev/null || echo "No output files in /output/"\n\
+fi\n\
+' > /proorigami/entrypoint.sh && chmod +x /proorigami/entrypoint.sh
+
+# Set entrypoint
+ENTRYPOINT ["/proorigami/entrypoint.sh"]

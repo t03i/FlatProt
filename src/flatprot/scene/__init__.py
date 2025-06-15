@@ -24,6 +24,9 @@ from .annotation import (
     LineAnnotationStyle,
     AreaAnnotation,
     AreaAnnotationStyle,
+    PositionAnnotation,
+    PositionAnnotationStyle,
+    PositionType,
 )
 from .errors import (
     SceneError,
@@ -67,6 +70,9 @@ __all__ = [
     "LineAnnotationStyle",
     "AreaAnnotation",
     "AreaAnnotationStyle",
+    "PositionAnnotation",
+    "PositionAnnotationStyle",
+    "PositionType",
     "SceneError",
     "SceneCreationError",
     "SceneAnnotationError",

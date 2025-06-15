@@ -16,6 +16,7 @@ from flatprot.scene.structure import (
     SheetStyle,
     CoilStyle,
 )
+from flatprot.scene.annotation import PositionAnnotationStyle
 
 from .errors import (
     StyleParsingError,
@@ -34,6 +35,7 @@ class StyleParser:
         "sheet": SheetStyle,
         "coil": CoilStyle,
         "connection": ConnectionStyle,
+        "position_annotation": PositionAnnotationStyle,
     }
 
     def __init__(self, file_path: Union[str, Path]):
@@ -72,11 +74,13 @@ class StyleParser:
                 f"Warning: Unknown style sections found and ignored: {', '.join(unknown_sections)}"
             )
 
-    def parse(self) -> Dict[str, Union[BaseStructureStyle, ConnectionStyle]]:
+    def parse(
+        self,
+    ) -> Dict[str, Union[BaseStructureStyle, ConnectionStyle, PositionAnnotationStyle]]:
         """Parses the known sections from the TOML file into Pydantic style objects.
 
         Returns:
-            A dictionary mapping section names ('helix', 'sheet', 'coil', 'connection')
+            A dictionary mapping section names ('helix', 'sheet', 'coil', 'connection', 'position_annotation')
             to their corresponding Pydantic style model instances.
 
         Raises:
@@ -84,7 +88,9 @@ class StyleParser:
                                   its Pydantic model.
             StyleParsingError: For other general parsing issues.
         """
-        parsed_styles: Dict[str, Union[BaseStructureStyle, ConnectionStyle]] = {}
+        parsed_styles: Dict[
+            str, Union[BaseStructureStyle, ConnectionStyle, PositionAnnotationStyle]
+        ] = {}
 
         for section_name, StyleModelClass in self.KNOWN_SECTIONS.items():
             section_data = self.raw_style_data.get(section_name)
@@ -122,11 +128,11 @@ class StyleParser:
 
     def get_element_styles(
         self,
-    ) -> Dict[str, Union[BaseStructureStyle, ConnectionStyle]]:
+    ) -> Dict[str, Union[BaseStructureStyle, ConnectionStyle, PositionAnnotationStyle]]:
         """Parse and return the element styles defined in the TOML file.
 
         Returns:
-            Dict mapping element type names ('helix', 'sheet', 'coil', 'connection')
+            Dict mapping element type names ('helix', 'sheet', 'coil', 'connection', 'position_annotation')
             to their parsed Pydantic style objects. Sections not found in the TOML
             file will be omitted from the dictionary.
 

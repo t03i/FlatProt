@@ -19,6 +19,7 @@ FlatProt is a Python package for creating simplified 2D protein visualizations, 
 - Install with database builder dependencies: `uv sync --group db-builder`
 
 ### Testing
+- Only run python or pytest through uv
 - Run all tests: `pytest`
 - Run specific test module: `pytest tests/core/test_structure.py`
 - Run tests with verbose output: `pytest -v`
