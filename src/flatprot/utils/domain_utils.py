@@ -40,11 +40,13 @@ class DomainTransformation:
         domain_range: The specific residue range defining the domain.
         transformation_matrix: The matrix used to transform this domain.
         domain_id: An optional identifier for the domain (e.g., 'Domain1', 'N-term').
+        scop_id: An optional SCOP family identifier from alignment (e.g., '3000114').
     """
 
     domain_range: ResidueRange
     transformation_matrix: TransformationMatrix
     domain_id: Optional[str] = None
+    scop_id: Optional[str] = None
 
     def __post_init__(self):
         """Validate inputs."""
@@ -56,6 +58,8 @@ class DomainTransformation:
             )
         if self.domain_id is not None and not isinstance(self.domain_id, str):
             raise TypeError("domain_id must be a string if provided.")
+        if self.scop_id is not None and not isinstance(self.scop_id, str):
+            raise TypeError("scop_id must be a string if provided.")
 
     def __repr__(self) -> str:
         """Provide a concise representation."""
@@ -194,8 +198,8 @@ def create_domain_aware_scene(
         or projected_structure.coordinates.size == 0
     ):
         raise ValueError("Input projected_structure has no coordinates.")
-    if arrangement not in ["horizontal", "vertical"]:
-        raise ValueError("Arrangement must be 'horizontal' or 'vertical'.")
+    if arrangement not in ["horizontal", "vertical", "grid"]:
+        raise ValueError("Arrangement must be 'horizontal', 'vertical', or 'grid'.")
     if domain_scop_ids and any(d.domain_id is None for d in domain_definitions):
         raise ValueError(
             "All domain_definitions must have a domain_id if domain_scop_ids is provided."
@@ -402,9 +406,22 @@ def create_domain_aware_scene(
         if arrangement == "horizontal":
             translate_x = idx * spacing
             translate_y = 0.0
-        else:  # vertical
+        elif arrangement == "vertical":
             translate_x = 0.0
             translate_y = idx * spacing
+        else:  # grid
+            # Calculate grid dimensions - try to make it roughly square
+            import math
+
+            cols = max(1, int(math.ceil(math.sqrt(total))))
+            _rows = max(1, int(math.ceil(total / cols)))
+
+            # Calculate position in grid
+            row = idx // cols
+            col = idx % cols
+
+            translate_x = col * spacing
+            translate_y = row * spacing
 
         # Apply the translation
         if group.transforms is None:
@@ -593,18 +610,35 @@ def align_regions_batch(
             )
 
             # Get transformation matrix based on alignment mode
+            scop_id = None
             if alignment_mode == "family-identity":
                 # Get rotation matrix from database
                 matrix_result = get_aligned_rotation_database(
                     alignment_result, alignment_db
                 )
                 transformation_matrix = matrix_result[0]
-                _db_entry = matrix_result[1]  # Unused but needed for API compatibility
+                db_entry = matrix_result[1]
 
                 if transformation_matrix is None:
                     logger.warning(f"No transformation matrix found for {region_id}")
                     failed_regions.append(region)
                     continue
+
+                # Extract SCOP ID from database entry
+                if db_entry and hasattr(db_entry, "entry_id") and db_entry.entry_id:
+                    scop_id = str(db_entry.entry_id)
+                    logger.info(f"Retrieved SCOP ID for {region_id}: {scop_id}")
+                else:
+                    # Fallback to alignment result DB ID
+                    scop_id = (
+                        str(alignment_result.db_id) if alignment_result.db_id else None
+                    )
+                    if scop_id:
+                        logger.info(
+                            f"Using alignment DB ID as SCOP ID for {region_id}: {scop_id}"
+                        )
+                    else:
+                        logger.warning(f"No SCOP ID available for {region_id}")
 
                 logger.info(f"Retrieved transformation matrix for {region_id}")
 
@@ -613,13 +647,22 @@ def align_regions_batch(
                 transformation_matrix = TransformationMatrix(
                     rotation=np.eye(3), translation=np.zeros(3)
                 )
+                # For inertia mode, still capture the alignment DB ID as SCOP ID
+                scop_id = (
+                    str(alignment_result.db_id) if alignment_result.db_id else None
+                )
                 logger.info(f"Using identity matrix for inertia mode: {region_id}")
+                if scop_id:
+                    logger.info(f"Captured alignment DB ID for {region_id}: {scop_id}")
+                else:
+                    logger.warning(f"No SCOP ID available for {region_id}")
 
             # Create DomainTransformation object
             domain_transformation = DomainTransformation(
                 domain_range=region,
                 transformation_matrix=transformation_matrix,
                 domain_id=region_id,
+                scop_id=scop_id,
             )
 
             domain_transformations.append(domain_transformation)

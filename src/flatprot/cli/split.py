@@ -16,6 +16,7 @@ from flatprot.io import (
     InvalidStructureError,
     GemmiStructureParser,
     OutputFileError,
+    StyleParser,
 )
 from flatprot.transformation import TransformationError
 from flatprot.utils.database import ensure_database_available
@@ -29,8 +30,9 @@ from flatprot.utils.structure_utils import (
     project_structure_orthographically,
     transform_structure_with_inertia,
 )
+from flatprot.utils.scene_utils import add_position_annotations_to_scene
 from flatprot.renderers import SVGRenderer
-from flatprot.cli.errors import FlatProtCLIError
+from flatprot.cli.errors import CLIError, error_handler
 
 
 class SplitConfig(BaseModel):
@@ -58,6 +60,12 @@ class SplitConfig(BaseModel):
     canvas_height: int = Field(default=1000, description="Canvas height in pixels")
     foldseek: str = Field(default="foldseek", description="Foldseek executable path")
     dssp: Optional[Path] = Field(default=None, description="DSSP file for PDB input")
+    show_positions: bool = Field(
+        default=False, description="Show residue position annotations"
+    )
+    show_scop_annotations: bool = Field(
+        default=False, description="Show SCOP family area annotations"
+    )
 
     @field_validator("regions")
     @classmethod
@@ -147,6 +155,7 @@ def parse_regions(regions_str: str) -> List[ResidueRange]:
     return regions
 
 
+@error_handler
 def split_command(
     structure_file: Path,
     *,
@@ -161,6 +170,8 @@ def split_command(
     canvas_height: int = 1000,
     foldseek: str = "foldseek",
     dssp: Optional[Path] = None,
+    show_positions: bool = False,
+    show_scop_annotations: bool = False,
 ) -> None:
     """Split protein structure into regions and create aligned visualization.
 
@@ -180,9 +191,11 @@ def split_command(
         canvas_height: Canvas height in pixels
         foldseek: Foldseek executable path
         dssp: DSSP file for PDB input (required for PDB files)
+        show_positions: Show residue position annotations
+        show_scop_annotations: Show SCOP family area annotations
 
     Raises:
-        FlatProtCLIError: If command execution fails
+        CLIError: If command execution fails
     """
     try:
         # Validate configuration
@@ -199,6 +212,8 @@ def split_command(
             canvas_height=canvas_height,
             foldseek=foldseek,
             dssp=dssp,
+            show_positions=show_positions,
+            show_scop_annotations=show_scop_annotations,
         )
 
         logger.info(f"Starting split command for {config.structure_file}")
@@ -209,9 +224,7 @@ def split_command(
         validate_structure_file(config.structure_file)
 
         if config.structure_file.suffix.lower() == ".pdb" and not config.dssp:
-            raise FlatProtCLIError(
-                "DSSP file required for PDB input. Use --dssp option."
-            )
+            raise CLIError("DSSP file required for PDB input. Use --dssp option.")
 
         # Parse regions
         region_ranges = parse_regions(config.regions)
@@ -220,11 +233,11 @@ def split_command(
         # Load original structure
         parser = GemmiStructureParser()
         original_structure = parser.parse_structure(
-            config.structure_file, dssp_file=config.dssp
+            config.structure_file, secondary_structure_file=config.dssp
         )
 
         if original_structure is None:
-            raise FlatProtCLIError("Failed to parse structure file")
+            raise CLIError("Failed to parse structure file")
 
         logger.info(
             f"Loaded structure: {original_structure.id} ({len(original_structure)} residues)"
@@ -259,7 +272,7 @@ def split_command(
             logger.info(f"Successfully aligned {len(domain_transformations)} regions")
 
             if not domain_transformations:
-                raise FlatProtCLIError("No successful alignments found")
+                raise CLIError("No successful alignments found")
 
             # Apply transformations if using family-identity mode
             if config.alignment_mode == "family-identity":
@@ -285,16 +298,53 @@ def split_command(
                 inertia_transformed, config.canvas_width, config.canvas_height
             )
 
+            # Load custom styles if provided
+            logger.info("Loading styles...")
+            default_styles = None
+            if config.style:
+                try:
+                    style_parser = StyleParser(config.style)
+                    style_data = style_parser.parse()
+                    default_styles = style_data
+                    logger.info(f"Loaded custom styles from {config.style}")
+                except Exception as e:
+                    logger.warning(f"Failed to load style file {config.style}: {e}")
+
+            # Extract SCOP IDs from domain transformations
+            logger.info("Extracting SCOP IDs from alignment results...")
+            domain_scop_ids = {}
+            for dt in domain_transformations:
+                if dt.domain_id and dt.scop_id:
+                    domain_scop_ids[dt.domain_id] = dt.scop_id
+                    logger.info(f"Mapped domain {dt.domain_id} -> SCOP ID {dt.scop_id}")
+
             # Create domain-aware scene
             logger.info(f"Creating scene with {config.layout} layout...")
+
+            # Control SCOP annotations based on flag
+            scop_ids_to_use = domain_scop_ids if config.show_scop_annotations else None
+            if config.show_scop_annotations:
+                logger.info("SCOP annotations enabled")
+            else:
+                logger.info("SCOP annotations disabled")
+
             scene = create_domain_aware_scene(
                 projected_structure=projected_structure,
                 domain_definitions=domain_transformations,
                 spacing=config.spacing,
                 arrangement=config.layout,
-                default_styles=None,  # TODO: Load from style file if provided
-                domain_scop_ids=None,  # TODO: Extract from alignment results
+                default_styles=default_styles,  # Use loaded styles
+                domain_scop_ids=scop_ids_to_use,  # Only pass SCOP IDs if enabled
             )
+
+            # Add position annotations if requested
+            if config.show_positions:
+                logger.info("Adding position annotations...")
+                position_style = None
+                if default_styles and "position_annotation" in default_styles:
+                    position_style = default_styles["position_annotation"]
+                add_position_annotations_to_scene(scene, position_style)
+                logger.info("Position annotations added")
 
             # Render SVG
             logger.info(f"Rendering SVG to {config.output}...")
@@ -307,6 +357,14 @@ def split_command(
                 render_width += int(config.spacing * len(domain_transformations))
             elif config.layout == "vertical":
                 render_height += int(config.spacing * len(domain_transformations))
+            elif config.layout == "grid":
+                import math
+
+                total = len(domain_transformations)
+                cols = max(1, int(math.ceil(math.sqrt(total))))
+                rows = max(1, int(math.ceil(total / cols)))
+                render_width += int(config.spacing * (cols - 1))
+                render_height += int(config.spacing * (rows - 1))
 
             renderer = SVGRenderer(scene, render_width, render_height)
             renderer.save_svg(config.output)
@@ -319,10 +377,10 @@ def split_command(
         TransformationError,
         OutputFileError,
     ) as e:
-        raise FlatProtCLIError(f"Split command failed: {e}")
+        raise CLIError(f"Split command failed: {e}")
     except Exception as e:
         logger.exception("Unexpected error in split command")
-        raise FlatProtCLIError(f"Unexpected error: {e}")
+        raise CLIError(f"Unexpected error: {e}")
 
 
 # Register with cyclopts

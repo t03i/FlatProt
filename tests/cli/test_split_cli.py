@@ -12,7 +12,6 @@ from flatprot.cli.split import (
     parse_regions,
     SplitConfig,
 )
-from flatprot.cli.errors import FlatProtCLIError
 from flatprot.core import ResidueRange
 
 
@@ -162,10 +161,11 @@ class TestSplitCommand:
         missing_file = tmp_path / "missing.cif"
         output_file = tmp_path / "output.svg"
 
-        with pytest.raises(FlatProtCLIError):
-            split_command(
-                structure_file=missing_file, regions="A:1-100", output=output_file
-            )
+        # With @error_handler decorator, exceptions are caught and return code 1
+        result = split_command(
+            structure_file=missing_file, regions="A:1-100", output=output_file
+        )
+        assert result == 1
 
     def test_split_command_pdb_without_dssp(self, tmp_path):
         """Test split command with PDB file but no DSSP."""
@@ -174,10 +174,11 @@ class TestSplitCommand:
         output_file = tmp_path / "output.svg"
 
         with patch("flatprot.cli.split.validate_structure_file"):
-            with pytest.raises(FlatProtCLIError, match="DSSP file required"):
-                split_command(
-                    structure_file=pdb_file, regions="A:1-100", output=output_file
-                )
+            # With @error_handler decorator, exceptions are caught and return code 1
+            result = split_command(
+                structure_file=pdb_file, regions="A:1-100", output=output_file
+            )
+            assert result == 1
 
     @patch("flatprot.cli.split.validate_structure_file")
     @patch("flatprot.cli.split.GemmiStructureParser")
@@ -219,7 +220,14 @@ class TestSplitCommand:
 
         mock_database.return_value = Path("/tmp/db")
 
-        mock_domain_transformations = [Mock(), Mock()]
+        # Create proper domain transformation mocks with scop_id
+        mock_dt1 = Mock()
+        mock_dt1.domain_id = "A:1-100"
+        mock_dt1.scop_id = "test_scop_1"
+        mock_dt2 = Mock()
+        mock_dt2.domain_id = "A:150-250"
+        mock_dt2.scop_id = "test_scop_2"
+        mock_domain_transformations = [mock_dt1, mock_dt2]
         mock_align.return_value = mock_domain_transformations
 
         mock_transformed_structure = Mock()
@@ -266,12 +274,13 @@ class TestSplitCommand:
         """Test split command with parser failure."""
         mock_parser.return_value.parse_structure.return_value = None
 
-        with pytest.raises(FlatProtCLIError, match="Failed to parse structure file"):
-            split_command(
-                structure_file=mock_structure_file,
-                regions="A:1-100",
-                output=mock_output_file,
-            )
+        # With @error_handler decorator, exceptions are caught and return code 1
+        result = split_command(
+            structure_file=mock_structure_file,
+            regions="A:1-100",
+            output=mock_output_file,
+        )
+        assert result == 1
 
     @patch("flatprot.cli.split.validate_structure_file")
     @patch("flatprot.cli.split.GemmiStructureParser")
@@ -301,12 +310,13 @@ class TestSplitCommand:
         mock_database.return_value = Path("/tmp/db")
         mock_align.return_value = []  # No successful alignments
 
-        with pytest.raises(FlatProtCLIError, match="No successful alignments found"):
-            split_command(
-                structure_file=mock_structure_file,
-                regions="A:1-100",
-                output=mock_output_file,
-            )
+        # With @error_handler decorator, exceptions are caught and return code 1
+        result = split_command(
+            structure_file=mock_structure_file,
+            regions="A:1-100",
+            output=mock_output_file,
+        )
+        assert result == 1
 
     @patch("flatprot.cli.split.validate_structure_file")
     @patch("flatprot.cli.split.GemmiStructureParser")
