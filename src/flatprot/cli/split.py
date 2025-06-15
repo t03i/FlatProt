@@ -63,8 +63,9 @@ class SplitConfig(BaseModel):
     show_positions: bool = Field(
         default=False, description="Show residue position annotations"
     )
-    show_scop_annotations: bool = Field(
-        default=False, description="Show SCOP family area annotations"
+    show_database_alignment: bool = Field(
+        default=False,
+        description="Enable database alignment and show family area annotations",
     )
 
     @field_validator("regions")
@@ -114,7 +115,7 @@ class SplitConfig(BaseModel):
     @classmethod
     def validate_layout(cls, v: str) -> str:
         """Validate layout arrangement."""
-        valid_layouts = {"horizontal", "vertical", "grid"}
+        valid_layouts = {"horizontal", "vertical"}
         if v not in valid_layouts:
             raise ValueError(f"Invalid layout: {v}. Must be one of {valid_layouts}")
         return v
@@ -171,7 +172,7 @@ def split_command(
     foldseek: str = "foldseek",
     dssp: Optional[Path] = None,
     show_positions: bool = False,
-    show_scop_annotations: bool = False,
+    show_database_alignment: bool = False,
 ) -> None:
     """Split protein structure into regions and create aligned visualization.
 
@@ -183,7 +184,7 @@ def split_command(
         regions: Comma-separated residue regions (e.g., 'A:1-100,A:150-250')
         output: Output SVG file path
         alignment_mode: Alignment strategy ('family-identity' or 'inertia')
-        layout: Layout arrangement ('horizontal', 'vertical', or 'grid')
+        layout: Layout arrangement ('horizontal' or 'vertical')
         spacing: Spacing between regions in pixels
         style: Custom style file (TOML format)
         min_probability: Minimum alignment probability threshold
@@ -192,7 +193,7 @@ def split_command(
         foldseek: Foldseek executable path
         dssp: DSSP file for PDB input (required for PDB files)
         show_positions: Show residue position annotations
-        show_scop_annotations: Show SCOP family area annotations
+        show_database_alignment: Enable database alignment and show family area annotations
 
     Raises:
         CLIError: If command execution fails
@@ -213,7 +214,7 @@ def split_command(
             foldseek=foldseek,
             dssp=dssp,
             show_positions=show_positions,
-            show_scop_annotations=show_scop_annotations,
+            show_database_alignment=show_database_alignment,
         )
 
         logger.info(f"Starting split command for {config.structure_file}")
@@ -254,34 +255,95 @@ def split_command(
             )
             logger.info(f"Extracted {len(region_files)} region files")
 
-            # Ensure alignment database is available
-            logger.info("Ensuring alignment database is available...")
-            db_path = ensure_database_available()
-            foldseek_db_path = db_path / "foldseek" / "db"
+            # Always create identity-based domain transformations for consistent layout
+            from flatprot.utils.domain_utils import DomainTransformation
+            from flatprot.transformation import TransformationMatrix
+            import numpy as np
 
-            # Align regions
-            logger.info(f"Aligning regions using {config.alignment_mode} mode...")
-            domain_transformations = align_regions_batch(
-                region_files,
-                region_ranges,
-                foldseek_db_path,
-                config.foldseek,
-                config.min_probability,
-                config.alignment_mode,
+            # Create identity transformation matrix for layout
+            identity_rotation = np.eye(3)
+            identity_translation = np.zeros(3)
+            identity_matrix = TransformationMatrix(
+                rotation=identity_rotation, translation=identity_translation
             )
-            logger.info(f"Successfully aligned {len(domain_transformations)} regions")
 
-            if not domain_transformations:
-                raise CLIError("No successful alignments found")
+            domain_transformations = []
 
-            # Apply transformations if using family-identity mode
-            if config.alignment_mode == "family-identity":
-                logger.info("Applying domain transformations...")
+            # Collect alignment data if database alignment is enabled (for annotations only)
+            if config.show_database_alignment:
+                # Ensure alignment database is available
+                logger.info("Ensuring alignment database is available...")
+                db_path = ensure_database_available()
+                foldseek_db_path = db_path / "foldseek" / "db"
+
+                # Align regions to get SCOP IDs and probabilities
+                logger.info("Aligning regions to collect annotation data...")
+                alignment_transformations = align_regions_batch(
+                    region_files,
+                    region_ranges,
+                    foldseek_db_path,
+                    config.foldseek,
+                    config.min_probability,
+                    config.alignment_mode,
+                )
+                logger.info(
+                    f"Successfully aligned {len(alignment_transformations)} regions"
+                )
+
+                if not alignment_transformations:
+                    raise CLIError("No successful alignments found")
+
+                # Create domain transformations with rotation-only matrices to preserve positioning
+                logger.info(
+                    "Creating domain definitions with rotation-only transformations..."
+                )
+                for alignment_transform in alignment_transformations:
+                    # Extract only rotation component, zero out translation to preserve positioning
+                    rotation_only_matrix = TransformationMatrix(
+                        rotation=alignment_transform.transformation_matrix.rotation,
+                        translation=np.zeros(
+                            3
+                        ),  # Zero translation to keep original positions
+                    )
+                    domain_transform = DomainTransformation(
+                        domain_range=alignment_transform.domain_range,
+                        transformation_matrix=rotation_only_matrix,  # Use rotation-only transformation
+                        domain_id=alignment_transform.domain_id,
+                        scop_id=alignment_transform.scop_id,  # Keep SCOP ID for annotations
+                        alignment_probability=alignment_transform.alignment_probability,  # Keep probability for annotations
+                    )
+                    domain_transformations.append(domain_transform)
+            else:
+                # No alignment - create simple domain transformations for layout only
+                logger.info(
+                    "Database alignment disabled - creating layout-only domain definitions..."
+                )
+                for i, region_range in enumerate(region_ranges):
+                    domain_id = f"{region_range.chain_id}:{region_range.start}-{region_range.end}"
+                    domain_transform = DomainTransformation(
+                        domain_range=region_range,
+                        transformation_matrix=identity_matrix,
+                        domain_id=domain_id,
+                        scop_id=None,  # No SCOP ID when database alignment is disabled
+                        alignment_probability=None,  # No alignment probability when alignment is disabled
+                    )
+                    domain_transformations.append(domain_transform)
+
+            logger.info(f"Created {len(domain_transformations)} domain definitions")
+
+            # Apply domain transformations if database alignment is enabled
+            if (
+                config.show_database_alignment
+                and config.alignment_mode == "family-identity"
+            ):
+                logger.info(
+                    "Applying domain transformations for aligned orientations..."
+                )
                 transformed_structure = apply_domain_transformations_masked(
                     original_structure, domain_transformations
                 )
             else:
-                # For inertia mode, use original structure
+                # Use original structure for consistent positioning when alignment disabled or inertia mode
                 transformed_structure = original_structure
 
             # Apply inertia transformation for overall orientation
@@ -310,23 +372,36 @@ def split_command(
                 except Exception as e:
                     logger.warning(f"Failed to load style file {config.style}: {e}")
 
-            # Extract SCOP IDs from domain transformations
-            logger.info("Extracting SCOP IDs from alignment results...")
+            # Extract SCOP IDs and alignment probabilities from domain transformations
+            logger.info(
+                "Extracting SCOP IDs and alignment probabilities from alignment results..."
+            )
             domain_scop_ids = {}
+            domain_alignment_probabilities = {}
             for dt in domain_transformations:
                 if dt.domain_id and dt.scop_id:
                     domain_scop_ids[dt.domain_id] = dt.scop_id
                     logger.info(f"Mapped domain {dt.domain_id} -> SCOP ID {dt.scop_id}")
 
+                if dt.domain_id and dt.alignment_probability is not None:
+                    domain_alignment_probabilities[
+                        dt.domain_id
+                    ] = dt.alignment_probability
+                    logger.info(
+                        f"Mapped domain {dt.domain_id} -> Alignment probability {dt.alignment_probability:.3f}"
+                    )
+
             # Create domain-aware scene
             logger.info(f"Creating scene with {config.layout} layout...")
 
-            # Control SCOP annotations based on flag
-            scop_ids_to_use = domain_scop_ids if config.show_scop_annotations else None
-            if config.show_scop_annotations:
-                logger.info("SCOP annotations enabled")
+            # Control family annotations based on flag
+            scop_ids_to_use = (
+                domain_scop_ids if config.show_database_alignment else None
+            )
+            if config.show_database_alignment:
+                logger.info("Database alignment and family annotations enabled")
             else:
-                logger.info("SCOP annotations disabled")
+                logger.info("Database alignment and family annotations disabled")
 
             scene = create_domain_aware_scene(
                 projected_structure=projected_structure,
@@ -335,6 +410,9 @@ def split_command(
                 arrangement=config.layout,
                 default_styles=default_styles,  # Use loaded styles
                 domain_scop_ids=scop_ids_to_use,  # Only pass SCOP IDs if enabled
+                domain_alignment_probabilities=domain_alignment_probabilities
+                if config.show_database_alignment
+                else None,
             )
 
             # Add position annotations if requested
@@ -357,14 +435,6 @@ def split_command(
                 render_width += int(config.spacing * len(domain_transformations))
             elif config.layout == "vertical":
                 render_height += int(config.spacing * len(domain_transformations))
-            elif config.layout == "grid":
-                import math
-
-                total = len(domain_transformations)
-                cols = max(1, int(math.ceil(math.sqrt(total))))
-                rows = max(1, int(math.ceil(total / cols)))
-                render_width += int(config.spacing * (cols - 1))
-                render_height += int(config.spacing * (rows - 1))
 
             renderer = SVGRenderer(scene, render_width, render_height)
             renderer.save_svg(config.output)

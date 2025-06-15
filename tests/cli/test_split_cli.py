@@ -379,62 +379,82 @@ class TestSplitCommand:
         # In inertia mode, should use original structure directly
         mock_inertia.assert_called_once_with(mock_structure)
 
+    @patch("flatprot.cli.split.validate_structure_file")
+    @patch("flatprot.cli.split.GemmiStructureParser")
+    @patch("flatprot.cli.split.extract_structure_regions")
+    @patch("flatprot.cli.split.ensure_database_available")
+    @patch("flatprot.cli.split.align_regions_batch")
+    @patch("flatprot.cli.split.apply_domain_transformations_masked")
+    @patch("flatprot.cli.split.transform_structure_with_inertia")
+    @patch("flatprot.cli.split.project_structure_orthographically")
+    @patch("flatprot.cli.split.create_domain_aware_scene")
+    @patch("flatprot.cli.split.SVGRenderer")
     def test_split_command_canvas_size_adjustment(
-        self, mock_structure_file, mock_output_file
+        self,
+        mock_renderer,
+        mock_scene,
+        mock_project,
+        mock_inertia,
+        mock_transform,
+        mock_align,
+        mock_database,
+        mock_extract,
+        mock_parser,
+        mock_validate,
+        mock_structure_file,
+        mock_output_file,
     ):
         """Test that canvas size is adjusted based on layout."""
-        with patch("flatprot.cli.split.validate_structure_file"), patch(
-            "flatprot.cli.split.GemmiStructureParser"
-        ) as mock_parser, patch(
-            "flatprot.cli.split.extract_structure_regions"
-        ) as mock_extract, patch(
-            "flatprot.cli.split.ensure_database_available"
-        ) as mock_database, patch(
-            "flatprot.cli.split.align_regions_batch"
-        ) as mock_align, patch(
-            "flatprot.cli.split.transform_structure_with_inertia"
-        ) as mock_inertia, patch(
-            "flatprot.cli.split.project_structure_orthographically"
-        ) as mock_project, patch(
-            "flatprot.cli.split.create_domain_aware_scene"
-        ) as mock_scene, patch("flatprot.cli.split.SVGRenderer") as mock_renderer:
-            # Setup mocks
-            mock_structure = Mock()
-            mock_structure.id = "test"
-            mock_structure.__len__ = Mock(return_value=100)
-            mock_parser.return_value.parse_structure.return_value = mock_structure
+        # Setup mocks
+        mock_structure = Mock()
+        mock_structure.id = "test"
+        mock_structure.__len__ = Mock(return_value=100)
+        mock_parser.return_value.parse_structure.return_value = mock_structure
 
-            mock_region_files = [
-                (Path("/tmp/region1.cif"), ResidueRange("A", 1, 100)),
-                (Path("/tmp/region2.cif"), ResidueRange("A", 150, 250)),
-            ]
-            mock_extract.return_value = mock_region_files
+        mock_region_files = [
+            (Path("/tmp/region1.cif"), ResidueRange("A", 1, 100)),
+            (Path("/tmp/region2.cif"), ResidueRange("A", 150, 250)),
+        ]
+        mock_extract.return_value = mock_region_files
 
-            mock_database.return_value = Path("/tmp/db")
+        mock_database.return_value = Path("/tmp/db")
 
-            mock_domain_transformations = [Mock(), Mock()]
-            mock_align.return_value = mock_domain_transformations
+        # Create proper domain transformation mocks with scop_id
+        mock_dt1 = Mock()
+        mock_dt1.domain_id = "A:1-100"
+        mock_dt1.scop_id = "test_scop_1"
+        mock_dt2 = Mock()
+        mock_dt2.domain_id = "A:150-250"
+        mock_dt2.scop_id = "test_scop_2"
+        mock_domain_transformations = [mock_dt1, mock_dt2]
+        mock_align.return_value = mock_domain_transformations
 
-            mock_inertia.return_value = Mock()
-            mock_project.return_value = Mock()
-            mock_scene.return_value = Mock()
+        mock_transformed_structure = Mock()
+        mock_transform.return_value = mock_transformed_structure
 
-            mock_renderer_instance = Mock()
-            mock_renderer.return_value = mock_renderer_instance
+        mock_inertia_structure = Mock()
+        mock_inertia.return_value = mock_inertia_structure
 
-            # Test horizontal layout
-            split_command(
-                structure_file=mock_structure_file,
-                regions="A:1-100,A:150-250",
-                output=mock_output_file,
-                layout="horizontal",
-                spacing=150.0,
-                canvas_width=1000,
-                canvas_height=800,
-            )
+        mock_projected_structure = Mock()
+        mock_project.return_value = mock_projected_structure
 
-            # Should adjust width for horizontal layout
-            expected_width = 1000 + int(150.0 * 2)  # spacing * num_transformations
-            mock_renderer.assert_called_with(
-                mock_scene.return_value, expected_width, 800
-            )
+        mock_scene_obj = Mock()
+        mock_scene.return_value = mock_scene_obj
+
+        mock_renderer_instance = Mock()
+        mock_renderer.return_value = mock_renderer_instance
+
+        # Test horizontal layout
+        split_command(
+            structure_file=mock_structure_file,
+            regions="A:1-100,A:150-250",
+            output=mock_output_file,
+            layout="horizontal",
+            spacing=150.0,
+            canvas_width=1000,
+            canvas_height=800,
+        )
+
+        # Should adjust width for horizontal layout
+        expected_width = 1000 + int(150.0 * 2)  # spacing * num_transformations
+        mock_renderer.assert_called_with(mock_scene.return_value, expected_width, 800)

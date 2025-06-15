@@ -41,12 +41,14 @@ class DomainTransformation:
         transformation_matrix: The matrix used to transform this domain.
         domain_id: An optional identifier for the domain (e.g., 'Domain1', 'N-term').
         scop_id: An optional SCOP family identifier from alignment (e.g., '3000114').
+        alignment_probability: The alignment probability/quality score (0.0-1.0).
     """
 
     domain_range: ResidueRange
     transformation_matrix: TransformationMatrix
     domain_id: Optional[str] = None
     scop_id: Optional[str] = None
+    alignment_probability: Optional[float] = None
 
     def __post_init__(self):
         """Validate inputs."""
@@ -168,6 +170,7 @@ def create_domain_aware_scene(
         Dict[str, Union[BaseStructureStyle, ConnectionStyle, AreaAnnotationStyle]]
     ] = None,
     domain_scop_ids: Optional[Dict[str, str]] = None,
+    domain_alignment_probabilities: Optional[Dict[str, float]] = None,
 ) -> Scene:
     """Creates a Scene containing only specified domains, each in its own group.
 
@@ -184,6 +187,8 @@ def create_domain_aware_scene(
         default_styles: Optional dictionary mapping element type names to style instances.
         domain_scop_ids: Optional dictionary mapping domain_id to an annotation string
                          (e.g., SCOP ID) used for AreaAnnotation labels.
+        domain_alignment_probabilities: Optional dictionary mapping domain_id to alignment
+                                        probability (0.0-1.0) for display in annotations.
 
     Returns:
         A Scene object containing only the specified domain groups, laid out.
@@ -198,8 +203,8 @@ def create_domain_aware_scene(
         or projected_structure.coordinates.size == 0
     ):
         raise ValueError("Input projected_structure has no coordinates.")
-    if arrangement not in ["horizontal", "vertical", "grid"]:
-        raise ValueError("Arrangement must be 'horizontal', 'vertical', or 'grid'.")
+    if arrangement not in ["horizontal", "vertical"]:
+        raise ValueError("Arrangement must be 'horizontal' or 'vertical'.")
     if domain_scop_ids and any(d.domain_id is None for d in domain_definitions):
         raise ValueError(
             "All domain_definitions must have a domain_id if domain_scop_ids is provided."
@@ -375,11 +380,23 @@ def create_domain_aware_scene(
                 continue
             try:
                 target_range_set = ResidueRangeSet([domain_tf.domain_range])
+
+                # Create label with SCOP ID and alignment probability
+                label = scop_id
+                if (
+                    domain_alignment_probabilities
+                    and domain_id in domain_alignment_probabilities
+                ):
+                    probability = domain_alignment_probabilities[domain_id]
+                    label = (
+                        f"{scop_id}\n({probability:.1%})"  # e.g., "3000622\n(85.3%)"
+                    )
+
                 annotation = AreaAnnotation(
                     id=f"{domain_id}_area",
                     residue_range_set=target_range_set,
                     style=base_area_style,  # Pass style or None
-                    label=scop_id,
+                    label=label,
                 )
                 # Add annotation as child of the specific domain group
                 scene.add_element(annotation, parent_id=group.id)
@@ -398,30 +415,18 @@ def create_domain_aware_scene(
     total = len(domain_ids_in_order)
     for i, domain_id in enumerate(domain_ids_in_order):
         group = domain_groups.get(domain_id)
-        idx = total - i - 1
         if not group:
             continue  # Should not happen based on checks
 
         # Calculate fixed translation based on index and spacing (margin)
         if arrangement == "horizontal":
+            idx = total - i - 1  # Reverse for horizontal (right to left)
             translate_x = idx * spacing
             translate_y = 0.0
         elif arrangement == "vertical":
+            idx = total - i - 1  # Reverse for vertical (bottom to top)
             translate_x = 0.0
             translate_y = idx * spacing
-        else:  # grid
-            # Calculate grid dimensions - try to make it roughly square
-            import math
-
-            cols = max(1, int(math.ceil(math.sqrt(total))))
-            _rows = max(1, int(math.ceil(total / cols)))
-
-            # Calculate position in grid
-            row = idx // cols
-            col = idx % cols
-
-            translate_x = col * spacing
-            translate_y = row * spacing
 
         # Apply the translation
         if group.transforms is None:
@@ -663,6 +668,7 @@ def align_regions_batch(
                 transformation_matrix=transformation_matrix,
                 domain_id=region_id,
                 scop_id=scop_id,
+                alignment_probability=alignment_result.probability,
             )
 
             domain_transformations.append(domain_transformation)
