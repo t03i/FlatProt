@@ -502,40 +502,16 @@ class TestCalculateIndividualInertiaTransformations:
         )
         structure.coordinates = coordinates
 
-        # Create mock chains and residues
-        mock_residue1 = Mock()
-        mock_residue1.coordinate_index = 0
-        mock_residue1.residue_type = "ALA"
+        # Create actual ResidueCoordinate objects with all required fields
+        from flatprot.core.coordinates import ResidueCoordinate
 
-        # Mock residue "in range" check properly using side_effect
-        def residue_in_range(residue_num):
-            def check_in_range(range_obj):
-                return (
-                    range_obj.start <= residue_num <= range_obj.end
-                    and range_obj.chain_id == "A"
-                )
-
-            return check_in_range
-
-        mock_residue1.__contains__ = residue_in_range(1)
-
-        mock_residue2 = Mock()
-        mock_residue2.coordinate_index = 1
-        mock_residue2.residue_type = "VAL"
-        mock_residue2.__contains__ = residue_in_range(2)
-
-        mock_residue3 = Mock()
-        mock_residue3.coordinate_index = 2
-        mock_residue3.residue_type = "GLY"
-        mock_residue3.__contains__ = residue_in_range(50)
-
-        mock_residue4 = Mock()
-        mock_residue4.coordinate_index = 3
-        mock_residue4.residue_type = "PHE"
-        mock_residue4.__contains__ = residue_in_range(51)
+        mock_residue1 = ResidueCoordinate("A", 1, residue_type="ALA", coordinate_index=0)
+        mock_residue2 = ResidueCoordinate("A", 2, residue_type="VAL", coordinate_index=1)
+        mock_residue3 = ResidueCoordinate("A", 50, residue_type="GLY", coordinate_index=2)
+        mock_residue4 = ResidueCoordinate("A", 51, residue_type="PHE", coordinate_index=3)
 
         mock_chain = Mock()
-        mock_chain.chain_id = "A"
+        mock_chain.id = "A"  # Use .id to match the actual implementation
         mock_chain.__iter__ = lambda self: iter(
             [mock_residue1, mock_residue2, mock_residue3, mock_residue4]
         )
@@ -552,7 +528,7 @@ class TestCalculateIndividualInertiaTransformations:
         ]
 
         with patch(
-            "flatprot.utils.domain_utils.calculate_inertia_transformation_matrix"
+            "flatprot.transformation.inertia_transformation.calculate_inertia_transformation_matrix"
         ) as mock_calc:
             mock_matrix = TransformationMatrix(
                 rotation=np.eye(3), translation=np.zeros(3)

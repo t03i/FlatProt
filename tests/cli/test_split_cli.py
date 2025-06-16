@@ -102,7 +102,8 @@ class TestSplitConfig:
         assert config.structure_file == structure_file
         assert config.regions == "A:1-100,B:1-50"
         assert config.alignment_mode == "family-identity"
-        assert config.layout == "horizontal"
+        assert config.gap_x == 0.0
+        assert config.gap_y == 0.0
 
     def test_invalid_regions_empty(self, tmp_path):
         """Test invalid empty regions."""
@@ -132,15 +133,20 @@ class TestSplitConfig:
                 alignment_mode="invalid",
             )
 
-    def test_invalid_layout(self, tmp_path):
-        """Test invalid layout."""
+    def test_gap_parameters(self, tmp_path):
+        """Test gap parameters."""
         structure_file = tmp_path / "test.cif"
         structure_file.touch()
 
-        with pytest.raises(ValueError, match="Invalid layout"):
-            SplitConfig(
-                structure_file=structure_file, regions="A:1-100", layout="invalid"
-            )
+        config = SplitConfig(
+            structure_file=structure_file, 
+            regions="A:1-100",
+            gap_x=50.0,
+            gap_y=100.0
+        )
+        
+        assert config.gap_x == 50.0
+        assert config.gap_y == 100.0
 
 
 class TestSplitCommand:
@@ -188,7 +194,6 @@ class TestSplitCommand:
     @patch("flatprot.cli.split.ensure_database_available")
     @patch("flatprot.cli.split.align_regions_batch")
     @patch("flatprot.cli.split.apply_domain_transformations_masked")
-    @patch("flatprot.cli.split.transform_structure_with_inertia")
     @patch("flatprot.cli.split.project_structure_orthographically")
     @patch("flatprot.cli.split.create_domain_aware_scene")
     @patch("flatprot.cli.split.SVGRenderer")
@@ -197,7 +202,6 @@ class TestSplitCommand:
         mock_renderer,
         mock_scene,
         mock_project,
-        mock_inertia,
         mock_transform,
         mock_align,
         mock_database,
@@ -249,9 +253,6 @@ class TestSplitCommand:
         mock_transformed_structure = Mock()
         mock_transform.return_value = mock_transformed_structure
 
-        mock_inertia_structure = Mock()
-        mock_inertia.return_value = mock_inertia_structure
-
         mock_projected_structure = Mock()
         mock_project.return_value = mock_projected_structure
 
@@ -279,8 +280,6 @@ class TestSplitCommand:
         mock_transform.assert_called_once_with(
             mock_structure, mock_domain_transformations
         )
-        # No global inertia transformation should be called
-        mock_inertia.assert_not_called()
         mock_project.assert_called_once()
         mock_scene.assert_called_once()
         mock_renderer.assert_called_once()
@@ -343,7 +342,8 @@ class TestSplitCommand:
     @patch("flatprot.cli.split.extract_structure_regions")
     @patch("flatprot.cli.split.ensure_database_available")
     @patch("flatprot.cli.split.align_regions_batch")
-    @patch("flatprot.cli.split.transform_structure_with_inertia")
+    @patch("flatprot.cli.split.calculate_individual_inertia_transformations")
+    @patch("flatprot.cli.split.apply_domain_transformations_masked")
     @patch("flatprot.cli.split.project_structure_orthographically")
     @patch("flatprot.cli.split.create_domain_aware_scene")
     @patch("flatprot.cli.split.SVGRenderer")
@@ -352,7 +352,8 @@ class TestSplitCommand:
         mock_renderer,
         mock_scene,
         mock_project,
-        mock_inertia,
+        mock_transform,
+        mock_calc_inertia,
         mock_align,
         mock_database,
         mock_extract,
