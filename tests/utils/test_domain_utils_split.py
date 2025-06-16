@@ -505,10 +505,18 @@ class TestCalculateIndividualInertiaTransformations:
         # Create actual ResidueCoordinate objects with all required fields
         from flatprot.core.coordinates import ResidueCoordinate
 
-        mock_residue1 = ResidueCoordinate("A", 1, residue_type="ALA", coordinate_index=0)
-        mock_residue2 = ResidueCoordinate("A", 2, residue_type="VAL", coordinate_index=1)
-        mock_residue3 = ResidueCoordinate("A", 50, residue_type="GLY", coordinate_index=2)
-        mock_residue4 = ResidueCoordinate("A", 51, residue_type="PHE", coordinate_index=3)
+        mock_residue1 = ResidueCoordinate(
+            "A", 1, residue_type="ALA", coordinate_index=0
+        )
+        mock_residue2 = ResidueCoordinate(
+            "A", 2, residue_type="VAL", coordinate_index=1
+        )
+        mock_residue3 = ResidueCoordinate(
+            "A", 50, residue_type="GLY", coordinate_index=2
+        )
+        mock_residue4 = ResidueCoordinate(
+            "A", 51, residue_type="PHE", coordinate_index=3
+        )
 
         mock_chain = Mock()
         mock_chain.id = "A"  # Use .id to match the actual implementation
