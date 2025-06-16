@@ -84,11 +84,11 @@ ATOM 3 C CA . VAL A 1 3 ? 7.6 0.0 0.0 1.00 20.0 ? 3 VAL A CA 1
         # Call CLI function with position annotations enabled
         result = project_structure_svg(
             structure=mock_structure_file,
-            show_positions=True,
+            show_positions="full",
         )
 
         # Verify position annotations were added
-        mock_add_positions.assert_called_once_with(mock_scene, None)
+        mock_add_positions.assert_called_once_with(mock_scene, None, "full")
         assert result == 0
 
     @patch("flatprot.cli.project.GemmiStructureParser")
@@ -124,7 +124,7 @@ ATOM 3 C CA . VAL A 1 3 ? 7.6 0.0 0.0 1.00 20.0 ? 3 VAL A CA 1
         # Call CLI function with position annotations disabled (default)
         result = project_structure_svg(
             structure=mock_structure_file,
-            show_positions=False,
+            show_positions="none",
         )
 
         # Verify position annotations were NOT added
@@ -190,11 +190,13 @@ color = "#FF0000"
         result = project_structure_svg(
             structure=mock_structure_file,
             style=style_file,
-            show_positions=True,
+            show_positions="full",
         )
 
         # Verify position annotations were added with custom style
-        mock_add_positions.assert_called_once_with(mock_scene, mock_position_style)
+        mock_add_positions.assert_called_once_with(
+            mock_scene, mock_position_style, "full"
+        )
         assert result == 0
 
     def test_position_annotation_scene_integration(self, mocker):
@@ -213,7 +215,7 @@ color = "#FF0000"
         mock_scene.get_sequential_structure_elements.return_value = [mock_helix]
 
         # Call add_position_annotations_to_scene
-        add_position_annotations_to_scene(mock_scene)
+        add_position_annotations_to_scene(mock_scene, annotation_level="full")
 
         # Verify add_element was called
         assert mock_scene.add_element.call_count > 0

@@ -57,8 +57,8 @@ class TestAddPositionAnnotationsToScene:
         """Test adding position annotations with default settings."""
         scene, mock_elements = self.create_mock_scene(mocker)
 
-        # Call the function
-        add_position_annotations_to_scene(scene)
+        # Call the function with default annotation level (full)
+        add_position_annotations_to_scene(scene, annotation_level="full")
 
         # Verify add_element was called
         assert scene.add_element.call_count > 0
@@ -94,10 +94,8 @@ class TestAddPositionAnnotationsToScene:
         """Test adding only terminus annotations."""
         scene, mock_elements = self.create_mock_scene(mocker)
 
-        # Call with residue numbers disabled
-        add_position_annotations_to_scene(
-            scene, show_terminus=True, show_residue_numbers=False
-        )
+        # Call with minimal level (terminus only)
+        add_position_annotations_to_scene(scene, annotation_level="minimal")
 
         # Check added annotations
         calls = scene.add_element.call_args_list
@@ -124,13 +122,11 @@ class TestAddPositionAnnotationsToScene:
         assert len(residue_numbers) == 0  # Should be none
 
     def test_add_position_annotations_residue_numbers_only(self, mocker):
-        """Test adding only residue number annotations."""
+        """Test adding residue number annotations with terminus."""
         scene, mock_elements = self.create_mock_scene(mocker)
 
-        # Call with terminus disabled
-        add_position_annotations_to_scene(
-            scene, show_terminus=False, show_residue_numbers=True
-        )
+        # Call with major level (terminus + major structures)
+        add_position_annotations_to_scene(scene, annotation_level="major")
 
         # Check added annotations
         calls = scene.add_element.call_args_list
@@ -152,18 +148,16 @@ class TestAddPositionAnnotationsToScene:
             if ann.position_type == PositionType.RESIDUE_NUMBER
         ]
 
-        assert len(n_terminus) == 0  # Should be none
-        assert len(c_terminus) == 0  # Should be none
+        assert len(n_terminus) == 1  # Should have terminus
+        assert len(c_terminus) == 1  # Should have terminus
         assert len(residue_numbers) == 4  # 2 for helix + 2 for sheet
 
     def test_add_position_annotations_no_annotations(self, mocker):
-        """Test that no annotations are added when both options are disabled."""
+        """Test that no annotations are added when level is none."""
         scene, mock_elements = self.create_mock_scene(mocker)
 
-        # Call with both disabled
-        add_position_annotations_to_scene(
-            scene, show_terminus=False, show_residue_numbers=False
-        )
+        # Call with none level
+        add_position_annotations_to_scene(scene, annotation_level="none")
 
         # Check added annotations
         calls = scene.add_element.call_args_list
@@ -182,7 +176,9 @@ class TestAddPositionAnnotationsToScene:
         )
 
         # Call with custom style
-        add_position_annotations_to_scene(scene, style=custom_style)
+        add_position_annotations_to_scene(
+            scene, style=custom_style, annotation_level="full"
+        )
 
         # Check that annotations were added with custom style
         calls = scene.add_element.call_args_list
@@ -201,7 +197,7 @@ class TestAddPositionAnnotationsToScene:
         scene.add_element = mocker.MagicMock()
 
         # Should not raise error but also not add any annotations
-        add_position_annotations_to_scene(scene)
+        add_position_annotations_to_scene(scene, annotation_level="full")
 
         # Should not have called add_element
         assert scene.add_element.call_count == 0
@@ -218,7 +214,7 @@ class TestAddPositionAnnotationsToScene:
         with pytest.raises(
             SceneCreationError, match="Failed to get structure elements"
         ):
-            add_position_annotations_to_scene(scene)
+            add_position_annotations_to_scene(scene, annotation_level="full")
 
     def test_add_position_annotations_add_element_error(self, mocker):
         """Test handling of error when adding annotation to scene."""
@@ -238,16 +234,14 @@ class TestAddPositionAnnotationsToScene:
         with pytest.raises(
             SceneCreationError, match="Failed to add N-terminus annotation"
         ):
-            add_position_annotations_to_scene(scene)
+            add_position_annotations_to_scene(scene, annotation_level="full")
 
     def test_residue_number_annotations_skip_coils(self, mocker):
         """Test that residue number annotations are not added for coil elements."""
         scene, mock_elements = self.create_mock_scene(mocker)
 
-        # Call function with only residue numbers enabled
-        add_position_annotations_to_scene(
-            scene, show_terminus=False, show_residue_numbers=True
-        )
+        # Call function with major level (includes residue numbers)
+        add_position_annotations_to_scene(scene, annotation_level="major")
 
         # Check that only helix and sheet get residue numbers, not coil
         calls = scene.add_element.call_args_list
@@ -280,9 +274,7 @@ class TestAddPositionAnnotationsToScene:
         scene.add_element = mocker.MagicMock()
 
         # Call function
-        add_position_annotations_to_scene(
-            scene, show_terminus=False, show_residue_numbers=True
-        )
+        add_position_annotations_to_scene(scene, annotation_level="full")
 
         # Should only add start annotation, not end (since start == end)
         calls = scene.add_element.call_args_list
@@ -313,7 +305,7 @@ class TestAddPositionAnnotationsToScene:
         scene.add_element = mocker.MagicMock()
 
         # Call function - should not raise error
-        add_position_annotations_to_scene(scene)
+        add_position_annotations_to_scene(scene, annotation_level="full")
 
         # Should not have added any residue number annotations
         calls = scene.add_element.call_args_list

@@ -68,7 +68,7 @@ class SplitConfig(BaseModel):
     foldseek: str = Field(default="foldseek", description="Foldseek executable path")
     dssp: Optional[Path] = Field(default=None, description="DSSP file for PDB input")
     show_positions: str = Field(
-        default="none",
+        default="minimal",
         description="Position annotation level: 'none', 'minimal', 'major', 'full'",
     )
     show_database_alignment: bool = Field(
@@ -404,7 +404,12 @@ def split_command(
         canvas_height: Canvas height in pixels
         foldseek: Foldseek executable path
         dssp: DSSP file for PDB input (required for PDB files)
-        show_positions: Position annotation level ('none', 'minimal', 'major', 'full')
+        show_positions: Position annotation level controlling residue numbering and terminus labels for each domain.
+            Available levels:
+            - 'none': No position annotations
+            - 'minimal': Only N/C terminus labels per domain (default)
+            - 'major': N/C terminus + residue numbers for major secondary structures (≥3 residues)
+            - 'full': All position annotations including short structures
         show_database_alignment: Enable database alignment and show family area annotations
 
     Raises:

@@ -237,16 +237,14 @@ def add_annotations_to_scene(annotations_path: Path, scene: Scene) -> None:
 def add_position_annotations_to_scene(
     scene: Scene,
     style: Optional[PositionAnnotationStyle] = None,
-    show_terminus: bool = True,
-    show_residue_numbers: bool = True,
+    annotation_level: str = "full",
 ) -> None:
     """Adds position annotations (N/C terminus and residue numbers) to the scene.
 
     Args:
         scene: The Scene object to add position annotations to.
         style: Optional custom style for position annotations.
-        show_terminus: Whether to show N/C terminus labels.
-        show_residue_numbers: Whether to show residue numbers on secondary structures.
+        annotation_level: Level of annotation detail ('none', 'minimal', 'major', 'full').
 
     Raises:
         SceneCreationError: If adding an element to the scene fails.
@@ -254,9 +252,14 @@ def add_position_annotations_to_scene(
     if style is None:
         style = PositionAnnotationStyle()
 
-    # Override style settings based on parameters
-    style.show_terminus = show_terminus
-    style.show_residue_numbers = show_residue_numbers
+    # Return early if no annotations requested
+    if annotation_level == "none":
+        logger.info("Position annotations disabled")
+        return
+
+    # Configure style settings based on annotation level
+    style.show_terminus = annotation_level in ["minimal", "major", "full"]
+    style.show_residue_numbers = annotation_level in ["major", "full"]
 
     # Get all structure elements in sequence
     try:
@@ -272,7 +275,7 @@ def add_position_annotations_to_scene(
         return
 
     # Add N-terminus annotation
-    if show_terminus and structure_elements:
+    if style.show_terminus and structure_elements:
         first_element = structure_elements[0]
         n_terminus_id = f"pos_n_terminus_{first_element.id}"
 
@@ -291,7 +294,7 @@ def add_position_annotations_to_scene(
             raise SceneCreationError(f"Failed to add N-terminus annotation: {e}") from e
 
     # Add C-terminus annotation
-    if show_terminus and structure_elements:
+    if style.show_terminus and structure_elements:
         last_element = structure_elements[-1]
         c_terminus_id = f"pos_c_terminus_{last_element.id}"
 
@@ -310,7 +313,7 @@ def add_position_annotations_to_scene(
             raise SceneCreationError(f"Failed to add C-terminus annotation: {e}") from e
 
     # Add residue number annotations for helices and sheets only
-    if show_residue_numbers:
+    if style.show_residue_numbers:
         for element in structure_elements:
             # Only add residue numbers for helices and sheets, not coils
             if not isinstance(element, (HelixSceneElement, SheetSceneElement)):
@@ -322,6 +325,19 @@ def add_position_annotations_to_scene(
 
             # Get the first range (assuming single range per element)
             residue_range = element.residue_range_set.ranges[0]
+
+            # Apply filtering based on annotation level
+            structure_length = residue_range.end - residue_range.start + 1
+
+            if annotation_level == "major" and structure_length < 3:
+                # Skip short structures in 'major' mode to reduce clutter
+                logger.debug(
+                    f"Skipping short structure {element.id} ({structure_length} residues)"
+                )
+                continue
+            elif annotation_level == "full":
+                # Include all structures in 'full' mode (original behavior)
+                pass
 
             # Add start position annotation
             start_id = f"pos_start_{element.id}"
@@ -376,6 +392,4 @@ def add_position_annotations_to_scene(
                     # Continue with other annotations even if one fails
                     continue
 
-    logger.info(
-        f"Added position annotations to scene (terminus: {show_terminus}, residue_numbers: {show_residue_numbers})"
-    )
+    logger.info(f"Added position annotations to scene (level: {annotation_level})")
