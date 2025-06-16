@@ -13,6 +13,8 @@ from flatprot.cli.split import (
     SplitConfig,
 )
 from flatprot.core import ResidueRange
+from flatprot.transformation import TransformationMatrix
+import numpy as np
 
 
 class TestParseRegions:
@@ -220,13 +222,27 @@ class TestSplitCommand:
 
         mock_database.return_value = Path("/tmp/db")
 
-        # Create proper domain transformation mocks with scop_id
+        # Create proper domain transformation mocks with transformation matrices
+        mock_rotation = np.eye(3)
+        mock_translation = np.zeros(3)
+        mock_transform_matrix = TransformationMatrix(
+            rotation=mock_rotation, translation=mock_translation
+        )
+
         mock_dt1 = Mock()
         mock_dt1.domain_id = "A:1-100"
         mock_dt1.scop_id = "test_scop_1"
+        mock_dt1.transformation_matrix = mock_transform_matrix
+        mock_dt1.domain_range = ResidueRange("A", 1, 100)
+        mock_dt1.alignment_probability = 0.85
+
         mock_dt2 = Mock()
         mock_dt2.domain_id = "A:150-250"
         mock_dt2.scop_id = "test_scop_2"
+        mock_dt2.transformation_matrix = mock_transform_matrix
+        mock_dt2.domain_range = ResidueRange("A", 150, 250)
+        mock_dt2.alignment_probability = 0.92
+
         mock_domain_transformations = [mock_dt1, mock_dt2]
         mock_align.return_value = mock_domain_transformations
 
@@ -419,13 +435,27 @@ class TestSplitCommand:
 
         mock_database.return_value = Path("/tmp/db")
 
-        # Create proper domain transformation mocks with scop_id
+        # Create proper domain transformation mocks with transformation matrices
+        mock_rotation = np.eye(3)
+        mock_translation = np.zeros(3)
+        mock_transform_matrix = TransformationMatrix(
+            rotation=mock_rotation, translation=mock_translation
+        )
+
         mock_dt1 = Mock()
         mock_dt1.domain_id = "A:1-100"
         mock_dt1.scop_id = "test_scop_1"
+        mock_dt1.transformation_matrix = mock_transform_matrix
+        mock_dt1.domain_range = ResidueRange("A", 1, 100)
+        mock_dt1.alignment_probability = 0.85
+
         mock_dt2 = Mock()
         mock_dt2.domain_id = "A:150-250"
         mock_dt2.scop_id = "test_scop_2"
+        mock_dt2.transformation_matrix = mock_transform_matrix
+        mock_dt2.domain_range = ResidueRange("A", 150, 250)
+        mock_dt2.alignment_probability = 0.92
+
         mock_domain_transformations = [mock_dt1, mock_dt2]
         mock_align.return_value = mock_domain_transformations
 

@@ -30,9 +30,16 @@ from flatprot.utils.structure_utils import (
     project_structure_orthographically,
     transform_structure_with_inertia,
 )
-from flatprot.utils.scene_utils import add_position_annotations_to_scene
 from flatprot.renderers import SVGRenderer
 from flatprot.cli.errors import CLIError, error_handler
+from flatprot.scene import (
+    PositionAnnotation,
+    PositionType,
+    HelixSceneElement,
+    SheetSceneElement,
+)
+from flatprot.scene.annotation.position import PositionAnnotationStyle
+from flatprot.core import ResidueCoordinate
 
 
 class SplitConfig(BaseModel):
@@ -60,8 +67,9 @@ class SplitConfig(BaseModel):
     canvas_height: int = Field(default=1000, description="Canvas height in pixels")
     foldseek: str = Field(default="foldseek", description="Foldseek executable path")
     dssp: Optional[Path] = Field(default=None, description="DSSP file for PDB input")
-    show_positions: bool = Field(
-        default=False, description="Show residue position annotations"
+    show_positions: str = Field(
+        default="none",
+        description="Position annotation level: 'none', 'minimal', 'major', 'full'",
     )
     show_database_alignment: bool = Field(
         default=False,
@@ -120,6 +128,17 @@ class SplitConfig(BaseModel):
             raise ValueError(f"Invalid layout: {v}. Must be one of {valid_layouts}")
         return v
 
+    @field_validator("show_positions")
+    @classmethod
+    def validate_show_positions(cls, v: str) -> str:
+        """Validate position annotation level."""
+        valid_levels = {"none", "minimal", "major", "full"}
+        if v not in valid_levels:
+            raise ValueError(
+                f"Invalid position annotation level: {v}. Must be one of {valid_levels}"
+            )
+        return v
+
 
 def parse_regions(regions_str: str) -> List[ResidueRange]:
     """Parse region string into ResidueRange objects.
@@ -156,6 +175,199 @@ def parse_regions(regions_str: str) -> List[ResidueRange]:
     return regions
 
 
+def add_domain_aware_position_annotations(
+    scene, domain_transformations, style=None, annotation_level="major"
+):
+    """Add cleaner position annotations to domain groups in a domain-aware scene.
+
+    This function creates a cleaner annotation approach for domain-separated visualizations:
+    - 'none': No position annotations
+    - 'minimal': Only N/C terminus per domain
+    - 'major': N/C terminus + major secondary structures (≥3 residues)
+    - 'full': All position annotations (original behavior)
+
+    Args:
+        scene: The Scene object with domain groups
+        domain_transformations: List of DomainTransformation objects defining domains
+        style: Optional PositionAnnotationStyle
+        annotation_level: Level of annotation detail ('none', 'minimal', 'major', 'full')
+    """
+    if style is None:
+        style = PositionAnnotationStyle()
+
+    # Return early if no annotations requested
+    if annotation_level == "none":
+        logger.info("Position annotations disabled")
+        return
+
+    # Get all structure elements organized by domain group
+    try:
+        all_structure_elements = scene.get_sequential_structure_elements()
+    except Exception as e:
+        logger.error(f"Failed to get sequential structure elements: {e}")
+        return
+
+    if not all_structure_elements:
+        logger.warning("No structure elements found for position annotations")
+        return
+
+    # Find which group each structure element belongs to
+    element_to_group = {}
+    for element in all_structure_elements:
+        if element.parent:
+            element_to_group[element.id] = element.parent.id
+
+    # Group elements by their parent domain group
+    elements_by_group = {}
+    for element in all_structure_elements:
+        group_id = element_to_group.get(element.id)
+        if group_id:
+            if group_id not in elements_by_group:
+                elements_by_group[group_id] = []
+            elements_by_group[group_id].append(element)
+
+    # Add cleaner position annotations for each domain group
+    for group_id, group_elements in elements_by_group.items():
+        if not group_elements:
+            continue
+
+        # Sort elements by sequence to find first and last
+        group_elements.sort(
+            key=lambda e: (
+                e.residue_range_set.ranges[0].chain_id
+                if e.residue_range_set.ranges
+                else "Z",
+                e.residue_range_set.ranges[0].start
+                if e.residue_range_set.ranges
+                else 99999,
+            )
+        )
+
+        # Add N-terminus annotation for this domain (always show)
+        first_element = group_elements[0]
+        n_terminus_id = f"pos_n_terminus_{group_id}_{first_element.id}"
+
+        try:
+            n_terminus = PositionAnnotation(
+                id=n_terminus_id,
+                target=first_element.residue_range_set,
+                position_type=PositionType.N_TERMINUS,
+                text="N",
+                style=style,
+            )
+            scene.add_element(n_terminus, parent_id=group_id)
+            logger.debug(
+                f"Added N-terminus annotation to group {group_id}: {n_terminus_id}"
+            )
+        except Exception as e:
+            logger.error(
+                f"Failed to add N-terminus annotation to group {group_id}: {e}"
+            )
+
+        # Add C-terminus annotation for this domain (always show)
+        last_element = group_elements[-1]
+        c_terminus_id = f"pos_c_terminus_{group_id}_{last_element.id}"
+
+        try:
+            c_terminus = PositionAnnotation(
+                id=c_terminus_id,
+                target=last_element.residue_range_set,
+                position_type=PositionType.C_TERMINUS,
+                text="C",
+                style=style,
+            )
+            scene.add_element(c_terminus, parent_id=group_id)
+            logger.debug(
+                f"Added C-terminus annotation to group {group_id}: {c_terminus_id}"
+            )
+        except Exception as e:
+            logger.error(
+                f"Failed to add C-terminus annotation to group {group_id}: {e}"
+            )
+
+        # Add residue number annotations based on annotation level
+        if annotation_level in ["major", "full"] and style.show_residue_numbers:
+            for element in group_elements:
+                # Only add residue numbers for helices and sheets, not coils
+                if not isinstance(element, (HelixSceneElement, SheetSceneElement)):
+                    continue
+
+                if not element.residue_range_set.ranges:
+                    logger.warning(f"Element {element.id} has no residue ranges")
+                    continue
+
+                # Get the first range (assuming single range per element)
+                residue_range = element.residue_range_set.ranges[0]
+
+                # Apply filtering based on annotation level
+                structure_length = residue_range.end - residue_range.start + 1
+
+                if annotation_level == "major" and structure_length < 3:
+                    # Skip short structures in 'major' mode to reduce clutter
+                    logger.debug(
+                        f"Skipping short structure {element.id} ({structure_length} residues)"
+                    )
+                    continue
+                elif annotation_level == "full":
+                    # Include all structures in 'full' mode (original behavior)
+                    pass
+
+                # Add start position annotation
+                start_id = f"pos_start_{element.id}"
+                try:
+                    # Create specific coordinate for start position
+                    start_coord = ResidueCoordinate(
+                        residue_range.chain_id,
+                        residue_range.start,
+                        None,  # residue_type not needed
+                        0,  # coordinate_index
+                    )
+                    start_annotation = PositionAnnotation(
+                        id=start_id,
+                        target=start_coord,
+                        position_type=PositionType.RESIDUE_NUMBER,
+                        text=str(residue_range.start),
+                        style=style,
+                    )
+                    scene.add_element(start_annotation, parent_id=group_id)
+                    logger.debug(
+                        f"Added start position annotation to group {group_id}: {start_id}"
+                    )
+                except Exception as e:
+                    logger.error(
+                        f"Failed to add start position annotation for {element.id}: {e}"
+                    )
+                    continue
+
+                # Add end position annotation (only if different from start)
+                if residue_range.end != residue_range.start:
+                    end_id = f"pos_end_{element.id}"
+                    try:
+                        # Create specific coordinate for end position
+                        end_coord = ResidueCoordinate(
+                            residue_range.chain_id,
+                            residue_range.end,
+                            None,  # residue_type not needed
+                            0,  # coordinate_index
+                        )
+                        end_annotation = PositionAnnotation(
+                            id=end_id,
+                            target=end_coord,
+                            position_type=PositionType.RESIDUE_NUMBER,
+                            text=str(residue_range.end),
+                            style=style,
+                        )
+                        scene.add_element(end_annotation, parent_id=group_id)
+                        logger.debug(
+                            f"Added end position annotation to group {group_id}: {end_id}"
+                        )
+                    except Exception as e:
+                        logger.error(
+                            f"Failed to add end position annotation for {element.id}: {e}"
+                        )
+                        continue
+
+
 @error_handler
 def split_command(
     structure_file: Path,
@@ -171,7 +383,7 @@ def split_command(
     canvas_height: int = 1000,
     foldseek: str = "foldseek",
     dssp: Optional[Path] = None,
-    show_positions: bool = False,
+    show_positions: str = "none",
     show_database_alignment: bool = False,
 ) -> None:
     """Split protein structure into regions and create aligned visualization.
@@ -192,7 +404,7 @@ def split_command(
         canvas_height: Canvas height in pixels
         foldseek: Foldseek executable path
         dssp: DSSP file for PDB input (required for PDB files)
-        show_positions: Show residue position annotations
+        show_positions: Position annotation level ('none', 'minimal', 'major', 'full')
         show_database_alignment: Enable database alignment and show family area annotations
 
     Raises:
@@ -269,15 +481,15 @@ def split_command(
 
             domain_transformations = []
 
-            # Collect alignment data if database alignment is enabled (for annotations only)
-            if config.show_database_alignment:
+            # Perform database alignment if family-identity mode is selected
+            if config.alignment_mode == "family-identity":
                 # Ensure alignment database is available
                 logger.info("Ensuring alignment database is available...")
                 db_path = ensure_database_available()
                 foldseek_db_path = db_path / "foldseek" / "db"
 
-                # Align regions to get SCOP IDs and probabilities
-                logger.info("Aligning regions to collect annotation data...")
+                # Align regions using family-identity mode
+                logger.info("Aligning regions using family-identity mode...")
                 alignment_transformations = align_regions_batch(
                     region_files,
                     region_ranges,
@@ -313,10 +525,10 @@ def split_command(
                         alignment_probability=alignment_transform.alignment_probability,  # Keep probability for annotations
                     )
                     domain_transformations.append(domain_transform)
-            else:
-                # No alignment - create simple domain transformations for layout only
+            else:  # inertia mode
+                # No database alignment - create simple domain transformations for layout only
                 logger.info(
-                    "Database alignment disabled - creating layout-only domain definitions..."
+                    "Using inertia mode - creating layout-only domain definitions..."
                 )
                 for i, region_range in enumerate(region_ranges):
                     domain_id = f"{region_range.chain_id}:{region_range.start}-{region_range.end}"
@@ -331,11 +543,8 @@ def split_command(
 
             logger.info(f"Created {len(domain_transformations)} domain definitions")
 
-            # Apply domain transformations if database alignment is enabled
-            if (
-                config.show_database_alignment
-                and config.alignment_mode == "family-identity"
-            ):
+            # Apply domain transformations if family-identity mode is used
+            if config.alignment_mode == "family-identity":
                 logger.info(
                     "Applying domain transformations for aligned orientations..."
                 )
@@ -343,7 +552,7 @@ def split_command(
                     original_structure, domain_transformations
                 )
             else:
-                # Use original structure for consistent positioning when alignment disabled or inertia mode
+                # Use original structure for inertia mode
                 transformed_structure = original_structure
 
             # Apply inertia transformation for overall orientation
@@ -415,14 +624,20 @@ def split_command(
                 else None,
             )
 
-            # Add position annotations if requested
-            if config.show_positions:
-                logger.info("Adding position annotations...")
+            # Add position annotations based on level
+            if config.show_positions != "none":
+                logger.info(
+                    f"Adding position annotations to domain groups (level: {config.show_positions})..."
+                )
                 position_style = None
                 if default_styles and "position_annotation" in default_styles:
                     position_style = default_styles["position_annotation"]
-                add_position_annotations_to_scene(scene, position_style)
-                logger.info("Position annotations added")
+                add_domain_aware_position_annotations(
+                    scene, domain_transformations, position_style, config.show_positions
+                )
+                logger.info(
+                    f"Position annotations added to domain groups (level: {config.show_positions})"
+                )
 
             # Render SVG
             logger.info(f"Rendering SVG to {config.output}...")
