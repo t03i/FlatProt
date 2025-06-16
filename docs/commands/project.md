@@ -119,6 +119,18 @@ flatprot project structure.cif -o output.svg --annotations features.toml
 flatprot project structure.cif -o aligned_output.svg --matrix alignment_matrix.npy
 ```
 
+**Use a Matrix from PyMOL Orientation:**
+
+```bash
+# First, extract matrix from PyMOL
+uv run scripts/get_matrix.py structure.cif
+
+# Then use it with project command
+flatprot project structure.cif -o pymol_oriented.svg --matrix rotation_matrix.npy
+```
+
+See the [PyMOL Matrix Extraction](../tools/matrix_extraction.md) documentation for details.
+
 **Combine Multiple Options:**
 
 ```bash
