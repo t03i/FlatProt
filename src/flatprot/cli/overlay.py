@@ -3,9 +3,11 @@
 import glob
 import sys
 from pathlib import Path
-from typing import List, Optional
+from typing import Annotated, List, Optional
 
 import cyclopts
+from cyclopts import Parameter
+
 
 from flatprot.core import logger
 from flatprot.utils.overlay_utils import create_overlay, OverlayConfig
@@ -19,7 +21,7 @@ app = cyclopts.App()
 def overlay(
     file_patterns: List[str],
     *,
-    output: str = "overlay.png",
+    output: Annotated[str, Parameter(name=["-o", "--output"])] = "overlay.png",
     family: Optional[str] = None,
     alignment_mode: str = "family-identity",
     style: Optional[Path] = None,

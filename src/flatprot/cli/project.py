@@ -41,7 +41,7 @@ def project_structure_svg(
     dssp: Optional[Path] = None,
     canvas_width: int = 1000,
     canvas_height: int = 1000,
-    show_positions: bool = False,
+    show_positions: str = "minimal",
     *,
     common: CommonParameters | None = None,
 ) -> int:
@@ -76,7 +76,12 @@ def project_structure_svg(
             Required for PDB files, as they don't contain secondary structure information.
         canvas_width: Width of the canvas in pixels.
         canvas_height: Height of the canvas in pixels.
-        show_positions: Whether to show position annotations (N/C terminus and residue numbers).
+        show_positions: Position annotation level controlling residue numbering and terminus labels.
+            Available levels:
+            - 'none': No position annotations
+            - 'minimal': Only N/C terminus labels (default)
+            - 'major': N/C terminus + residue numbers for major secondary structures (≥3 residues)
+            - 'full': All position annotations including short structures
     Returns:
         int: 0 for success, 1 for errors.
     Examples:
@@ -88,9 +93,22 @@ def project_structure_svg(
             flatprot structure.pdb output.svg --matrix custom_matrix.npy
         Providing secondary structure information for PDB files:
             flatprot structure.pdb output.svg --dssp structure.dssp
+        Position annotation examples:
+            flatprot structure.cif output.svg --show-positions none
+            flatprot structure.cif output.svg --show-positions minimal
+            flatprot structure.cif output.svg --show-positions major
+            flatprot structure.cif output.svg --show-positions full
 
     """
     set_logging_level(common)
+
+    # Validate show_positions parameter
+    valid_position_levels = {"none", "minimal", "major", "full"}
+    if show_positions not in valid_position_levels:
+        raise FlatProtError(
+            f"Invalid position annotation level: {show_positions}. "
+            f"Must be one of {valid_position_levels}"
+        )
 
     try:
         # Validate the structure file
@@ -167,12 +185,12 @@ def project_structure_svg(
         if annotations is not None:
             add_annotations_to_scene(annotations, scene)
 
-        # Add position annotations if requested
-        if show_positions:
+        # Add position annotations based on level
+        if show_positions != "none":
             position_style = None
             if styles_dict and "position_annotation" in styles_dict:
                 position_style = styles_dict["position_annotation"]
-            add_position_annotations_to_scene(scene, position_style)
+            add_position_annotations_to_scene(scene, position_style, show_positions)
 
         # Log coordinate shape from scene before rendering
         if (

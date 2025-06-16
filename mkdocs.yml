@@ -10,6 +10,7 @@ nav:
       - Project: commands/project.md
       - Align: commands/align.md
       - Overlay: commands/overlay.md
+      - Split: commands/split.md
   - File Formats:
       - Matrix Files: file_formats/matrix.md
       - Style Files: file_formats/style.md

@@ -217,6 +217,7 @@ class SVGRenderer:
         if not isinstance(element, SceneGroup):
             return  # Only process groups
 
+        # Use group with transform
         svg_transform_str = str(element.transforms)
         current_svg_group = Group(id=element.id, transform=svg_transform_str)
         svg_group_map[element.id] = current_svg_group
