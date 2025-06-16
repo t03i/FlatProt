@@ -66,6 +66,8 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../../commands/overlay/">Overlay</a>
                   </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../commands/split/">Split</a>
+                  </li>
               </ul>
               <p class="caption"><span class="caption-text">File Formats</span></p>
               <ul>
@@ -13233,6 +13235,17 @@ Domain groups are translated by a fixed margin based on the <code>spacing</code>
              (e.g., SCOP ID) used for AreaAnnotation labels.</p>
               </div>
             </li>
+            <li>
+              <b><code>domain_alignment_probabilities</code></b>
+                  (<code><span title="typing.Optional">Optional</span>[<span title="typing.Dict">Dict</span>[<span title="str">str</span>, <span title="float">float</span>]]</code>, default:
+                      <code>None</code>
+)
+              –
+              <div class="doc-md-description">
+                <p>Optional dictionary mapping domain_id to alignment
+                            probability (0.0-1.0) for display in annotations.</p>
+              </div>
+            </li>
         </ul>
       </td>
     </tr>
@@ -13295,22 +13308,7 @@ Domain groups are translated by a fixed margin based on the <code>spacing</code>
 
             <details class="quote">
               <summary>Source code in <code>src/flatprot/utils/domain_utils.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">149</span>
-<span class="normal">150</span>
-<span class="normal">151</span>
-<span class="normal">152</span>
-<span class="normal">153</span>
-<span class="normal">154</span>
-<span class="normal">155</span>
-<span class="normal">156</span>
-<span class="normal">157</span>
-<span class="normal">158</span>
-<span class="normal">159</span>
-<span class="normal">160</span>
-<span class="normal">161</span>
-<span class="normal">162</span>
-<span class="normal">163</span>
-<span class="normal">164</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">164</span>
 <span class="normal">165</span>
 <span class="normal">166</span>
 <span class="normal">167</span>
@@ -13557,7 +13555,38 @@ Domain groups are translated by a fixed margin based on the <code>spacing</code>
 <span class="normal">408</span>
 <span class="normal">409</span>
 <span class="normal">410</span>
-<span class="normal">411</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">create_domain_aware_scene</span><span class="p">(</span>
+<span class="normal">411</span>
+<span class="normal">412</span>
+<span class="normal">413</span>
+<span class="normal">414</span>
+<span class="normal">415</span>
+<span class="normal">416</span>
+<span class="normal">417</span>
+<span class="normal">418</span>
+<span class="normal">419</span>
+<span class="normal">420</span>
+<span class="normal">421</span>
+<span class="normal">422</span>
+<span class="normal">423</span>
+<span class="normal">424</span>
+<span class="normal">425</span>
+<span class="normal">426</span>
+<span class="normal">427</span>
+<span class="normal">428</span>
+<span class="normal">429</span>
+<span class="normal">430</span>
+<span class="normal">431</span>
+<span class="normal">432</span>
+<span class="normal">433</span>
+<span class="normal">434</span>
+<span class="normal">435</span>
+<span class="normal">436</span>
+<span class="normal">437</span>
+<span class="normal">438</span>
+<span class="normal">439</span>
+<span class="normal">440</span>
+<span class="normal">441</span>
+<span class="normal">442</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">create_domain_aware_scene</span><span class="p">(</span>
     <span class="n">projected_structure</span><span class="p">:</span> <span class="n">Structure</span><span class="p">,</span>
     <span class="n">domain_definitions</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">DomainTransformation</span><span class="p">],</span>
     <span class="n">spacing</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span>
@@ -13566,6 +13595,7 @@ Domain groups are translated by a fixed margin based on the <code>spacing</code>
         <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Union</span><span class="p">[</span><span class="n">BaseStructureStyle</span><span class="p">,</span> <span class="n">ConnectionStyle</span><span class="p">,</span> <span class="n">AreaAnnotationStyle</span><span class="p">]]</span>
     <span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">domain_scop_ids</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">domain_alignment_probabilities</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Scene</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Creates a Scene containing only specified domains, each in its own group.</span>
 
@@ -13582,6 +13612,8 @@ Domain groups are translated by a fixed margin based on the <code>spacing</code>
 <span class="sd">        default_styles: Optional dictionary mapping element type names to style instances.</span>
 <span class="sd">        domain_scop_ids: Optional dictionary mapping domain_id to an annotation string</span>
 <span class="sd">                         (e.g., SCOP ID) used for AreaAnnotation labels.</span>
+<span class="sd">        domain_alignment_probabilities: Optional dictionary mapping domain_id to alignment</span>
+<span class="sd">                                        probability (0.0-1.0) for display in annotations.</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        A Scene object containing only the specified domain groups, laid out.</span>
@@ -13773,11 +13805,23 @@ Domain groups are translated by a fixed margin based on the <code>spacing</code>
                 <span class="k">continue</span>
             <span class="k">try</span><span class="p">:</span>
                 <span class="n">target_range_set</span> <span class="o">=</span> <span class="n">ResidueRangeSet</span><span class="p">([</span><span class="n">domain_tf</span><span class="o">.</span><span class="n">domain_range</span><span class="p">])</span>
+
+                <span class="c1"># Create label with SCOP ID and alignment probability</span>
+                <span class="n">label</span> <span class="o">=</span> <span class="n">scop_id</span>
+                <span class="k">if</span> <span class="p">(</span>
+                    <span class="n">domain_alignment_probabilities</span>
+                    <span class="ow">and</span> <span class="n">domain_id</span> <span class="ow">in</span> <span class="n">domain_alignment_probabilities</span>
+                <span class="p">):</span>
+                    <span class="n">probability</span> <span class="o">=</span> <span class="n">domain_alignment_probabilities</span><span class="p">[</span><span class="n">domain_id</span><span class="p">]</span>
+                    <span class="n">label</span> <span class="o">=</span> <span class="p">(</span>
+                        <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">scop_id</span><span class="si">}</span><span class="se">\n</span><span class="s2">(</span><span class="si">{</span><span class="n">probability</span><span class="si">:</span><span class="s2">.1%</span><span class="si">}</span><span class="s2">)&quot;</span>  <span class="c1"># e.g., &quot;3000622\n(85.3%)&quot;</span>
+                    <span class="p">)</span>
+
                 <span class="n">annotation</span> <span class="o">=</span> <span class="n">AreaAnnotation</span><span class="p">(</span>
                     <span class="nb">id</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">domain_id</span><span class="si">}</span><span class="s2">_area&quot;</span><span class="p">,</span>
                     <span class="n">residue_range_set</span><span class="o">=</span><span class="n">target_range_set</span><span class="p">,</span>
                     <span class="n">style</span><span class="o">=</span><span class="n">base_area_style</span><span class="p">,</span>  <span class="c1"># Pass style or None</span>
-                    <span class="n">label</span><span class="o">=</span><span class="n">scop_id</span><span class="p">,</span>
+                    <span class="n">label</span><span class="o">=</span><span class="n">label</span><span class="p">,</span>
                 <span class="p">)</span>
                 <span class="c1"># Add annotation as child of the specific domain group</span>
                 <span class="n">scene</span><span class="o">.</span><span class="n">add_element</span><span class="p">(</span><span class="n">annotation</span><span class="p">,</span> <span class="n">parent_id</span><span class="o">=</span><span class="n">group</span><span class="o">.</span><span class="n">id</span><span class="p">)</span>
@@ -13796,15 +13840,16 @@ Domain groups are translated by a fixed margin based on the <code>spacing</code>
     <span class="n">total</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">domain_ids_in_order</span><span class="p">)</span>
     <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">domain_id</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">domain_ids_in_order</span><span class="p">):</span>
         <span class="n">group</span> <span class="o">=</span> <span class="n">domain_groups</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">domain_id</span><span class="p">)</span>
-        <span class="n">idx</span> <span class="o">=</span> <span class="n">total</span> <span class="o">-</span> <span class="n">i</span> <span class="o">-</span> <span class="mi">1</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">group</span><span class="p">:</span>
             <span class="k">continue</span>  <span class="c1"># Should not happen based on checks</span>
 
         <span class="c1"># Calculate fixed translation based on index and spacing (margin)</span>
         <span class="k">if</span> <span class="n">arrangement</span> <span class="o">==</span> <span class="s2">&quot;horizontal&quot;</span><span class="p">:</span>
+            <span class="n">idx</span> <span class="o">=</span> <span class="n">total</span> <span class="o">-</span> <span class="n">i</span> <span class="o">-</span> <span class="mi">1</span>  <span class="c1"># Reverse for horizontal (right to left)</span>
             <span class="n">translate_x</span> <span class="o">=</span> <span class="n">idx</span> <span class="o">*</span> <span class="n">spacing</span>
             <span class="n">translate_y</span> <span class="o">=</span> <span class="mf">0.0</span>
-        <span class="k">else</span><span class="p">:</span>  <span class="c1"># vertical</span>
+        <span class="k">elif</span> <span class="n">arrangement</span> <span class="o">==</span> <span class="s2">&quot;vertical&quot;</span><span class="p">:</span>
+            <span class="n">idx</span> <span class="o">=</span> <span class="n">total</span> <span class="o">-</span> <span class="n">i</span> <span class="o">-</span> <span class="mi">1</span>  <span class="c1"># Reverse for vertical (bottom to top)</span>
             <span class="n">translate_x</span> <span class="o">=</span> <span class="mf">0.0</span>
             <span class="n">translate_y</span> <span class="o">=</span> <span class="n">idx</span> <span class="o">*</span> <span class="n">spacing</span>
 

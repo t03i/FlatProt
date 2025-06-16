@@ -66,6 +66,8 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../../commands/overlay/">Overlay</a>
                   </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../commands/split/">Split</a>
+                  </li>
               </ul>
               <p class="caption"><span class="caption-text">File Formats</span></p>
               <ul>
@@ -668,7 +670,8 @@
 <span class="normal">476</span>
 <span class="normal">477</span>
 <span class="normal">478</span>
-<span class="normal">479</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span> <span class="nc">SVGRenderer</span><span class="p">:</span>
+<span class="normal">479</span>
+<span class="normal">480</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span> <span class="nc">SVGRenderer</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Renders a Scene object to an SVG Drawing.</span>
 
 <span class="sd">    Attributes:</span>
@@ -803,6 +806,7 @@
         <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">element</span><span class="p">,</span> <span class="n">SceneGroup</span><span class="p">):</span>
             <span class="k">return</span>  <span class="c1"># Only process groups</span>
 
+        <span class="c1"># Use group with transform</span>
         <span class="n">svg_transform_str</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">element</span><span class="o">.</span><span class="n">transforms</span><span class="p">)</span>
         <span class="n">current_svg_group</span> <span class="o">=</span> <span class="n">Group</span><span class="p">(</span><span class="nb">id</span><span class="o">=</span><span class="n">element</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="n">transform</span><span class="o">=</span><span class="n">svg_transform_str</span><span class="p">)</span>
         <span class="n">svg_group_map</span><span class="p">[</span><span class="n">element</span><span class="o">.</span><span class="n">id</span><span class="p">]</span> <span class="o">=</span> <span class="n">current_svg_group</span>
@@ -1274,14 +1278,14 @@
 
             <details class="quote">
               <summary>Source code in <code>src/flatprot/renderers/svg_renderer.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">472</span>
-<span class="normal">473</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">473</span>
 <span class="normal">474</span>
 <span class="normal">475</span>
 <span class="normal">476</span>
 <span class="normal">477</span>
 <span class="normal">478</span>
-<span class="normal">479</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">get_svg_string</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="normal">479</span>
+<span class="normal">480</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">get_svg_string</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Renders the scene and returns the SVG content as a string.</span>
 
 <span class="sd">    Returns:</span>
@@ -1311,8 +1315,7 @@
 
             <details class="quote">
               <summary>Source code in <code>src/flatprot/renderers/svg_renderer.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">282</span>
-<span class="normal">283</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">283</span>
 <span class="normal">284</span>
 <span class="normal">285</span>
 <span class="normal">286</span>
@@ -1489,7 +1492,8 @@
 <span class="normal">457</span>
 <span class="normal">458</span>
 <span class="normal">459</span>
-<span class="normal">460</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">render</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Drawing</span><span class="p">:</span>
+<span class="normal">460</span>
+<span class="normal">461</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">render</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Drawing</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Renders the scene to a drawsvg.Drawing object.&quot;&quot;&quot;</span>
     <span class="n">drawing</span> <span class="o">=</span> <span class="n">Drawing</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">width</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">height</span><span class="p">)</span>
     <span class="n">svg_group_map</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Group</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
@@ -1714,15 +1718,15 @@
 
             <details class="quote">
               <summary>Source code in <code>src/flatprot/renderers/svg_renderer.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">462</span>
-<span class="normal">463</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">463</span>
 <span class="normal">464</span>
 <span class="normal">465</span>
 <span class="normal">466</span>
 <span class="normal">467</span>
 <span class="normal">468</span>
 <span class="normal">469</span>
-<span class="normal">470</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">save_svg</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filename</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="normal">470</span>
+<span class="normal">471</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">save_svg</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filename</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Renders the scene and saves it to an SVG file.</span>
 
 <span class="sd">    Args:</span>

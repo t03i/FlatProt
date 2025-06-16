@@ -57,6 +57,8 @@
     </li>
     <li class="toctree-l3"><a class="reference internal" href="#structure-alignment">Structure Alignment</a>
     </li>
+    <li class="toctree-l3"><a class="reference internal" href="#region-based-analysis">Region-Based Analysis</a>
+    </li>
         </ul>
     </li>
     <li class="toctree-l2"><a class="reference internal" href="#key-features">Key Features</a>
@@ -89,6 +91,8 @@
                   <li class="toctree-l1"><a class="reference internal" href="commands/align/">Align</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="commands/overlay/">Overlay</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="commands/split/">Split</a>
                   </li>
               </ul>
               <p class="caption"><span class="caption-text">File Formats</span></p>
@@ -147,7 +151,7 @@
 <h1 id="about">About</h1>
 <p>FlatProt is a Python package for protein structure and sequence analysis. It provides standardized 2D visualizations for enhanced protein comparability, combining efficient processing of proteins with user-friendly visualizations.</p>
 <h2 id="standard-workflow-on-the-command-line">Standard Workflow on the command line</h2>
-<p>FlatProt provides three main commands for protein structure analysis:</p>
+<p>FlatProt provides four main commands for protein structure analysis:</p>
 <h3 id="single-structure-projection">Single Structure Projection</h3>
 <p>Generate 2D projections of individual protein structures in three simple steps:</p>
 <ol>
@@ -181,12 +185,21 @@
 <li>Find best matching family: <code>flatprot align structure.cif -i alignment_info.json</code></li>
 <li>Use alignment in projections: <code>flatprot project structure.cif --matrix alignment_matrix.npy -o aligned.svg</code></li>
 </ol>
+<h3 id="region-based-analysis">Region-Based Analysis</h3>
+<p>Extract and visualize specific structural regions with comparative alignment:</p>
+<ol>
+<li>Define regions of interest: <code>flatprot split protein.cif --regions "A:1-100,A:150-250" -o regions.svg</code></li>
+<li>With database alignment: <code>flatprot split protein.cif --regions "A:1-100,A:150-250" --show-database-alignment -o aligned_regions.svg</code></li>
+<li>Custom layouts: <code>flatprot split protein.cif --regions "A:1-100,A:150-250" --layout vertical --spacing 150 -o layout.svg</code></li>
+</ol>
 <p>The resulting files contain clean, publication-ready 2D representations that can be viewed in any web browser or vector graphics editor.</p>
 <h2 id="key-features">Key Features</h2>
 <ul>
 <li><strong>Single Structure Visualization</strong>: Standardized 2D projections of individual protein structures</li>
 <li><strong>Multi-Structure Overlays</strong>: Compare multiple structures with automatic clustering and alignment</li>
-<li><strong>Family-Based Alignment</strong>: Integration with Foldseek alignments for protein family mapping</li>
+<li><strong>Region-Based Analysis</strong>: Extract and visualize specific domains, motifs, or binding sites with comparative alignment</li>
+<li><strong>Family-Based Alignment</strong>: Integration with Foldseek alignments for protein family mapping with rotation-only transformations</li>
+<li><strong>Database Annotations</strong>: Automatic SCOP family identification and alignment probability display</li>
 <li><strong>Batch Processing</strong>: Efficient processing of proteins across varying sizes</li>
 <li><strong>High Performance</strong>: Fast response times even for large, complex structures</li>
 <li><strong>Scalable</strong>: Support for proteins up to 3,000 residues and datasets with 50+ structures</li>
@@ -209,7 +222,12 @@
 <h2 id="advanced-features">Advanced Features</h2>
 <ul>
 <li><strong>Multi-chain Support</strong>: Automatic handling and visualization of multiple protein chains</li>
-<li><strong>Domain Analysis</strong>: Support for domain-split visualization with optional domain annotations</li>
+<li><strong>Region-Specific Extraction</strong>: Precise extraction of structural domains, motifs, and binding sites</li>
+<li><strong>Database-Driven Alignment</strong>: Integration with FoldSeek for family-specific structural alignment</li>
+<li><strong>Rotation-Only Transformations</strong>: Align region orientations while preserving spatial relationships</li>
+<li><strong>SCOP Family Annotations</strong>: Automatic identification and display of structural classification annotations</li>
+<li><strong>Alignment Quality Metrics</strong>: Display of alignment probabilities and confidence scores</li>
+<li><strong>Flexible Layout Systems</strong>: Horizontal, vertical, and grid arrangements for comparative visualization</li>
 <li><strong>LDDT Score Visualization</strong>: Color-coded representation of local distance difference test scores</li>
 <li><strong>Residue Annotations</strong>: Optional display of amino acid annotations and chain positions</li>
 <li><strong>Custom Highlighting</strong>: Support for manual residue and bond highlighting through JSON configuration</li>
@@ -272,5 +290,5 @@ bioRxiv 2025.04.22.650077; doi: <a href="https://doi.org/10.1101/2025.04.22.6500
 
 <!--
 MkDocs version : 1.6.1
-Build Date UTC : 2025-06-14 14:03:46.400760+00:00
+Build Date UTC : 2025-06-16 10:20:18.587614+00:00
 -->

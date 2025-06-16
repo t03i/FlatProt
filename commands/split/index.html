@@ -1,0 +1,727 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><link rel="canonical" href="https://t03i.github.io/FlatProt/commands/split/" />
+      <link rel="shortcut icon" href="../../img/favicon.ico" />
+    <title>Split - FlatProt</title>
+    <link rel="stylesheet" href="../../css/theme.css" />
+    <link rel="stylesheet" href="../../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+        <link href="../../assets/_mkdocstrings.css" rel="stylesheet" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "Split";
+        var mkdocs_page_input_path = "commands/split.md";
+        var mkdocs_page_url = "/FlatProt/commands/split/";
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="../../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/languages/yaml.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/languages/python.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/languages/json.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/languages/toml.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/languages/bash.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/languages/numpy.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href="../.." class="icon icon-home"> FlatProt
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../..">Home</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../installation/">Installation</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../examples/">Examples</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Commands</span></p>
+              <ul class="current">
+                  <li class="toctree-l1"><a class="reference internal" href="../project/">Project</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../align/">Align</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../overlay/">Overlay</a>
+                  </li>
+                  <li class="toctree-l1 current"><a class="reference internal current" href="#">Split</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#overview">Overview</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#requirements">Requirements</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#usage">Usage</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#parameters">Parameters</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#required">Required</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#output-options">Output Options</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#region-layout-options">Region Layout Options</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#alignment-options">Alignment Options</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#visualization-options">Visualization Options</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#input-file-options">Input File Options</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#alignment-modes">Alignment Modes</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#family-identity-alignment-recommended">Family-Identity Alignment (Recommended)</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#inertia-alignment">Inertia Alignment</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#position-annotations-show-positions">Position Annotations (--show-positions)</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#annotation-levels">Annotation Levels</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#domain-specific-behavior">Domain-Specific Behavior</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#database-alignment-features">Database Alignment Features</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#structural-alignment">Structural Alignment</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#area-annotations">Area Annotations</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#layout-arrangements">Layout Arrangements</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#horizontal-layout-default">Horizontal Layout (Default)</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#vertical-layout">Vertical Layout</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#region-specification">Region Specification</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#format">Format</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#examples">Examples</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#input-file-support">Input File Support</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#cif-format-recommended">CIF Format (Recommended)</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#pdb-format">PDB Format</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#examples_1">Examples</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#basic-usage">Basic Usage</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#database-alignment-and-annotations">Database Alignment and Annotations</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#custom-styling-and-visualization">Custom Styling and Visualization</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#pdb-input-workflow">PDB Input Workflow</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#comparison-studies">Comparison Studies</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#workflow-details">Workflow Details</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#advanced-usage">Advanced Usage</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#batch-processing-multiple-proteins">Batch Processing Multiple Proteins</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#domain-family-analysis">Domain Family Analysis</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#integration-with-analysis-scripts">Integration with Analysis Scripts</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#performance-tips">Performance Tips</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#speed-optimization">Speed Optimization</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#quality-optimization">Quality Optimization</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#memory-optimization">Memory Optimization</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#troubleshooting">Troubleshooting</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#common-issues">Common Issues</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#performance-benchmarks">Performance Benchmarks</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#integration-with-other-commands">Integration with Other Commands</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#workflow-with-align-command">Workflow with Align Command</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#workflow-with-project-command">Workflow with Project Command</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#workflow-with-overlay-command">Workflow with Overlay Command</a>
+    </li>
+        </ul>
+    </li>
+    </ul>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">File Formats</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../file_formats/matrix/">Matrix Files</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../file_formats/style/">Style Files</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../file_formats/annotations/">Annotation Files</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">API Reference</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../api/io/">IO</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../api/core/">Core</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../api/transformation/">Transformation & Projection</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../api/scene/">Scene</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../api/rendering/">Rendering</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../api/alignment/">DatabaseAlignment</a>
+                  </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../..">FlatProt</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../.." class="icon icon-home" aria-label="Docs"></a></li>
+          <li class="breadcrumb-item">Commands</li>
+      <li class="breadcrumb-item active">Split</li>
+    <li class="wy-breadcrumbs-aside">
+          <a href="https://github.com/t03i/FlatProt/edit/master/docs/commands/split.md" class="icon icon-github"> Edit on GitHub</a>
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="split-command">Split Command</h1>
+<p>Extract and visualize specific structural regions from protein structures with automatic alignment and comparative layout.</p>
+<h2 id="overview">Overview</h2>
+<p>The <code>split</code> command extracts specified structural regions (domains, motifs, binding sites) from protein structures, optionally aligns them using database search, and creates a combined SVG visualization with regions arranged spatially. This enables focused analysis of specific protein regions while maintaining structural context.</p>
+<h2 id="requirements">Requirements</h2>
+<ul>
+<li><strong>FoldSeek</strong>: Required for database alignment functionality</li>
+<li>Install from <a href="https://github.com/steineggerlab/foldseek">FoldSeek GitHub</a> or use conda: <code>conda install bioconda::foldseek</code></li>
+<li><strong>DSSP (mkdssp v4.4.0+)</strong>: Required for PDB input files</li>
+<li>Install from <a href="https://github.com/PDB-ECHA/dssp">DSSP GitHub</a> or use conda: <code>conda install conda-forge::dssp</code></li>
+</ul>
+<h2 id="usage">Usage</h2>
+<pre><code class="language-bash">flatprot split STRUCTURE_FILE --regions &quot;REGIONS&quot; [OPTIONS]
+</code></pre>
+<h2 id="parameters">Parameters</h2>
+<h3 id="required">Required</h3>
+<ul>
+<li><code>STRUCTURE_FILE</code> - Path to input structure file (PDB/CIF format)</li>
+<li><code>--regions</code> / <code>-r</code> - Comma-separated residue regions in format "CHAIN:START-END"</li>
+<li>Examples: <code>"A:1-100,A:150-250"</code>, <code>"A:1-100,B:50-150,A:200-300"</code></li>
+</ul>
+<h3 id="output-options">Output Options</h3>
+<ul>
+<li><code>--output</code> / <code>-o</code> - Output SVG file path [default: split_output.svg]</li>
+</ul>
+<h3 id="region-layout-options">Region Layout Options</h3>
+<ul>
+<li><code>--layout</code> - Layout arrangement [default: horizontal]</li>
+<li><code>horizontal</code>: Arrange regions left to right</li>
+<li><code>vertical</code>: Arrange regions top to bottom</li>
+<li><code>--spacing</code> - Spacing between regions in pixels [default: 100.0]</li>
+</ul>
+<h3 id="alignment-options">Alignment Options</h3>
+<ul>
+<li><code>--alignment-mode</code> - Alignment strategy [default: family-identity]</li>
+<li><code>family-identity</code>: Align each region using FoldSeek database search with rotation-only transformations</li>
+<li><code>inertia</code>: Use principal component analysis alignment (no database search)</li>
+<li><code>--min-probability</code> - Minimum alignment probability threshold [default: 0.5]</li>
+<li><code>--foldseek</code> / <code>-f</code> - FoldSeek executable path [default: foldseek]</li>
+<li><code>--show-database-alignment</code> - Enable database alignment and show family area annotations [default: False]</li>
+</ul>
+<h3 id="visualization-options">Visualization Options</h3>
+<ul>
+<li><code>--style</code> - Custom style TOML file path</li>
+<li><code>--canvas-width</code> - Canvas width in pixels [default: 1000]</li>
+<li><code>--canvas-height</code> - Canvas height in pixels [default: 1000]</li>
+<li><code>--show-positions</code> - Position annotation level: <code>none</code>, <code>minimal</code>, <code>major</code>, <code>full</code> [default: minimal]</li>
+</ul>
+<h3 id="input-file-options">Input File Options</h3>
+<ul>
+<li><code>--dssp</code> - DSSP file for PDB input (required for PDB files)</li>
+</ul>
+<h2 id="alignment-modes">Alignment Modes</h2>
+<h3 id="family-identity-alignment-recommended">Family-Identity Alignment (Recommended)</h3>
+<p>Uses FoldSeek to align each region against a curated database of protein families:</p>
+<ul>
+<li><strong>Automatic Database Download</strong>: Downloads alignment database on first use</li>
+<li><strong>Region-Specific Alignment</strong>: Each region is aligned independently</li>
+<li><strong>Rotation-Only Transformations</strong>: Applies only rotation (no translation) to preserve relative positioning</li>
+<li><strong>Family Annotations</strong>: Shows SCOP family IDs and alignment probabilities when <code>--show-database-alignment</code> is enabled</li>
+</ul>
+<pre><code class="language-bash"># Basic family-identity alignment with annotations
+flatprot split protein.cif --regions &quot;A:1-100,A:150-250&quot; --show-database-alignment -o aligned_regions.svg
+
+# High-confidence alignments only
+flatprot split protein.cif --regions &quot;A:1-100,A:150-250&quot; --min-probability 0.8 --show-database-alignment
+</code></pre>
+<h3 id="inertia-alignment">Inertia Alignment</h3>
+<p>Uses principal component analysis for structure alignment:</p>
+<ul>
+<li><strong>Fast Processing</strong>: No external database dependencies</li>
+<li><strong>Universal</strong>: Works with any protein structure</li>
+<li><strong>Consistent</strong>: Deterministic alignment based on structure geometry</li>
+</ul>
+<pre><code class="language-bash">flatprot split protein.cif --regions &quot;A:1-100,A:150-250&quot; --alignment-mode inertia
+</code></pre>
+<h2 id="position-annotations-show-positions">Position Annotations (<code>--show-positions</code>)</h2>
+<p>Position annotations add residue numbers and N/C terminus labels to each domain in the split visualization, helping identify specific regions within extracted domains. The annotation level controls the detail displayed for each separated domain:</p>
+<h3 id="annotation-levels">Annotation Levels</h3>
+<ul>
+<li><strong><code>none</code></strong>: No position annotations are added to any domain.</li>
+<li><strong><code>minimal</code></strong> (default): Only N and C terminus labels are shown for each domain, providing basic domain orientation.</li>
+<li><strong><code>major</code></strong>: N/C terminus labels plus residue numbers for major secondary structures (helices and sheets with ≥3 residues) within each domain. Short structures are omitted to reduce clutter.</li>
+<li><strong><code>full</code></strong>: All position annotations including residue numbers for all secondary structures within each domain, even single-residue elements.</li>
+</ul>
+<h3 id="domain-specific-behavior">Domain-Specific Behavior</h3>
+<ul>
+<li><strong>Per-Domain Annotations</strong>: Each extracted domain receives its own set of annotations</li>
+<li><strong>Terminus Labels</strong>: N and C labels mark the start and end of each domain</li>
+<li><strong>Residue Numbers</strong>: Start and end residue numbers for secondary structure elements within domains</li>
+<li><strong>Filtering</strong>: In 'major' mode, only significant secondary structures (≥3 residues) receive residue numbers</li>
+<li><strong>Element Types</strong>: Residue numbers are added only to helices and sheets, not coil regions</li>
+</ul>
+<h2 id="database-alignment-features">Database Alignment Features</h2>
+<p>When <code>--show-database-alignment</code> is enabled:</p>
+<h3 id="structural-alignment">Structural Alignment</h3>
+<ul>
+<li>Each region is individually aligned to its best-matching family in the database</li>
+<li>Only rotation transformations are applied (translations are zeroed out)</li>
+<li>Preserves relative positioning while showing aligned orientations</li>
+<li>Regions maintain consistent spatial relationships</li>
+</ul>
+<h3 id="area-annotations">Area Annotations</h3>
+<ul>
+<li>SCOP family IDs are displayed as area annotations around each region</li>
+<li>Alignment probabilities are shown as percentages</li>
+<li>Format: "Family ID\n(Probability%)" e.g., "3000622\n(85.3%)"</li>
+</ul>
+<pre><code class="language-bash"># Enable database alignment with area annotations
+flatprot split protein.cif --regions &quot;A:1-100,A:150-250&quot; --show-database-alignment -o annotated.svg
+</code></pre>
+<h2 id="layout-arrangements">Layout Arrangements</h2>
+<h3 id="horizontal-layout-default">Horizontal Layout (Default)</h3>
+<p>Arranges regions from left to right with configurable spacing:</p>
+<pre><code class="language-bash">flatprot split protein.cif --regions &quot;A:1-100,A:150-250,B:1-80&quot; --layout horizontal --spacing 150
+</code></pre>
+<h3 id="vertical-layout">Vertical Layout</h3>
+<p>Arranges regions from top to bottom:</p>
+<pre><code class="language-bash">flatprot split protein.cif --regions &quot;A:1-100,A:150-250,B:1-80&quot; --layout vertical --spacing 200
+</code></pre>
+<h2 id="region-specification">Region Specification</h2>
+<h3 id="format">Format</h3>
+<ul>
+<li><strong>Pattern</strong>: <code>"CHAIN:START-END"</code></li>
+<li><strong>Multiple Regions</strong>: Comma-separated list</li>
+<li><strong>Chain IDs</strong>: Single letters (A, B, C, etc.)</li>
+<li><strong>Residue Numbers</strong>: 1-based indexing</li>
+</ul>
+<h3 id="examples">Examples</h3>
+<p><strong>Single Chain, Multiple Domains:</strong></p>
+<pre><code class="language-bash">flatprot split protein.cif --regions &quot;A:1-100,A:150-250,A:300-400&quot;
+</code></pre>
+<p><strong>Multiple Chains:</strong></p>
+<pre><code class="language-bash">flatprot split structure.cif --regions &quot;A:1-100,B:50-150,C:20-120&quot;
+</code></pre>
+<p><strong>Overlapping Regions:</strong></p>
+<pre><code class="language-bash">flatprot split protein.cif --regions &quot;A:1-120,A:80-200&quot;  # 40 residue overlap
+</code></pre>
+<h2 id="input-file-support">Input File Support</h2>
+<h3 id="cif-format-recommended">CIF Format (Recommended)</h3>
+<ul>
+<li>Usually contains secondary structure information</li>
+<li>No additional files required</li>
+<li>Better handling of complex structures</li>
+</ul>
+<pre><code class="language-bash">flatprot split structure.cif --regions &quot;A:1-100,A:150-250&quot; -o output.svg
+</code></pre>
+<h3 id="pdb-format">PDB Format</h3>
+<ul>
+<li>Requires DSSP file for secondary structure assignment</li>
+<li>Run DSSP separately: <code>mkdssp -i structure.pdb -o structure.dssp</code></li>
+</ul>
+<pre><code class="language-bash"># First, generate DSSP file
+mkdssp -i protein.pdb -o protein.dssp
+
+# Then run split command
+flatprot split protein.pdb --regions &quot;A:1-100,A:150-250&quot; --dssp protein.dssp -o output.svg
+</code></pre>
+<h2 id="examples_1">Examples</h2>
+<h3 id="basic-usage">Basic Usage</h3>
+<p><strong>Simple domain splitting:</strong></p>
+<pre><code class="language-bash">flatprot split protein.cif --regions &quot;A:1-100,A:150-250&quot; -o domains.svg
+</code></pre>
+<p><strong>Multiple chains with custom layout:</strong></p>
+<pre><code class="language-bash">flatprot split structure.cif --regions &quot;A:1-100,B:50-150,A:200-300&quot; --layout vertical --spacing 150 -o multi_chain.svg
+</code></pre>
+<h3 id="database-alignment-and-annotations">Database Alignment and Annotations</h3>
+<p><strong>Enable family alignment with annotations:</strong></p>
+<pre><code class="language-bash">flatprot split protein.cif --regions &quot;A:1-100,A:150-250&quot; --show-database-alignment -o aligned_annotated.svg
+</code></pre>
+<p><strong>High-confidence alignments with custom threshold:</strong></p>
+<pre><code class="language-bash">flatprot split protein.cif --regions &quot;A:1-80,A:100-180,A:200-280&quot; --show-database-alignment --min-probability 0.7 -o high_confidence.svg
+</code></pre>
+<h3 id="custom-styling-and-visualization">Custom Styling and Visualization</h3>
+<p><strong>Custom styling with position annotations:</strong></p>
+<pre><code class="language-bash"># Clean domains without annotations
+flatprot split protein.cif --regions &quot;A:10-110,A:130-230&quot; --style custom.toml --show-positions none -o clean.svg
+
+# Basic domain orientation (default)
+flatprot split protein.cif --regions &quot;A:10-110,A:130-230&quot; --style custom.toml --show-positions minimal -o oriented.svg
+
+# Major structures with residue numbers
+flatprot split protein.cif --regions &quot;A:10-110,A:130-230&quot; --style custom.toml --show-positions major -o detailed.svg
+
+# Full annotation detail
+flatprot split protein.cif --regions &quot;A:10-110,A:130-230&quot; --style custom.toml --show-positions full -o comprehensive.svg
+</code></pre>
+<p><strong>Large canvas with wide spacing:</strong></p>
+<pre><code class="language-bash">flatprot split protein.cif --regions &quot;A:1-100,A:150-250,A:300-400&quot; --canvas-width 1500 --spacing 200 -o large_canvas.svg
+</code></pre>
+<h3 id="pdb-input-workflow">PDB Input Workflow</h3>
+<p><strong>Complete PDB processing pipeline:</strong></p>
+<pre><code class="language-bash"># 1. Generate secondary structure
+mkdssp -i protein.pdb -o protein.dssp
+
+# 2. Split with database alignment
+flatprot split protein.pdb --regions &quot;A:1-100,A:150-200&quot; --dssp protein.dssp --show-database-alignment -o output.svg
+</code></pre>
+<h3 id="comparison-studies">Comparison Studies</h3>
+<p><strong>Compare alignment modes:</strong></p>
+<pre><code class="language-bash"># Family-identity alignment
+flatprot split protein.cif --regions &quot;A:1-100,A:150-250&quot; --alignment-mode family-identity --show-database-alignment -o family_aligned.svg
+
+# Inertia alignment for comparison
+flatprot split protein.cif --regions &quot;A:1-100,A:150-250&quot; --alignment-mode inertia -o inertia_aligned.svg
+</code></pre>
+<h2 id="workflow-details">Workflow Details</h2>
+<p>The split command follows this processing pipeline:</p>
+<ol>
+<li><strong>Input Validation</strong></li>
+<li>Validates structure file format and accessibility</li>
+<li>Parses and validates region specifications</li>
+<li>
+<p>Checks for required DSSP file (PDB input only)</p>
+</li>
+<li>
+<p><strong>Region Extraction</strong></p>
+</li>
+<li>Extracts specified regions to temporary CIF files</li>
+<li>Uses GEMMI library for precise region isolation</li>
+<li>
+<p>Maintains original residue numbering and chain IDs</p>
+</li>
+<li>
+<p><strong>Optional Database Alignment</strong></p>
+</li>
+<li>Downloads/validates alignment database (if enabled)</li>
+<li>Aligns each region individually using FoldSeek</li>
+<li>Retrieves transformation matrices and family annotations</li>
+<li>
+<p>Applies rotation-only transformations (preserves positioning)</p>
+</li>
+<li>
+<p><strong>Structure Transformation</strong></p>
+</li>
+<li>Applies inertia transformation for overall orientation</li>
+<li>Projects 3D coordinates to 2D using orthographic projection</li>
+<li>
+<p>Maintains consistent coordinate system across regions</p>
+</li>
+<li>
+<p><strong>Scene Creation</strong></p>
+</li>
+<li>Creates separate groups for each region</li>
+<li>Applies layout transformations (horizontal/vertical spacing)</li>
+<li>Adds area annotations with family IDs and probabilities (if enabled)</li>
+<li>
+<p>Applies custom styling (if provided)</p>
+</li>
+<li>
+<p><strong>SVG Rendering</strong></p>
+</li>
+<li>Combines all region visualizations</li>
+<li>Maintains proper layering and group organization</li>
+<li>Exports to SVG format with embedded styling</li>
+</ol>
+<h2 id="advanced-usage">Advanced Usage</h2>
+<h3 id="batch-processing-multiple-proteins">Batch Processing Multiple Proteins</h3>
+<pre><code class="language-bash">#!/bin/bash
+for protein in proteins/*.cif; do
+    base=$(basename &quot;$protein&quot; .cif)
+    flatprot split &quot;$protein&quot; \
+        --regions &quot;A:1-100,A:150-250&quot; \
+        --show-database-alignment \
+        --layout horizontal \
+        -o &quot;split_results/${base}_split.svg&quot;
+done
+</code></pre>
+<h3 id="domain-family-analysis">Domain Family Analysis</h3>
+<pre><code class="language-bash"># Extract and analyze common domain across multiple proteins
+for protein in family_proteins/*.cif; do
+    base=$(basename &quot;$protein&quot; .cif)
+    flatprot split &quot;$protein&quot; \
+        --regions &quot;A:50-150&quot; \
+        --show-database-alignment \
+        --min-probability 0.8 \
+        -o &quot;domains/${base}_domain.svg&quot;
+done
+</code></pre>
+<h3 id="integration-with-analysis-scripts">Integration with Analysis Scripts</h3>
+<pre><code class="language-python">import subprocess
+import json
+from pathlib import Path
+
+def split_and_analyze_domains(structure_file, domain_regions, output_dir):
+    &quot;&quot;&quot;Split domains and return alignment information.&quot;&quot;&quot;
+    output_path = output_dir / f&quot;{structure_file.stem}_split.svg&quot;
+
+    cmd = [
+        &quot;flatprot&quot;, &quot;split&quot;, str(structure_file),
+        &quot;--regions&quot;, &quot;,&quot;.join(domain_regions),
+        &quot;--show-database-alignment&quot;,
+        &quot;--layout&quot;, &quot;horizontal&quot;,
+        &quot;-o&quot;, str(output_path)
+    ]
+
+    result = subprocess.run(cmd, capture_output=True, text=True)
+    return result.returncode == 0, output_path
+
+# Example usage
+domains = [&quot;A:1-100&quot;, &quot;A:150-250&quot;, &quot;A:300-400&quot;]
+success, output = split_and_analyze_domains(
+    Path(&quot;protein.cif&quot;),
+    domains,
+    Path(&quot;results&quot;)
+)
+</code></pre>
+<h2 id="performance-tips">Performance Tips</h2>
+<h3 id="speed-optimization">Speed Optimization</h3>
+<ul>
+<li><strong>Use CIF input</strong> (no DSSP file generation required)</li>
+<li><strong>Disable database alignment</strong> for quick layout-only visualization</li>
+<li><strong>Smaller canvas sizes</strong> for faster processing</li>
+<li><strong>Fewer regions</strong> reduce extraction and alignment time</li>
+</ul>
+<h3 id="quality-optimization">Quality Optimization</h3>
+<ul>
+<li><strong>Enable database alignment</strong> for biologically meaningful orientations</li>
+<li><strong>Higher alignment probability thresholds</strong> for confident annotations</li>
+<li><strong>Custom styling</strong> for publication-ready output</li>
+<li><strong>Larger canvas sizes</strong> for detailed visualization</li>
+</ul>
+<h3 id="memory-optimization">Memory Optimization</h3>
+<ul>
+<li><strong>Limit number of regions</strong> for memory-constrained systems</li>
+<li><strong>Smaller region sizes</strong> reduce memory usage</li>
+<li><strong>Use minimal/none position annotations</strong> for simpler scenes (use <code>--show-positions none</code> for cleanest output)</li>
+</ul>
+<h2 id="troubleshooting">Troubleshooting</h2>
+<h3 id="common-issues">Common Issues</h3>
+<p><strong>"DSSP file required for PDB input" error:</strong></p>
+<pre><code class="language-bash"># Generate DSSP file
+mkdssp -i structure.pdb -o structure.dssp
+
+# Then retry with DSSP file
+flatprot split structure.pdb --regions &quot;A:1-100&quot; --dssp structure.dssp
+</code></pre>
+<p><strong>"Invalid region format" error:</strong></p>
+<pre><code class="language-bash"># Check region format
+flatprot split protein.cif --regions &quot;A:1-100,B:50-150&quot;  # Correct
+flatprot split protein.cif --regions &quot;A:1:100,B:50-150&quot;  # Incorrect (colon instead of dash)
+</code></pre>
+<p><strong>"No successful alignments found" error:</strong></p>
+<pre><code class="language-bash"># Lower probability threshold
+flatprot split protein.cif --regions &quot;A:1-100&quot; --min-probability 0.3 --show-database-alignment
+
+# Or disable database alignment
+flatprot split protein.cif --regions &quot;A:1-100&quot; --alignment-mode inertia
+</code></pre>
+<p><strong>"Chain not found in structure" error:</strong></p>
+<pre><code class="language-bash"># Check available chains
+grep &quot;^ATOM&quot; structure.pdb | awk '{print $5}' | sort -u  # For PDB
+# Or examine CIF structure to verify chain IDs
+</code></pre>
+<p><strong>Database download issues:</strong></p>
+<pre><code class="language-bash"># Check network connectivity
+# Verify FoldSeek installation
+which foldseek
+
+# Use inertia mode as fallback
+flatprot split protein.cif --regions &quot;A:1-100&quot; --alignment-mode inertia
+</code></pre>
+<h3 id="performance-benchmarks">Performance Benchmarks</h3>
+<p>Typical processing times on a modern laptop:</p>
+<table>
+<thead>
+<tr>
+<th>Regions</th>
+<th>Mode</th>
+<th>Database Alignment</th>
+<th>Time</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>2-3</td>
+<td>Inertia</td>
+<td>Disabled</td>
+<td>2-5s</td>
+</tr>
+<tr>
+<td>2-3</td>
+<td>Family-Identity</td>
+<td>Enabled</td>
+<td>15-30s</td>
+</tr>
+<tr>
+<td>5-7</td>
+<td>Inertia</td>
+<td>Disabled</td>
+<td>3-8s</td>
+</tr>
+<tr>
+<td>5-7</td>
+<td>Family-Identity</td>
+<td>Enabled</td>
+<td>30-60s</td>
+</tr>
+</tbody>
+</table>
+<p><em>First run with family-identity mode includes database download time (~30s)</em></p>
+<h2 id="integration-with-other-commands">Integration with Other Commands</h2>
+<h3 id="workflow-with-align-command">Workflow with Align Command</h3>
+<pre><code class="language-bash"># 1. First, explore protein family alignment
+flatprot align protein.cif -i alignment_info.json
+
+# 2. Extract domains with family-specific alignment
+flatprot split protein.cif --regions &quot;A:1-100,A:150-250&quot; --show-database-alignment -o aligned_domains.svg
+</code></pre>
+<h3 id="workflow-with-project-command">Workflow with Project Command</h3>
+<pre><code class="language-bash"># 1. Create full structure projection
+flatprot project protein.cif -o full_structure.svg
+
+# 2. Create domain-specific split view
+flatprot split protein.cif --regions &quot;A:1-100,A:150-250&quot; --show-database-alignment -o domain_split.svg
+
+# 3. Compare full vs. domain views
+</code></pre>
+<h3 id="workflow-with-overlay-command">Workflow with Overlay Command</h3>
+<pre><code class="language-bash"># 1. Split domains from multiple related proteins
+for protein in family/*.cif; do
+    base=$(basename &quot;$protein&quot; .cif)
+    flatprot split &quot;$protein&quot; --regions &quot;A:50-150&quot; -o &quot;domains/${base}_domain.svg&quot;
+done
+
+# 2. Create domain overlay for comparison
+flatprot overlay &quot;family/*.cif&quot; --alignment-mode family-identity -o family_domains_overlay.png
+</code></pre>
+<p>This comprehensive documentation covers all the split command features including database alignment, rotation-only transformations, area annotations with alignment probabilities, and various layout options for comparative visualization of protein regions.</p>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="../overlay/" class="btn btn-neutral float-left" title="Overlay"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../../file_formats/matrix/" class="btn btn-neutral float-right" title="Matrix Files">Next <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+        <span>
+          <a href="https://github.com/t03i/FlatProt" class="fa fa-github" style="color: #fcfcfc"> GitHub</a>
+        </span>
+    
+    
+      <span><a href="../overlay/" style="color: #fcfcfc">&laquo; Previous</a></span>
+    
+    
+      <span><a href="../../file_formats/matrix/" style="color: #fcfcfc">Next &raquo;</a></span>
+    
+  </span>
+</div>
+    <script src="../../js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = "../..";</script>
+    <script src="../../js/theme_extra.js"></script>
+    <script src="../../js/theme.js"></script>
+      <script src="../../search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>

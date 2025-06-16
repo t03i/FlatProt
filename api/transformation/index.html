@@ -66,6 +66,8 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../../commands/overlay/">Overlay</a>
                   </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../commands/split/">Split</a>
+                  </li>
               </ul>
               <p class="caption"><span class="caption-text">File Formats</span></p>
               <ul>
@@ -2517,6 +2519,22 @@ show_root_heading: true</p>
                 <p>An optional identifier for the domain (e.g., 'Domain1', 'N-term').</p>
               </div>
             </li>
+            <li>
+              <b><code>scop_id</code></b>
+                  (<code><span title="typing.Optional">Optional</span>[<span title="str">str</span>]</code>)
+              –
+              <div class="doc-md-description">
+                <p>An optional SCOP family identifier from alignment (e.g., '3000114').</p>
+              </div>
+            </li>
+            <li>
+              <b><code>alignment_probability</code></b>
+                  (<code><span title="typing.Optional">Optional</span>[<span title="float">float</span>]</code>)
+              –
+              <div class="doc-md-description">
+                <p>The alignment probability/quality score (0.0-1.0).</p>
+              </div>
+            </li>
         </ul>
       </td>
     </tr>
@@ -2530,16 +2548,7 @@ show_root_heading: true</p>
 
               <details class="quote">
                 <summary>Source code in <code>src/flatprot/utils/domain_utils.py</code></summary>
-                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">25</span>
-<span class="normal">26</span>
-<span class="normal">27</span>
-<span class="normal">28</span>
-<span class="normal">29</span>
-<span class="normal">30</span>
-<span class="normal">31</span>
-<span class="normal">32</span>
-<span class="normal">33</span>
-<span class="normal">34</span>
+                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">34</span>
 <span class="normal">35</span>
 <span class="normal">36</span>
 <span class="normal">37</span>
@@ -2559,7 +2568,22 @@ show_root_heading: true</p>
 <span class="normal">51</span>
 <span class="normal">52</span>
 <span class="normal">53</span>
-<span class="normal">54</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@dataclass</span>
+<span class="normal">54</span>
+<span class="normal">55</span>
+<span class="normal">56</span>
+<span class="normal">57</span>
+<span class="normal">58</span>
+<span class="normal">59</span>
+<span class="normal">60</span>
+<span class="normal">61</span>
+<span class="normal">62</span>
+<span class="normal">63</span>
+<span class="normal">64</span>
+<span class="normal">65</span>
+<span class="normal">66</span>
+<span class="normal">67</span>
+<span class="normal">68</span>
+<span class="normal">69</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@dataclass</span>
 <span class="k">class</span> <span class="nc">DomainTransformation</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Encapsulates a transformation matrix applied to a specific protein domain.</span>
@@ -2568,11 +2592,15 @@ show_root_heading: true</p>
 <span class="sd">        domain_range: The specific residue range defining the domain.</span>
 <span class="sd">        transformation_matrix: The matrix used to transform this domain.</span>
 <span class="sd">        domain_id: An optional identifier for the domain (e.g., &#39;Domain1&#39;, &#39;N-term&#39;).</span>
+<span class="sd">        scop_id: An optional SCOP family identifier from alignment (e.g., &#39;3000114&#39;).</span>
+<span class="sd">        alignment_probability: The alignment probability/quality score (0.0-1.0).</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">domain_range</span><span class="p">:</span> <span class="n">ResidueRange</span>
     <span class="n">transformation_matrix</span><span class="p">:</span> <span class="n">TransformationMatrix</span>
     <span class="n">domain_id</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">scop_id</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">alignment_probability</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
 
     <span class="k">def</span> <span class="nf">__post_init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Validate inputs.&quot;&quot;&quot;</span>
@@ -2584,6 +2612,8 @@ show_root_heading: true</p>
             <span class="p">)</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">domain_id</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">domain_id</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
             <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;domain_id must be a string if provided.&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">scop_id</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">scop_id</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;scop_id must be a string if provided.&quot;</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Provide a concise representation.&quot;&quot;&quot;</span>
@@ -2620,16 +2650,18 @@ show_root_heading: true</p>
 
             <details class="quote">
               <summary>Source code in <code>src/flatprot/utils/domain_utils.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">40</span>
-<span class="normal">41</span>
-<span class="normal">42</span>
-<span class="normal">43</span>
-<span class="normal">44</span>
-<span class="normal">45</span>
-<span class="normal">46</span>
-<span class="normal">47</span>
-<span class="normal">48</span>
-<span class="normal">49</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">__post_init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">53</span>
+<span class="normal">54</span>
+<span class="normal">55</span>
+<span class="normal">56</span>
+<span class="normal">57</span>
+<span class="normal">58</span>
+<span class="normal">59</span>
+<span class="normal">60</span>
+<span class="normal">61</span>
+<span class="normal">62</span>
+<span class="normal">63</span>
+<span class="normal">64</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">__post_init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Validate inputs.&quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">domain_range</span><span class="p">,</span> <span class="n">ResidueRange</span><span class="p">):</span>
         <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;domain_range must be a ResidueRange object.&quot;</span><span class="p">)</span>
@@ -2639,6 +2671,8 @@ show_root_heading: true</p>
         <span class="p">)</span>
     <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">domain_id</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">domain_id</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
         <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;domain_id must be a string if provided.&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">scop_id</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">scop_id</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;scop_id must be a string if provided.&quot;</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
@@ -2661,10 +2695,10 @@ show_root_heading: true</p>
 
             <details class="quote">
               <summary>Source code in <code>src/flatprot/utils/domain_utils.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">51</span>
-<span class="normal">52</span>
-<span class="normal">53</span>
-<span class="normal">54</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">66</span>
+<span class="normal">67</span>
+<span class="normal">68</span>
+<span class="normal">69</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Provide a concise representation.&quot;&quot;&quot;</span>
     <span class="n">name</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot; &#39;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">domain_id</span><span class="si">}</span><span class="s2">&#39;&quot;</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">domain_id</span> <span class="k">else</span> <span class="s2">&quot;&quot;</span>
     <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;&lt;DomainTransformation</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2"> range=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">domain_range</span><span class="si">}</span><span class="s2">&gt;&quot;</span>
@@ -2788,22 +2822,7 @@ structure remains unchanged.</p>
 
             <details class="quote">
               <summary>Source code in <code>src/flatprot/utils/domain_utils.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 57</span>
-<span class="normal"> 58</span>
-<span class="normal"> 59</span>
-<span class="normal"> 60</span>
-<span class="normal"> 61</span>
-<span class="normal"> 62</span>
-<span class="normal"> 63</span>
-<span class="normal"> 64</span>
-<span class="normal"> 65</span>
-<span class="normal"> 66</span>
-<span class="normal"> 67</span>
-<span class="normal"> 68</span>
-<span class="normal"> 69</span>
-<span class="normal"> 70</span>
-<span class="normal"> 71</span>
-<span class="normal"> 72</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 72</span>
 <span class="normal"> 73</span>
 <span class="normal"> 74</span>
 <span class="normal"> 75</span>
@@ -2874,7 +2893,22 @@ structure remains unchanged.</p>
 <span class="normal">140</span>
 <span class="normal">141</span>
 <span class="normal">142</span>
-<span class="normal">143</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">apply_domain_transformations_masked</span><span class="p">(</span>
+<span class="normal">143</span>
+<span class="normal">144</span>
+<span class="normal">145</span>
+<span class="normal">146</span>
+<span class="normal">147</span>
+<span class="normal">148</span>
+<span class="normal">149</span>
+<span class="normal">150</span>
+<span class="normal">151</span>
+<span class="normal">152</span>
+<span class="normal">153</span>
+<span class="normal">154</span>
+<span class="normal">155</span>
+<span class="normal">156</span>
+<span class="normal">157</span>
+<span class="normal">158</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">apply_domain_transformations_masked</span><span class="p">(</span>
     <span class="n">structure</span><span class="p">:</span> <span class="n">Structure</span><span class="p">,</span>
     <span class="n">domain_transforms</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">DomainTransformation</span><span class="p">],</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Structure</span><span class="p">:</span>

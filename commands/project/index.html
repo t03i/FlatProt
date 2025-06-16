@@ -82,6 +82,14 @@
     </li>
         </ul>
     </li>
+    <li class="toctree-l2"><a class="reference internal" href="#position-annotations-show-positions">Position Annotations (--show-positions)</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#annotation-levels">Annotation Levels</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#position-annotation-details">Position Annotation Details</a>
+    </li>
+        </ul>
+    </li>
     <li class="toctree-l2"><a class="reference internal" href="#examples">Examples</a>
     </li>
     <li class="toctree-l2"><a class="reference internal" href="#error-handling">Error Handling</a>
@@ -91,6 +99,8 @@
                   <li class="toctree-l1"><a class="reference internal" href="../align/">Align</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../overlay/">Overlay</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../split/">Split</a>
                   </li>
               </ul>
               <p class="caption"><span class="caption-text">File Formats</span></p>
@@ -213,6 +223,13 @@
 <td>Height of the output SVG canvas in pixels.</td>
 </tr>
 <tr>
+<td><code>--show-positions</code></td>
+<td></td>
+<td>String</td>
+<td><code>minimal</code></td>
+<td>Position annotation level: <code>none</code>, <code>minimal</code>, <code>major</code>, <code>full</code>. Controls residue numbering and terminus labels.</td>
+</tr>
+<tr>
 <td><code>--quiet</code></td>
 <td></td>
 <td>Boolean</td>
@@ -265,6 +282,22 @@
 <li>Optional, but <strong>required</strong> when the input <code>STRUCTURE_FILE</code> is in PDB format.</li>
 <li>Standard DSSP output file providing secondary structure assignments (helix, sheet, coil) for each residue.</li>
 </ul>
+<h2 id="position-annotations-show-positions">Position Annotations (<code>--show-positions</code>)</h2>
+<p>Position annotations add residue numbers and N/C terminus labels to the SVG output, helping identify specific regions of the protein structure. The annotation level controls how much detail is displayed:</p>
+<h3 id="annotation-levels">Annotation Levels</h3>
+<ul>
+<li><strong><code>none</code></strong>: No position annotations are added to the output.</li>
+<li><strong><code>minimal</code></strong> (default): Only N and C terminus labels are shown, providing basic orientation.</li>
+<li><strong><code>major</code></strong>: N/C terminus labels plus residue numbers for major secondary structures (helices and sheets with ≥3 residues). Short structures are omitted to reduce clutter.</li>
+<li><strong><code>full</code></strong>: All position annotations including residue numbers for all secondary structures, even single-residue elements.</li>
+</ul>
+<h3 id="position-annotation-details">Position Annotation Details</h3>
+<ul>
+<li><strong>Terminus Labels</strong>: N and C labels mark the start and end of the protein chain</li>
+<li><strong>Residue Numbers</strong>: Start and end residue numbers for secondary structure elements</li>
+<li><strong>Filtering</strong>: In 'major' mode, only significant secondary structures (≥3 residues) receive residue numbers</li>
+<li><strong>Element Types</strong>: Residue numbers are added only to helices and sheets, not coil regions</li>
+</ul>
 <h2 id="examples">Examples</h2>
 <p><strong>Basic Projection (mmCIF to SVG file):</strong></p>
 <pre><code class="language-bash">flatprot project structure.cif -o output.svg
@@ -293,6 +326,19 @@
 </code></pre>
 <p><strong>Adjust Canvas Size:</strong></p>
 <pre><code class="language-bash">flatprot project structure.cif -o large_output.svg --canvas-width 1500 --canvas-height 1200
+</code></pre>
+<p><strong>Position Annotation Examples:</strong></p>
+<pre><code class="language-bash"># No position annotations
+flatprot project structure.cif -o clean.svg --show-positions none
+
+# Only terminus labels (default)
+flatprot project structure.cif -o terminus.svg --show-positions minimal
+
+# Terminus + major secondary structures
+flatprot project structure.cif -o major.svg --show-positions major
+
+# All position annotations
+flatprot project structure.cif -o detailed.svg --show-positions full
 </code></pre>
 <h2 id="error-handling">Error Handling</h2>
 <p>The command provides informative error messages for various issues:</p>
