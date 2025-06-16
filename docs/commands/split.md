@@ -47,7 +47,7 @@ flatprot split STRUCTURE_FILE --regions "REGIONS" [OPTIONS]
 - `--style` - Custom style TOML file path
 - `--canvas-width` - Canvas width in pixels [default: 1000]
 - `--canvas-height` - Canvas height in pixels [default: 1000]
-- `--show-positions` - Show residue position annotations [default: False]
+- `--show-positions` - Position annotation level: `none`, `minimal`, `major`, `full` [default: minimal]
 
 ### Input File Options
 - `--dssp` - DSSP file for PDB input (required for PDB files)
@@ -82,6 +82,25 @@ Uses principal component analysis for structure alignment:
 ```bash
 flatprot split protein.cif --regions "A:1-100,A:150-250" --alignment-mode inertia
 ```
+
+## Position Annotations (`--show-positions`)
+
+Position annotations add residue numbers and N/C terminus labels to each domain in the split visualization, helping identify specific regions within extracted domains. The annotation level controls the detail displayed for each separated domain:
+
+### Annotation Levels
+
+- **`none`**: No position annotations are added to any domain.
+- **`minimal`** (default): Only N and C terminus labels are shown for each domain, providing basic domain orientation.
+- **`major`**: N/C terminus labels plus residue numbers for major secondary structures (helices and sheets with ≥3 residues) within each domain. Short structures are omitted to reduce clutter.
+- **`full`**: All position annotations including residue numbers for all secondary structures within each domain, even single-residue elements.
+
+### Domain-Specific Behavior
+
+- **Per-Domain Annotations**: Each extracted domain receives its own set of annotations
+- **Terminus Labels**: N and C labels mark the start and end of each domain
+- **Residue Numbers**: Start and end residue numbers for secondary structure elements within domains
+- **Filtering**: In 'major' mode, only significant secondary structures (≥3 residues) receive residue numbers
+- **Element Types**: Residue numbers are added only to helices and sheets, not coil regions
 
 ## Database Alignment Features
 
@@ -197,7 +216,17 @@ flatprot split protein.cif --regions "A:1-80,A:100-180,A:200-280" --show-databas
 
 **Custom styling with position annotations:**
 ```bash
-flatprot split protein.cif --regions "A:10-110,A:130-230" --style custom.toml --show-positions -o styled.svg
+# Clean domains without annotations
+flatprot split protein.cif --regions "A:10-110,A:130-230" --style custom.toml --show-positions none -o clean.svg
+
+# Basic domain orientation (default)
+flatprot split protein.cif --regions "A:10-110,A:130-230" --style custom.toml --show-positions minimal -o oriented.svg
+
+# Major structures with residue numbers
+flatprot split protein.cif --regions "A:10-110,A:130-230" --style custom.toml --show-positions major -o detailed.svg
+
+# Full annotation detail
+flatprot split protein.cif --regions "A:10-110,A:130-230" --style custom.toml --show-positions full -o comprehensive.svg
 ```
 
 **Large canvas with wide spacing:**
@@ -341,7 +370,7 @@ success, output = split_and_analyze_domains(
 ### Memory Optimization
 - **Limit number of regions** for memory-constrained systems
 - **Smaller region sizes** reduce memory usage
-- **Disable position annotations** for simpler scenes
+- **Use minimal/none position annotations** for simpler scenes (use `--show-positions none` for cleanest output)
 
 ## Troubleshooting
 
