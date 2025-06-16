@@ -8,6 +8,7 @@ from cyclopts import App
 from .project import project_structure_svg
 from .align import align_structure_rotation
 from .overlay import overlay
+from .split import split_command
 from flatprot import __version__
 
 
@@ -23,6 +24,10 @@ app.command(
 app.command(
     overlay,
     "overlay",
+)
+app.command(
+    split_command,
+    "split",
 )
 
 

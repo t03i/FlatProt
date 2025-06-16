@@ -235,6 +235,7 @@ def run_flatprot_project(input_path, output_path, matrix_path, canvas_args):
         output_path,
         "--matrix",
         matrix_path,
+        "--show-positions",
         "--quiet",
     ]
     # Parse canvas args like "--canvas-width 300 --canvas-height 200"

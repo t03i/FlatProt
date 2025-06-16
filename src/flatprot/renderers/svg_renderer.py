@@ -18,6 +18,7 @@ from flatprot.scene import (
     SceneError,
     LineAnnotation,
     AreaAnnotation,
+    PositionAnnotation,
     BaseAnnotationElement,
     BaseStructureSceneElement,
     TargetResidueNotFoundError,
@@ -35,6 +36,7 @@ from .svg_annotations import (
     _draw_point_annotation,
     _draw_line_annotation,
     _draw_area_annotation,
+    _draw_position_annotation,
 )
 
 # --- Helper Functions --- #
@@ -109,6 +111,7 @@ class SVGRenderer:
         PointAnnotation: _draw_point_annotation,
         LineAnnotation: _draw_line_annotation,
         AreaAnnotation: _draw_area_annotation,
+        PositionAnnotation: _draw_position_annotation,
     }
 
     def __init__(
@@ -214,6 +217,7 @@ class SVGRenderer:
         if not isinstance(element, SceneGroup):
             return  # Only process groups
 
+        # Use group with transform
         svg_transform_str = str(element.transforms)
         current_svg_group = Group(id=element.id, transform=svg_transform_str)
         svg_group_map[element.id] = current_svg_group
