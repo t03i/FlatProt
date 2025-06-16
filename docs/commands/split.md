@@ -270,16 +270,14 @@ The split command follows this processing pipeline:
    - Uses GEMMI library for precise region isolation
    - Maintains original residue numbering and chain IDs
 
-3. **Optional Database Alignment**
-   - Downloads/validates alignment database (if enabled)
-   - Aligns each region individually using FoldSeek
-   - Retrieves transformation matrices and family annotations
-   - Applies rotation-only transformations (preserves positioning)
+3. **Domain-Specific Transformations**
+   - **Family-identity mode**: Aligns each region to database using FoldSeek, applies rotation around each domain's center to show recognizable database orientation
+   - **Inertia mode**: Calculates individual inertia transformations, applies rotation around each domain's center to highlight secondary structure composition
 
-4. **Structure Transformation**
-   - Applies inertia transformation for overall orientation
+4. **Centered Rotation and Projection**
+   - Rotates each domain around its geometric center, preserving relative positioning
    - Projects 3D coordinates to 2D using orthographic projection
-   - Maintains consistent coordinate system across regions
+   - Maintains structural relationships while optimizing individual domain orientations
 
 5. **Scene Creation**
    - Creates separate groups for each region

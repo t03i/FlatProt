@@ -275,8 +275,12 @@ class TestSplitCommand:
         mock_extract.assert_called_once()
         mock_database.assert_called_once()
         mock_align.assert_called_once()
-        mock_transform.assert_called_once()
-        mock_inertia.assert_called_once()
+        # Verify domain transformation is called with original structure (no global inertia)
+        mock_transform.assert_called_once_with(
+            mock_structure, mock_domain_transformations
+        )
+        # No global inertia transformation should be called
+        mock_inertia.assert_not_called()
         mock_project.assert_called_once()
         mock_scene.assert_called_once()
         mock_renderer.assert_called_once()
@@ -392,8 +396,8 @@ class TestSplitCommand:
             alignment_mode="inertia",
         )
 
-        # In inertia mode, should use original structure directly
-        mock_inertia.assert_called_once_with(mock_structure)
+        # In inertia mode, no global inertia transformation (individual domain inertia is handled internally)
+        mock_inertia.assert_not_called()
 
     @patch("flatprot.cli.split.validate_structure_file")
     @patch("flatprot.cli.split.GemmiStructureParser")

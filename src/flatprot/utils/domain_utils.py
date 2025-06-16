@@ -74,11 +74,11 @@ def apply_domain_transformations_masked(
     domain_transforms: List[DomainTransformation],
 ) -> Structure:
     """
-    Applies specific transformation matrices sequentially to defined domains.
+    Applies specific transformation matrices to defined domains around their centers.
 
-    Uses boolean masks to identify coordinates for each domain. If domains overlap,
-    transformations applied later in the `domain_transforms` list will overwrite
-    those applied earlier for the overlapping coordinates.
+    Each domain is rotated around its geometric center, preserving its position
+    within the global structure while optimizing its orientation for visualization.
+    Uses boolean masks to identify coordinates for each domain.
 
     Creates a new Structure object with transformed 3D coordinates. The original
     structure remains unchanged.
@@ -86,7 +86,7 @@ def apply_domain_transformations_masked(
     Args:
         structure: The original Structure object.
         domain_transforms: An ordered list of DomainTransformation objects.
-                           The order determines precedence in case of overlaps.
+                           Rotations are applied around each domain's center.
 
     Returns:
         A new Structure object with coordinates transformed domain-specifically.
@@ -122,21 +122,28 @@ def apply_domain_transformations_masked(
 
     for mask, domain_tf in zip(domain_masks, domain_transforms):
         if not np.any(mask):
-            print(
+            logger.warning(
                 f"No coordinates found for domain {domain_tf.domain_range}. Skipping transformation."
             )
             continue
 
-        matrix = domain_tf.transformation_matrix
         domain_id_str = f" '{domain_tf.domain_id}'" if domain_tf.domain_id else ""
-        print(
-            f"Applying transformation for domain{domain_id_str} {domain_tf.domain_range} (affecting {np.sum(mask)} coordinates)..."
+        logger.debug(
+            f"Applying centered transformation for domain{domain_id_str} {domain_tf.domain_range} (affecting {np.sum(mask)} coordinates)..."
         )
 
-        # Apply transformation to the *original* coordinates selected by the mask
         try:
+            # Calculate domain center
+            domain_center = calculate_domain_center(structure, domain_tf.domain_range)
+
+            # Create centered transformation using only rotation from domain_tf
+            # This rotates the domain around its center, preserving its position
+            rotation = domain_tf.transformation_matrix.rotation
+            centered_matrix = create_centered_transformation(rotation, domain_center)
+
+            # Apply transformation to the *original* coordinates selected by the mask
             coords_subset = original_coords[mask, :]
-            transformed_subset = matrix.apply(coords_subset)
+            transformed_subset = centered_matrix.apply(coords_subset)
 
             if transformed_subset.shape != coords_subset.shape:
                 raise TransformationError(
@@ -146,9 +153,14 @@ def apply_domain_transformations_masked(
 
             transformed_coords[mask, :] = transformed_subset
 
+            logger.info(
+                f"Applied centered rotation for domain{domain_id_str} {domain_tf.domain_range} "
+                f"around center {domain_center}"
+            )
+
         except Exception as e:
             raise TransformationError(
-                f"Failed to apply transformation matrix for domain {domain_tf.domain_range}: {e}"
+                f"Failed to apply centered transformation for domain {domain_tf.domain_range}: {e}"
             ) from e
 
     # Create a new structure object with the same topology but new coordinates
@@ -164,7 +176,8 @@ def apply_domain_transformations_masked(
 def create_domain_aware_scene(
     projected_structure: Structure,
     domain_definitions: List[DomainTransformation],
-    spacing: float = 0.0,
+    gap_x: float = 0.0,
+    gap_y: float = 0.0,
     arrangement: str = "horizontal",
     default_styles: Optional[
         Dict[str, Union[BaseStructureStyle, ConnectionStyle, AreaAnnotationStyle]]
@@ -176,14 +189,16 @@ def create_domain_aware_scene(
 
     Elements (structure, connections, annotations) are assigned to their respective
     domain group. Elements not belonging to any defined domain are discarded.
-    Domain groups are translated by a fixed margin based on the `spacing` parameter.
+    Domain groups are progressively translated: last domain stays at origin,
+    earlier domains get negative progressive translations (i×gap_x, i×gap_y) where i is negative.
 
     Args:
         projected_structure: The Structure object with final 2D projected coordinates.
         domain_definitions: List of DomainTransformation objects defining the domains.
                             The domain_id attribute is crucial.
-        spacing: Fixed margin used to separate domain groups in pixels.
-        arrangement: How to arrange domain groups ('horizontal' or 'vertical').
+        gap_x: Progressive horizontal gap between domains in pixels (last domain at origin).
+        gap_y: Progressive vertical gap between domains in pixels (last domain at origin).
+        arrangement: How to arrange domain groups (kept for compatibility).
         default_styles: Optional dictionary mapping element type names to style instances.
         domain_scop_ids: Optional dictionary mapping domain_id to an annotation string
                          (e.g., SCOP ID) used for AreaAnnotation labels.
@@ -191,10 +206,10 @@ def create_domain_aware_scene(
                                         probability (0.0-1.0) for display in annotations.
 
     Returns:
-        A Scene object containing only the specified domain groups, laid out.
+        A Scene object containing only the specified domain groups, laid out progressively.
 
     Raises:
-        ValueError: If arrangement is invalid, structure lacks coordinates, or
+        ValueError: If structure lacks coordinates, or
                     domain_definitions have issues (missing IDs when needed, duplicates).
         TypeError: If incompatible style types are provided in default_styles.
     """
@@ -203,8 +218,6 @@ def create_domain_aware_scene(
         or projected_structure.coordinates.size == 0
     ):
         raise ValueError("Input projected_structure has no coordinates.")
-    if arrangement not in ["horizontal", "vertical"]:
-        raise ValueError("Arrangement must be 'horizontal' or 'vertical'.")
     if domain_scop_ids and any(d.domain_id is None for d in domain_definitions):
         raise ValueError(
             "All domain_definitions must have a domain_id if domain_scop_ids is provided."
@@ -225,7 +238,7 @@ def create_domain_aware_scene(
     domain_tf_lookup: Dict[str, DomainTransformation] = {}
 
     # --- 1. Create Domain Groups Only ---
-    print("Creating scene groups for defined domains...")
+    logger.debug("Creating scene groups for defined domains...")
     for domain_tf in domain_definitions:
         domain_id = domain_tf.domain_id or str(domain_tf.domain_range)
         if domain_id in domain_groups:
@@ -236,13 +249,13 @@ def create_domain_aware_scene(
         domain_groups[domain_id] = domain_group
         domain_ids_in_order.append(domain_id)
         domain_tf_lookup[domain_id] = domain_tf
-    print(f"Created {len(domain_groups)} domain groups.")
+    logger.debug(f"Created {len(domain_groups)} domain groups.")
     if not domain_groups:
         logger.warning("No domain groups created. Scene will be empty.")
         return scene  # Return early if no domains defined/created
 
     # --- 2. Assign Structure Elements ONLY to Domain Groups ---
-    print("Assigning structure elements to domain groups...")
+    logger.debug("Assigning structure elements to domain groups...")
     element_map: Dict[str, SceneGroup] = {}  # Map element ID to its parent group
     elements_assigned_count = 0
     elements_discarded_count = 0
@@ -298,12 +311,12 @@ def create_domain_aware_scene(
                 # Element does not belong to any defined domain, discard it
                 elements_discarded_count += 1
 
-    print(
+    logger.debug(
         f"Assigned {elements_assigned_count} elements to domain groups. Discarded {elements_discarded_count}."
     )
 
     # --- 3. Add Connections ONLY Within the Same Domain Group ---
-    print("Adding connections within domain groups...")
+    logger.debug("Adding connections within domain groups...")
     all_structure_elements = scene.get_sequential_structure_elements()
     connections_added_count = 0
     connections_discarded_count = 0
@@ -338,7 +351,7 @@ def create_domain_aware_scene(
                     end_element=element_i_plus_1,
                     style=base_conn_style,
                 )
-                print(
+                logger.debug(
                     f"Adding connection between {element_i.id} and {element_i_plus_1.id} to group {group_i.id}"
                 )
                 scene.add_element(conn, parent_id=group_i.id)
@@ -353,16 +366,16 @@ def create_domain_aware_scene(
             # Connection spans groups or involves discarded elements
             connections_discarded_count += 1
 
-    print(
+    logger.debug(
         f"Added {connections_added_count} connections within groups. Discarded {connections_discarded_count}."
     )
 
     # --- 4. Add Domain Annotations to Respective Groups ---
     if domain_scop_ids:
-        print("Adding domain annotations...")
+        logger.debug("Adding domain annotations...")
         annotations_added_count = 0
         base_area_style = styles.get("area_annotation")
-        print(f"Base area style: {base_area_style}")
+        logger.debug(f"Base area style: {base_area_style}")
         # Type check
         if base_area_style is not None and not isinstance(
             base_area_style, AreaAnnotationStyle
@@ -406,38 +419,47 @@ def create_domain_aware_scene(
                     f"Failed adding area annotation for domain {domain_id}: {e}",
                     exc_info=True,
                 )
-        print(f"Added {annotations_added_count} domain area annotations.")
+        logger.debug(f"Added {annotations_added_count} domain area annotations.")
 
-    # --- 5. Apply Fixed Layout Translation to Domain Groups ---
-    print("Applying fixed layout translations...")
-    layout_applied_count = 0
-    # Use the ordered list for consistent layout
-    total = len(domain_ids_in_order)
-    for i, domain_id in enumerate(domain_ids_in_order):
-        group = domain_groups.get(domain_id)
-        if not group:
-            continue  # Should not happen based on checks
-
-        # Calculate fixed translation based on index and spacing (margin)
-        if arrangement == "horizontal":
-            idx = total - i - 1  # Reverse for horizontal (right to left)
-            translate_x = idx * spacing
-            translate_y = 0.0
-        elif arrangement == "vertical":
-            idx = total - i - 1  # Reverse for vertical (bottom to top)
-            translate_x = 0.0
-            translate_y = idx * spacing
-
-        # Apply the translation
-        if group.transforms is None:
-            group.transforms = GroupTransform()  # Should exist, but safety check
-        group.transforms.translate = (translate_x, translate_y)
-        print(
-            f"Applied fixed translate to group {domain_id}: ({translate_x:.2f}, {translate_y:.2f})"
+    # --- 5. Apply Progressive Gap Translation to Domain Groups ---
+    # Apply incremental gap_x and gap_y translation to domains for proper separation
+    if gap_x != 0.0 or gap_y != 0.0:
+        logger.debug(
+            f"Applying progressive gap translation with increments: ({gap_x}, {gap_y})"
         )
-        layout_applied_count += 1
+        layout_applied_count = 0
+        # Apply reverse progressive translation - last domain stays at origin, earlier domains get positive gaps
+        num_domains = len(domain_ids_in_order)
+        for i, domain_id in enumerate(domain_ids_in_order):
+            group = domain_groups.get(domain_id)
+            if not group:
+                continue  # Should not happen based on checks
 
-    print(f"Applied fixed layout transforms to {layout_applied_count} domain groups.")
+            # Calculate reverse progressive translation: last domain (i=num_domains-1) stays at (0,0)
+            # Earlier domains get progressively larger positive translations for visual separation
+            translate_x = (num_domains - 1 - i) * gap_x
+            translate_y = (num_domains - 1 - i) * gap_y
+
+            if group.transforms is None:
+                group.transforms = GroupTransform()
+            group.transforms.translate = (translate_x, translate_y)
+            logger.debug(
+                f"Applied progressive translation to group {domain_id}: ({translate_x:.2f}, {translate_y:.2f})"
+            )
+            layout_applied_count += 1
+
+        logger.debug(
+            f"Applied progressive gap translations to {layout_applied_count} domain groups."
+        )
+    else:
+        logger.debug("Keeping domains in original positions (gap_x = gap_y = 0.0).")
+        # Ensure groups have identity transforms but no translation
+        for domain_id in domain_ids_in_order:
+            group = domain_groups.get(domain_id)
+            if group:
+                if group.transforms is None:
+                    group.transforms = GroupTransform()
+                group.transforms.translate = (0.0, 0.0)  # Keep in original position
 
     return scene
 
@@ -696,3 +718,160 @@ def align_regions_batch(
     )
 
     return domain_transformations
+
+
+def calculate_individual_inertia_transformations(
+    structure: Structure, region_ranges: List[ResidueRange]
+) -> List[DomainTransformation]:
+    """Calculate individual inertia transformations for each domain region.
+
+    Args:
+        structure: The Structure object to extract coordinates from
+        region_ranges: List of ResidueRange objects defining the domains
+
+    Returns:
+        List of DomainTransformation objects with inertia-based transformations
+
+    Raises:
+        ValueError: If structure lacks coordinates or regions have no residues
+    """
+    from flatprot.transformation.inertia_transformation import (
+        calculate_inertia_transformation_matrix,
+    )
+
+    if not hasattr(structure, "coordinates") or structure.coordinates is None:
+        raise ValueError("Structure has no coordinates for inertia transformation.")
+
+    domain_transformations = []
+
+    for region_range in region_ranges:
+        # Collect coordinates and residues for this domain
+        domain_coords = []
+        domain_residues = []
+
+        for chain in structure.values():
+            if chain.id == region_range.chain_id:
+                for residue in chain:
+                    if residue in region_range:
+                        if (
+                            hasattr(residue, "coordinate_index")
+                            and residue.coordinate_index
+                            < structure.coordinates.shape[0]
+                        ):
+                            domain_coords.append(
+                                structure.coordinates[residue.coordinate_index]
+                            )
+                            domain_residues.append(residue.residue_type)
+
+        if not domain_coords:
+            logger.warning(
+                f"No coordinates found for domain {region_range}, using identity matrix"
+            )
+            transformation_matrix = TransformationMatrix(
+                rotation=np.eye(3), translation=np.zeros(3)
+            )
+        else:
+            # Convert to numpy array
+            coords_array = np.array(domain_coords)
+
+            # Use equal weights (geometric center) for simplicity
+            weights = np.ones(len(coords_array))
+
+            # Calculate inertia transformation matrix for this domain
+            inertia_matrix = calculate_inertia_transformation_matrix(
+                coords_array, weights
+            )
+
+            # Use only rotation component - translation will be handled by centered transformation
+            transformation_matrix = TransformationMatrix(
+                rotation=inertia_matrix.rotation,
+                translation=np.zeros(3),  # Zero translation for centered application
+            )
+
+            logger.info(
+                f"Calculated inertia rotation for domain {region_range} "
+                f"with {len(coords_array)} coordinates"
+            )
+
+        # Create domain transformation
+        domain_id = f"{region_range.chain_id}:{region_range.start}-{region_range.end}"
+        domain_transformation = DomainTransformation(
+            domain_range=region_range,
+            transformation_matrix=transformation_matrix,
+            domain_id=domain_id,
+            scop_id=None,  # No SCOP ID for inertia mode
+            alignment_probability=None,  # No alignment probability for inertia mode
+        )
+
+        domain_transformations.append(domain_transformation)
+
+    logger.info(
+        f"Calculated individual inertia transformations for {len(domain_transformations)} domains"
+    )
+
+    return domain_transformations
+
+
+def calculate_domain_center(
+    structure: Structure, domain_range: ResidueRange
+) -> np.ndarray:
+    """Calculate the geometric center of a domain in the original structure.
+
+    Args:
+        structure: The Structure object containing coordinates
+        domain_range: ResidueRange defining the domain
+
+    Returns:
+        3D coordinates of domain center
+
+    Raises:
+        ValueError: If no coordinates found for domain
+    """
+    domain_coords = []
+
+    for chain in structure.values():
+        if chain.id == domain_range.chain_id:
+            for residue in chain:
+                if residue in domain_range:
+                    if (
+                        hasattr(residue, "coordinate_index")
+                        and residue.coordinate_index < structure.coordinates.shape[0]
+                    ):
+                        domain_coords.append(
+                            structure.coordinates[residue.coordinate_index]
+                        )
+
+    if not domain_coords:
+        raise ValueError(f"No coordinates found for domain {domain_range}")
+
+    # Calculate geometric center
+    domain_coords_array = np.array(domain_coords)
+    domain_center = np.mean(domain_coords_array, axis=0)
+
+    logger.debug(f"Domain {domain_range} center: {domain_center}")
+    return domain_center
+
+
+def create_centered_transformation(
+    rotation: np.ndarray, center: np.ndarray
+) -> TransformationMatrix:
+    """Create a transformation that rotates around a specific center point.
+
+    Args:
+        rotation: 3x3 rotation matrix
+        center: 3D center point to rotate around
+
+    Returns:
+        TransformationMatrix that rotates around the center
+    """
+    # T_final = T_recenter ∘ T_rotate ∘ T_center
+    # Where:
+    # - T_center: translate center to origin (translation = -center)
+    # - T_rotate: apply rotation (rotation = R, translation = 0)
+    # - T_recenter: translate back from origin (translation = center)
+    #
+    # Combined: T_final = (R, center - R @ center)
+
+    translation = center - rotation @ center
+
+    return TransformationMatrix(rotation=rotation, translation=translation)
