@@ -43,7 +43,7 @@ Extract and visualize specific structural regions with comparative alignment:
 
 1. Define regions of interest: `flatprot split protein.cif --regions "A:1-100,A:150-250" -o regions.svg`
 2. With database alignment: `flatprot split protein.cif --regions "A:1-100,A:150-250" --show-database-alignment -o aligned_regions.svg`
-3. Custom layouts: `flatprot split protein.cif --regions "A:1-100,A:150-250" --layout vertical --spacing 150 -o layout.svg`
+3. Progressive gap positioning: `flatprot split protein.cif --regions "A:1-100,A:150-250" --gap-x 150 --gap-y 100 -o positioned.svg`
 
 The resulting files contain clean, publication-ready 2D representations that can be viewed in any web browser or vector graphics editor.
 
@@ -82,7 +82,7 @@ FlatProt offers multiple visualization types to suit different analysis needs:
 -   **Rotation-Only Transformations**: Align region orientations while preserving spatial relationships
 -   **SCOP Family Annotations**: Automatic identification and display of structural classification annotations
 -   **Alignment Quality Metrics**: Display of alignment probabilities and confidence scores
--   **Flexible Layout Systems**: Horizontal, vertical, and grid arrangements for comparative visualization
+-   **Progressive Gap Positioning**: Flexible domain spacing with configurable horizontal and vertical gaps for comparative visualization
 -   **LDDT Score Visualization**: Color-coded representation of local distance difference test scores
 -   **Residue Annotations**: Optional display of amino acid annotations and chain positions
 -   **Custom Highlighting**: Support for manual residue and bond highlighting through JSON configuration
