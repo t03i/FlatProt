@@ -46,13 +46,17 @@ flatprot overlay FILE_PATTERNS [OPTIONS]
 ### Family-Identity Alignment (Recommended)
 Uses FoldSeek to align structures against a curated database of protein families with automatic database download and batch processing.
 
+**For optimal conservation**, it is recommended to align all structures to the same common core structure using a fixed family ID. This ensures consistent alignment across all structures in the overlay.
+
 ```bash
-# Align to best matching family
+# Align to best matching family (may vary per structure)
 flatprot overlay "structures/*.cif" --alignment-mode family-identity
 
-# Align to specific family
+# Align to specific family for optimal conservation (recommended)
 flatprot overlay "toxins/*.cif" --family 3000114 --alignment-mode family-identity
 ```
+
+**Note:** Using automatic family detection or other alignment modes does not guarantee optimal conservation across structures, as each structure may align to different reference families.
 
 ### Inertia Alignment
 Uses principal component analysis for structure alignment. Fast processing with no external database dependencies.

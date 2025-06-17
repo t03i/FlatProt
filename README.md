@@ -82,6 +82,61 @@ FlatProt provides four main commands:
 
 See the [CLI documentation](https://t03i.github.io/FlatProt/commands/project/) for detailed usage.
 
+## 🔄 Common Workflows
+
+### Single Structure Visualization
+```bash
+# 1. Add secondary structure information
+mkdssp your_protein.cif your_protein_with_dssp.cif
+
+# 2. Create 2D projection
+flatprot project your_protein_with_dssp.cif --output protein_2d.svg
+```
+
+### Aligned Structure Visualization
+```bash
+# 1. Find optimal family alignment
+flatprot align protein.cif -m alignment_matrix.npy
+
+# 2. Create aligned 2D projection
+flatprot project protein.cif --matrix alignment_matrix.npy -o aligned_protein.svg
+```
+
+### Family Comparison Workflow
+```bash
+# 1. Find optimal alignment for family
+flatprot align reference_protein.cif -i family_info.json
+
+# 2. Extract family ID from results
+family_id=$(jq -r '.best_hit.target_id' family_info.json)
+
+# 3. Create conserved overlay using fixed family ID
+flatprot overlay "family_proteins/*.cif" --family "$family_id" -o family_overlay.png
+```
+
+### Domain Analysis Workflow
+```bash
+# 1. Create full structure view
+flatprot project protein.cif -o full_structure.svg
+
+# 2. Extract and align specific domains
+flatprot split protein.cif --regions "A:1-100,A:150-250" --show-database-alignment -o domains.svg
+
+# 3. Create domain overlay for comparison
+flatprot overlay "domain_structures/*.cif" --family 3000114 -o domain_comparison.png
+```
+
+### Custom Alignment Workflow
+```bash
+# 1. Generate alignment matrix from first structure
+flatprot align reference.cif -m alignment_matrix.npy
+
+# 2. Apply same alignment to all structures
+for file in *.cif; do
+    flatprot project "$file" --matrix alignment_matrix.npy -o "aligned_${file%.cif}.svg"
+done
+```
+
 ## Reference
 
 If you use FlatProt in your research, please cite:

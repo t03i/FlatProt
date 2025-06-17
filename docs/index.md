@@ -49,6 +49,49 @@ Extract and visualize specific structural regions with comparative alignment:
 2. With database alignment: `flatprot split protein.cif --regions "A:1-100,A:150-250" --show-database-alignment -o aligned_regions.svg`
 3. Progressive gap positioning: `flatprot split protein.cif --regions "A:1-100,A:150-250" --gap-x 150 --gap-y 100 -o positioned.svg`
 
+## Common Command Chaining Workflows
+
+### Family Comparison with Optimal Conservation
+
+For optimal conservation across multiple structures, align all to the same family reference:
+
+```bash
+# 1. Find optimal alignment for family
+flatprot align reference_protein.cif -i family_info.json
+
+# 2. Extract family ID from results
+family_id=$(jq -r '.best_hit.target_id' family_info.json)
+
+# 3. Create conserved overlay using fixed family ID
+flatprot overlay "family_proteins/*.cif" --family "$family_id" -o family_overlay.png
+```
+
+### Aligned Structure Visualization
+
+Create family-aligned 2D projections of individual structures:
+
+```bash
+# 1. Find optimal family alignment
+flatprot align protein.cif -m alignment_matrix.npy
+
+# 2. Create aligned 2D projection
+flatprot project protein.cif --matrix alignment_matrix.npy -o aligned_protein.svg
+```
+
+### Comprehensive Domain Analysis
+
+Combine full structure and domain-specific views:
+
+```bash
+# 1. Create full structure view
+flatprot project protein.cif -o full_structure.svg
+
+# 2. Extract and align specific domains
+flatprot split protein.cif --regions "A:1-100,A:150-250" --show-database-alignment -o domains.svg
+
+```
+
+
 The resulting files contain clean, publication-ready 2D representations that can be viewed in any web browser or vector graphics editor.
 
 ## Key Features
