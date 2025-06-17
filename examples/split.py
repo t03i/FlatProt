@@ -93,7 +93,7 @@ print(f"🎯 FlatProt format: {regions_with_chain}")
 # %%
 # Create split domain visualization
 !mkdir -p "{tmp_path}split"
-!uv run flatprot split "{data_path}1KT0/1kt0.cif" --regions "{regions_with_chain}" --output "{tmp_path}split/1kt0_domains.svg" --canvas-width 800 --canvas-height 600 --show-positions major --gap-x 50 --gap-y 20 --quiet
+!uv run flatprot split "{data_path}1KT0/1kt0.cif" --regions "{regions_with_chain}" --output "{tmp_path}split/1kt0_domains.svg" --canvas-width 800 --canvas-height 600 --show-positions minimal --show-database-alignment --gap-x 200 --gap-y 20 --quiet
 
 print("✅ Domain splitting completed!")
 

@@ -34,6 +34,7 @@ from flatprot.utils.structure_utils import (
 )
 from flatprot.renderers import SVGRenderer
 from flatprot.cli.errors import CLIError, error_handler
+from flatprot.cli.utils import CommonParameters, set_logging_level
 from flatprot.scene import (
     PositionAnnotation,
     PositionType,
@@ -382,6 +383,7 @@ def split_command(
     dssp: Optional[Path] = None,
     show_positions: str = "none",
     show_database_alignment: bool = False,
+    common: CommonParameters | None = None,
 ) -> None:
     """Split protein structure into regions and create aligned visualization.
 
@@ -412,6 +414,8 @@ def split_command(
     Raises:
         CLIError: If command execution fails
     """
+    set_logging_level(common)
+
     try:
         # Validate configuration
         config = SplitConfig(
