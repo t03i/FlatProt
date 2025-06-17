@@ -112,7 +112,6 @@ type = "point"
 label = "Active Site"
 index = "A:67"
 [annotations.style]
-marker_shape = "triangle"
 marker_radius = 3
 color = "#E74C3C"        # Red for high importance
 label_color = "#C0392B"
@@ -125,7 +124,6 @@ type = "point"
 label = "Binding Pocket"
 index = "A:151"
 [annotations.style]
-marker_shape = "diamond"
 marker_radius = 2.5
 color = "#9B59B6"        # Purple for binding sites
 label_color = "#8E44AD"

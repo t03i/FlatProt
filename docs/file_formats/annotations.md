@@ -29,7 +29,6 @@ id = "point-his41",      # Optional: unique identifier
 
 # Optional inline 'style' table for overrides:
 [annotations.style]
-    marker_shape = "star",
     marker_radius = 8.0,
     color = "#FF0000",
     label_offset = [5.0, -5.0] # TOML array for tuple
@@ -101,10 +100,11 @@ Each annotation can optionally include a `style` table (a TOML table) to overrid
 
 ### Point Annotation Style (`style` table when `type = "point"`)
 
-| Attribute       | Type                                                       | Default    | Description                                       |
-| --------------- | ---------------------------------------------------------- | ---------- | ------------------------------------------------- |
-| `marker_shape`  | String (`"circle"`, `"square"`, `"triangle"`, `"diamond"`) | `"circle"` | Shape of the marker.                              |
-| `marker_radius` | Float                                                      | `5.0`      | Radius (size) of the point marker (must be >= 0). |
+| Attribute       | Type  | Default | Description                                        |
+| --------------- | ----- | ------- | -------------------------------------------------- |
+| `marker_radius` | Float | `5.0`   | Radius (size) of the point marker (must be >= 0). |
+
+Note: Point markers are always rendered as circles.
 
 ### Line Annotation Style (`style` table when `type = "line"`)
 
