@@ -114,8 +114,8 @@ print(f"✅ Analyzed {len(structures)} structures!")
 def write_disulfide_annotations(structure_name, bonds, output_file):
     """Write disulfide bond annotations to a TOML file."""
     with open(output_file, 'w') as f:
-        f.write(f"# Disulfide bond annotations for {structure_name}\\n")
-        f.write("# Generated automatically by FlatProt\\n\\n")
+        f.write(f"# Disulfide bond annotations for {structure_name}\n")
+        f.write("# Generated automatically by FlatProt\n\n")
 
         for i, (res1, chain1, res2, chain2) in enumerate(bonds):
             f.write("[[annotations]]\n")
