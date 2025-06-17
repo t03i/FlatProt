@@ -18,6 +18,8 @@ nav:
       - Matrix Files: file_formats/matrix.md
       - Style Files: file_formats/style.md
       - Annotation Files: file_formats/annotations.md
+  - Tools:
+      - PyMOL Matrix Extraction: tools/matrix_extraction.md
   - API Reference:
       - IO: api/io.md
       - Core: api/core.md
