@@ -2,126 +2,56 @@
 
 <img width="910" alt="image" src=".github/images/family_fixed.png">
 
-FlatProt is a tool for 2D protein visualization aimed at improving the comparability of protein structures through standardized 2D visualizations. FlatProt focuses on creating highly comparable representations for same-family proteins. In this case FlatProt was used to generate comparable representations for 3 3FTx structures.
+FlatProt is a tool for 2D protein visualization aimed at improving the comparability of protein structures through standardized 2D visualizations. FlatProt focuses on creating highly comparable representations for same-family proteins.
 
-## Getting Started
+## 📚 Documentation
 
-FlatProt needs python version: python= ">=3.11,<=3.13"
+**[📖 Full Documentation](https://t03i.github.io/FlatProt/)** - Complete guide with examples, API reference, and tutorials
 
-### Download FlatProt via uv
+**[🔬 Interactive Examples](https://t03i.github.io/FlatProt/examples/)** - Jupyter notebooks with Google Colab integration
 
-We use and recommend [uv](https://github.com/astral-sh/uv) as a fast, reliable Python package installer and resolver.
+## 🚀 Quick Start
 
-```shell
-# Install FlatProt using uv
+### Installation
+
+FlatProt requires Python 3.11-3.13. Install using [uv](https://github.com/astral-sh/uv) (recommended):
+
+```bash
+# Install FlatProt
 uv tool add FlatProt
-```
 
-```shell
-# Install FlatProt using uv
+# Or run directly without installation
 uvx flatprot
 ```
 
-### Install Foldseek
+### Dependencies
 
-Instructions for downloading the Foldseek software can be found in Foldseek's GitHub
+**Required:**
+- [Foldseek](https://github.com/steineggerlab/foldseek) - for structure alignment
+- [DSSP](https://pdb-redo.eu/dssp/download) - mkdssp version 4.4.0 (available via brew on macOS)
 
--   [Foldseek GitHub](https://github.com/steineggerlab/foldseek)
+**Optional:**
+- [Cairo](https://cairographics.org/) - for PNG/PDF output from overlay command
 
---> FlatProt needs the path to the foldseek executable passed as argument to the main function to be used by the program.
+### Basic Usage
 
-### Install dssp
+Generate a 2D protein visualization from a structure file:
 
-Instructions for downloading dssp can be found here:
-
--   [dssp instructions](https://pdb-redo.eu/dssp/download)
-
-!The program runs on the mkdssp version 4.4.0! (some sources don't provide that (brew does!))
-
-_An example download workflow for usage can also be found in the google colab_
-
-### Install Cairo (Optional - Required for Overlay Command PNG/PDF Output)
-
-For PNG and PDF output from the `flatprot overlay` command, the Cairo graphics library is required:
-
-**macOS:**
 ```bash
-brew install cairo
+# 1. Add secondary structure information to your CIF file
+mkdssp your_protein.cif your_protein_with_dssp.cif
+
+# 2. Create 2D projection
+flatprot project your_protein_with_dssp.cif --output protein_2d.svg
 ```
 
-**Ubuntu/Debian:**
-```bash
-sudo apt-get install libcairo2-dev pkg-config
-```
+For detailed installation and usage instructions, see the [documentation](https://t03i.github.io/FlatProt/installation/).
 
-**Windows:**
-Install Cairo binaries or use conda:
-```bash
-conda install cairo
-```
+## 📊 Example Visualizations
 
-**Verification:**
-```bash
-python -c "import drawsvg; print('Cairo available:', hasattr(drawsvg, '_cairo_available') and drawsvg._cairo_available)"
-```
+<img width="409" alt="Cobra protein visualization" src=".github/images/cobra.png">
 
-## First experiences with Google Colab
-
-For direct usage of FlatProt including all parameters the following Collabs provide functionalities for using FlatProt without locally downloading anything.
-The runtime of the Colab is way longer than local usage. Therefore we don't advise using it for big amounts of data:
-
-### UniProt ID Projection Example
-
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/t03i/FlatProt/blob/notebooks/examples/uniprot_projection.ipynb)
-
-This notebook demonstrates how to fetch a protein structure from the AlphaFold Database (AFDB) using a UniProt ID, run DSSP, and generate a FlatProt projection.
-
-### Annotation and Style Example
-
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/t03i/FlatProt/blob/notebooks/examples/annotations.ipynb)
-
-This notebook demonstrates how to apply custom styles and various annotations (point, line, area) to a FlatProt projection.
-
-### Same Family Alignment Example
-
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/t03i/FlatProt/blob/notebooks/examples/3ftx_alignment.ipynb)
-
-This notebook demonstrates aligning three related three-finger toxin structures (Cobra, Krait, Snake) using a Foldseek database and then projecting them into 2D SVG visualizations using FlatProt.
-
-### Domain-Aligned Projection Example
-
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/t03i/FlatProt/blob/notebooks/examples/chainsaw.ipynb)
-
-Generate and compare different 2D SVG visualizations of a protein structure based on its domains: Normal Projection, Domain-Aligned Projection, Domain-Separated Projection.
-
-### Compute Cystine Bridges Example
-
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/t03i/FlatProt/blob/notebooks/examples/dysulfide.ipynb)
-
-This notebook demonstrates how to: Compute cystine (disulfide) bridges from a protein structure file (`.cif`); Create a FlatProt annotation file (`.toml`) highlighting these bridges; Generate a 2D SVG projection of the protein using `flatprot project`, applying the annotations.
-
-### Family Overlay Example
-
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/t03i/FlatProt/blob/notebooks/examples/klk_overlay.ipynb)
-
-This example script demonstrates how to align KLK (Kallikrein) structures and overlay their FlatProt projections.
-
-## Documentation
-
-FlatProt's documentation can found here:
-
--   [FlatProt documentation!](https://t03i.github.io/FlatProt/)
-
-The documentation includes:
-
--   Detailed CLI usage instructions
--   File format specifications
--   API reference
-
-**important notes:**
-
--   input PDB files need a header to work (important for predicted structures)
--   FlatProt's methods can be used via command line commands (cli)
+<img width="409" alt="Protein overlay visualization" src=".github/images/overlay.png">
 
 ## Contributing
 
@@ -141,11 +71,71 @@ This project uses datasets that can be found on Zenodo.
 
 [Zenodo Data](https://doi.org/10.5281/zenodo.15264810)
 
-## Example visualizations
+## 🔧 CLI Commands
 
-<img width="409" alt="Cobra protein visualization" src=".github/images/cobra.png">
+FlatProt provides four main commands:
 
-<img width="409" alt="Protein overlay visualization" src=".github/images/overlay.png">
+- `flatprot project` - Create 2D SVG projections from protein structures
+- `flatprot align` - Align protein structures using rotation
+- `flatprot overlay` - Create overlay visualizations from multiple structures
+- `flatprot split` - Extract and align structural regions for comparison
+
+See the [CLI documentation](https://t03i.github.io/FlatProt/commands/project/) for detailed usage.
+
+## 🔄 Common Workflows
+
+### Single Structure Visualization
+```bash
+# 1. Add secondary structure information
+mkdssp your_protein.cif your_protein_with_dssp.cif
+
+# 2. Create 2D projection
+flatprot project your_protein_with_dssp.cif --output protein_2d.svg
+```
+
+### Aligned Structure Visualization
+```bash
+# 1. Find optimal family alignment
+flatprot align protein.cif -m alignment_matrix.npy
+
+# 2. Create aligned 2D projection
+flatprot project protein.cif --matrix alignment_matrix.npy -o aligned_protein.svg
+```
+
+### Family Comparison Workflow
+```bash
+# 1. Find optimal alignment for family
+flatprot align reference_protein.cif -i family_info.json
+
+# 2. Extract family ID from results
+family_id=$(jq -r '.best_hit.target_id' family_info.json)
+
+# 3. Create conserved overlay using fixed family ID
+flatprot overlay "family_proteins/*.cif" --family "$family_id" -o family_overlay.png
+```
+
+### Domain Analysis Workflow
+```bash
+# 1. Create full structure view
+flatprot project protein.cif -o full_structure.svg
+
+# 2. Extract and align specific domains
+flatprot split protein.cif --regions "A:1-100,A:150-250" --show-database-alignment -o domains.svg
+
+# 3. Create domain overlay for comparison
+flatprot overlay "domain_structures/*.cif" --family 3000114 -o domain_comparison.png
+```
+
+### Custom Alignment Workflow
+```bash
+# 1. Generate alignment matrix from first structure
+flatprot align reference.cif -m alignment_matrix.npy
+
+# 2. Apply same alignment to all structures
+for file in *.cif; do
+    flatprot project "$file" --matrix alignment_matrix.npy -o "aligned_${file%.cif}.svg"
+done
+```
 
 ## Reference
 
