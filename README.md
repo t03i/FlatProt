@@ -10,6 +10,8 @@ FlatProt is a tool for 2D protein visualization aimed at improving the comparabi
 
 **[🔬 Interactive Examples](https://t03i.github.io/FlatProt/examples/)** - Jupyter notebooks with Google Colab integration
 
+**[🧬 Try Now: UniProt to Visualization](https://colab.research.google.com/github/t03i/FlatProt/blob/main/examples/uniprot_alphafold.ipynb)** - From any UniProt ID to beautiful 2D visualization in minutes!
+
 ## 🚀 Quick Start
 
 ### Installation
@@ -45,15 +47,14 @@ uvx flatprot --help
 Generate a 2D protein visualization from a structure file:
 
 ```bash
-# 1. Add secondary structure information to your CIF file
-mkdssp your_protein.cif your_protein_with_dssp.cif
+# Option 1: AlphaFold structures (no DSSP needed - secondary structure included!)
+flatprot project AF-P69905-F1-model_v4.cif --output protein_2d.svg
 
-# 2. Create 2D projection
-# If installed with 'uv tool add FlatProt':
+# Option 2: PDB/CIF files (add secondary structure first)
+mkdssp your_protein.cif your_protein_with_dssp.cif
 flatprot project your_protein_with_dssp.cif --output protein_2d.svg
 
-# If using without installation:
-# uvx flatprot project your_protein_with_dssp.cif --output protein_2d.svg
+# Note: If using without installation, replace 'flatprot' with 'uvx flatprot'
 ```
 
 For detailed installation and usage instructions, see the [documentation](https://t03i.github.io/FlatProt/installation/).
@@ -99,10 +100,11 @@ See the [CLI documentation](https://t03i.github.io/FlatProt/commands/project/) f
 
 ### Single Structure Visualization
 ```bash
-# 1. Add secondary structure information
-mkdssp your_protein.cif your_protein_with_dssp.cif
+# AlphaFold structures (recommended - no preprocessing needed!)
+flatprot project AF-P69905-F1-model_v4.cif --output protein_2d.svg
 
-# 2. Create 2D projection
+# Traditional PDB/CIF files (requires DSSP preprocessing)
+mkdssp your_protein.cif your_protein_with_dssp.cif
 flatprot project your_protein_with_dssp.cif --output protein_2d.svg
 ```
 

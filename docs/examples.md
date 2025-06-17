@@ -24,28 +24,33 @@ Interactive Jupyter notebooks demonstrating FlatProt's capabilities, from basic 
 **Perfect for beginners!** Ultra-clean example using native Jupyter shell commands (`!flatprot project`). Creates beautiful 2D visualizations with minimal complexity.
 
 ### Protein Family Overlay
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/t03i/FlatProt/blob/main/examples/overlay_v2.ipynb)
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/t03i/FlatProt/blob/main/examples/overlay.ipynb)
 
 **One command, multiple proteins!** Ultra-simplified demonstration using `%%bash` cells. Shows automatic clustering, alignment, and family visualization.
 
-### Three-Finger Toxin Alignment
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/t03i/FlatProt/blob/main/examples/3ftx_simple.ipynb)
+### Protein Alignment and Projection
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/t03i/FlatProt/blob/main/examples/project_align.ipynb)
 
-**Structure comparison made simple!** Clean shell command workflow for comparing three related toxin structures side-by-side.
+**Compare related protein structures with consistent alignment!** Shows how to align three similar toxins to a reference database and create side-by-side projections with consistent orientation.
+
+### Protein Domain Splitting
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/t03i/FlatProt/blob/main/examples/split.ipynb)
+
+**Extract and visualize protein domains separately!** Demonstrates how to use `flatprot split` to extract structural domains and create individual visualizations for comparative analysis.
 
 ## 🔬 Advanced Examples
 
-### UniProt Integration
+### UniProt to AlphaFold Visualization
 
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/t03i/FlatProt/blob/main/examples/uniprot_projection.ipynb)
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/t03i/FlatProt/blob/main/examples/uniprot_alphafold.ipynb)
 
-This notebook demonstrates how to fetch a protein structure from the AlphaFold Database (AFDB) using a UniProt ID, run DSSP to determine secondary structure, and then generate a 2D projection using FlatProt.
+**From UniProt ID to beautiful visualization in minutes!** Automatically downloads AlphaFold structures, extracts functional annotations from UniProt, aligns to protein families, and creates publication-ready visualizations. Features automatic binding site detection and multiple visualization variants.
 
-### Custom Annotations
+### Custom Styling and Annotations
 
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/t03i/FlatProt/blob/main/examples/annotations.ipynb)
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/t03i/FlatProt/blob/main/examples/custom_styling.ipynb)
 
-This notebook demonstrates how to apply custom styles and various annotations (point, line, area) to a FlatProt projection.
+**Create beautiful protein visualizations with custom colors and annotations!** Demonstrates modern color schemes, point/line/area annotations, and style variations. Includes a side-by-side comparison gallery showing different aesthetic approaches.
 
 
 ### Domain Analysis (Chainsaw)
@@ -70,13 +75,14 @@ Advanced example showing complex overlay creation with automatic clustering, fam
 
 **🚀 Recommended (Clean & Simple):**
 1. **Start:** [Simple Projection](simple_projection_v2.ipynb) - Pure shell commands, minimal complexity
-2. **Next:** [Three-Finger Toxin Alignment](3ftx_simple.ipynb) - Structure comparison made easy
-3. **Features:** [Disulfide Bond Detection](disulfide_auto.ipynb) - Automated family analysis + annotations
-4. **Scale up:** [Protein Family Overlay](overlay_v2.ipynb) - Multi-protein visualization
+2. **Align:** [Protein Alignment and Projection](project_align.ipynb) - Structure comparison with consistent alignment
+3. **Domains:** [Protein Domain Splitting](split.ipynb) - Extract and visualize domains separately
+4. **Features:** [Disulfide Bond Detection](disulfide_auto.ipynb) - Automated family analysis + annotations
+5. **Scale up:** [Protein Family Overlay](overlay_v2.ipynb) - Multi-protein visualization
 
 **🔬 Advanced (Full-Featured):**
-5. **Customize:** [Custom Annotations](annotations.ipynb) & [Domain Analysis](chainsaw.ipynb)
-6. **Research:** [UniProt Integration](uniprot_projection.ipynb) & [KLK Family Analysis](klk_overlay.ipynb)
+6. **Customize:** [Custom Styling](custom_styling.ipynb) & [Domain Analysis](chainsaw.ipynb)
+7. **Research:** [UniProt to AlphaFold](uniprot_alphafold.ipynb) & [KLK Family Analysis](klk_overlay.ipynb)
 
 ## 🔧 Technical Notes
 
