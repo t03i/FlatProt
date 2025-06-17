@@ -9,7 +9,10 @@ FlatProt is a Python package for protein structure and sequence analysis. It pro
 
 ## Standard Workflow on the command line
 
-FlatProt provides four main commands for protein structure analysis:
+FlatProt provides four main commands for protein structure analysis.
+
+!!!note
+The following examples assume you've installed FlatProt with `uv tool add FlatProt`. If you're using the no-install option, replace `flatprot` with `uvx flatprot` in all commands.
 
 ### Single Structure Projection
 

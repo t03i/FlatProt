@@ -16,12 +16,19 @@ FlatProt is a tool for 2D protein visualization aimed at improving the comparabi
 
 FlatProt requires Python 3.11-3.13. Install using [uv](https://github.com/astral-sh/uv) (recommended):
 
+**Option 1: Install and use persistently (recommended)**
 ```bash
-# Install FlatProt
+# Install FlatProt (makes 'flatprot' command available)
 uv tool add FlatProt
 
-# Or run directly without installation
-uvx flatprot
+# Now you can use flatprot directly
+flatprot --help
+```
+
+**Option 2: Run without installation**
+```bash
+# Run FlatProt without installing (use 'uvx flatprot' instead of 'flatprot')
+uvx flatprot --help
 ```
 
 ### Dependencies
@@ -42,7 +49,11 @@ Generate a 2D protein visualization from a structure file:
 mkdssp your_protein.cif your_protein_with_dssp.cif
 
 # 2. Create 2D projection
+# If installed with 'uv tool add FlatProt':
 flatprot project your_protein_with_dssp.cif --output protein_2d.svg
+
+# If using without installation:
+# uvx flatprot project your_protein_with_dssp.cif --output protein_2d.svg
 ```
 
 For detailed installation and usage instructions, see the [documentation](https://t03i.github.io/FlatProt/installation/).
@@ -83,6 +94,8 @@ FlatProt provides four main commands:
 See the [CLI documentation](https://t03i.github.io/FlatProt/commands/project/) for detailed usage.
 
 ## 🔄 Common Workflows
+
+**Note:** The following examples assume you've installed FlatProt with `uv tool add FlatProt`. If you're using the no-install option, replace `flatprot` with `uvx flatprot` in all commands.
 
 ### Single Structure Visualization
 ```bash
