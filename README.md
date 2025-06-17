@@ -10,18 +10,27 @@ FlatProt is a tool for 2D protein visualization aimed at improving the comparabi
 
 **[🔬 Interactive Examples](https://t03i.github.io/FlatProt/examples/)** - Jupyter notebooks with Google Colab integration
 
+**[🧬 Try Now: UniProt to Visualization](https://colab.research.google.com/github/t03i/FlatProt/blob/main/examples/uniprot_alphafold.ipynb)** - From any UniProt ID to beautiful 2D visualization in minutes!
+
 ## 🚀 Quick Start
 
 ### Installation
 
 FlatProt requires Python 3.11-3.13. Install using [uv](https://github.com/astral-sh/uv) (recommended):
 
+**Option 1: Install and use persistently (recommended)**
 ```bash
-# Install FlatProt
+# Install FlatProt (makes 'flatprot' command available)
 uv tool add FlatProt
 
-# Or run directly without installation
-uvx flatprot
+# Now you can use flatprot directly
+flatprot --help
+```
+
+**Option 2: Run without installation**
+```bash
+# Run FlatProt without installing (use 'uvx flatprot' instead of 'flatprot')
+uvx flatprot --help
 ```
 
 ### Dependencies
@@ -38,11 +47,14 @@ uvx flatprot
 Generate a 2D protein visualization from a structure file:
 
 ```bash
-# 1. Add secondary structure information to your CIF file
-mkdssp your_protein.cif your_protein_with_dssp.cif
+# Option 1: AlphaFold structures (no DSSP needed - secondary structure included!)
+flatprot project AF-P69905-F1-model_v4.cif --output protein_2d.svg
 
-# 2. Create 2D projection
+# Option 2: PDB/CIF files (add secondary structure first)
+mkdssp your_protein.cif your_protein_with_dssp.cif
 flatprot project your_protein_with_dssp.cif --output protein_2d.svg
+
+# Note: If using without installation, replace 'flatprot' with 'uvx flatprot'
 ```
 
 For detailed installation and usage instructions, see the [documentation](https://t03i.github.io/FlatProt/installation/).
@@ -84,12 +96,15 @@ See the [CLI documentation](https://t03i.github.io/FlatProt/commands/project/) f
 
 ## 🔄 Common Workflows
 
+**Note:** The following examples assume you've installed FlatProt with `uv tool add FlatProt`. If you're using the no-install option, replace `flatprot` with `uvx flatprot` in all commands.
+
 ### Single Structure Visualization
 ```bash
-# 1. Add secondary structure information
-mkdssp your_protein.cif your_protein_with_dssp.cif
+# AlphaFold structures (recommended - no preprocessing needed!)
+flatprot project AF-P69905-F1-model_v4.cif --output protein_2d.svg
 
-# 2. Create 2D projection
+# Traditional PDB/CIF files (requires DSSP preprocessing)
+mkdssp your_protein.cif your_protein_with_dssp.cif
 flatprot project your_protein_with_dssp.cif --output protein_2d.svg
 ```
 

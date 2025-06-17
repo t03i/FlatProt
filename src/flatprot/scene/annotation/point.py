@@ -1,7 +1,7 @@
 # Copyright 2025 Tobias Olenyi.
 # SPDX-License-Identifier: Apache-2.0
 
-from typing import Optional, Literal
+from typing import Optional
 
 import numpy as np
 from pydantic import Field
@@ -25,9 +25,6 @@ from ..resolver import CoordinateResolver
 class PointAnnotationStyle(BaseAnnotationStyle):
     """Style properties specific to PointAnnotation elements."""
 
-    marker_shape: Literal["circle", "square", "triangle", "diamond"] = Field(
-        default="circle", description="Shape of the marker."
-    )
     marker_radius: float = Field(
         default=5.0,
         ge=0,

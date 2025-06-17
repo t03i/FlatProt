@@ -54,18 +54,31 @@ def setup_colab_environment():
     COLAB_BASE_DIR = Path(".")  # Assumes running in /content
     REPO_DIR_NAME = "FlatProt-main"  # Used for extracting data path
 
-    # --- 1. Install FlatProt ---
-    print("\n[1/4] Installing FlatProt via pip...")
-    run_cmd(["uv", "tool", "install", "flatprot"])
+    # --- 1. Install Cairo for PNG support ---
+    print("\n[1/5] Installing Cairo library for PNG/PDF support...")
+    try:
+        print("Updating package list...")
+        run_cmd(["sudo", "apt-get", "update", "-qq"])
+        print("Installing Cairo and related libraries...")
+        run_cmd(
+            "sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -qq libcairo2-dev pkg-config python3-dev",
+            shell=True,
+        )
+        # Install Python Cairo bindings
+        run_cmd([sys.executable, "-m", "pip", "install", "--quiet", "pycairo"])
+        print("[DONE] Cairo installation step.")
+    except Exception as e:
+        print(f"[WARN] Cairo installation failed: {e}. PNG output may not work.")
+
+    # --- 2. Install FlatProt ---
+    print("\n[2/5] Installing FlatProt via pip...")
     run_cmd(
         [sys.executable, "-m", "pip", "install", "--quiet", "--upgrade", "flatprot"]
     )
-    # Verify installation (optional, but good practice)
-    # run_cmd([sys.executable, "-m", "pip", "show", "flatprot"])
     print("[DONE] FlatProt installation step.")
 
-    # --- 2. Install Foldseek ---
-    print("\n[2/4] Installing Foldseek...")
+    # --- 3. Install Foldseek ---
+    print("\n[3/5] Installing Foldseek...")
     foldseek_url = "https://mmseqs.com/foldseek/foldseek-linux-avx2.tar.gz"
     foldseek_tar = COLAB_BASE_DIR / "foldseek-linux-avx2.tar.gz"
     foldseek_dir = COLAB_BASE_DIR / "foldseek"
@@ -104,8 +117,8 @@ def setup_colab_environment():
     run_cmd([str(foldseek_executable), "--help"], capture=True)
     print("[DONE] Foldseek installation step.")
 
-    # --- 3. Install DSSP ---
-    print("\n[3/4] Installing DSSP (mkdssp)...")
+    # --- 4. Install DSSP ---
+    print("\n[4/5] Installing DSSP (mkdssp)...")
     # Check if mkdssp command exists using shutil.which
     import shutil
 
@@ -125,11 +138,11 @@ def setup_colab_environment():
     run_cmd(["mkdssp", "--version"], capture=True)
     print("[DONE] DSSP installation step.")
 
-    # --- 4. Download Repository Data (if needed) ---
-    print("\n[4/4] Ensuring 'data/' directory exists...")
+    # --- 5. Download Repository Data (if needed) ---
+    print("\n[5/5] Setting up FlatProt data in /content/...")
     data_dir_local = COLAB_BASE_DIR / "data"
     if not data_dir_local.exists() or not any(data_dir_local.iterdir()):
-        print("'data/' directory missing or empty, downloading from repository...")
+        print("Downloading FlatProt data...")
         repo_zip_url = "https://github.com/t03i/FlatProt/archive/refs/heads/main.zip"
         repo_zip_file = COLAB_BASE_DIR / "repo.zip"
         repo_temp_dir = COLAB_BASE_DIR / "repo_temp"
@@ -147,42 +160,41 @@ def setup_colab_environment():
 
         extracted_repo_path = repo_temp_dir / REPO_DIR_NAME
         if extracted_repo_path.is_dir():
+            # Copy data/ directory to /content/data/
             source_data_path = extracted_repo_path / "data"
             if source_data_path.exists() and source_data_path.is_dir():
-                print(
-                    f"Moving data/ directory from {extracted_repo_path} to {data_dir_local}..."
-                )
-                # Ensure target data dir exists
+                print(f"Setting up data/ directory in /content/...")
                 data_dir_local.mkdir(exist_ok=True)
-                # Move contents using mv -T to handle potential existing target
-                run_cmd(["mv", "-T", str(source_data_path), str(data_dir_local)])
-                print("Moved data/ directory successfully.")
+                run_cmd(["cp", "-r", str(source_data_path) + "/.", str(data_dir_local)])
+                print("✅ data/ directory ready")
             else:
-                print(
-                    f"[WARN] 'data/' directory not found within extracted archive at {source_data_path}.",
-                    file=sys.stderr,
-                )
-                data_dir_local.mkdir(exist_ok=True)  # Create empty data dir anyway
+                print(f"[WARN] 'data/' directory not found in archive.", file=sys.stderr)
+                data_dir_local.mkdir(exist_ok=True)
+
+            # Create tmp/ directory in /content/
+            tmp_dir_local = COLAB_BASE_DIR / "tmp"
+            tmp_dir_local.mkdir(exist_ok=True)
+            print("✅ tmp/ directory ready")
+
         else:
-            print(
-                f"[ERROR] Expected directory '{extracted_repo_path}' not found after extraction.",
-                file=sys.stderr,
-            )
-            data_dir_local.mkdir(exist_ok=True)  # Create empty data dir
+            print(f"[ERROR] Expected directory '{extracted_repo_path}' not found after extraction.", file=sys.stderr)
+            data_dir_local.mkdir(exist_ok=True)
 
         print("Cleaning up downloaded archive files...")
         run_cmd(["rm", "-rf", str(repo_temp_dir), str(repo_zip_file)])
     else:
-        print("'data/' directory already exists and is not empty. Skipping download.")
+        print("✅ Data already exists in /content/. Skipping download.")
+        # Ensure tmp/ exists
+        tmp_dir_local = COLAB_BASE_DIR / "tmp"
+        tmp_dir_local.mkdir(exist_ok=True)
 
-    # Final check for data directory
+    # Final check
     if data_dir_local.exists():
-        print(f"[DONE] 'data/' directory is present at {data_dir_local.resolve()}.")
+        print(f"[DONE] FlatProt ready in /content/ (notebook working directory)")
+        print(f"       ├── data/    # ← Protein structures")
+        print(f"       └── tmp/     # ← Output files")
     else:
-        print(
-            "[WARN] 'data/' directory is still missing after setup attempt.",
-            file=sys.stderr,
-        )
+        print("[WARN] Setup incomplete.", file=sys.stderr)
 
     print("\n--- Google Colab Environment Setup Finished ---")
 

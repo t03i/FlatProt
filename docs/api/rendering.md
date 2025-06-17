@@ -23,7 +23,7 @@ Several aspects define how the FlatProt rendering system, particularly the `SVGR
         -   `HelixSceneElement`: Typically rendered as an SVG `<path>` or `<polygon>` representing the zigzag ribbon.
         -   `SheetSceneElement`: Rendered as an SVG `<polygon>` forming the arrowhead shape.
         -   `CoilSceneElement`: Rendered as an SVG `<path>` or `<polyline>` representing the smoothed line.
-        -   `PointAnnotation`: Rendered as an SVG `<circle>`, `<rect>`, or `<path>` depending on the `marker_shape` style, plus an SVG `<text>` element for the label.
+        -   `PointAnnotation`: Rendered as an SVG `<circle>` plus an SVG `<text>` element for the label.
         -   `LineAnnotation`: Rendered as an SVG `<line>` or `<path>`, potentially with `<circle>` elements for connectors and `<polygon>` for arrowheads, plus an SVG `<text>` element for the label.
         -   `AreaAnnotation`: Rendered as an SVG `<path>` or `<polygon>` representing the padded convex hull, plus an SVG `<text>` element for the label.
     -   Elements are often grouped within SVG `<g>` tags for organization, potentially grouped by type or parent element in the scene graph.
