@@ -78,6 +78,11 @@
                   <li class="toctree-l1"><a class="reference internal" href="../../file_formats/annotations/">Annotation Files</a>
                   </li>
               </ul>
+              <p class="caption"><span class="caption-text">Tools</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../tools/matrix_extraction/">PyMOL Matrix Extraction</a>
+                  </li>
+              </ul>
               <p class="caption"><span class="caption-text">API Reference</span></p>
               <ul class="current">
                   <li class="toctree-l1"><a class="reference internal" href="../io/">IO</a>
@@ -2726,10 +2731,10 @@ members_order: source</p>
 <a id="flatprot.utils.domain_utils.apply_domain_transformations_masked"></a>
     <div class="doc doc-contents first">
 
-        <p>Applies specific transformation matrices sequentially to defined domains.</p>
-<p>Uses boolean masks to identify coordinates for each domain. If domains overlap,
-transformations applied later in the <code>domain_transforms</code> list will overwrite
-those applied earlier for the overlapping coordinates.</p>
+        <p>Applies specific transformation matrices to defined domains around their centers.</p>
+<p>Each domain is rotated around its geometric center, preserving its position
+within the global structure while optimizing its orientation for visualization.
+Uses boolean masks to identify coordinates for each domain.</p>
 <p>Creates a new Structure object with transformed 3D coordinates. The original
 structure remains unchanged.</p>
 
@@ -2758,7 +2763,7 @@ structure remains unchanged.</p>
               –
               <div class="doc-md-description">
                 <p>An ordered list of DomainTransformation objects.
-               The order determines precedence in case of overlaps.</p>
+               Rotations are applied around each domain's center.</p>
               </div>
             </li>
         </ul>
@@ -2908,16 +2913,28 @@ structure remains unchanged.</p>
 <span class="normal">155</span>
 <span class="normal">156</span>
 <span class="normal">157</span>
-<span class="normal">158</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">apply_domain_transformations_masked</span><span class="p">(</span>
+<span class="normal">158</span>
+<span class="normal">159</span>
+<span class="normal">160</span>
+<span class="normal">161</span>
+<span class="normal">162</span>
+<span class="normal">163</span>
+<span class="normal">164</span>
+<span class="normal">165</span>
+<span class="normal">166</span>
+<span class="normal">167</span>
+<span class="normal">168</span>
+<span class="normal">169</span>
+<span class="normal">170</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">apply_domain_transformations_masked</span><span class="p">(</span>
     <span class="n">structure</span><span class="p">:</span> <span class="n">Structure</span><span class="p">,</span>
     <span class="n">domain_transforms</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">DomainTransformation</span><span class="p">],</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Structure</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Applies specific transformation matrices sequentially to defined domains.</span>
+<span class="sd">    Applies specific transformation matrices to defined domains around their centers.</span>
 
-<span class="sd">    Uses boolean masks to identify coordinates for each domain. If domains overlap,</span>
-<span class="sd">    transformations applied later in the `domain_transforms` list will overwrite</span>
-<span class="sd">    those applied earlier for the overlapping coordinates.</span>
+<span class="sd">    Each domain is rotated around its geometric center, preserving its position</span>
+<span class="sd">    within the global structure while optimizing its orientation for visualization.</span>
+<span class="sd">    Uses boolean masks to identify coordinates for each domain.</span>
 
 <span class="sd">    Creates a new Structure object with transformed 3D coordinates. The original</span>
 <span class="sd">    structure remains unchanged.</span>
@@ -2925,7 +2942,7 @@ structure remains unchanged.</p>
 <span class="sd">    Args:</span>
 <span class="sd">        structure: The original Structure object.</span>
 <span class="sd">        domain_transforms: An ordered list of DomainTransformation objects.</span>
-<span class="sd">                           The order determines precedence in case of overlaps.</span>
+<span class="sd">                           Rotations are applied around each domain&#39;s center.</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        A new Structure object with coordinates transformed domain-specifically.</span>
@@ -2961,21 +2978,28 @@ structure remains unchanged.</p>
 
     <span class="k">for</span> <span class="n">mask</span><span class="p">,</span> <span class="n">domain_tf</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">domain_masks</span><span class="p">,</span> <span class="n">domain_transforms</span><span class="p">):</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">mask</span><span class="p">):</span>
-            <span class="nb">print</span><span class="p">(</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
                 <span class="sa">f</span><span class="s2">&quot;No coordinates found for domain </span><span class="si">{</span><span class="n">domain_tf</span><span class="o">.</span><span class="n">domain_range</span><span class="si">}</span><span class="s2">. Skipping transformation.&quot;</span>
             <span class="p">)</span>
             <span class="k">continue</span>
 
-        <span class="n">matrix</span> <span class="o">=</span> <span class="n">domain_tf</span><span class="o">.</span><span class="n">transformation_matrix</span>
         <span class="n">domain_id_str</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot; &#39;</span><span class="si">{</span><span class="n">domain_tf</span><span class="o">.</span><span class="n">domain_id</span><span class="si">}</span><span class="s2">&#39;&quot;</span> <span class="k">if</span> <span class="n">domain_tf</span><span class="o">.</span><span class="n">domain_id</span> <span class="k">else</span> <span class="s2">&quot;&quot;</span>
-        <span class="nb">print</span><span class="p">(</span>
-            <span class="sa">f</span><span class="s2">&quot;Applying transformation for domain</span><span class="si">{</span><span class="n">domain_id_str</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">domain_tf</span><span class="o">.</span><span class="n">domain_range</span><span class="si">}</span><span class="s2"> (affecting </span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">mask</span><span class="p">)</span><span class="si">}</span><span class="s2"> coordinates)...&quot;</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;Applying centered transformation for domain</span><span class="si">{</span><span class="n">domain_id_str</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">domain_tf</span><span class="o">.</span><span class="n">domain_range</span><span class="si">}</span><span class="s2"> (affecting </span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">mask</span><span class="p">)</span><span class="si">}</span><span class="s2"> coordinates)...&quot;</span>
         <span class="p">)</span>
 
-        <span class="c1"># Apply transformation to the *original* coordinates selected by the mask</span>
         <span class="k">try</span><span class="p">:</span>
+            <span class="c1"># Calculate domain center</span>
+            <span class="n">domain_center</span> <span class="o">=</span> <span class="n">calculate_domain_center</span><span class="p">(</span><span class="n">structure</span><span class="p">,</span> <span class="n">domain_tf</span><span class="o">.</span><span class="n">domain_range</span><span class="p">)</span>
+
+            <span class="c1"># Create centered transformation using only rotation from domain_tf</span>
+            <span class="c1"># This rotates the domain around its center, preserving its position</span>
+            <span class="n">rotation</span> <span class="o">=</span> <span class="n">domain_tf</span><span class="o">.</span><span class="n">transformation_matrix</span><span class="o">.</span><span class="n">rotation</span>
+            <span class="n">centered_matrix</span> <span class="o">=</span> <span class="n">create_centered_transformation</span><span class="p">(</span><span class="n">rotation</span><span class="p">,</span> <span class="n">domain_center</span><span class="p">)</span>
+
+            <span class="c1"># Apply transformation to the *original* coordinates selected by the mask</span>
             <span class="n">coords_subset</span> <span class="o">=</span> <span class="n">original_coords</span><span class="p">[</span><span class="n">mask</span><span class="p">,</span> <span class="p">:]</span>
-            <span class="n">transformed_subset</span> <span class="o">=</span> <span class="n">matrix</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">coords_subset</span><span class="p">)</span>
+            <span class="n">transformed_subset</span> <span class="o">=</span> <span class="n">centered_matrix</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">coords_subset</span><span class="p">)</span>
 
             <span class="k">if</span> <span class="n">transformed_subset</span><span class="o">.</span><span class="n">shape</span> <span class="o">!=</span> <span class="n">coords_subset</span><span class="o">.</span><span class="n">shape</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="n">TransformationError</span><span class="p">(</span>
@@ -2985,9 +3009,14 @@ structure remains unchanged.</p>
 
             <span class="n">transformed_coords</span><span class="p">[</span><span class="n">mask</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">transformed_subset</span>
 
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Applied centered rotation for domain</span><span class="si">{</span><span class="n">domain_id_str</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">domain_tf</span><span class="o">.</span><span class="n">domain_range</span><span class="si">}</span><span class="s2"> &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;around center </span><span class="si">{</span><span class="n">domain_center</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="p">)</span>
+
         <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
             <span class="k">raise</span> <span class="n">TransformationError</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">&quot;Failed to apply transformation matrix for domain </span><span class="si">{</span><span class="n">domain_tf</span><span class="o">.</span><span class="n">domain_range</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;Failed to apply centered transformation for domain </span><span class="si">{</span><span class="n">domain_tf</span><span class="o">.</span><span class="n">domain_range</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span>
             <span class="p">)</span> <span class="kn">from</span> <span class="nn">e</span>
 
     <span class="c1"># Create a new structure object with the same topology but new coordinates</span>

@@ -53,9 +53,39 @@
               <ul class="current">
                 <li class="toctree-l1 current"><a class="reference internal current" href="#">Installation</a>
     <ul class="current">
-    <li class="toctree-l2"><a class="reference internal" href="#using-uv-recommended">Using uv (Recommended)</a>
+    <li class="toctree-l2"><a class="reference internal" href="#quick-installation">Quick Installation</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#using-uv-recommended">Using uv (Recommended)</a>
     </li>
-    <li class="toctree-l2"><a class="reference internal" href="#for-development">For development</a>
+    <li class="toctree-l3"><a class="reference internal" href="#using-pip">Using pip</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#development-installation">Development Installation</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#required-dependencies">Required Dependencies</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#1-dssp-required-for-pdb-files">1. DSSP (Required for PDB Files)</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#2-foldseek-required-for-alignment-features">2. FoldSeek (Required for Alignment Features)</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#3-cairo-optional-required-for-pngpdf-output">3. Cairo (Optional - Required for PNG/PDF Output)</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#complete-setup-workflow">Complete Setup Workflow</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#basic-usage-cif-files-only">Basic Usage (CIF files only)</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#full-feature-usage">Full Feature Usage</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#platform-specific-notes">Platform-Specific Notes</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#performance-optimization">Performance Optimization</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#next-steps">Next Steps</a>
     </li>
     </ul>
                 </li>
@@ -82,6 +112,11 @@
                   <li class="toctree-l1"><a class="reference internal" href="../file_formats/style/">Style Files</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../file_formats/annotations/">Annotation Files</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Tools</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../tools/matrix_extraction/">PyMOL Matrix Extraction</a>
                   </li>
               </ul>
               <p class="caption"><span class="caption-text">API Reference</span></p>
@@ -129,20 +164,128 @@
 -->
 
 <h1 id="installation">Installation</h1>
-<p>FlatProt can be installed using uv (recommended) or pip.</p>
-<h2 id="using-uv-recommended">Using uv (Recommended)</h2>
+<p>FlatProt can be installed using uv (recommended) or pip. The package requires Python 3.11-3.13.</p>
+<h2 id="quick-installation">Quick Installation</h2>
+<h3 id="using-uv-recommended">Using uv (Recommended)</h3>
 <p>Install uv if you haven't already:</p>
 <pre><code class="language-bash">curl -LsSf https://astral.sh/uv/install.sh | sh
 </code></pre>
 <p>Then install FlatProt:</p>
 <pre><code class="language-bash">uvx tool install flatprot
 </code></pre>
+<p>Or for temporary usage:</p>
+<pre><code class="language-bash">uvx flatprot
+</code></pre>
 <p>Verify the installation:</p>
 <pre><code class="language-bash">flatprot --version
 </code></pre>
-<h2 id="for-development">For development</h2>
+<h3 id="using-pip">Using pip</h3>
+<pre><code class="language-bash">pip install flatprot
+</code></pre>
+<h2 id="development-installation">Development Installation</h2>
+<p>For development work:</p>
 <pre><code class="language-bash">uv add flatprot
 </code></pre>
+<h2 id="required-dependencies">Required Dependencies</h2>
+<p>FlatProt has several external dependencies that need to be installed separately:</p>
+<h3 id="1-dssp-required-for-pdb-files">1. DSSP (Required for PDB Files)</h3>
+<p>DSSP is required for secondary structure assignment when working with PDB format files. FlatProt requires <strong>mkdssp version 4.4.0+</strong>.</p>
+<p><strong>Installation Options:</strong></p>
+<p><strong>macOS (Homebrew):</strong></p>
+<pre><code class="language-bash">brew install dssp
+</code></pre>
+<p><strong>Ubuntu/Debian:</strong></p>
+<pre><code class="language-bash">sudo apt-get install dssp
+</code></pre>
+<p><strong>Conda/Mamba:</strong></p>
+<pre><code class="language-bash">conda install conda-forge::dssp
+</code></pre>
+<p><strong>Manual Installation:</strong>
+- Download from: <a href="https://pdb-redo.eu/dssp/download">DSSP Download Page</a>
+- Follow platform-specific build instructions
+- Ensure the <code>mkdssp</code> executable is in your PATH</p>
+<p><strong>Verification:</strong></p>
+<pre><code class="language-bash">mkdssp --version
+</code></pre>
+<h3 id="2-foldseek-required-for-alignment-features">2. FoldSeek (Required for Alignment Features)</h3>
+<p>FoldSeek is required for database alignment functionality in the <code>align</code> and <code>split</code> commands.</p>
+<p><strong>Installation Options:</strong></p>
+<p><strong>Conda/Mamba (Recommended):</strong></p>
+<pre><code class="language-bash">conda install bioconda::foldseek
+</code></pre>
+<p><strong>Manual Installation:</strong>
+- Download from: <a href="https://github.com/steineggerlab/foldseek">FoldSeek GitHub</a>
+- Follow platform-specific build instructions
+- Ensure the <code>foldseek</code> executable is in your PATH</p>
+<p><strong>Verification:</strong></p>
+<pre><code class="language-bash">foldseek --version
+</code></pre>
+<h3 id="3-cairo-optional-required-for-pngpdf-output">3. Cairo (Optional - Required for PNG/PDF Output)</h3>
+<p>Cairo is required only for PNG and PDF output from the <code>flatprot overlay</code> command. SVG output works without Cairo.</p>
+<p><strong>macOS:</strong></p>
+<pre><code class="language-bash">brew install cairo
+</code></pre>
+<p><strong>Ubuntu/Debian:</strong></p>
+<pre><code class="language-bash">sudo apt-get install libcairo2-dev pkg-config
+</code></pre>
+<p><strong>Windows:</strong>
+Install Cairo binaries or use conda:</p>
+<pre><code class="language-bash">conda install cairo
+</code></pre>
+<p><strong>Verification:</strong></p>
+<pre><code class="language-bash">python -c &quot;import drawsvg; print('Cairo available:', hasattr(drawsvg, '_cairo_available') and drawsvg._cairo_available)&quot;
+</code></pre>
+<h2 id="complete-setup-workflow">Complete Setup Workflow</h2>
+<p>Here's a complete setup workflow for different scenarios:</p>
+<h3 id="basic-usage-cif-files-only">Basic Usage (CIF files only)</h3>
+<pre><code class="language-bash"># Install FlatProt
+uvx tool install flatprot
+
+# Test with CIF file (no additional dependencies needed)
+flatprot project structure.cif -o output.svg
+</code></pre>
+<h3 id="full-feature-usage">Full Feature Usage</h3>
+<pre><code class="language-bash"># Install FlatProt
+uvx tool install flatprot
+
+# Install dependencies
+brew install dssp cairo  # macOS
+conda install bioconda::foldseek conda-forge::dssp cairo  # Cross-platform
+
+# Test full functionality
+flatprot split structure.cif --regions &quot;A:1-100&quot; --show-database-alignment
+flatprot overlay &quot;structures/*.cif&quot; -o overlay.png
+</code></pre>
+<h3 id="platform-specific-notes">Platform-Specific Notes</h3>
+<p><strong>macOS:</strong></p>
+<ul>
+<li>Homebrew provides the most reliable installations</li>
+<li>All dependencies available through brew</li>
+<li>On newer M-series models, setting up Cairo requires manual adjustment to find the library path.</li>
+</ul>
+<p><strong>Linux:</strong></p>
+<ul>
+<li>Use package manager when possible</li>
+<li>Conda/mamba provides consistent cross-distribution support</li>
+</ul>
+<p><strong>Windows:</strong></p>
+<ul>
+<li>Conda/mamba recommended for all dependencies</li>
+<li>Manual installation may require additional build tools</li>
+</ul>
+<h2 id="performance-optimization">Performance Optimization</h2>
+<p>For better performance, consider:</p>
+<ol>
+<li><strong>Use CIF format</strong> when possible</li>
+<li><strong>Pre-compute DSSP files</strong> for batch processing of PDB files</li>
+</ol>
+<h2 id="next-steps">Next Steps</h2>
+<p>After installation, check out:</p>
+<ul>
+<li><a href="../">Getting Started Guide</a></li>
+<li><a href="commands/">Command Line Interface Documentation</a></li>
+<li><a href="../examples/">Examples</a></li>
+</ul>
               
             </div>
           </div><footer>

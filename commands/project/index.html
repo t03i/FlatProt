@@ -112,6 +112,11 @@
                   <li class="toctree-l1"><a class="reference internal" href="../../file_formats/annotations/">Annotation Files</a>
                   </li>
               </ul>
+              <p class="caption"><span class="caption-text">Tools</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../tools/matrix_extraction/">PyMOL Matrix Extraction</a>
+                  </li>
+              </ul>
               <p class="caption"><span class="caption-text">API Reference</span></p>
               <ul>
                   <li class="toctree-l1"><a class="reference internal" href="../../api/io/">IO</a>
@@ -317,6 +322,14 @@
 <p><strong>Use a Pre-calculated Alignment Matrix:</strong></p>
 <pre><code class="language-bash">flatprot project structure.cif -o aligned_output.svg --matrix alignment_matrix.npy
 </code></pre>
+<p><strong>Use a Matrix from PyMOL Orientation:</strong></p>
+<pre><code class="language-bash"># First, extract matrix from PyMOL
+uv run scripts/get_matrix.py structure.cif
+
+# Then use it with project command
+flatprot project structure.cif -o pymol_oriented.svg --matrix rotation_matrix.npy
+</code></pre>
+<p>See the <a href="../../tools/matrix_extraction/">PyMOL Matrix Extraction</a> documentation for details.</p>
 <p><strong>Combine Multiple Options:</strong></p>
 <pre><code class="language-bash">flatprot project structure.cif -o styled_annotated.svg \
     --matrix alignment_matrix.npy \

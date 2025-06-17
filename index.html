@@ -104,6 +104,11 @@
                   <li class="toctree-l1"><a class="reference internal" href="file_formats/annotations/">Annotation Files</a>
                   </li>
               </ul>
+              <p class="caption"><span class="caption-text">Tools</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="tools/matrix_extraction/">PyMOL Matrix Extraction</a>
+                  </li>
+              </ul>
               <p class="caption"><span class="caption-text">API Reference</span></p>
               <ul>
                   <li class="toctree-l1"><a class="reference internal" href="api/io/">IO</a>
@@ -190,7 +195,7 @@
 <ol>
 <li>Define regions of interest: <code>flatprot split protein.cif --regions "A:1-100,A:150-250" -o regions.svg</code></li>
 <li>With database alignment: <code>flatprot split protein.cif --regions "A:1-100,A:150-250" --show-database-alignment -o aligned_regions.svg</code></li>
-<li>Custom layouts: <code>flatprot split protein.cif --regions "A:1-100,A:150-250" --layout vertical --spacing 150 -o layout.svg</code></li>
+<li>Progressive gap positioning: <code>flatprot split protein.cif --regions "A:1-100,A:150-250" --gap-x 150 --gap-y 100 -o positioned.svg</code></li>
 </ol>
 <p>The resulting files contain clean, publication-ready 2D representations that can be viewed in any web browser or vector graphics editor.</p>
 <h2 id="key-features">Key Features</h2>
@@ -227,7 +232,7 @@
 <li><strong>Rotation-Only Transformations</strong>: Align region orientations while preserving spatial relationships</li>
 <li><strong>SCOP Family Annotations</strong>: Automatic identification and display of structural classification annotations</li>
 <li><strong>Alignment Quality Metrics</strong>: Display of alignment probabilities and confidence scores</li>
-<li><strong>Flexible Layout Systems</strong>: Horizontal, vertical, and grid arrangements for comparative visualization</li>
+<li><strong>Progressive Gap Positioning</strong>: Flexible domain spacing with configurable horizontal and vertical gaps for comparative visualization</li>
 <li><strong>LDDT Score Visualization</strong>: Color-coded representation of local distance difference test scores</li>
 <li><strong>Residue Annotations</strong>: Optional display of amino acid annotations and chain positions</li>
 <li><strong>Custom Highlighting</strong>: Support for manual residue and bond highlighting through JSON configuration</li>
@@ -290,5 +295,5 @@ bioRxiv 2025.04.22.650077; doi: <a href="https://doi.org/10.1101/2025.04.22.6500
 
 <!--
 MkDocs version : 1.6.1
-Build Date UTC : 2025-06-16 10:20:18.587614+00:00
+Build Date UTC : 2025-06-17 08:15:54.115845+00:00
 -->

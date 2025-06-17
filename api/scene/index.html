@@ -78,6 +78,11 @@
                   <li class="toctree-l1"><a class="reference internal" href="../../file_formats/annotations/">Annotation Files</a>
                   </li>
               </ul>
+              <p class="caption"><span class="caption-text">Tools</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../tools/matrix_extraction/">PyMOL Matrix Extraction</a>
+                  </li>
+              </ul>
               <p class="caption"><span class="caption-text">API Reference</span></p>
               <ul class="current">
                   <li class="toctree-l1"><a class="reference internal" href="../io/">IO</a>
@@ -13164,7 +13169,8 @@ show_root_heading: true</p>
         <p>Creates a Scene containing only specified domains, each in its own group.</p>
 <p>Elements (structure, connections, annotations) are assigned to their respective
 domain group. Elements not belonging to any defined domain are discarded.
-Domain groups are translated by a fixed margin based on the <code>spacing</code> parameter.</p>
+Domain groups are progressively translated: last domain stays at origin,
+earlier domains get negative progressive translations (i×gap_x, i×gap_y) where i is negative.</p>
 
 
 <table class="field-list">
@@ -13195,13 +13201,23 @@ Domain groups are translated by a fixed margin based on the <code>spacing</code>
               </div>
             </li>
             <li>
-              <b><code>spacing</code></b>
+              <b><code>gap_x</code></b>
                   (<code><span title="float">float</span></code>, default:
                       <code>0.0</code>
 )
               –
               <div class="doc-md-description">
-                <p>Fixed margin used to separate domain groups in pixels.</p>
+                <p>Progressive horizontal gap between domains in pixels (last domain at origin).</p>
+              </div>
+            </li>
+            <li>
+              <b><code>gap_y</code></b>
+                  (<code><span title="float">float</span></code>, default:
+                      <code>0.0</code>
+)
+              –
+              <div class="doc-md-description">
+                <p>Progressive vertical gap between domains in pixels (last domain at origin).</p>
               </div>
             </li>
             <li>
@@ -13211,7 +13227,7 @@ Domain groups are translated by a fixed margin based on the <code>spacing</code>
 )
               –
               <div class="doc-md-description">
-                <p>How to arrange domain groups ('horizontal' or 'vertical').</p>
+                <p>How to arrange domain groups (kept for compatibility).</p>
               </div>
             </li>
             <li>
@@ -13266,7 +13282,7 @@ Domain groups are translated by a fixed margin based on the <code>spacing</code>
                   <code><a class="autorefs autorefs-internal" title="flatprot.scene.Scene" href="#flatprot.scene.Scene">Scene</a></code>
               –
               <div class="doc-md-description">
-                <p>A Scene object containing only the specified domain groups, laid out.</p>
+                <p>A Scene object containing only the specified domain groups, laid out progressively.</p>
               </div>
             </li>
         </ul>
@@ -13289,7 +13305,7 @@ Domain groups are translated by a fixed margin based on the <code>spacing</code>
                   <code><span title="ValueError">ValueError</span></code>
               –
               <div class="doc-md-description">
-                <p>If arrangement is invalid, structure lacks coordinates, or
+                <p>If structure lacks coordinates, or
         domain_definitions have issues (missing IDs when needed, duplicates).</p>
               </div>
             </li>
@@ -13308,19 +13324,7 @@ Domain groups are translated by a fixed margin based on the <code>spacing</code>
 
             <details class="quote">
               <summary>Source code in <code>src/flatprot/utils/domain_utils.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">164</span>
-<span class="normal">165</span>
-<span class="normal">166</span>
-<span class="normal">167</span>
-<span class="normal">168</span>
-<span class="normal">169</span>
-<span class="normal">170</span>
-<span class="normal">171</span>
-<span class="normal">172</span>
-<span class="normal">173</span>
-<span class="normal">174</span>
-<span class="normal">175</span>
-<span class="normal">176</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">176</span>
 <span class="normal">177</span>
 <span class="normal">178</span>
 <span class="normal">179</span>
@@ -13586,10 +13590,33 @@ Domain groups are translated by a fixed margin based on the <code>spacing</code>
 <span class="normal">439</span>
 <span class="normal">440</span>
 <span class="normal">441</span>
-<span class="normal">442</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">create_domain_aware_scene</span><span class="p">(</span>
+<span class="normal">442</span>
+<span class="normal">443</span>
+<span class="normal">444</span>
+<span class="normal">445</span>
+<span class="normal">446</span>
+<span class="normal">447</span>
+<span class="normal">448</span>
+<span class="normal">449</span>
+<span class="normal">450</span>
+<span class="normal">451</span>
+<span class="normal">452</span>
+<span class="normal">453</span>
+<span class="normal">454</span>
+<span class="normal">455</span>
+<span class="normal">456</span>
+<span class="normal">457</span>
+<span class="normal">458</span>
+<span class="normal">459</span>
+<span class="normal">460</span>
+<span class="normal">461</span>
+<span class="normal">462</span>
+<span class="normal">463</span>
+<span class="normal">464</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">create_domain_aware_scene</span><span class="p">(</span>
     <span class="n">projected_structure</span><span class="p">:</span> <span class="n">Structure</span><span class="p">,</span>
     <span class="n">domain_definitions</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">DomainTransformation</span><span class="p">],</span>
-    <span class="n">spacing</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span>
+    <span class="n">gap_x</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span>
+    <span class="n">gap_y</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span>
     <span class="n">arrangement</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;horizontal&quot;</span><span class="p">,</span>
     <span class="n">default_styles</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span>
         <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Union</span><span class="p">[</span><span class="n">BaseStructureStyle</span><span class="p">,</span> <span class="n">ConnectionStyle</span><span class="p">,</span> <span class="n">AreaAnnotationStyle</span><span class="p">]]</span>
@@ -13601,14 +13628,16 @@ Domain groups are translated by a fixed margin based on the <code>spacing</code>
 
 <span class="sd">    Elements (structure, connections, annotations) are assigned to their respective</span>
 <span class="sd">    domain group. Elements not belonging to any defined domain are discarded.</span>
-<span class="sd">    Domain groups are translated by a fixed margin based on the `spacing` parameter.</span>
+<span class="sd">    Domain groups are progressively translated: last domain stays at origin,</span>
+<span class="sd">    earlier domains get negative progressive translations (i×gap_x, i×gap_y) where i is negative.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        projected_structure: The Structure object with final 2D projected coordinates.</span>
 <span class="sd">        domain_definitions: List of DomainTransformation objects defining the domains.</span>
 <span class="sd">                            The domain_id attribute is crucial.</span>
-<span class="sd">        spacing: Fixed margin used to separate domain groups in pixels.</span>
-<span class="sd">        arrangement: How to arrange domain groups (&#39;horizontal&#39; or &#39;vertical&#39;).</span>
+<span class="sd">        gap_x: Progressive horizontal gap between domains in pixels (last domain at origin).</span>
+<span class="sd">        gap_y: Progressive vertical gap between domains in pixels (last domain at origin).</span>
+<span class="sd">        arrangement: How to arrange domain groups (kept for compatibility).</span>
 <span class="sd">        default_styles: Optional dictionary mapping element type names to style instances.</span>
 <span class="sd">        domain_scop_ids: Optional dictionary mapping domain_id to an annotation string</span>
 <span class="sd">                         (e.g., SCOP ID) used for AreaAnnotation labels.</span>
@@ -13616,10 +13645,10 @@ Domain groups are translated by a fixed margin based on the <code>spacing</code>
 <span class="sd">                                        probability (0.0-1.0) for display in annotations.</span>
 
 <span class="sd">    Returns:</span>
-<span class="sd">        A Scene object containing only the specified domain groups, laid out.</span>
+<span class="sd">        A Scene object containing only the specified domain groups, laid out progressively.</span>
 
 <span class="sd">    Raises:</span>
-<span class="sd">        ValueError: If arrangement is invalid, structure lacks coordinates, or</span>
+<span class="sd">        ValueError: If structure lacks coordinates, or</span>
 <span class="sd">                    domain_definitions have issues (missing IDs when needed, duplicates).</span>
 <span class="sd">        TypeError: If incompatible style types are provided in default_styles.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
@@ -13628,8 +13657,6 @@ Domain groups are translated by a fixed margin based on the <code>spacing</code>
         <span class="ow">or</span> <span class="n">projected_structure</span><span class="o">.</span><span class="n">coordinates</span><span class="o">.</span><span class="n">size</span> <span class="o">==</span> <span class="mi">0</span>
     <span class="p">):</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Input projected_structure has no coordinates.&quot;</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">arrangement</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;horizontal&quot;</span><span class="p">,</span> <span class="s2">&quot;vertical&quot;</span><span class="p">]:</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Arrangement must be &#39;horizontal&#39; or &#39;vertical&#39;.&quot;</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">domain_scop_ids</span> <span class="ow">and</span> <span class="nb">any</span><span class="p">(</span><span class="n">d</span><span class="o">.</span><span class="n">domain_id</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">domain_definitions</span><span class="p">):</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
             <span class="s2">&quot;All domain_definitions must have a domain_id if domain_scop_ids is provided.&quot;</span>
@@ -13650,7 +13677,7 @@ Domain groups are translated by a fixed margin based on the <code>spacing</code>
     <span class="n">domain_tf_lookup</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">DomainTransformation</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
 
     <span class="c1"># --- 1. Create Domain Groups Only ---</span>
-    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Creating scene groups for defined domains...&quot;</span><span class="p">)</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Creating scene groups for defined domains...&quot;</span><span class="p">)</span>
     <span class="k">for</span> <span class="n">domain_tf</span> <span class="ow">in</span> <span class="n">domain_definitions</span><span class="p">:</span>
         <span class="n">domain_id</span> <span class="o">=</span> <span class="n">domain_tf</span><span class="o">.</span><span class="n">domain_id</span> <span class="ow">or</span> <span class="nb">str</span><span class="p">(</span><span class="n">domain_tf</span><span class="o">.</span><span class="n">domain_range</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">domain_id</span> <span class="ow">in</span> <span class="n">domain_groups</span><span class="p">:</span>
@@ -13661,13 +13688,13 @@ Domain groups are translated by a fixed margin based on the <code>spacing</code>
         <span class="n">domain_groups</span><span class="p">[</span><span class="n">domain_id</span><span class="p">]</span> <span class="o">=</span> <span class="n">domain_group</span>
         <span class="n">domain_ids_in_order</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">domain_id</span><span class="p">)</span>
         <span class="n">domain_tf_lookup</span><span class="p">[</span><span class="n">domain_id</span><span class="p">]</span> <span class="o">=</span> <span class="n">domain_tf</span>
-    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Created </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">domain_groups</span><span class="p">)</span><span class="si">}</span><span class="s2"> domain groups.&quot;</span><span class="p">)</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Created </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">domain_groups</span><span class="p">)</span><span class="si">}</span><span class="s2"> domain groups.&quot;</span><span class="p">)</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">domain_groups</span><span class="p">:</span>
         <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;No domain groups created. Scene will be empty.&quot;</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">scene</span>  <span class="c1"># Return early if no domains defined/created</span>
 
     <span class="c1"># --- 2. Assign Structure Elements ONLY to Domain Groups ---</span>
-    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Assigning structure elements to domain groups...&quot;</span><span class="p">)</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Assigning structure elements to domain groups...&quot;</span><span class="p">)</span>
     <span class="n">element_map</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">SceneGroup</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>  <span class="c1"># Map element ID to its parent group</span>
     <span class="n">elements_assigned_count</span> <span class="o">=</span> <span class="mi">0</span>
     <span class="n">elements_discarded_count</span> <span class="o">=</span> <span class="mi">0</span>
@@ -13723,12 +13750,12 @@ Domain groups are translated by a fixed margin based on the <code>spacing</code>
                 <span class="c1"># Element does not belong to any defined domain, discard it</span>
                 <span class="n">elements_discarded_count</span> <span class="o">+=</span> <span class="mi">1</span>
 
-    <span class="nb">print</span><span class="p">(</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
         <span class="sa">f</span><span class="s2">&quot;Assigned </span><span class="si">{</span><span class="n">elements_assigned_count</span><span class="si">}</span><span class="s2"> elements to domain groups. Discarded </span><span class="si">{</span><span class="n">elements_discarded_count</span><span class="si">}</span><span class="s2">.&quot;</span>
     <span class="p">)</span>
 
     <span class="c1"># --- 3. Add Connections ONLY Within the Same Domain Group ---</span>
-    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Adding connections within domain groups...&quot;</span><span class="p">)</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Adding connections within domain groups...&quot;</span><span class="p">)</span>
     <span class="n">all_structure_elements</span> <span class="o">=</span> <span class="n">scene</span><span class="o">.</span><span class="n">get_sequential_structure_elements</span><span class="p">()</span>
     <span class="n">connections_added_count</span> <span class="o">=</span> <span class="mi">0</span>
     <span class="n">connections_discarded_count</span> <span class="o">=</span> <span class="mi">0</span>
@@ -13763,7 +13790,7 @@ Domain groups are translated by a fixed margin based on the <code>spacing</code>
                     <span class="n">end_element</span><span class="o">=</span><span class="n">element_i_plus_1</span><span class="p">,</span>
                     <span class="n">style</span><span class="o">=</span><span class="n">base_conn_style</span><span class="p">,</span>
                 <span class="p">)</span>
-                <span class="nb">print</span><span class="p">(</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
                     <span class="sa">f</span><span class="s2">&quot;Adding connection between </span><span class="si">{</span><span class="n">element_i</span><span class="o">.</span><span class="n">id</span><span class="si">}</span><span class="s2"> and </span><span class="si">{</span><span class="n">element_i_plus_1</span><span class="o">.</span><span class="n">id</span><span class="si">}</span><span class="s2"> to group </span><span class="si">{</span><span class="n">group_i</span><span class="o">.</span><span class="n">id</span><span class="si">}</span><span class="s2">&quot;</span>
                 <span class="p">)</span>
                 <span class="n">scene</span><span class="o">.</span><span class="n">add_element</span><span class="p">(</span><span class="n">conn</span><span class="p">,</span> <span class="n">parent_id</span><span class="o">=</span><span class="n">group_i</span><span class="o">.</span><span class="n">id</span><span class="p">)</span>
@@ -13778,16 +13805,16 @@ Domain groups are translated by a fixed margin based on the <code>spacing</code>
             <span class="c1"># Connection spans groups or involves discarded elements</span>
             <span class="n">connections_discarded_count</span> <span class="o">+=</span> <span class="mi">1</span>
 
-    <span class="nb">print</span><span class="p">(</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
         <span class="sa">f</span><span class="s2">&quot;Added </span><span class="si">{</span><span class="n">connections_added_count</span><span class="si">}</span><span class="s2"> connections within groups. Discarded </span><span class="si">{</span><span class="n">connections_discarded_count</span><span class="si">}</span><span class="s2">.&quot;</span>
     <span class="p">)</span>
 
     <span class="c1"># --- 4. Add Domain Annotations to Respective Groups ---</span>
     <span class="k">if</span> <span class="n">domain_scop_ids</span><span class="p">:</span>
-        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Adding domain annotations...&quot;</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Adding domain annotations...&quot;</span><span class="p">)</span>
         <span class="n">annotations_added_count</span> <span class="o">=</span> <span class="mi">0</span>
         <span class="n">base_area_style</span> <span class="o">=</span> <span class="n">styles</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;area_annotation&quot;</span><span class="p">)</span>
-        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Base area style: </span><span class="si">{</span><span class="n">base_area_style</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Base area style: </span><span class="si">{</span><span class="n">base_area_style</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
         <span class="c1"># Type check</span>
         <span class="k">if</span> <span class="n">base_area_style</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span>
             <span class="n">base_area_style</span><span class="p">,</span> <span class="n">AreaAnnotationStyle</span>
@@ -13831,38 +13858,47 @@ Domain groups are translated by a fixed margin based on the <code>spacing</code>
                     <span class="sa">f</span><span class="s2">&quot;Failed adding area annotation for domain </span><span class="si">{</span><span class="n">domain_id</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
                     <span class="n">exc_info</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
                 <span class="p">)</span>
-        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Added </span><span class="si">{</span><span class="n">annotations_added_count</span><span class="si">}</span><span class="s2"> domain area annotations.&quot;</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Added </span><span class="si">{</span><span class="n">annotations_added_count</span><span class="si">}</span><span class="s2"> domain area annotations.&quot;</span><span class="p">)</span>
 
-    <span class="c1"># --- 5. Apply Fixed Layout Translation to Domain Groups ---</span>
-    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Applying fixed layout translations...&quot;</span><span class="p">)</span>
-    <span class="n">layout_applied_count</span> <span class="o">=</span> <span class="mi">0</span>
-    <span class="c1"># Use the ordered list for consistent layout</span>
-    <span class="n">total</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">domain_ids_in_order</span><span class="p">)</span>
-    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">domain_id</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">domain_ids_in_order</span><span class="p">):</span>
-        <span class="n">group</span> <span class="o">=</span> <span class="n">domain_groups</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">domain_id</span><span class="p">)</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">group</span><span class="p">:</span>
-            <span class="k">continue</span>  <span class="c1"># Should not happen based on checks</span>
-
-        <span class="c1"># Calculate fixed translation based on index and spacing (margin)</span>
-        <span class="k">if</span> <span class="n">arrangement</span> <span class="o">==</span> <span class="s2">&quot;horizontal&quot;</span><span class="p">:</span>
-            <span class="n">idx</span> <span class="o">=</span> <span class="n">total</span> <span class="o">-</span> <span class="n">i</span> <span class="o">-</span> <span class="mi">1</span>  <span class="c1"># Reverse for horizontal (right to left)</span>
-            <span class="n">translate_x</span> <span class="o">=</span> <span class="n">idx</span> <span class="o">*</span> <span class="n">spacing</span>
-            <span class="n">translate_y</span> <span class="o">=</span> <span class="mf">0.0</span>
-        <span class="k">elif</span> <span class="n">arrangement</span> <span class="o">==</span> <span class="s2">&quot;vertical&quot;</span><span class="p">:</span>
-            <span class="n">idx</span> <span class="o">=</span> <span class="n">total</span> <span class="o">-</span> <span class="n">i</span> <span class="o">-</span> <span class="mi">1</span>  <span class="c1"># Reverse for vertical (bottom to top)</span>
-            <span class="n">translate_x</span> <span class="o">=</span> <span class="mf">0.0</span>
-            <span class="n">translate_y</span> <span class="o">=</span> <span class="n">idx</span> <span class="o">*</span> <span class="n">spacing</span>
-
-        <span class="c1"># Apply the translation</span>
-        <span class="k">if</span> <span class="n">group</span><span class="o">.</span><span class="n">transforms</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">group</span><span class="o">.</span><span class="n">transforms</span> <span class="o">=</span> <span class="n">GroupTransform</span><span class="p">()</span>  <span class="c1"># Should exist, but safety check</span>
-        <span class="n">group</span><span class="o">.</span><span class="n">transforms</span><span class="o">.</span><span class="n">translate</span> <span class="o">=</span> <span class="p">(</span><span class="n">translate_x</span><span class="p">,</span> <span class="n">translate_y</span><span class="p">)</span>
-        <span class="nb">print</span><span class="p">(</span>
-            <span class="sa">f</span><span class="s2">&quot;Applied fixed translate to group </span><span class="si">{</span><span class="n">domain_id</span><span class="si">}</span><span class="s2">: (</span><span class="si">{</span><span class="n">translate_x</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">translate_y</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">)&quot;</span>
+    <span class="c1"># --- 5. Apply Progressive Gap Translation to Domain Groups ---</span>
+    <span class="c1"># Apply incremental gap_x and gap_y translation to domains for proper separation</span>
+    <span class="k">if</span> <span class="n">gap_x</span> <span class="o">!=</span> <span class="mf">0.0</span> <span class="ow">or</span> <span class="n">gap_y</span> <span class="o">!=</span> <span class="mf">0.0</span><span class="p">:</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;Applying progressive gap translation with increments: (</span><span class="si">{</span><span class="n">gap_x</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">gap_y</span><span class="si">}</span><span class="s2">)&quot;</span>
         <span class="p">)</span>
-        <span class="n">layout_applied_count</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="n">layout_applied_count</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="c1"># Apply reverse progressive translation - last domain stays at origin, earlier domains get positive gaps</span>
+        <span class="n">num_domains</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">domain_ids_in_order</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">domain_id</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">domain_ids_in_order</span><span class="p">):</span>
+            <span class="n">group</span> <span class="o">=</span> <span class="n">domain_groups</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">domain_id</span><span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">group</span><span class="p">:</span>
+                <span class="k">continue</span>  <span class="c1"># Should not happen based on checks</span>
 
-    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Applied fixed layout transforms to </span><span class="si">{</span><span class="n">layout_applied_count</span><span class="si">}</span><span class="s2"> domain groups.&quot;</span><span class="p">)</span>
+            <span class="c1"># Calculate reverse progressive translation: last domain (i=num_domains-1) stays at (0,0)</span>
+            <span class="c1"># Earlier domains get progressively larger positive translations for visual separation</span>
+            <span class="n">translate_x</span> <span class="o">=</span> <span class="p">(</span><span class="n">num_domains</span> <span class="o">-</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">i</span><span class="p">)</span> <span class="o">*</span> <span class="n">gap_x</span>
+            <span class="n">translate_y</span> <span class="o">=</span> <span class="p">(</span><span class="n">num_domains</span> <span class="o">-</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">i</span><span class="p">)</span> <span class="o">*</span> <span class="n">gap_y</span>
+
+            <span class="k">if</span> <span class="n">group</span><span class="o">.</span><span class="n">transforms</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">group</span><span class="o">.</span><span class="n">transforms</span> <span class="o">=</span> <span class="n">GroupTransform</span><span class="p">()</span>
+            <span class="n">group</span><span class="o">.</span><span class="n">transforms</span><span class="o">.</span><span class="n">translate</span> <span class="o">=</span> <span class="p">(</span><span class="n">translate_x</span><span class="p">,</span> <span class="n">translate_y</span><span class="p">)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Applied progressive translation to group </span><span class="si">{</span><span class="n">domain_id</span><span class="si">}</span><span class="s2">: (</span><span class="si">{</span><span class="n">translate_x</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">translate_y</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">)&quot;</span>
+            <span class="p">)</span>
+            <span class="n">layout_applied_count</span> <span class="o">+=</span> <span class="mi">1</span>
+
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;Applied progressive gap translations to </span><span class="si">{</span><span class="n">layout_applied_count</span><span class="si">}</span><span class="s2"> domain groups.&quot;</span>
+        <span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Keeping domains in original positions (gap_x = gap_y = 0.0).&quot;</span><span class="p">)</span>
+        <span class="c1"># Ensure groups have identity transforms but no translation</span>
+        <span class="k">for</span> <span class="n">domain_id</span> <span class="ow">in</span> <span class="n">domain_ids_in_order</span><span class="p">:</span>
+            <span class="n">group</span> <span class="o">=</span> <span class="n">domain_groups</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">domain_id</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">group</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">group</span><span class="o">.</span><span class="n">transforms</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="n">group</span><span class="o">.</span><span class="n">transforms</span> <span class="o">=</span> <span class="n">GroupTransform</span><span class="p">()</span>
+                <span class="n">group</span><span class="o">.</span><span class="n">transforms</span><span class="o">.</span><span class="n">translate</span> <span class="o">=</span> <span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">)</span>  <span class="c1"># Keep in original position</span>
 
     <span class="k">return</span> <span class="n">scene</span>
 </code></pre></div></td></tr></table></div>
