@@ -6,6 +6,9 @@ nav:
   - Home: index.md
   - Installation: installation.md
   - Examples: examples.md
+  - Tools:
+      - Custom Database: tools/custom_database.md
+      - Rebuild Default Database: tools/database_builder.md
   - Commands:
       - Project: commands/project.md
       - Align: commands/align.md

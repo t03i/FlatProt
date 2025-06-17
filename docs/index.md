@@ -12,6 +12,7 @@ FlatProt is a Python package for protein structure and sequence analysis. It pro
 FlatProt provides four main commands for protein structure analysis:
 
 ### Single Structure Projection
+
 Generate 2D projections of individual protein structures in three simple steps:
 
 1. Obtain the protein structure file (CIF or PDB format)
@@ -26,6 +27,7 @@ Generate 2D projections of individual protein structures in three simple steps:
     - Customize with options like `--canvas-width 500 --canvas-height 400` for sizing
 
 ### Multi-Structure Comparison
+
 Create overlay visualizations to compare multiple related structures:
 
 1. Collect related structure files (same family or similar proteins)
@@ -33,12 +35,14 @@ Create overlay visualizations to compare multiple related structures:
 3. For consistent size comparison: `flatprot overlay "structures/*.cif" --disable-scaling -o overlay.png`
 
 ### Structure Alignment
+
 Align structures to known protein families:
 
 1. Find best matching family: `flatprot align structure.cif -i alignment_info.json`
 2. Use alignment in projections: `flatprot project structure.cif --matrix alignment_matrix.npy -o aligned.svg`
 
 ### Region-Based Analysis
+
 Extract and visualize specific structural regions with comparative alignment:
 
 1. Define regions of interest: `flatprot split protein.cif --regions "A:1-100,A:150-250" -o regions.svg`
