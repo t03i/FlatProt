@@ -1,10 +1,10 @@
 # Split Command
 
-Extract and visualize specific structural regions from protein structures with automatic alignment and comparative layout.
+Extract and visualize specific structural regions from protein structures with automatic alignment and progressive gap layout.
 
 ## Overview
 
-The `split` command extracts specified structural regions (domains, motifs, binding sites) from protein structures, optionally aligns them using database search, and creates a combined SVG visualization with regions arranged spatially. This enables focused analysis of specific protein regions while maintaining structural context.
+The `split` command extracts specified structural regions (domains, motifs, binding sites) from protein structures, optionally aligns them using database search, and creates a combined SVG visualization with regions arranged spatially using progressive gap positioning. This enables focused analysis of specific protein regions while maintaining structural context.
 
 ## Requirements
 
@@ -29,11 +29,9 @@ flatprot split STRUCTURE_FILE --regions "REGIONS" [OPTIONS]
 ### Output Options
 - `--output` / `-o` - Output SVG file path [default: split_output.svg]
 
-### Region Layout Options
-- `--layout` - Layout arrangement [default: horizontal]
-  - `horizontal`: Arrange regions left to right
-  - `vertical`: Arrange regions top to bottom
-- `--spacing` - Spacing between regions in pixels [default: 100.0]
+### Region Gap Options
+- `--gap-x` - Progressive horizontal gap between domains in pixels (last domain at origin) [default: 0.0]
+- `--gap-y` - Progressive vertical gap between domains in pixels (last domain at origin) [default: 0.0]
 
 ### Alignment Options
 - `--alignment-mode` - Alignment strategy [default: family-identity]
@@ -122,21 +120,27 @@ When `--show-database-alignment` is enabled:
 flatprot split protein.cif --regions "A:1-100,A:150-250" --show-database-alignment -o annotated.svg
 ```
 
-## Layout Arrangements
+## Progressive Gap Positioning
 
-### Horizontal Layout (Default)
-Arranges regions from left to right with configurable spacing:
-
-```bash
-flatprot split protein.cif --regions "A:1-100,A:150-250,B:1-80" --layout horizontal --spacing 150
-```
-
-### Vertical Layout
-Arranges regions from top to bottom:
+### Gap Parameters
+The split command uses progressive gap positioning where each domain is offset from the previous one:
 
 ```bash
-flatprot split protein.cif --regions "A:1-100,A:150-250,B:1-80" --layout vertical --spacing 200
+# Horizontal gap progression (domains arranged left to right)
+flatprot split protein.cif --regions "A:1-100,A:150-250,B:1-80" --gap-x 150
+
+# Vertical gap progression (domains arranged top to bottom)
+flatprot split protein.cif --regions "A:1-100,A:150-250,B:1-80" --gap-y 200
+
+# Diagonal arrangement with both horizontal and vertical gaps
+flatprot split protein.cif --regions "A:1-100,A:150-250,B:1-80" --gap-x 100 --gap-y 150
 ```
+
+### Progressive Gap Behavior
+- **Last Domain Origin**: The last domain remains at the origin (0,0)
+- **Progressive Offset**: Each previous domain is offset by the gap amount multiplied by its position
+- **Cumulative Positioning**: Domain 1 at origin, Domain 2 at (-gap_x, -gap_y), Domain 3 at (-2*gap_x, -2*gap_y), etc.
+- **Flexible Arrangements**: Combine gap_x and gap_y for custom spatial arrangements
 
 ## Region Specification
 
@@ -195,9 +199,9 @@ flatprot split protein.pdb --regions "A:1-100,A:150-250" --dssp protein.dssp -o 
 flatprot split protein.cif --regions "A:1-100,A:150-250" -o domains.svg
 ```
 
-**Multiple chains with custom layout:**
+**Multiple chains with progressive gaps:**
 ```bash
-flatprot split structure.cif --regions "A:1-100,B:50-150,A:200-300" --layout vertical --spacing 150 -o multi_chain.svg
+flatprot split structure.cif --regions "A:1-100,B:50-150,A:200-300" --gap-x 150 --gap-y 100 -o multi_chain.svg
 ```
 
 ### Database Alignment and Annotations
@@ -229,9 +233,9 @@ flatprot split protein.cif --regions "A:10-110,A:130-230" --style custom.toml --
 flatprot split protein.cif --regions "A:10-110,A:130-230" --style custom.toml --show-positions full -o comprehensive.svg
 ```
 
-**Large canvas with wide spacing:**
+**Large canvas with progressive gaps:**
 ```bash
-flatprot split protein.cif --regions "A:1-100,A:150-250,A:300-400" --canvas-width 1500 --spacing 200 -o large_canvas.svg
+flatprot split protein.cif --regions "A:1-100,A:150-250,A:300-400" --canvas-width 1500 --gap-x 200 --gap-y 100 -o large_canvas.svg
 ```
 
 ### PDB Input Workflow
@@ -270,24 +274,27 @@ The split command follows this processing pipeline:
    - Uses GEMMI library for precise region isolation
    - Maintains original residue numbering and chain IDs
 
-3. **Optional Database Alignment**
-   - Downloads/validates alignment database (if enabled)
-   - Aligns each region individually using FoldSeek
-   - Retrieves transformation matrices and family annotations
-   - Applies rotation-only transformations (preserves positioning)
+3. **Domain-Specific Transformations**
+   - **Family-identity mode**: Aligns each region to database using FoldSeek, applies rotation around each domain's center to show recognizable database orientation
+   - **Inertia mode**: Calculates individual inertia transformations, applies rotation around each domain's center to highlight secondary structure composition
 
-4. **Structure Transformation**
-   - Applies inertia transformation for overall orientation
+4. **Centered Rotation and Projection**
+   - Rotates each domain around its geometric center, preserving relative positioning
    - Projects 3D coordinates to 2D using orthographic projection
-   - Maintains consistent coordinate system across regions
+   - Maintains structural relationships while optimizing individual domain orientations
 
-5. **Scene Creation**
+5. **Progressive Gap Application**
+   - Applies progressive gap positioning to separate domains spatially
+   - Last domain remains at origin, previous domains offset by cumulative gap amounts
+   - Preserves relative domain orientations while providing clear separation
+
+6. **Scene Creation**
    - Creates separate groups for each region
-   - Applies layout transformations (horizontal/vertical spacing)
+   - Applies gap-based positioning transformations
    - Adds area annotations with family IDs and probabilities (if enabled)
    - Applies custom styling (if provided)
 
-6. **SVG Rendering**
+7. **SVG Rendering**
    - Combines all region visualizations
    - Maintains proper layering and group organization
    - Exports to SVG format with embedded styling
@@ -303,7 +310,7 @@ for protein in proteins/*.cif; do
     flatprot split "$protein" \
         --regions "A:1-100,A:150-250" \
         --show-database-alignment \
-        --layout horizontal \
+        --gap-x 150 \
         -o "split_results/${base}_split.svg"
 done
 ```
@@ -337,7 +344,7 @@ def split_and_analyze_domains(structure_file, domain_regions, output_dir):
         "flatprot", "split", str(structure_file),
         "--regions", ",".join(domain_regions),
         "--show-database-alignment",
-        "--layout", "horizontal",
+        "--gap-x", "150",
         "-o", str(output_path)
     ]
 
@@ -356,18 +363,21 @@ success, output = split_and_analyze_domains(
 ## Performance Tips
 
 ### Speed Optimization
+
 - **Use CIF input** (no DSSP file generation required)
-- **Disable database alignment** for quick layout-only visualization
+- **Disable database alignment** for quick gap-based positioning only
 - **Smaller canvas sizes** for faster processing
 - **Fewer regions** reduce extraction and alignment time
 
 ### Quality Optimization
+
 - **Enable database alignment** for biologically meaningful orientations
 - **Higher alignment probability thresholds** for confident annotations
 - **Custom styling** for publication-ready output
 - **Larger canvas sizes** for detailed visualization
 
 ### Memory Optimization
+
 - **Limit number of regions** for memory-constrained systems
 - **Smaller region sizes** reduce memory usage
 - **Use minimal/none position annotations** for simpler scenes (use `--show-positions none` for cleanest output)
@@ -377,6 +387,7 @@ success, output = split_and_analyze_domains(
 ### Common Issues
 
 **"DSSP file required for PDB input" error:**
+
 ```bash
 # Generate DSSP file
 mkdssp -i structure.pdb -o structure.dssp
@@ -386,6 +397,7 @@ flatprot split structure.pdb --regions "A:1-100" --dssp structure.dssp
 ```
 
 **"Invalid region format" error:**
+
 ```bash
 # Check region format
 flatprot split protein.cif --regions "A:1-100,B:50-150"  # Correct
@@ -393,6 +405,7 @@ flatprot split protein.cif --regions "A:1:100,B:50-150"  # Incorrect (colon inst
 ```
 
 **"No successful alignments found" error:**
+
 ```bash
 # Lower probability threshold
 flatprot split protein.cif --regions "A:1-100" --min-probability 0.3 --show-database-alignment
@@ -402,6 +415,7 @@ flatprot split protein.cif --regions "A:1-100" --alignment-mode inertia
 ```
 
 **"Chain not found in structure" error:**
+
 ```bash
 # Check available chains
 grep "^ATOM" structure.pdb | awk '{print $5}' | sort -u  # For PDB
@@ -409,6 +423,7 @@ grep "^ATOM" structure.pdb | awk '{print $5}' | sort -u  # For PDB
 ```
 
 **Database download issues:**
+
 ```bash
 # Check network connectivity
 # Verify FoldSeek installation
@@ -421,6 +436,7 @@ flatprot split protein.cif --regions "A:1-100" --alignment-mode inertia
 ### Performance Benchmarks
 
 Typical processing times on a modern laptop:
+*First run with family-identity mode includes database download time (~30s)*
 
 | Regions | Mode | Database Alignment | Time |
 |---------|------|-------------------|------|
@@ -429,7 +445,6 @@ Typical processing times on a modern laptop:
 | 5-7 | Inertia | Disabled | 3-8s |
 | 5-7 | Family-Identity | Enabled | 30-60s |
 
-*First run with family-identity mode includes database download time (~30s)*
 
 ## Integration with Other Commands
 
@@ -449,23 +464,6 @@ flatprot split protein.cif --regions "A:1-100,A:150-250" --show-database-alignme
 # 1. Create full structure projection
 flatprot project protein.cif -o full_structure.svg
 
-# 2. Create domain-specific split view
-flatprot split protein.cif --regions "A:1-100,A:150-250" --show-database-alignment -o domain_split.svg
-
-# 3. Compare full vs. domain views
+# 2. Create domain-specific split view with progressive gaps
+flatprot split protein.cif --regions "A:1-100,A:150-250" --gap-x 150 -o domain_split.svg
 ```
-
-### Workflow with Overlay Command
-
-```bash
-# 1. Split domains from multiple related proteins
-for protein in family/*.cif; do
-    base=$(basename "$protein" .cif)
-    flatprot split "$protein" --regions "A:50-150" -o "domains/${base}_domain.svg"
-done
-
-# 2. Create domain overlay for comparison
-flatprot overlay "family/*.cif" --alignment-mode family-identity -o family_domains_overlay.png
-```
-
-This comprehensive documentation covers all the split command features including database alignment, rotation-only transformations, area annotations with alignment probabilities, and various layout options for comparative visualization of protein regions.

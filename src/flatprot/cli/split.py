@@ -18,17 +18,19 @@ from flatprot.io import (
     OutputFileError,
     StyleParser,
 )
-from flatprot.transformation import TransformationError
+from flatprot.transformation import TransformationError, TransformationMatrix
+import numpy as np
 from flatprot.utils.database import ensure_database_available
 from flatprot.utils.domain_utils import (
     apply_domain_transformations_masked,
     create_domain_aware_scene,
     extract_structure_regions,
     align_regions_batch,
+    calculate_individual_inertia_transformations,
+    DomainTransformation,
 )
 from flatprot.utils.structure_utils import (
     project_structure_orthographically,
-    transform_structure_with_inertia,
 )
 from flatprot.renderers import SVGRenderer
 from flatprot.cli.errors import CLIError, error_handler
@@ -55,9 +57,13 @@ class SplitConfig(BaseModel):
         default=Path("split_output.svg"), description="Output SVG file path"
     )
     alignment_mode: str = Field(default="family-identity", description="Alignment mode")
-    layout: str = Field(default="horizontal", description="Layout arrangement")
-    spacing: float = Field(
-        default=100.0, description="Spacing between regions in pixels"
+    gap_x: float = Field(
+        default=0.0,
+        description="Progressive horizontal gap between domains in pixels (last domain at origin)",
+    )
+    gap_y: float = Field(
+        default=0.0,
+        description="Progressive vertical gap between domains in pixels (last domain at origin)",
     )
     style: Optional[Path] = Field(default=None, description="Custom style file (TOML)")
     min_probability: float = Field(
@@ -117,15 +123,6 @@ class SplitConfig(BaseModel):
             raise ValueError(
                 f"Invalid alignment mode: {v}. Must be one of {valid_modes}"
             )
-        return v
-
-    @field_validator("layout")
-    @classmethod
-    def validate_layout(cls, v: str) -> str:
-        """Validate layout arrangement."""
-        valid_layouts = {"horizontal", "vertical"}
-        if v not in valid_layouts:
-            raise ValueError(f"Invalid layout: {v}. Must be one of {valid_layouts}")
         return v
 
     @field_validator("show_positions")
@@ -375,8 +372,8 @@ def split_command(
     regions: str,
     output: Path = Path("split_output.svg"),
     alignment_mode: str = "family-identity",
-    layout: str = "horizontal",
-    spacing: float = 100.0,
+    gap_x: float = 0.0,
+    gap_y: float = 0.0,
     style: Optional[Path] = None,
     min_probability: float = 0.5,
     canvas_width: int = 1000,
@@ -396,8 +393,8 @@ def split_command(
         regions: Comma-separated residue regions (e.g., 'A:1-100,A:150-250')
         output: Output SVG file path
         alignment_mode: Alignment strategy ('family-identity' or 'inertia')
-        layout: Layout arrangement ('horizontal' or 'vertical')
-        spacing: Spacing between regions in pixels
+        gap_x: Progressive horizontal gap between domains in pixels (last domain at origin)
+        gap_y: Progressive vertical gap between domains in pixels (last domain at origin)
         style: Custom style file (TOML format)
         min_probability: Minimum alignment probability threshold
         canvas_width: Canvas width in pixels
@@ -422,8 +419,8 @@ def split_command(
             regions=regions,
             output=output,
             alignment_mode=alignment_mode,
-            layout=layout,
-            spacing=spacing,
+            gap_x=gap_x,
+            gap_y=gap_y,
             style=style,
             min_probability=min_probability,
             canvas_width=canvas_width,
@@ -472,21 +469,7 @@ def split_command(
             )
             logger.info(f"Extracted {len(region_files)} region files")
 
-            # Always create identity-based domain transformations for consistent layout
-            from flatprot.utils.domain_utils import DomainTransformation
-            from flatprot.transformation import TransformationMatrix
-            import numpy as np
-
-            # Create identity transformation matrix for layout
-            identity_rotation = np.eye(3)
-            identity_translation = np.zeros(3)
-            identity_matrix = TransformationMatrix(
-                rotation=identity_rotation, translation=identity_translation
-            )
-
-            domain_transformations = []
-
-            # Perform database alignment if family-identity mode is selected
+            # Create domain transformations based on alignment mode
             if config.alignment_mode == "family-identity":
                 # Ensure alignment database is available
                 logger.info("Ensuring alignment database is available...")
@@ -495,7 +478,7 @@ def split_command(
 
                 # Align regions using family-identity mode
                 logger.info("Aligning regions using family-identity mode...")
-                alignment_transformations = align_regions_batch(
+                domain_transformations = align_regions_batch(
                     region_files,
                     region_ranges,
                     foldseek_db_path,
@@ -504,74 +487,95 @@ def split_command(
                     config.alignment_mode,
                 )
                 logger.info(
-                    f"Successfully aligned {len(alignment_transformations)} regions"
+                    f"Successfully aligned {len(domain_transformations)} regions"
                 )
 
-                if not alignment_transformations:
+                if not domain_transformations:
                     raise CLIError("No successful alignments found")
 
-                # Create domain transformations with rotation-only matrices to preserve positioning
+                # Convert alignment transformations to rotation-only for centered application
                 logger.info(
-                    "Creating domain definitions with rotation-only transformations..."
+                    "Converting database alignments to rotation-only transformations..."
                 )
-                for alignment_transform in alignment_transformations:
-                    # Extract only rotation component, zero out translation to preserve positioning
+                final_domain_transformations = []
+                for alignment_transform in domain_transformations:
+                    # Extract only rotation component for centered application
                     rotation_only_matrix = TransformationMatrix(
                         rotation=alignment_transform.transformation_matrix.rotation,
                         translation=np.zeros(
                             3
-                        ),  # Zero translation to keep original positions
+                        ),  # Translation handled by centered transformation
                     )
                     domain_transform = DomainTransformation(
                         domain_range=alignment_transform.domain_range,
-                        transformation_matrix=rotation_only_matrix,  # Use rotation-only transformation
+                        transformation_matrix=rotation_only_matrix,
                         domain_id=alignment_transform.domain_id,
-                        scop_id=alignment_transform.scop_id,  # Keep SCOP ID for annotations
-                        alignment_probability=alignment_transform.alignment_probability,  # Keep probability for annotations
+                        scop_id=alignment_transform.scop_id,
+                        alignment_probability=alignment_transform.alignment_probability,
                     )
-                    domain_transformations.append(domain_transform)
+                    final_domain_transformations.append(domain_transform)
+                domain_transformations = final_domain_transformations
+
             else:  # inertia mode
-                # No database alignment - create simple domain transformations for layout only
+                # Calculate individual inertia transformations for each domain
                 logger.info(
-                    "Using inertia mode - creating layout-only domain definitions..."
+                    "Calculating individual inertia transformations for each domain..."
                 )
-                for i, region_range in enumerate(region_ranges):
-                    domain_id = f"{region_range.chain_id}:{region_range.start}-{region_range.end}"
-                    domain_transform = DomainTransformation(
-                        domain_range=region_range,
-                        transformation_matrix=identity_matrix,
-                        domain_id=domain_id,
-                        scop_id=None,  # No SCOP ID when database alignment is disabled
-                        alignment_probability=None,  # No alignment probability when alignment is disabled
-                    )
-                    domain_transformations.append(domain_transform)
+                domain_transformations = calculate_individual_inertia_transformations(
+                    original_structure, region_ranges
+                )
 
-            logger.info(f"Created {len(domain_transformations)} domain definitions")
+            logger.info(f"Created {len(domain_transformations)} domain transformations")
 
-            # Apply domain transformations if family-identity mode is used
-            if config.alignment_mode == "family-identity":
-                logger.info(
-                    "Applying domain transformations for aligned orientations..."
-                )
-                transformed_structure = apply_domain_transformations_masked(
-                    original_structure, domain_transformations
-                )
+            # Apply domain transformations (no global inertia transformation)
+            logger.info("Applying domain-specific transformations...")
+
+            # Calculate original structure center before transformations for consistent projection
+            original_coords = original_structure.coordinates
+            if (
+                original_coords is not None
+                and hasattr(original_coords, "size")
+                and isinstance(original_coords.size, int)
+                and original_coords.size > 0
+            ):
+                original_center = np.mean(original_coords, axis=0)
+                logger.info(f"Original structure center: {original_center}")
             else:
-                # Use original structure for inertia mode
-                transformed_structure = original_structure
+                original_center = np.zeros(3)
+                logger.warning("No coordinates found for center calculation")
 
-            # Apply inertia transformation for overall orientation
-            logger.info("Applying inertia transformation...")
-            inertia_transformed = transform_structure_with_inertia(
-                transformed_structure
+            transformed_structure = apply_domain_transformations_masked(
+                original_structure, domain_transformations
             )
+
+            # Calculate how much the center moved after domain transformations
+            transformed_coords = transformed_structure.coordinates
+            if (
+                transformed_coords is not None
+                and hasattr(transformed_coords, "size")
+                and isinstance(transformed_coords.size, int)
+                and transformed_coords.size > 0
+            ):
+                transformed_center = np.mean(transformed_coords, axis=0)
+                center_shift = transformed_center - original_center
+                logger.info(f"Transformed structure center: {transformed_center}")
+                logger.info(f"Center shift from domain transformations: {center_shift}")
+
+                # Apply correction to maintain original center position
+                corrected_coords = transformed_coords - center_shift
+                transformed_structure = transformed_structure.with_coordinates(
+                    corrected_coords
+                )
+                logger.info("Applied center correction to maintain original position")
+            else:
+                logger.warning("No coordinates found after transformation")
 
             # Project to 2D
             logger.info(
                 f"Projecting to 2D ({config.canvas_width}x{config.canvas_height})..."
             )
             projected_structure = project_structure_orthographically(
-                inertia_transformed, config.canvas_width, config.canvas_height
+                transformed_structure, config.canvas_width, config.canvas_height
             )
 
             # Load custom styles if provided
@@ -606,7 +610,7 @@ def split_command(
                     )
 
             # Create domain-aware scene
-            logger.info(f"Creating scene with {config.layout} layout...")
+            logger.info(f"Creating scene with {config.alignment_mode} mode...")
 
             # Control family annotations based on flag
             scop_ids_to_use = (
@@ -620,8 +624,8 @@ def split_command(
             scene = create_domain_aware_scene(
                 projected_structure=projected_structure,
                 domain_definitions=domain_transformations,
-                spacing=config.spacing,
-                arrangement=config.layout,
+                gap_x=config.gap_x,
+                gap_y=config.gap_y,
                 default_styles=default_styles,  # Use loaded styles
                 domain_scop_ids=scop_ids_to_use,  # Only pass SCOP IDs if enabled
                 domain_alignment_probabilities=domain_alignment_probabilities
@@ -647,14 +651,28 @@ def split_command(
             # Render SVG
             logger.info(f"Rendering SVG to {config.output}...")
 
-            # Adjust canvas size for layout
+            # Calculate canvas size to accommodate progressive translations
             render_width = config.canvas_width
             render_height = config.canvas_height
 
-            if config.layout == "horizontal":
-                render_width += int(config.spacing * len(domain_transformations))
-            elif config.layout == "vertical":
-                render_height += int(config.spacing * len(domain_transformations))
+            # Expand canvas if progressive gaps are used
+            if config.gap_x != 0.0 or config.gap_y != 0.0:
+                num_domains = len(domain_transformations)
+                # Calculate the range of translations: from 0 to maximum positive
+                # Last domain gets: (num_domains-1 - (num_domains-1)) * gap = 0
+                # First domain gets: (num_domains-1 - 0) * gap = (num_domains-1) * gap
+                max_translation_x = (num_domains - 1) * abs(config.gap_x)
+                max_translation_y = (num_domains - 1) * abs(config.gap_y)
+
+                # Expand canvas to accommodate positive translations plus some padding
+                if max_translation_x > 0:
+                    render_width += int(max_translation_x * 1.2)  # 20% padding
+                if max_translation_y > 0:
+                    render_height += int(max_translation_y * 1.2)  # 20% padding
+
+                logger.info(
+                    f"Expanded canvas for progressive gaps: {render_width}x{render_height}"
+                )
 
             renderer = SVGRenderer(scene, render_width, render_height)
             renderer.save_svg(config.output)
