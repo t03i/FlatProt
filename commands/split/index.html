@@ -68,10 +68,6 @@
                   </li>
                   <li class="toctree-l1 current"><a class="reference internal current" href="#">Split</a>
     <ul class="current">
-    <li class="toctree-l2"><a class="reference internal" href="#overview">Overview</a>
-    </li>
-    <li class="toctree-l2"><a class="reference internal" href="#requirements">Requirements</a>
-    </li>
     <li class="toctree-l2"><a class="reference internal" href="#usage">Usage</a>
     </li>
     <li class="toctree-l2"><a class="reference internal" href="#parameters">Parameters</a>
@@ -80,15 +76,17 @@
     </li>
     <li class="toctree-l3"><a class="reference internal" href="#output-options">Output Options</a>
     </li>
-    <li class="toctree-l3"><a class="reference internal" href="#region-gap-options">Region Gap Options</a>
+    <li class="toctree-l3"><a class="reference internal" href="#gap-options">Gap Options</a>
     </li>
     <li class="toctree-l3"><a class="reference internal" href="#alignment-options">Alignment Options</a>
     </li>
-    <li class="toctree-l3"><a class="reference internal" href="#visualization-options">Visualization Options</a>
+    <li class="toctree-l3"><a class="reference internal" href="#styling-options">Styling Options</a>
     </li>
-    <li class="toctree-l3"><a class="reference internal" href="#input-file-options">Input File Options</a>
+    <li class="toctree-l3"><a class="reference internal" href="#input-options">Input Options</a>
     </li>
         </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#requirements">Requirements</a>
     </li>
     <li class="toctree-l2"><a class="reference internal" href="#alignment-modes">Alignment Modes</a>
         <ul>
@@ -98,43 +96,15 @@
     </li>
         </ul>
     </li>
-    <li class="toctree-l2"><a class="reference internal" href="#position-annotations-show-positions">Position Annotations (--show-positions)</a>
-        <ul>
-    <li class="toctree-l3"><a class="reference internal" href="#annotation-levels">Annotation Levels</a>
-    </li>
-    <li class="toctree-l3"><a class="reference internal" href="#domain-specific-behavior">Domain-Specific Behavior</a>
-    </li>
-        </ul>
-    </li>
-    <li class="toctree-l2"><a class="reference internal" href="#database-alignment-features">Database Alignment Features</a>
-        <ul>
-    <li class="toctree-l3"><a class="reference internal" href="#structural-alignment">Structural Alignment</a>
-    </li>
-    <li class="toctree-l3"><a class="reference internal" href="#area-annotations">Area Annotations</a>
-    </li>
-        </ul>
+    <li class="toctree-l2"><a class="reference internal" href="#position-annotations">Position Annotations</a>
     </li>
     <li class="toctree-l2"><a class="reference internal" href="#progressive-gap-positioning">Progressive Gap Positioning</a>
-        <ul>
-    <li class="toctree-l3"><a class="reference internal" href="#gap-parameters">Gap Parameters</a>
-    </li>
-    <li class="toctree-l3"><a class="reference internal" href="#progressive-gap-behavior">Progressive Gap Behavior</a>
-    </li>
-        </ul>
     </li>
     <li class="toctree-l2"><a class="reference internal" href="#region-specification">Region Specification</a>
         <ul>
     <li class="toctree-l3"><a class="reference internal" href="#format">Format</a>
     </li>
     <li class="toctree-l3"><a class="reference internal" href="#examples">Examples</a>
-    </li>
-        </ul>
-    </li>
-    <li class="toctree-l2"><a class="reference internal" href="#input-file-support">Input File Support</a>
-        <ul>
-    <li class="toctree-l3"><a class="reference internal" href="#cif-format-recommended">CIF Format (Recommended)</a>
-    </li>
-    <li class="toctree-l3"><a class="reference internal" href="#pdb-format">PDB Format</a>
     </li>
         </ul>
     </li>
@@ -152,15 +122,9 @@
     </li>
         </ul>
     </li>
-    <li class="toctree-l2"><a class="reference internal" href="#workflow-details">Workflow Details</a>
-    </li>
-    <li class="toctree-l2"><a class="reference internal" href="#advanced-usage">Advanced Usage</a>
+    <li class="toctree-l2"><a class="reference internal" href="#troubleshooting">Troubleshooting</a>
         <ul>
-    <li class="toctree-l3"><a class="reference internal" href="#batch-processing-multiple-proteins">Batch Processing Multiple Proteins</a>
-    </li>
-    <li class="toctree-l3"><a class="reference internal" href="#domain-family-analysis">Domain Family Analysis</a>
-    </li>
-    <li class="toctree-l3"><a class="reference internal" href="#integration-with-analysis-scripts">Integration with Analysis Scripts</a>
+    <li class="toctree-l3"><a class="reference internal" href="#common-issues">Common Issues</a>
     </li>
         </ul>
     </li>
@@ -171,14 +135,6 @@
     <li class="toctree-l3"><a class="reference internal" href="#quality-optimization">Quality Optimization</a>
     </li>
     <li class="toctree-l3"><a class="reference internal" href="#memory-optimization">Memory Optimization</a>
-    </li>
-        </ul>
-    </li>
-    <li class="toctree-l2"><a class="reference internal" href="#troubleshooting">Troubleshooting</a>
-        <ul>
-    <li class="toctree-l3"><a class="reference internal" href="#common-issues">Common Issues</a>
-    </li>
-    <li class="toctree-l3"><a class="reference internal" href="#performance-benchmarks">Performance Benchmarks</a>
     </li>
         </ul>
     </li>
@@ -204,6 +160,10 @@
               </ul>
               <p class="caption"><span class="caption-text">Tools</span></p>
               <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../tools/custom_database/">Custom Database</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../tools/database_builder/">Rebuild Default Database</a>
+                  </li>
                   <li class="toctree-l1"><a class="reference internal" href="../../tools/matrix_extraction/">PyMOL Matrix Extraction</a>
                   </li>
               </ul>
@@ -249,15 +209,6 @@
               
                 <h1 id="split-command">Split Command</h1>
 <p>Extract and visualize specific structural regions from protein structures with automatic alignment and progressive gap layout.</p>
-<h2 id="overview">Overview</h2>
-<p>The <code>split</code> command extracts specified structural regions (domains, motifs, binding sites) from protein structures, optionally aligns them using database search, and creates a combined SVG visualization with regions arranged spatially using progressive gap positioning. This enables focused analysis of specific protein regions while maintaining structural context.</p>
-<h2 id="requirements">Requirements</h2>
-<ul>
-<li><strong>FoldSeek</strong>: Required for database alignment functionality</li>
-<li>Install from <a href="https://github.com/steineggerlab/foldseek">FoldSeek GitHub</a> or use conda: <code>conda install bioconda::foldseek</code></li>
-<li><strong>DSSP (mkdssp v4.4.0+)</strong>: Required for PDB input files</li>
-<li>Install from <a href="https://github.com/PDB-ECHA/dssp">DSSP GitHub</a> or use conda: <code>conda install conda-forge::dssp</code></li>
-</ul>
 <h2 id="usage">Usage</h2>
 <pre><code class="language-bash">flatprot split STRUCTURE_FILE --regions &quot;REGIONS&quot; [OPTIONS]
 </code></pre>
@@ -271,41 +222,46 @@
 <h3 id="output-options">Output Options</h3>
 <ul>
 <li><code>--output</code> / <code>-o</code> - Output SVG file path [default: split_output.svg]</li>
+<li><code>--canvas-width</code> - Canvas width in pixels [default: 1000]</li>
+<li><code>--canvas-height</code> - Canvas height in pixels [default: 1000]</li>
 </ul>
-<h3 id="region-gap-options">Region Gap Options</h3>
+<h3 id="gap-options">Gap Options</h3>
 <ul>
-<li><code>--gap-x</code> - Progressive horizontal gap between domains in pixels (last domain at origin) [default: 0.0]</li>
-<li><code>--gap-y</code> - Progressive vertical gap between domains in pixels (last domain at origin) [default: 0.0]</li>
+<li><code>--gap-x</code> - Progressive horizontal gap between domains in pixels [default: 0.0]</li>
+<li><code>--gap-y</code> - Progressive vertical gap between domains in pixels [default: 0.0]</li>
 </ul>
 <h3 id="alignment-options">Alignment Options</h3>
 <ul>
 <li><code>--alignment-mode</code> - Alignment strategy [default: family-identity]</li>
-<li><code>family-identity</code>: Align each region using FoldSeek database search with rotation-only transformations</li>
-<li><code>inertia</code>: Use principal component analysis alignment (no database search)</li>
+<li><code>family-identity</code>: Align each region using FoldSeek database search</li>
+<li><code>inertia</code>: Use principal component analysis alignment</li>
 <li><code>--min-probability</code> - Minimum alignment probability threshold [default: 0.5]</li>
 <li><code>--foldseek</code> / <code>-f</code> - FoldSeek executable path [default: foldseek]</li>
-<li><code>--show-database-alignment</code> - Enable database alignment and show family area annotations [default: False]</li>
+<li><code>--show-database-alignment</code> - Enable database alignment and show family area annotations</li>
 </ul>
-<h3 id="visualization-options">Visualization Options</h3>
+<h3 id="styling-options">Styling Options</h3>
 <ul>
 <li><code>--style</code> - Custom style TOML file path</li>
-<li><code>--canvas-width</code> - Canvas width in pixels [default: 1000]</li>
-<li><code>--canvas-height</code> - Canvas height in pixels [default: 1000]</li>
 <li><code>--show-positions</code> - Position annotation level: <code>none</code>, <code>minimal</code>, <code>major</code>, <code>full</code> [default: minimal]</li>
 </ul>
-<h3 id="input-file-options">Input File Options</h3>
+<h3 id="input-options">Input Options</h3>
 <ul>
 <li><code>--dssp</code> - DSSP file for PDB input (required for PDB files)</li>
 </ul>
+<h2 id="requirements">Requirements</h2>
+<ul>
+<li><strong>FoldSeek</strong>: Required for database alignment functionality</li>
+<li><strong>DSSP (mkdssp v4.4.0+)</strong>: Required for PDB input files</li>
+</ul>
+<p>Install via conda:</p>
+<pre><code class="language-bash">conda install bioconda::foldseek conda-forge::dssp
+</code></pre>
 <h2 id="alignment-modes">Alignment Modes</h2>
 <h3 id="family-identity-alignment-recommended">Family-Identity Alignment (Recommended)</h3>
-<p>Uses FoldSeek to align each region against a curated database of protein families:</p>
-<ul>
-<li><strong>Automatic Database Download</strong>: Downloads alignment database on first use</li>
-<li><strong>Region-Specific Alignment</strong>: Each region is aligned independently</li>
-<li><strong>Rotation-Only Transformations</strong>: Applies only rotation (no translation) to preserve relative positioning</li>
-<li><strong>Family Annotations</strong>: Shows SCOP family IDs and alignment probabilities when <code>--show-database-alignment</code> is enabled</li>
-</ul>
+<p>Uses FoldSeek to align each region against a curated database of protein families:
+- Automatic database download on first use
+- Region-specific alignment with rotation-only transformations
+- Family annotations show SCOP family IDs and alignment probabilities</p>
 <pre><code class="language-bash"># Basic family-identity alignment with annotations
 flatprot split protein.cif --regions &quot;A:1-100,A:150-250&quot; --show-database-alignment -o aligned_regions.svg
 
@@ -313,140 +269,75 @@ flatprot split protein.cif --regions &quot;A:1-100,A:150-250&quot; --show-databa
 flatprot split protein.cif --regions &quot;A:1-100,A:150-250&quot; --min-probability 0.8 --show-database-alignment
 </code></pre>
 <h3 id="inertia-alignment">Inertia Alignment</h3>
-<p>Uses principal component analysis for structure alignment:</p>
-<ul>
-<li><strong>Fast Processing</strong>: No external database dependencies</li>
-<li><strong>Universal</strong>: Works with any protein structure</li>
-<li><strong>Consistent</strong>: Deterministic alignment based on structure geometry</li>
-</ul>
+<p>Uses principal component analysis for structure alignment. Fast processing with no external database dependencies.</p>
 <pre><code class="language-bash">flatprot split protein.cif --regions &quot;A:1-100,A:150-250&quot; --alignment-mode inertia
 </code></pre>
-<h2 id="position-annotations-show-positions">Position Annotations (<code>--show-positions</code>)</h2>
-<p>Position annotations add residue numbers and N/C terminus labels to each domain in the split visualization, helping identify specific regions within extracted domains. The annotation level controls the detail displayed for each separated domain:</p>
-<h3 id="annotation-levels">Annotation Levels</h3>
+<h2 id="position-annotations">Position Annotations</h2>
+<p>Controls residue numbering and terminus labels for each domain:</p>
 <ul>
-<li><strong><code>none</code></strong>: No position annotations are added to any domain.</li>
-<li><strong><code>minimal</code></strong> (default): Only N and C terminus labels are shown for each domain, providing basic domain orientation.</li>
-<li><strong><code>major</code></strong>: N/C terminus labels plus residue numbers for major secondary structures (helices and sheets with ≥3 residues) within each domain. Short structures are omitted to reduce clutter.</li>
-<li><strong><code>full</code></strong>: All position annotations including residue numbers for all secondary structures within each domain, even single-residue elements.</li>
+<li><strong><code>none</code></strong>: No position annotations</li>
+<li><strong><code>minimal</code></strong> (default): Only N and C terminus labels for each domain</li>
+<li><strong><code>major</code></strong>: Terminus labels + residue numbers for major secondary structures (≥3 residues)</li>
+<li><strong><code>full</code></strong>: All position annotations including single-residue elements</li>
 </ul>
-<h3 id="domain-specific-behavior">Domain-Specific Behavior</h3>
-<ul>
-<li><strong>Per-Domain Annotations</strong>: Each extracted domain receives its own set of annotations</li>
-<li><strong>Terminus Labels</strong>: N and C labels mark the start and end of each domain</li>
-<li><strong>Residue Numbers</strong>: Start and end residue numbers for secondary structure elements within domains</li>
-<li><strong>Filtering</strong>: In 'major' mode, only significant secondary structures (≥3 residues) receive residue numbers</li>
-<li><strong>Element Types</strong>: Residue numbers are added only to helices and sheets, not coil regions</li>
-</ul>
-<h2 id="database-alignment-features">Database Alignment Features</h2>
-<p>When <code>--show-database-alignment</code> is enabled:</p>
-<h3 id="structural-alignment">Structural Alignment</h3>
-<ul>
-<li>Each region is individually aligned to its best-matching family in the database</li>
-<li>Only rotation transformations are applied (translations are zeroed out)</li>
-<li>Preserves relative positioning while showing aligned orientations</li>
-<li>Regions maintain consistent spatial relationships</li>
-</ul>
-<h3 id="area-annotations">Area Annotations</h3>
-<ul>
-<li>SCOP family IDs are displayed as area annotations around each region</li>
-<li>Alignment probabilities are shown as percentages</li>
-<li>Format: "Family ID\n(Probability%)" e.g., "3000622\n(85.3%)"</li>
-</ul>
-<pre><code class="language-bash"># Enable database alignment with area annotations
-flatprot split protein.cif --regions &quot;A:1-100,A:150-250&quot; --show-database-alignment -o annotated.svg
-</code></pre>
 <h2 id="progressive-gap-positioning">Progressive Gap Positioning</h2>
-<h3 id="gap-parameters">Gap Parameters</h3>
-<p>The split command uses progressive gap positioning where each domain is offset from the previous one:</p>
-<pre><code class="language-bash"># Horizontal gap progression (domains arranged left to right)
+<p>Each domain is offset from the previous one using progressive gaps:
+- <strong>Last domain</strong> remains at origin (0,0)
+- <strong>Previous domains</strong> offset by gap amount × position
+- <strong>Flexible arrangements</strong> combine gap_x and gap_y for custom layouts</p>
+<pre><code class="language-bash"># Horizontal arrangement
 flatprot split protein.cif --regions &quot;A:1-100,A:150-250,B:1-80&quot; --gap-x 150
 
-# Vertical gap progression (domains arranged top to bottom)
+# Vertical arrangement
 flatprot split protein.cif --regions &quot;A:1-100,A:150-250,B:1-80&quot; --gap-y 200
 
-# Diagonal arrangement with both horizontal and vertical gaps
+# Diagonal arrangement
 flatprot split protein.cif --regions &quot;A:1-100,A:150-250,B:1-80&quot; --gap-x 100 --gap-y 150
 </code></pre>
-<h3 id="progressive-gap-behavior">Progressive Gap Behavior</h3>
-<ul>
-<li><strong>Last Domain Origin</strong>: The last domain remains at the origin (0,0)</li>
-<li><strong>Progressive Offset</strong>: Each previous domain is offset by the gap amount multiplied by its position</li>
-<li><strong>Cumulative Positioning</strong>: Domain 1 at origin, Domain 2 at (-gap_x, -gap_y), Domain 3 at (-2<em>gap_x, -2</em>gap_y), etc.</li>
-<li><strong>Flexible Arrangements</strong>: Combine gap_x and gap_y for custom spatial arrangements</li>
-</ul>
 <h2 id="region-specification">Region Specification</h2>
 <h3 id="format">Format</h3>
 <ul>
 <li><strong>Pattern</strong>: <code>"CHAIN:START-END"</code></li>
-<li><strong>Multiple Regions</strong>: Comma-separated list</li>
+<li><strong>Multiple regions</strong>: Comma-separated list</li>
 <li><strong>Chain IDs</strong>: Single letters (A, B, C, etc.)</li>
-<li><strong>Residue Numbers</strong>: 1-based indexing</li>
+<li><strong>Residue numbers</strong>: 1-based indexing</li>
 </ul>
 <h3 id="examples">Examples</h3>
-<p><strong>Single Chain, Multiple Domains:</strong></p>
-<pre><code class="language-bash">flatprot split protein.cif --regions &quot;A:1-100,A:150-250,A:300-400&quot;
-</code></pre>
-<p><strong>Multiple Chains:</strong></p>
-<pre><code class="language-bash">flatprot split structure.cif --regions &quot;A:1-100,B:50-150,C:20-120&quot;
-</code></pre>
-<p><strong>Overlapping Regions:</strong></p>
-<pre><code class="language-bash">flatprot split protein.cif --regions &quot;A:1-120,A:80-200&quot;  # 40 residue overlap
-</code></pre>
-<h2 id="input-file-support">Input File Support</h2>
-<h3 id="cif-format-recommended">CIF Format (Recommended)</h3>
-<ul>
-<li>Usually contains secondary structure information</li>
-<li>No additional files required</li>
-<li>Better handling of complex structures</li>
-</ul>
-<pre><code class="language-bash">flatprot split structure.cif --regions &quot;A:1-100,A:150-250&quot; -o output.svg
-</code></pre>
-<h3 id="pdb-format">PDB Format</h3>
-<ul>
-<li>Requires DSSP file for secondary structure assignment</li>
-<li>Run DSSP separately: <code>mkdssp -i structure.pdb -o structure.dssp</code></li>
-</ul>
-<pre><code class="language-bash"># First, generate DSSP file
-mkdssp -i protein.pdb -o protein.dssp
+<pre><code class="language-bash"># Single chain, multiple domains
+flatprot split protein.cif --regions &quot;A:1-100,A:150-250,A:300-400&quot;
 
-# Then run split command
-flatprot split protein.pdb --regions &quot;A:1-100,A:150-250&quot; --dssp protein.dssp -o output.svg
+# Multiple chains
+flatprot split structure.cif --regions &quot;A:1-100,B:50-150,C:20-120&quot;
+
+# Overlapping regions
+flatprot split protein.cif --regions &quot;A:1-120,A:80-200&quot;  # 40 residue overlap
 </code></pre>
 <h2 id="examples_1">Examples</h2>
 <h3 id="basic-usage">Basic Usage</h3>
-<p><strong>Simple domain splitting:</strong></p>
-<pre><code class="language-bash">flatprot split protein.cif --regions &quot;A:1-100,A:150-250&quot; -o domains.svg
-</code></pre>
-<p><strong>Multiple chains with progressive gaps:</strong></p>
-<pre><code class="language-bash">flatprot split structure.cif --regions &quot;A:1-100,B:50-150,A:200-300&quot; --gap-x 150 --gap-y 100 -o multi_chain.svg
+<pre><code class="language-bash"># Simple domain splitting
+flatprot split protein.cif --regions &quot;A:1-100,A:150-250&quot; -o domains.svg
+
+# Multiple chains with progressive gaps
+flatprot split structure.cif --regions &quot;A:1-100,B:50-150,A:200-300&quot; --gap-x 150 --gap-y 100 -o multi_chain.svg
 </code></pre>
 <h3 id="database-alignment-and-annotations">Database Alignment and Annotations</h3>
-<p><strong>Enable family alignment with annotations:</strong></p>
-<pre><code class="language-bash">flatprot split protein.cif --regions &quot;A:1-100,A:150-250&quot; --show-database-alignment -o aligned_annotated.svg
-</code></pre>
-<p><strong>High-confidence alignments with custom threshold:</strong></p>
-<pre><code class="language-bash">flatprot split protein.cif --regions &quot;A:1-80,A:100-180,A:200-280&quot; --show-database-alignment --min-probability 0.7 -o high_confidence.svg
+<pre><code class="language-bash"># Enable family alignment with annotations
+flatprot split protein.cif --regions &quot;A:1-100,A:150-250&quot; --show-database-alignment -o aligned_annotated.svg
+
+# High-confidence alignments with custom threshold
+flatprot split protein.cif --regions &quot;A:1-80,A:100-180,A:200-280&quot; --show-database-alignment --min-probability 0.7 -o high_confidence.svg
 </code></pre>
 <h3 id="custom-styling-and-visualization">Custom Styling and Visualization</h3>
-<p><strong>Custom styling with position annotations:</strong></p>
 <pre><code class="language-bash"># Clean domains without annotations
 flatprot split protein.cif --regions &quot;A:10-110,A:130-230&quot; --style custom.toml --show-positions none -o clean.svg
-
-# Basic domain orientation (default)
-flatprot split protein.cif --regions &quot;A:10-110,A:130-230&quot; --style custom.toml --show-positions minimal -o oriented.svg
 
 # Major structures with residue numbers
 flatprot split protein.cif --regions &quot;A:10-110,A:130-230&quot; --style custom.toml --show-positions major -o detailed.svg
 
-# Full annotation detail
-flatprot split protein.cif --regions &quot;A:10-110,A:130-230&quot; --style custom.toml --show-positions full -o comprehensive.svg
-</code></pre>
-<p><strong>Large canvas with progressive gaps:</strong></p>
-<pre><code class="language-bash">flatprot split protein.cif --regions &quot;A:1-100,A:150-250,A:300-400&quot; --canvas-width 1500 --gap-x 200 --gap-y 100 -o large_canvas.svg
+# Large canvas with progressive gaps
+flatprot split protein.cif --regions &quot;A:1-100,A:150-250,A:300-400&quot; --canvas-width 1500 --gap-x 200 --gap-y 100 -o large_canvas.svg
 </code></pre>
 <h3 id="pdb-input-workflow">PDB Input Workflow</h3>
-<p><strong>Complete PDB processing pipeline:</strong></p>
 <pre><code class="language-bash"># 1. Generate secondary structure
 mkdssp -i protein.pdb -o protein.dssp
 
@@ -454,119 +345,40 @@ mkdssp -i protein.pdb -o protein.dssp
 flatprot split protein.pdb --regions &quot;A:1-100,A:150-200&quot; --dssp protein.dssp --show-database-alignment -o output.svg
 </code></pre>
 <h3 id="comparison-studies">Comparison Studies</h3>
-<p><strong>Compare alignment modes:</strong></p>
-<pre><code class="language-bash"># Family-identity alignment
+<pre><code class="language-bash"># Compare alignment modes
 flatprot split protein.cif --regions &quot;A:1-100,A:150-250&quot; --alignment-mode family-identity --show-database-alignment -o family_aligned.svg
-
-# Inertia alignment for comparison
 flatprot split protein.cif --regions &quot;A:1-100,A:150-250&quot; --alignment-mode inertia -o inertia_aligned.svg
 </code></pre>
-<h2 id="workflow-details">Workflow Details</h2>
-<p>The split command follows this processing pipeline:</p>
-<ol>
-<li><strong>Input Validation</strong></li>
-<li>Validates structure file format and accessibility</li>
-<li>Parses and validates region specifications</li>
-<li>
-<p>Checks for required DSSP file (PDB input only)</p>
-</li>
-<li>
-<p><strong>Region Extraction</strong></p>
-</li>
-<li>Extracts specified regions to temporary CIF files</li>
-<li>Uses GEMMI library for precise region isolation</li>
-<li>
-<p>Maintains original residue numbering and chain IDs</p>
-</li>
-<li>
-<p><strong>Domain-Specific Transformations</strong></p>
-</li>
-<li><strong>Family-identity mode</strong>: Aligns each region to database using FoldSeek, applies rotation around each domain's center to show recognizable database orientation</li>
-<li>
-<p><strong>Inertia mode</strong>: Calculates individual inertia transformations, applies rotation around each domain's center to highlight secondary structure composition</p>
-</li>
-<li>
-<p><strong>Centered Rotation and Projection</strong></p>
-</li>
-<li>Rotates each domain around its geometric center, preserving relative positioning</li>
-<li>Projects 3D coordinates to 2D using orthographic projection</li>
-<li>
-<p>Maintains structural relationships while optimizing individual domain orientations</p>
-</li>
-<li>
-<p><strong>Progressive Gap Application</strong></p>
-</li>
-<li>Applies progressive gap positioning to separate domains spatially</li>
-<li>Last domain remains at origin, previous domains offset by cumulative gap amounts</li>
-<li>
-<p>Preserves relative domain orientations while providing clear separation</p>
-</li>
-<li>
-<p><strong>Scene Creation</strong></p>
-</li>
-<li>Creates separate groups for each region</li>
-<li>Applies gap-based positioning transformations</li>
-<li>Adds area annotations with family IDs and probabilities (if enabled)</li>
-<li>
-<p>Applies custom styling (if provided)</p>
-</li>
-<li>
-<p><strong>SVG Rendering</strong></p>
-</li>
-<li>Combines all region visualizations</li>
-<li>Maintains proper layering and group organization</li>
-<li>Exports to SVG format with embedded styling</li>
-</ol>
-<h2 id="advanced-usage">Advanced Usage</h2>
-<h3 id="batch-processing-multiple-proteins">Batch Processing Multiple Proteins</h3>
-<pre><code class="language-bash">#!/bin/bash
-for protein in proteins/*.cif; do
-    base=$(basename &quot;$protein&quot; .cif)
-    flatprot split &quot;$protein&quot; \
-        --regions &quot;A:1-100,A:150-250&quot; \
-        --show-database-alignment \
-        --gap-x 150 \
-        -o &quot;split_results/${base}_split.svg&quot;
-done
+<h2 id="troubleshooting">Troubleshooting</h2>
+<h3 id="common-issues">Common Issues</h3>
+<p><strong>"DSSP file required for PDB input" error:</strong></p>
+<pre><code class="language-bash"># Generate DSSP file first
+mkdssp -i structure.pdb -o structure.dssp
+flatprot split structure.pdb --regions &quot;A:1-100&quot; --dssp structure.dssp
 </code></pre>
-<h3 id="domain-family-analysis">Domain Family Analysis</h3>
-<pre><code class="language-bash"># Extract and analyze common domain across multiple proteins
-for protein in family_proteins/*.cif; do
-    base=$(basename &quot;$protein&quot; .cif)
-    flatprot split &quot;$protein&quot; \
-        --regions &quot;A:50-150&quot; \
-        --show-database-alignment \
-        --min-probability 0.8 \
-        -o &quot;domains/${base}_domain.svg&quot;
-done
+<p><strong>"Invalid region format" error:</strong></p>
+<pre><code class="language-bash"># Check region format
+flatprot split protein.cif --regions &quot;A:1-100,B:50-150&quot;  # Correct
+flatprot split protein.cif --regions &quot;A:1:100,B:50-150&quot;  # Incorrect (colon instead of dash)
 </code></pre>
-<h3 id="integration-with-analysis-scripts">Integration with Analysis Scripts</h3>
-<pre><code class="language-python">import subprocess
-import json
-from pathlib import Path
+<p><strong>"No successful alignments found" error:</strong></p>
+<pre><code class="language-bash"># Lower probability threshold
+flatprot split protein.cif --regions &quot;A:1-100&quot; --min-probability 0.3 --show-database-alignment
 
-def split_and_analyze_domains(structure_file, domain_regions, output_dir):
-    &quot;&quot;&quot;Split domains and return alignment information.&quot;&quot;&quot;
-    output_path = output_dir / f&quot;{structure_file.stem}_split.svg&quot;
+# Or disable database alignment
+flatprot split protein.cif --regions &quot;A:1-100&quot; --alignment-mode inertia
+</code></pre>
+<p><strong>"Chain not found in structure" error:</strong></p>
+<pre><code class="language-bash"># Check available chains in PDB
+grep &quot;^ATOM&quot; structure.pdb | awk '{print $5}' | sort -u
+# Or examine CIF structure to verify chain IDs
+</code></pre>
+<p><strong>Database download issues:</strong></p>
+<pre><code class="language-bash"># Check network connectivity and FoldSeek installation
+which foldseek
 
-    cmd = [
-        &quot;flatprot&quot;, &quot;split&quot;, str(structure_file),
-        &quot;--regions&quot;, &quot;,&quot;.join(domain_regions),
-        &quot;--show-database-alignment&quot;,
-        &quot;--gap-x&quot;, &quot;150&quot;,
-        &quot;-o&quot;, str(output_path)
-    ]
-
-    result = subprocess.run(cmd, capture_output=True, text=True)
-    return result.returncode == 0, output_path
-
-# Example usage
-domains = [&quot;A:1-100&quot;, &quot;A:150-250&quot;, &quot;A:300-400&quot;]
-success, output = split_and_analyze_domains(
-    Path(&quot;protein.cif&quot;),
-    domains,
-    Path(&quot;results&quot;)
-)
+# Use inertia mode as fallback
+flatprot split protein.cif --regions &quot;A:1-100&quot; --alignment-mode inertia
 </code></pre>
 <h2 id="performance-tips">Performance Tips</h2>
 <h3 id="speed-optimization">Speed Optimization</h3>
@@ -587,84 +399,11 @@ success, output = split_and_analyze_domains(
 <ul>
 <li><strong>Limit number of regions</strong> for memory-constrained systems</li>
 <li><strong>Smaller region sizes</strong> reduce memory usage</li>
-<li><strong>Use minimal/none position annotations</strong> for simpler scenes (use <code>--show-positions none</code> for cleanest output)</li>
+<li><strong>Use minimal/none position annotations</strong> for simpler scenes</li>
 </ul>
-<h2 id="troubleshooting">Troubleshooting</h2>
-<h3 id="common-issues">Common Issues</h3>
-<p><strong>"DSSP file required for PDB input" error:</strong></p>
-<pre><code class="language-bash"># Generate DSSP file
-mkdssp -i structure.pdb -o structure.dssp
-
-# Then retry with DSSP file
-flatprot split structure.pdb --regions &quot;A:1-100&quot; --dssp structure.dssp
-</code></pre>
-<p><strong>"Invalid region format" error:</strong></p>
-<pre><code class="language-bash"># Check region format
-flatprot split protein.cif --regions &quot;A:1-100,B:50-150&quot;  # Correct
-flatprot split protein.cif --regions &quot;A:1:100,B:50-150&quot;  # Incorrect (colon instead of dash)
-</code></pre>
-<p><strong>"No successful alignments found" error:</strong></p>
-<pre><code class="language-bash"># Lower probability threshold
-flatprot split protein.cif --regions &quot;A:1-100&quot; --min-probability 0.3 --show-database-alignment
-
-# Or disable database alignment
-flatprot split protein.cif --regions &quot;A:1-100&quot; --alignment-mode inertia
-</code></pre>
-<p><strong>"Chain not found in structure" error:</strong></p>
-<pre><code class="language-bash"># Check available chains
-grep &quot;^ATOM&quot; structure.pdb | awk '{print $5}' | sort -u  # For PDB
-# Or examine CIF structure to verify chain IDs
-</code></pre>
-<p><strong>Database download issues:</strong></p>
-<pre><code class="language-bash"># Check network connectivity
-# Verify FoldSeek installation
-which foldseek
-
-# Use inertia mode as fallback
-flatprot split protein.cif --regions &quot;A:1-100&quot; --alignment-mode inertia
-</code></pre>
-<h3 id="performance-benchmarks">Performance Benchmarks</h3>
-<p>Typical processing times on a modern laptop:
-<em>First run with family-identity mode includes database download time (~30s)</em></p>
-<table>
-<thead>
-<tr>
-<th>Regions</th>
-<th>Mode</th>
-<th>Database Alignment</th>
-<th>Time</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>2-3</td>
-<td>Inertia</td>
-<td>Disabled</td>
-<td>2-5s</td>
-</tr>
-<tr>
-<td>2-3</td>
-<td>Family-Identity</td>
-<td>Enabled</td>
-<td>15-30s</td>
-</tr>
-<tr>
-<td>5-7</td>
-<td>Inertia</td>
-<td>Disabled</td>
-<td>3-8s</td>
-</tr>
-<tr>
-<td>5-7</td>
-<td>Family-Identity</td>
-<td>Enabled</td>
-<td>30-60s</td>
-</tr>
-</tbody>
-</table>
 <h2 id="integration-with-other-commands">Integration with Other Commands</h2>
 <h3 id="workflow-with-align-command">Workflow with Align Command</h3>
-<pre><code class="language-bash"># 1. First, explore protein family alignment
+<pre><code class="language-bash"># 1. Explore protein family alignment
 flatprot align protein.cif -i alignment_info.json
 
 # 2. Extract domains with family-specific alignment
@@ -674,7 +413,7 @@ flatprot split protein.cif --regions &quot;A:1-100,A:150-250&quot; --show-databa
 <pre><code class="language-bash"># 1. Create full structure projection
 flatprot project protein.cif -o full_structure.svg
 
-# 2. Create domain-specific split view with progressive gaps
+# 2. Create domain-specific split view
 flatprot split protein.cif --regions &quot;A:1-100,A:150-250&quot; --gap-x 150 -o domain_split.svg
 </code></pre>
               

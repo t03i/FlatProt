@@ -61,6 +61,16 @@
     </li>
         </ul>
     </li>
+    <li class="toctree-l2"><a class="reference internal" href="#common-command-chaining-workflows">Common Command Chaining Workflows</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#family-comparison-with-optimal-conservation">Family Comparison with Optimal Conservation</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#aligned-structure-visualization">Aligned Structure Visualization</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#comprehensive-domain-analysis">Comprehensive Domain Analysis</a>
+    </li>
+        </ul>
+    </li>
     <li class="toctree-l2"><a class="reference internal" href="#key-features">Key Features</a>
     </li>
     <li class="toctree-l2"><a class="reference internal" href="#visualization-options">Visualization Options</a>
@@ -106,6 +116,10 @@
               </ul>
               <p class="caption"><span class="caption-text">Tools</span></p>
               <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="tools/custom_database/">Custom Database</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="tools/database_builder/">Rebuild Default Database</a>
+                  </li>
                   <li class="toctree-l1"><a class="reference internal" href="tools/matrix_extraction/">PyMOL Matrix Extraction</a>
                   </li>
               </ul>
@@ -156,7 +170,11 @@
 <h1 id="about">About</h1>
 <p>FlatProt is a Python package for protein structure and sequence analysis. It provides standardized 2D visualizations for enhanced protein comparability, combining efficient processing of proteins with user-friendly visualizations.</p>
 <h2 id="standard-workflow-on-the-command-line">Standard Workflow on the command line</h2>
-<p>FlatProt provides four main commands for protein structure analysis:</p>
+<p>FlatProt provides four main commands for protein structure analysis.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+</div>
+<p>The following examples assume you've installed FlatProt with <code>uv tool add FlatProt</code>. If you're using the no-install option, replace <code>flatprot</code> with <code>uvx flatprot</code> in all commands.</p>
 <h3 id="single-structure-projection">Single Structure Projection</h3>
 <p>Generate 2D projections of individual protein structures in three simple steps:</p>
 <ol>
@@ -197,6 +215,35 @@
 <li>With database alignment: <code>flatprot split protein.cif --regions "A:1-100,A:150-250" --show-database-alignment -o aligned_regions.svg</code></li>
 <li>Progressive gap positioning: <code>flatprot split protein.cif --regions "A:1-100,A:150-250" --gap-x 150 --gap-y 100 -o positioned.svg</code></li>
 </ol>
+<h2 id="common-command-chaining-workflows">Common Command Chaining Workflows</h2>
+<h3 id="family-comparison-with-optimal-conservation">Family Comparison with Optimal Conservation</h3>
+<p>For optimal conservation across multiple structures, align all to the same family reference:</p>
+<pre><code class="language-bash"># 1. Find optimal alignment for family
+flatprot align reference_protein.cif -i family_info.json
+
+# 2. Extract family ID from results
+family_id=$(jq -r '.best_hit.target_id' family_info.json)
+
+# 3. Create conserved overlay using fixed family ID
+flatprot overlay &quot;family_proteins/*.cif&quot; --family &quot;$family_id&quot; -o family_overlay.png
+</code></pre>
+<h3 id="aligned-structure-visualization">Aligned Structure Visualization</h3>
+<p>Create family-aligned 2D projections of individual structures:</p>
+<pre><code class="language-bash"># 1. Find optimal family alignment
+flatprot align protein.cif -m alignment_matrix.npy
+
+# 2. Create aligned 2D projection
+flatprot project protein.cif --matrix alignment_matrix.npy -o aligned_protein.svg
+</code></pre>
+<h3 id="comprehensive-domain-analysis">Comprehensive Domain Analysis</h3>
+<p>Combine full structure and domain-specific views:</p>
+<pre><code class="language-bash"># 1. Create full structure view
+flatprot project protein.cif -o full_structure.svg
+
+# 2. Extract and align specific domains
+flatprot split protein.cif --regions &quot;A:1-100,A:150-250&quot; --show-database-alignment -o domains.svg
+
+</code></pre>
 <p>The resulting files contain clean, publication-ready 2D representations that can be viewed in any web browser or vector graphics editor.</p>
 <h2 id="key-features">Key Features</h2>
 <ul>
@@ -295,5 +342,5 @@ bioRxiv 2025.04.22.650077; doi: <a href="https://doi.org/10.1101/2025.04.22.6500
 
 <!--
 MkDocs version : 1.6.1
-Build Date UTC : 2025-06-17 08:15:54.115845+00:00
+Build Date UTC : 2025-06-18 14:31:40.835566+00:00
 -->

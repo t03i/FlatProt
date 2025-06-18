@@ -66,10 +66,6 @@
                   </li>
                   <li class="toctree-l1 current"><a class="reference internal current" href="#">Overlay</a>
     <ul class="current">
-    <li class="toctree-l2"><a class="reference internal" href="#overview">Overview</a>
-    </li>
-    <li class="toctree-l2"><a class="reference internal" href="#requirements">Requirements</a>
-    </li>
     <li class="toctree-l2"><a class="reference internal" href="#usage">Usage</a>
     </li>
     <li class="toctree-l2"><a class="reference internal" href="#parameters">Parameters</a>
@@ -97,20 +93,6 @@
         </ul>
     </li>
     <li class="toctree-l2"><a class="reference internal" href="#clustering">Clustering</a>
-        <ul>
-    <li class="toctree-l3"><a class="reference internal" href="#default-behavior">Default Behavior</a>
-    </li>
-    <li class="toctree-l3"><a class="reference internal" href="#configuration">Configuration</a>
-    </li>
-        </ul>
-    </li>
-    <li class="toctree-l2"><a class="reference internal" href="#scaling-options">Scaling Options</a>
-        <ul>
-    <li class="toctree-l3"><a class="reference internal" href="#automatic-scaling-default">Automatic Scaling (Default)</a>
-    </li>
-    <li class="toctree-l3"><a class="reference internal" href="#disabled-scaling-new-feature">Disabled Scaling (New Feature)</a>
-    </li>
-        </ul>
     </li>
     <li class="toctree-l2"><a class="reference internal" href="#output-formats">Output Formats</a>
         <ul>
@@ -122,41 +104,17 @@
     </li>
         </ul>
     </li>
+    <li class="toctree-l2"><a class="reference internal" href="#requirements">Requirements</a>
+    </li>
     <li class="toctree-l2"><a class="reference internal" href="#examples">Examples</a>
         <ul>
     <li class="toctree-l3"><a class="reference internal" href="#basic-usage">Basic Usage</a>
     </li>
     <li class="toctree-l3"><a class="reference internal" href="#family-based-alignment">Family-Based Alignment</a>
     </li>
-    <li class="toctree-l3"><a class="reference internal" href="#clustering-configuration">Clustering Configuration</a>
-    </li>
     <li class="toctree-l3"><a class="reference internal" href="#size-comparison-studies">Size Comparison Studies</a>
     </li>
     <li class="toctree-l3"><a class="reference internal" href="#custom-styling">Custom Styling</a>
-    </li>
-    <li class="toctree-l3"><a class="reference internal" href="#performance-optimization">Performance Optimization</a>
-    </li>
-        </ul>
-    </li>
-    <li class="toctree-l2"><a class="reference internal" href="#workflow-details">Workflow Details</a>
-    </li>
-    <li class="toctree-l2"><a class="reference internal" href="#advanced-usage">Advanced Usage</a>
-        <ul>
-    <li class="toctree-l3"><a class="reference internal" href="#batch-processing-multiple-families">Batch Processing Multiple Families</a>
-    </li>
-    <li class="toctree-l3"><a class="reference internal" href="#quality-control-pipeline">Quality Control Pipeline</a>
-    </li>
-    <li class="toctree-l3"><a class="reference internal" href="#integration-with-analysis-scripts">Integration with Analysis Scripts</a>
-    </li>
-        </ul>
-    </li>
-    <li class="toctree-l2"><a class="reference internal" href="#performance-tips">Performance Tips</a>
-        <ul>
-    <li class="toctree-l3"><a class="reference internal" href="#speed-optimization">Speed Optimization</a>
-    </li>
-    <li class="toctree-l3"><a class="reference internal" href="#quality-optimization">Quality Optimization</a>
-    </li>
-    <li class="toctree-l3"><a class="reference internal" href="#memory-optimization">Memory Optimization</a>
     </li>
         </ul>
     </li>
@@ -164,17 +122,9 @@
         <ul>
     <li class="toctree-l3"><a class="reference internal" href="#common-issues">Common Issues</a>
     </li>
-    <li class="toctree-l3"><a class="reference internal" href="#performance-benchmarks">Performance Benchmarks</a>
-    </li>
         </ul>
     </li>
-    <li class="toctree-l2"><a class="reference internal" href="#integration-with-other-commands">Integration with Other Commands</a>
-        <ul>
-    <li class="toctree-l3"><a class="reference internal" href="#workflow-with-align-command">Workflow with Align Command</a>
-    </li>
-    <li class="toctree-l3"><a class="reference internal" href="#workflow-with-project-command">Workflow with Project Command</a>
-    </li>
-        </ul>
+    <li class="toctree-l2"><a class="reference internal" href="#performance-tips">Performance Tips</a>
     </li>
     </ul>
                   </li>
@@ -192,6 +142,10 @@
               </ul>
               <p class="caption"><span class="caption-text">Tools</span></p>
               <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../tools/custom_database/">Custom Database</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../tools/database_builder/">Rebuild Default Database</a>
+                  </li>
                   <li class="toctree-l1"><a class="reference internal" href="../../tools/matrix_extraction/">PyMOL Matrix Extraction</a>
                   </li>
               </ul>
@@ -237,18 +191,6 @@
               
                 <h1 id="overlay-command">Overlay Command</h1>
 <p>Create combined visualizations from multiple protein structures with automatic clustering, family-based alignment, and opacity scaling.</p>
-<h2 id="overview">Overview</h2>
-<p>The <code>overlay</code> command combines multiple protein structures into a single visualization, enabling comparison of structural similarities and differences across protein families. It supports both family-identity alignment (using structure databases) and inertia-based alignment for optimal structure comparison.</p>
-<h2 id="requirements">Requirements</h2>
-<p>For PNG and PDF output, the Cairo graphics library is required:</p>
-<ul>
-<li><strong>macOS:</strong> <code>brew install cairo</code></li>
-<li><strong>Ubuntu:</strong> <code>sudo apt-get install libcairo2-dev pkg-config</code></li>
-<li><strong>Windows:</strong> Install Cairo binaries or use <code>conda install cairo</code></li>
-</ul>
-<p>Verify installation:</p>
-<pre><code class="language-bash">python -c &quot;import drawsvg; print('Cairo available:', hasattr(drawsvg, '_cairo_available') and drawsvg._cairo_available)&quot;
-</code></pre>
 <h2 id="usage">Usage</h2>
 <pre><code class="language-bash">flatprot overlay FILE_PATTERNS [OPTIONS]
 </code></pre>
@@ -292,100 +234,63 @@
 </ul>
 <h2 id="alignment-modes">Alignment Modes</h2>
 <h3 id="family-identity-alignment-recommended">Family-Identity Alignment (Recommended)</h3>
-<p>Uses FoldSeek to align structures against a curated database of protein families:</p>
-<ul>
-<li><strong>Automatic Database Download</strong>: Downloads alignment database on first use</li>
-<li><strong>Batch Processing</strong>: Efficiently processes multiple structures in single FoldSeek call</li>
-<li><strong>Family-Specific</strong>: Can target specific SCOP family IDs with <code>--family</code></li>
-<li><strong>Fallback Support</strong>: Automatically falls back to inertia alignment if database alignment fails</li>
-</ul>
-<pre><code class="language-bash"># Align to best matching family
+<p>Uses FoldSeek to align structures against a curated database of protein families with automatic database download and batch processing.</p>
+<p><strong>For optimal conservation</strong>, it is recommended to align all structures to the same common core structure using a fixed family ID. This ensures consistent alignment across all structures in the overlay.</p>
+<pre><code class="language-bash"># Align to best matching family (may vary per structure)
 flatprot overlay &quot;structures/*.cif&quot; --alignment-mode family-identity
 
-# Align to specific family
+# Align to specific family for optimal conservation (recommended)
 flatprot overlay &quot;toxins/*.cif&quot; --family 3000114 --alignment-mode family-identity
 </code></pre>
+<p><strong>Note:</strong> Using automatic family detection or other alignment modes does not guarantee optimal conservation across structures, as each structure may align to different reference families.</p>
 <h3 id="inertia-alignment">Inertia Alignment</h3>
-<p>Uses principal component analysis for structure alignment:</p>
-<ul>
-<li><strong>Fast Processing</strong>: No external database dependencies</li>
-<li><strong>Universal</strong>: Works with any protein structure</li>
-<li><strong>Consistent</strong>: Deterministic alignment based on structure geometry</li>
-</ul>
+<p>Uses principal component analysis for structure alignment. Fast processing with no external database dependencies.</p>
 <pre><code class="language-bash">flatprot overlay &quot;structures/*.cif&quot; --alignment-mode inertia
 </code></pre>
 <h2 id="clustering">Clustering</h2>
 <p>Automatic clustering reduces visual complexity by grouping similar structures:</p>
-<h3 id="default-behavior">Default Behavior</h3>
 <ul>
 <li><strong>Auto-enabled</strong> for datasets with 100+ structures</li>
 <li>Uses FoldSeek to identify structural similarity</li>
-<li>Selects representative structures from each cluster</li>
 <li>Scales opacity based on cluster size (larger clusters = higher opacity)</li>
 </ul>
-<h3 id="configuration">Configuration</h3>
-<ul>
-<li><strong>Manual Control</strong>: Use <code>--clustering</code> / <code>--no-clustering</code> to force enable/disable</li>
-<li><strong>Auto-threshold</strong>: Adjust when clustering auto-enables with <code>--clustering-auto-threshold</code></li>
-<li><strong>Similarity Thresholds</strong>: Configure clustering sensitivity:</li>
-<li><code>--clustering-min-seq-id</code> (0.0-1.0): Lower = more permissive clustering</li>
-<li><code>--clustering-coverage</code> (0.0-1.0): Lower = more permissive clustering</li>
-</ul>
-<pre><code class="language-bash"># Auto-clustering (default) - enables at 100+ structures
-flatprot overlay &quot;small_set/*.cif&quot;  # No clustering (&lt; 100 files)
-flatprot overlay &quot;large_dataset/*.cif&quot;  # Auto-clustering (≥ 100 files)
-
-# Manual control
+<pre><code class="language-bash"># Manual control
 flatprot overlay &quot;structures/*.cif&quot; --clustering  # Force enable
 flatprot overlay &quot;structures/*.cif&quot; --no-clustering  # Force disable
 
-# Custom auto-threshold
-flatprot overlay &quot;structures/*.cif&quot; --clustering-auto-threshold 50
-
-# Custom clustering parameters
+# Custom thresholds
 flatprot overlay &quot;structures/*.cif&quot; --clustering-min-seq-id 0.8 --clustering-coverage 0.95
-</code></pre>
-<h2 id="scaling-options">Scaling Options</h2>
-<h3 id="automatic-scaling-default">Automatic Scaling (Default)</h3>
-<p>Scales each structure to fit the canvas optimally:
-- Good for individual structure visualization
-- May cause size inconsistencies between different structures</p>
-<h3 id="disabled-scaling-new-feature">Disabled Scaling (New Feature)</h3>
-<p>Maintains consistent scale across all structures:
-- <strong>Use Case</strong>: Comparing structures of different sizes
-- <strong>Benefits</strong>: True size relationships preserved
-- <strong>Recommendation</strong>: Use with family-identity alignment for best results</p>
-<pre><code class="language-bash"># Compare structures at consistent scale
-flatprot overlay &quot;family/*.cif&quot; --disable-scaling --alignment-mode family-identity
 </code></pre>
 <h2 id="output-formats">Output Formats</h2>
 <h3 id="svg-vector">SVG (Vector)</h3>
 <ul>
-<li><strong>Advantages</strong>: Scalable, no Cairo required, small file size</li>
-<li><strong>Use Cases</strong>: Web display, further editing, publications</li>
-<li><strong>Limitations</strong>: Limited raster effects</li>
+<li>Scalable, no Cairo required, small file size</li>
+<li>Best for web display and publications</li>
 </ul>
 <h3 id="png-raster">PNG (Raster)</h3>
 <ul>
-<li><strong>Advantages</strong>: Universal compatibility, predictable appearance</li>
-<li><strong>Use Cases</strong>: Presentations, papers, thumbnails</li>
-<li><strong>Requirements</strong>: Cairo graphics library</li>
-<li><strong>Configuration</strong>: Adjustable DPI (150-600 recommended)</li>
+<li>Universal compatibility, requires Cairo graphics library</li>
+<li>Adjustable DPI (150-600 recommended)</li>
 </ul>
 <h3 id="pdf-vector">PDF (Vector)</h3>
 <ul>
-<li><strong>Advantages</strong>: Publication quality, vector graphics, universal</li>
-<li><strong>Use Cases</strong>: Publications, high-quality prints</li>
-<li><strong>Requirements</strong>: Cairo graphics library</li>
+<li>Publication quality, requires Cairo graphics library</li>
 </ul>
 <pre><code class="language-bash"># High-quality publication PDF
 flatprot overlay &quot;structures/*.cif&quot; -o publication.pdf --dpi 600
 
 # Web-optimized SVG
 flatprot overlay &quot;structures/*.cif&quot; -o web_display.svg
-
-# Presentation PNG
-flatprot overlay &quot;structures/*.cif&quot; -o presentation.png --dpi 300
+</code></pre>
+<h2 id="requirements">Requirements</h2>
+<p>For PNG and PDF output, install Cairo graphics library:</p>
+<ul>
+<li><strong>macOS:</strong> <code>brew install cairo</code></li>
+<li><strong>Ubuntu:</strong> <code>sudo apt-get install libcairo2-dev pkg-config</code></li>
+<li><strong>Windows:</strong> <code>conda install cairo</code></li>
+</ul>
+<p>Verify installation:</p>
+<pre><code class="language-bash">python -c &quot;import drawsvg; print('Cairo available:', hasattr(drawsvg, '_cairo_available') and drawsvg._cairo_available)&quot;
 </code></pre>
 <h2 id="examples">Examples</h2>
 <h3 id="basic-usage">Basic Usage</h3>
@@ -402,28 +307,9 @@ flatprot overlay &quot;structures/*.cif&quot; -o presentation.png --dpi 300
 <p><strong>Specific family alignment:</strong></p>
 <pre><code class="language-bash">flatprot overlay &quot;toxins/*.cif&quot; --family 3000114 --alignment-mode family-identity -o toxin_family.pdf
 </code></pre>
-<p><strong>High-confidence alignments only:</strong></p>
-<pre><code class="language-bash">flatprot overlay &quot;structures/*.cif&quot; --min-probability 0.8 --alignment-mode family-identity
-</code></pre>
-<h3 id="clustering-configuration">Clustering Configuration</h3>
-<p><strong>Strict clustering (more representatives):</strong></p>
-<pre><code class="language-bash">flatprot overlay &quot;structures/*.cif&quot; --clustering-min-seq-id 0.8 --clustering-coverage 0.95
-</code></pre>
-<p><strong>Permissive clustering (fewer representatives):</strong></p>
-<pre><code class="language-bash">flatprot overlay &quot;structures/*.cif&quot; --clustering-min-seq-id 0.3 --clustering-coverage 0.7
-</code></pre>
-<p><strong>Force clustering on small datasets:</strong></p>
-<pre><code class="language-bash">flatprot overlay file1.cif file2.cif file3.cif --clustering
-</code></pre>
-<p><strong>Custom auto-threshold for medium datasets:</strong></p>
-<pre><code class="language-bash">flatprot overlay &quot;medium_set/*.cif&quot; --clustering-auto-threshold 20
-</code></pre>
 <h3 id="size-comparison-studies">Size Comparison Studies</h3>
 <p><strong>Compare structures at true relative sizes:</strong></p>
 <pre><code class="language-bash">flatprot overlay &quot;different_sizes/*.cif&quot; --disable-scaling --alignment-mode family-identity -o size_comparison.png
-</code></pre>
-<p><strong>Large canvas for detailed comparison:</strong></p>
-<pre><code class="language-bash">flatprot overlay &quot;complex_structures/*.cif&quot; --canvas-width 1500 --canvas-height 1500 --disable-scaling
 </code></pre>
 <h3 id="custom-styling">Custom Styling</h3>
 <p><strong>Apply custom colors and styles:</strong></p>
@@ -432,133 +318,6 @@ flatprot overlay &quot;structures/*.cif&quot; -o presentation.png --dpi 300
 <p><strong>Publication-ready with high DPI:</strong></p>
 <pre><code class="language-bash">flatprot overlay &quot;family/*.cif&quot; --style publication.toml --dpi 600 -o figure.pdf
 </code></pre>
-<h3 id="performance-optimization">Performance Optimization</h3>
-<p><strong>Quick preview (low DPI, small canvas):</strong></p>
-<pre><code class="language-bash">flatprot overlay &quot;large_set/*.cif&quot; --dpi 150 --canvas-width 500 --canvas-height 500 -o preview.png
-</code></pre>
-<p><strong>Disable clustering for small datasets:</strong></p>
-<pre><code class="language-bash">flatprot overlay file1.cif file2.cif file3.cif --no-clustering -o small_set.svg
-</code></pre>
-<h2 id="workflow-details">Workflow Details</h2>
-<p>The overlay command follows this processing pipeline:</p>
-<ol>
-<li><strong>Input Resolution</strong></li>
-<li>Resolves glob patterns to find structure files</li>
-<li>Validates file formats and accessibility</li>
-<li>
-<p>Reports number of structures found</p>
-</li>
-<li>
-<p><strong>Optional Clustering</strong></p>
-</li>
-<li>Groups similar structures using FoldSeek (if enabled)</li>
-<li>Selects representative structures from clusters</li>
-<li>
-<p>Calculates opacity weights based on cluster sizes</p>
-</li>
-<li>
-<p><strong>Alignment Processing</strong></p>
-</li>
-<li><strong>Family-Identity Mode</strong>:<ul>
-<li>Downloads/validates alignment database</li>
-<li>Runs batch FoldSeek alignment</li>
-<li>Retrieves transformation matrices from database</li>
-<li>Falls back to inertia if alignment fails</li>
-</ul>
-</li>
-<li>
-<p><strong>Inertia Mode</strong>: Calculates principal component transformations</p>
-</li>
-<li>
-<p><strong>Structure Projection</strong></p>
-</li>
-<li>Applies transformation matrices to 3D coordinates</li>
-<li>Projects to 2D using orthographic projection</li>
-<li>Applies scaling (unless disabled)</li>
-<li>
-<p>Centers structures on canvas</p>
-</li>
-<li>
-<p><strong>Scene Creation</strong></p>
-</li>
-<li>Loads custom styles (if provided)</li>
-<li>Creates 2D scene objects for each structure</li>
-<li>
-<p>Applies opacity based on cluster weights</p>
-</li>
-<li>
-<p><strong>Overlay Composition</strong></p>
-</li>
-<li>Combines all structure drawings</li>
-<li>Preserves individual structure opacity</li>
-<li>
-<p>Maintains proper layering</p>
-</li>
-<li>
-<p><strong>Export</strong></p>
-</li>
-<li>Renders to requested format</li>
-<li>Applies DPI settings for raster formats</li>
-<li>Saves to specified output path</li>
-</ol>
-<h2 id="advanced-usage">Advanced Usage</h2>
-<h3 id="batch-processing-multiple-families">Batch Processing Multiple Families</h3>
-<pre><code class="language-bash">#!/bin/bash
-for family_dir in family_*/; do
-    family_name=$(basename &quot;$family_dir&quot;)
-    flatprot overlay &quot;${family_dir}*.cif&quot; \
-        --alignment-mode family-identity \
-        --disable-scaling \
-        -o &quot;overlays/${family_name}_overlay.pdf&quot; \
-        --dpi 300
-done
-</code></pre>
-<h3 id="quality-control-pipeline">Quality Control Pipeline</h3>
-<pre><code class="language-bash"># Generate both aligned and unaligned versions for comparison
-flatprot overlay &quot;structures/*.cif&quot; --alignment-mode family-identity -o aligned.png
-flatprot overlay &quot;structures/*.cif&quot; --alignment-mode inertia -o inertia.png
-flatprot overlay &quot;structures/*.cif&quot; --no-clustering -o all_structures.png
-</code></pre>
-<h3 id="integration-with-analysis-scripts">Integration with Analysis Scripts</h3>
-<pre><code class="language-python">import subprocess
-import json
-
-def create_family_overlay(structures_pattern, family_id=None):
-    &quot;&quot;&quot;Create overlay with optional family targeting.&quot;&quot;&quot;
-    cmd = [
-        &quot;flatprot&quot;, &quot;overlay&quot;, structures_pattern,
-        &quot;--alignment-mode&quot;, &quot;family-identity&quot;,
-        &quot;--disable-scaling&quot;,
-        &quot;-o&quot;, f&quot;overlay_{family_id or 'auto'}.png&quot;
-    ]
-
-    if family_id:
-        cmd.extend([&quot;--family&quot;, family_id])
-
-    result = subprocess.run(cmd, capture_output=True, text=True)
-    return result.returncode == 0
-</code></pre>
-<h2 id="performance-tips">Performance Tips</h2>
-<h3 id="speed-optimization">Speed Optimization</h3>
-<ul>
-<li><strong>Use SVG output</strong> for fastest processing (no rasterization)</li>
-<li><strong>Enable clustering</strong> for large datasets (&gt;10 structures)</li>
-<li><strong>Lower DPI</strong> for quick previews (150-200)</li>
-<li><strong>Smaller canvas</strong> for faster processing</li>
-</ul>
-<h3 id="quality-optimization">Quality Optimization</h3>
-<ul>
-<li><strong>Higher DPI</strong> for publications (300-600)</li>
-<li><strong>PDF output</strong> for vector graphics quality</li>
-<li><strong>Disable clustering</strong> for small, carefully curated sets</li>
-<li><strong>Custom styles</strong> for publication-ready appearance</li>
-</ul>
-<h3 id="memory-optimization">Memory Optimization</h3>
-<ul>
-<li><strong>Process in batches</strong> for very large datasets</li>
-<li><strong>Use clustering</strong> to reduce memory usage</li>
-<li><strong>Smaller canvas sizes</strong> for memory-constrained systems</li>
-</ul>
 <h2 id="troubleshooting">Troubleshooting</h2>
 <h3 id="common-issues">Common Issues</h3>
 <p><strong>"Cairo library not available" error:</strong></p>
@@ -566,37 +325,16 @@ def create_family_overlay(structures_pattern, family_id=None):
 brew install cairo  # macOS
 sudo apt-get install libcairo2-dev  # Ubuntu
 
-# Verify installation
-python -c &quot;import drawsvg; print(drawsvg._cairo_available)&quot;
-
 # Fallback to SVG
 flatprot overlay &quot;*.cif&quot; -o output.svg
 </code></pre>
 <p><strong>"No files found matching pattern" error:</strong></p>
-<pre><code class="language-bash"># Check pattern syntax
-ls structures/*.cif  # Verify files exist
-
-# Use absolute paths
-flatprot overlay &quot;/full/path/to/structures/*.cif&quot;
-
-# Quote patterns properly
+<pre><code class="language-bash"># Quote patterns properly
 flatprot overlay &quot;structures/*.cif&quot;  # Correct
-flatprot overlay structures/*.cif    # May fail in some shells
 </code></pre>
 <p><strong>Family alignment fails:</strong></p>
-<pre><code class="language-bash"># Check network connectivity (for database download)
-# Verify Foldseek is installed
-which foldseek
-
-# Force fallback to inertia mode
+<pre><code class="language-bash"># Force fallback to inertia mode
 flatprot overlay &quot;*.cif&quot; --alignment-mode inertia
-</code></pre>
-<p><strong>Clustering fails:</strong></p>
-<pre><code class="language-bash"># Disable clustering
-flatprot overlay &quot;*.cif&quot; --no-clustering
-
-# Check Foldseek availability
-foldseek --help
 </code></pre>
 <p><strong>Memory issues with large datasets:</strong></p>
 <pre><code class="language-bash"># Use clustering to reduce structures
@@ -604,75 +342,14 @@ flatprot overlay &quot;large_set/*.cif&quot; --clustering
 
 # Reduce canvas size
 flatprot overlay &quot;*.cif&quot; --canvas-width 500 --canvas-height 500
-
-# Process in smaller batches
-flatprot overlay &quot;batch1/*.cif&quot; -o batch1.png
-flatprot overlay &quot;batch2/*.cif&quot; -o batch2.png
 </code></pre>
-<h3 id="performance-benchmarks">Performance Benchmarks</h3>
-<p>Typical processing times on a modern laptop:</p>
-<table>
-<thead>
-<tr>
-<th>Structures</th>
-<th>Mode</th>
-<th>Clustering</th>
-<th>Time</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>3-5</td>
-<td>Family-identity</td>
-<td>Enabled</td>
-<td>10-30s</td>
-</tr>
-<tr>
-<td>3-5</td>
-<td>Inertia</td>
-<td>Disabled</td>
-<td>2-5s</td>
-</tr>
-<tr>
-<td>10-20</td>
-<td>Family-identity</td>
-<td>Enabled</td>
-<td>30-60s</td>
-</tr>
-<tr>
-<td>10-20</td>
-<td>Inertia</td>
-<td>Enabled</td>
-<td>5-15s</td>
-</tr>
-<tr>
-<td>50+</td>
-<td>Family-identity</td>
-<td>Enabled</td>
-<td>1-5min</td>
-</tr>
-</tbody>
-</table>
-<p><em>First run with family-identity mode includes database download time (~30s)</em></p>
-<h2 id="integration-with-other-commands">Integration with Other Commands</h2>
-<h3 id="workflow-with-align-command">Workflow with Align Command</h3>
-<pre><code class="language-bash"># 1. First, explore alignment options
-flatprot align structure.cif -i alignment_info.json
-
-# 2. Create overlay with discovered family
-family_id=$(jq -r '.best_match.family_id' alignment_info.json)
-flatprot overlay &quot;family_structures/*.cif&quot; --family &quot;$family_id&quot; -o aligned_overlay.png
-</code></pre>
-<h3 id="workflow-with-project-command">Workflow with Project Command</h3>
-<pre><code class="language-bash"># 1. Create individual projections
-for file in *.cif; do
-    flatprot project &quot;$file&quot; -o &quot;individual_${file%.cif}.svg&quot;
-done
-
-# 2. Create comparison overlay
-flatprot overlay &quot;*.cif&quot; --disable-scaling -o comparison_overlay.png
-</code></pre>
-<p>This comprehensive documentation covers all the new features including family-identity alignment, batched processing, disable-scaling option, and provides extensive examples for different use cases.</p>
+<h2 id="performance-tips">Performance Tips</h2>
+<ul>
+<li><strong>Use SVG output</strong> for fastest processing (no rasterization)</li>
+<li><strong>Enable clustering</strong> for large datasets (&gt;10 structures)</li>
+<li><strong>Lower DPI</strong> for quick previews (150-200)</li>
+<li><strong>Higher DPI</strong> for publications (300-600)</li>
+</ul>
               
             </div>
           </div><footer>

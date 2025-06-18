@@ -64,35 +64,51 @@
     <ul class="current">
     <li class="toctree-l2"><a class="reference internal" href="#usage">Usage</a>
     </li>
-    <li class="toctree-l2"><a class="reference internal" href="#arguments">Arguments</a>
+    <li class="toctree-l2"><a class="reference internal" href="#parameters">Parameters</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#required">Required</a>
     </li>
-    <li class="toctree-l2"><a class="reference internal" href="#options">Options</a>
+    <li class="toctree-l3"><a class="reference internal" href="#output-options">Output Options</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#transformation-options">Transformation Options</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#styling-options">Styling Options</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#input-options">Input Options</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#general-options">General Options</a>
+    </li>
+        </ul>
     </li>
     <li class="toctree-l2"><a class="reference internal" href="#input-file-formats">Input File Formats</a>
         <ul>
-    <li class="toctree-l3"><a class="reference internal" href="#structure-file-structure_file">Structure File (STRUCTURE_FILE)</a>
+    <li class="toctree-l3"><a class="reference internal" href="#structure-files">Structure Files</a>
     </li>
-    <li class="toctree-l3"><a class="reference internal" href="#matrix-file-matrix">Matrix File (--matrix)</a>
-    </li>
-    <li class="toctree-l3"><a class="reference internal" href="#style-file-style">Style File (--style)</a>
-    </li>
-    <li class="toctree-l3"><a class="reference internal" href="#annotation-file-annotations">Annotation File (--annotations)</a>
-    </li>
-    <li class="toctree-l3"><a class="reference internal" href="#dssp-file-dssp">DSSP File (--dssp)</a>
+    <li class="toctree-l3"><a class="reference internal" href="#matrix-files">Matrix Files</a>
     </li>
         </ul>
     </li>
-    <li class="toctree-l2"><a class="reference internal" href="#position-annotations-show-positions">Position Annotations (--show-positions)</a>
-        <ul>
-    <li class="toctree-l3"><a class="reference internal" href="#annotation-levels">Annotation Levels</a>
-    </li>
-    <li class="toctree-l3"><a class="reference internal" href="#position-annotation-details">Position Annotation Details</a>
-    </li>
-        </ul>
+    <li class="toctree-l2"><a class="reference internal" href="#position-annotations">Position Annotations</a>
     </li>
     <li class="toctree-l2"><a class="reference internal" href="#examples">Examples</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#basic-usage">Basic Usage</a>
     </li>
-    <li class="toctree-l2"><a class="reference internal" href="#error-handling">Error Handling</a>
+    <li class="toctree-l3"><a class="reference internal" href="#custom-styling-and-annotations">Custom Styling and Annotations</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#matrix-transformations">Matrix Transformations</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#position-annotations_1">Position Annotations</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#canvas-size-adjustment">Canvas Size Adjustment</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#troubleshooting">Troubleshooting</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#common-issues">Common Issues</a>
+    </li>
+        </ul>
     </li>
     </ul>
                   </li>
@@ -114,6 +130,10 @@
               </ul>
               <p class="caption"><span class="caption-text">Tools</span></p>
               <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../tools/custom_database/">Custom Database</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../tools/database_builder/">Rebuild Default Database</a>
+                  </li>
                   <li class="toctree-l1"><a class="reference internal" href="../../tools/matrix_extraction/">PyMOL Matrix Extraction</a>
                   </li>
               </ul>
@@ -158,212 +178,125 @@
             <div class="section" itemprop="articleBody">
               
                 <h1 id="project-command">Project Command</h1>
-<p>The <code>project</code> command transforms a 3D protein structure into a standardized 2D SVG representation, optionally applying custom transformations, styles, and annotations.</p>
+<p>Transform a 3D protein structure into a standardized 2D SVG representation with optional custom transformations, styles, and annotations.</p>
 <h2 id="usage">Usage</h2>
 <pre><code class="language-bash">flatprot project STRUCTURE_FILE [OPTIONS]
 </code></pre>
-<h2 id="arguments">Arguments</h2>
+<h2 id="parameters">Parameters</h2>
+<h3 id="required">Required</h3>
 <ul>
-<li><code>STRUCTURE_FILE</code>: Path to the input protein structure file (PDB or mmCIF format). Required.</li>
+<li><code>STRUCTURE_FILE</code> - Path to the input protein structure file (PDB or mmCIF format)</li>
 </ul>
-<h2 id="options">Options</h2>
-<table>
-<thead>
-<tr>
-<th>Option</th>
-<th>Short</th>
-<th>Type</th>
-<th>Default</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>--output</code></td>
-<td><code>-o</code></td>
-<td>Path</td>
-<td><em>stdout</em></td>
-<td>Path to save the output SVG file. If omitted, the SVG content is printed to standard output.</td>
-</tr>
-<tr>
-<td><code>--matrix</code></td>
-<td></td>
-<td>Path</td>
-<td><em>None</em></td>
-<td>Path to a custom transformation matrix (NumPy <code>.npy</code> format). If omitted, an inertia-based transformation is applied. See format details below.</td>
-</tr>
-<tr>
-<td><code>--style</code></td>
-<td></td>
-<td>Path</td>
-<td><em>None</em></td>
-<td>Path to a custom style file (TOML format). See <a href="../../file_formats/style/">Style File Format</a>.</td>
-</tr>
-<tr>
-<td><code>--annotations</code></td>
-<td></td>
-<td>Path</td>
-<td><em>None</em></td>
-<td>Path to a custom annotation file (TOML format). See <a href="../../file_formats/annotations/">Annotation File Format</a>.</td>
-</tr>
-<tr>
-<td><code>--dssp</code></td>
-<td></td>
-<td>Path</td>
-<td><em>None</em></td>
-<td>Path to a DSSP file for secondary structure assignment. <strong>Required if <code>STRUCTURE_FILE</code> is in PDB format.</strong> Ignored for mmCIF files.</td>
-</tr>
-<tr>
-<td><code>--canvas-width</code></td>
-<td></td>
-<td>Integer</td>
-<td><code>1000</code></td>
-<td>Width of the output SVG canvas in pixels.</td>
-</tr>
-<tr>
-<td><code>--canvas-height</code></td>
-<td></td>
-<td>Integer</td>
-<td><code>1000</code></td>
-<td>Height of the output SVG canvas in pixels.</td>
-</tr>
-<tr>
-<td><code>--show-positions</code></td>
-<td></td>
-<td>String</td>
-<td><code>minimal</code></td>
-<td>Position annotation level: <code>none</code>, <code>minimal</code>, <code>major</code>, <code>full</code>. Controls residue numbering and terminus labels.</td>
-</tr>
-<tr>
-<td><code>--quiet</code></td>
-<td></td>
-<td>Boolean</td>
-<td><code>false</code></td>
-<td>Suppress all informational output except errors.</td>
-</tr>
-<tr>
-<td><code>--verbose</code></td>
-<td></td>
-<td>Boolean</td>
-<td><code>false</code></td>
-<td>Print additional debug information during execution.</td>
-</tr>
-</tbody>
-</table>
+<h3 id="output-options">Output Options</h3>
+<ul>
+<li><code>--output</code> / <code>-o</code> - Path to save the output SVG file [default: stdout]</li>
+<li><code>--canvas-width</code> - Width of the output SVG canvas in pixels [default: 1000]</li>
+<li><code>--canvas-height</code> - Height of the output SVG canvas in pixels [default: 1000]</li>
+</ul>
+<h3 id="transformation-options">Transformation Options</h3>
+<ul>
+<li><code>--matrix</code> - Path to a custom transformation matrix (NumPy <code>.npy</code> format). If omitted, inertia-based transformation is applied</li>
+</ul>
+<h3 id="styling-options">Styling Options</h3>
+<ul>
+<li><code>--style</code> - Path to a custom style file (TOML format). See <a href="../../file_formats/style/">Style File Format</a></li>
+<li><code>--annotations</code> - Path to a custom annotation file (TOML format). See <a href="../../file_formats/annotations/">Annotation File Format</a></li>
+<li><code>--show-positions</code> - Position annotation level: <code>none</code>, <code>minimal</code>, <code>major</code>, <code>full</code> [default: minimal]</li>
+</ul>
+<h3 id="input-options">Input Options</h3>
+<ul>
+<li><code>--dssp</code> - Path to a DSSP file for secondary structure assignment. <strong>Required for PDB format files</strong></li>
+</ul>
+<h3 id="general-options">General Options</h3>
+<ul>
+<li><code>--quiet</code> - Suppress all informational output except errors</li>
+<li><code>--verbose</code> - Print additional debug information during execution</li>
+</ul>
 <h2 id="input-file-formats">Input File Formats</h2>
-<h3 id="structure-file-structure_file">Structure File (<code>STRUCTURE_FILE</code>)</h3>
+<h3 id="structure-files">Structure Files</h3>
 <ul>
-<li>Accepts protein structure files in PDB (<code>.pdb</code>) or mmCIF (<code>.cif</code>, <code>.mmcif</code>) format.</li>
-<li><strong>PDB Requirement:</strong> If using a <code>.pdb</code> file, you <strong>must</strong> provide secondary structure information via a corresponding DSSP file using the <code>--dssp</code> option. FlatProt cannot determine secondary structure directly from PDB format.</li>
-<li><strong>mmCIF:</strong> Usually contains secondary structure information; the <code>--dssp</code> option is typically not needed.</li>
+<li><strong>PDB Format (<code>.pdb</code>):</strong> Requires DSSP file for secondary structure assignment</li>
+<li><strong>mmCIF Format (<code>.cif</code>, <code>.mmcif</code>):</strong> Usually contains secondary structure information</li>
 </ul>
-<h3 id="matrix-file-matrix">Matrix File (<code>--matrix</code>)</h3>
+<h3 id="matrix-files">Matrix Files</h3>
+<p>NumPy files (<code>.npy</code>) specifying custom 3D transformations. Supported formats:
+- 4x3 matrix: 3x3 rotation + 1x3 translation
+- 3x4 matrix: Transposed version (auto-corrected)
+- 3x3 matrix: Pure rotation (zero translation)</p>
+<p>If omitted, inertia-based transformation is applied.</p>
+<h2 id="position-annotations">Position Annotations</h2>
+<p>Controls residue numbering and terminus labels in the SVG output:</p>
 <ul>
-<li>Optional. If provided, must be a NumPy file (<code>.npy</code>).</li>
-<li>Specifies a custom 3D transformation (rotation and translation) applied before projection.</li>
-<li>Expected formats:<ul>
-<li>A 4x3 matrix: 3x3 rotation matrix in the top 3 rows, 1x3 translation vector in the bottom row.</li>
-<li>A 3x4 matrix: Transposed version of the 4x3 format (will be auto-corrected).</li>
-<li>A 3x3 matrix: Pure rotation matrix (translation is assumed to be zero).</li>
-</ul>
-</li>
-<li>If omitted, the structure is transformed based on its principal axes of inertia.</li>
-</ul>
-<h3 id="style-file-style">Style File (<code>--style</code>)</h3>
-<ul>
-<li>Optional. Must be a TOML file.</li>
-<li>Defines visual properties (colors, strokes, sizes, etc.) for secondary structure elements.</li>
-<li>See the <a href="../../file_formats/style/">Style File Format documentation</a> for details.</li>
-</ul>
-<h3 id="annotation-file-annotations">Annotation File (<code>--annotations</code>)</h3>
-<ul>
-<li>Optional. Must be a TOML file.</li>
-<li>Defines points, lines, and areas to highlight specific residues or regions.</li>
-<li>Can include inline styles to customize individual annotations.</li>
-<li>See the <a href="../../file_formats/annotations/">Annotation File Format documentation</a> for details.</li>
-</ul>
-<h3 id="dssp-file-dssp">DSSP File (<code>--dssp</code>)</h3>
-<ul>
-<li>Optional, but <strong>required</strong> when the input <code>STRUCTURE_FILE</code> is in PDB format.</li>
-<li>Standard DSSP output file providing secondary structure assignments (helix, sheet, coil) for each residue.</li>
-</ul>
-<h2 id="position-annotations-show-positions">Position Annotations (<code>--show-positions</code>)</h2>
-<p>Position annotations add residue numbers and N/C terminus labels to the SVG output, helping identify specific regions of the protein structure. The annotation level controls how much detail is displayed:</p>
-<h3 id="annotation-levels">Annotation Levels</h3>
-<ul>
-<li><strong><code>none</code></strong>: No position annotations are added to the output.</li>
-<li><strong><code>minimal</code></strong> (default): Only N and C terminus labels are shown, providing basic orientation.</li>
-<li><strong><code>major</code></strong>: N/C terminus labels plus residue numbers for major secondary structures (helices and sheets with ≥3 residues). Short structures are omitted to reduce clutter.</li>
-<li><strong><code>full</code></strong>: All position annotations including residue numbers for all secondary structures, even single-residue elements.</li>
-</ul>
-<h3 id="position-annotation-details">Position Annotation Details</h3>
-<ul>
-<li><strong>Terminus Labels</strong>: N and C labels mark the start and end of the protein chain</li>
-<li><strong>Residue Numbers</strong>: Start and end residue numbers for secondary structure elements</li>
-<li><strong>Filtering</strong>: In 'major' mode, only significant secondary structures (≥3 residues) receive residue numbers</li>
-<li><strong>Element Types</strong>: Residue numbers are added only to helices and sheets, not coil regions</li>
+<li><strong><code>none</code></strong>: No position annotations</li>
+<li><strong><code>minimal</code></strong> (default): Only N and C terminus labels</li>
+<li><strong><code>major</code></strong>: Terminus labels + residue numbers for major secondary structures (≥3 residues)</li>
+<li><strong><code>full</code></strong>: All position annotations including single-residue elements</li>
 </ul>
 <h2 id="examples">Examples</h2>
-<p><strong>Basic Projection (mmCIF to SVG file):</strong></p>
-<pre><code class="language-bash">flatprot project structure.cif -o output.svg
-</code></pre>
-<p><strong>Projection with DSSP (PDB to SVG file):</strong></p>
-<pre><code class="language-bash">flatprot project structure.pdb -o output.svg --dssp structure.dssp
-</code></pre>
-<p><strong>Projection to Standard Output (Stdout):</strong></p>
-<pre><code class="language-bash">flatprot project structure.cif &gt; output.svg
-</code></pre>
-<p><strong>Apply Custom Styling:</strong></p>
-<pre><code class="language-bash">flatprot project structure.cif -o output.svg --style custom_styles.toml
-</code></pre>
-<p><strong>Add Annotations:</strong></p>
-<pre><code class="language-bash">flatprot project structure.cif -o output.svg --annotations features.toml
-</code></pre>
-<p><strong>Use a Pre-calculated Alignment Matrix:</strong></p>
-<pre><code class="language-bash">flatprot project structure.cif -o aligned_output.svg --matrix alignment_matrix.npy
-</code></pre>
-<p><strong>Use a Matrix from PyMOL Orientation:</strong></p>
-<pre><code class="language-bash"># First, extract matrix from PyMOL
-uv run scripts/get_matrix.py structure.cif
+<h3 id="basic-usage">Basic Usage</h3>
+<pre><code class="language-bash"># Basic projection (mmCIF to SVG)
+flatprot project structure.cif -o output.svg
 
-# Then use it with project command
+# Projection with DSSP (PDB to SVG)
+flatprot project structure.pdb -o output.svg --dssp structure.dssp
+
+# Output to stdout
+flatprot project structure.cif &gt; output.svg
+</code></pre>
+<h3 id="custom-styling-and-annotations">Custom Styling and Annotations</h3>
+<pre><code class="language-bash"># Apply custom styling
+flatprot project structure.cif -o output.svg --style custom_styles.toml
+
+# Add annotations
+flatprot project structure.cif -o output.svg --annotations features.toml
+
+# Combine multiple options
+flatprot project structure.cif -o styled_annotated.svg \
+    --matrix alignment_matrix.npy \
+    --style custom_styles.toml \
+    --annotations features.toml
+</code></pre>
+<h3 id="matrix-transformations">Matrix Transformations</h3>
+<pre><code class="language-bash"># Use pre-calculated alignment matrix
+flatprot project structure.cif -o aligned_output.svg --matrix alignment_matrix.npy
+
+# Extract matrix from PyMOL orientation
+uv run scripts/get_matrix.py structure.cif
 flatprot project structure.cif -o pymol_oriented.svg --matrix rotation_matrix.npy
 </code></pre>
 <p>See the <a href="../../tools/matrix_extraction/">PyMOL Matrix Extraction</a> documentation for details.</p>
-<p><strong>Combine Multiple Options:</strong></p>
-<pre><code class="language-bash">flatprot project structure.cif -o styled_annotated.svg \
-    --matrix alignment_matrix.npy \
-    --style custom_styles.toml \
-    --annotations features.toml \
-    --verbose
-</code></pre>
-<p><strong>Adjust Canvas Size:</strong></p>
-<pre><code class="language-bash">flatprot project structure.cif -o large_output.svg --canvas-width 1500 --canvas-height 1200
-</code></pre>
-<p><strong>Position Annotation Examples:</strong></p>
+<h3 id="position-annotations_1">Position Annotations</h3>
 <pre><code class="language-bash"># No position annotations
 flatprot project structure.cif -o clean.svg --show-positions none
 
 # Only terminus labels (default)
 flatprot project structure.cif -o terminus.svg --show-positions minimal
 
-# Terminus + major secondary structures
+# Major secondary structures
 flatprot project structure.cif -o major.svg --show-positions major
 
 # All position annotations
 flatprot project structure.cif -o detailed.svg --show-positions full
 </code></pre>
-<h2 id="error-handling">Error Handling</h2>
-<p>The command provides informative error messages for various issues:</p>
-<ul>
-<li><strong>File Errors:</strong> Missing or invalid input files (<code>FileNotFoundError</code>, <code>InvalidStructureError</code>).</li>
-<li><strong>Format Errors:</strong> Incorrect format for structure, matrix, style, or annotation files (<code>FlatProtError</code>, specific parser errors).</li>
-<li><strong>Missing DSSP:</strong> Error if a PDB file is provided without a <code>--dssp</code> file (<code>FlatProtError</code>).</li>
-<li><strong>Processing Errors:</strong> Issues during transformation, projection, scene creation, or rendering (<code>FlatProtError</code>, <code>CoordinateCalculationError</code>).</li>
-<li><strong>Output Errors:</strong> Failure to write the output SVG file (<code>OutputFileError</code>).</li>
-</ul>
-<p>Use the <code>--verbose</code> flag for more detailed error information and debugging output.
-Exit codes are <code>0</code> for success and <code>1</code> for any error.</p>
+<h3 id="canvas-size-adjustment">Canvas Size Adjustment</h3>
+<pre><code class="language-bash"># Large canvas for detailed output
+flatprot project structure.cif -o large_output.svg --canvas-width 1500 --canvas-height 1200
+</code></pre>
+<h2 id="troubleshooting">Troubleshooting</h2>
+<h3 id="common-issues">Common Issues</h3>
+<p><strong>Missing DSSP file for PDB input:</strong></p>
+<pre><code class="language-bash"># Generate DSSP file first
+mkdssp structure.pdb structure.dssp
+flatprot project structure.pdb --dssp structure.dssp -o output.svg
+</code></pre>
+<p><strong>Invalid matrix format:</strong>
+- Ensure matrix file is in NumPy <code>.npy</code> format
+- Supported shapes: 3x3, 3x4, or 4x3
+- Use <code>--verbose</code> for detailed error information</p>
+<p><strong>File format errors:</strong>
+- Verify structure file is valid PDB or mmCIF format
+- Check that style/annotation files are valid TOML format
+- Ensure all file paths are correct and accessible</p>
               
             </div>
           </div><footer>

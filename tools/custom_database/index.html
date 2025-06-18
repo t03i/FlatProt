@@ -1,0 +1,730 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><link rel="canonical" href="https://t03i.github.io/FlatProt/tools/custom_database/" />
+      <link rel="shortcut icon" href="../../img/favicon.ico" />
+    <title>Custom Database - FlatProt</title>
+    <link rel="stylesheet" href="../../css/theme.css" />
+    <link rel="stylesheet" href="../../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+        <link href="../../assets/_mkdocstrings.css" rel="stylesheet" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "Custom Database";
+        var mkdocs_page_input_path = "tools/custom_database.md";
+        var mkdocs_page_url = "/FlatProt/tools/custom_database/";
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="../../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/languages/yaml.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/languages/python.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/languages/json.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/languages/toml.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/languages/bash.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/languages/numpy.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href="../.." class="icon icon-home"> FlatProt
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../..">Home</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../installation/">Installation</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../examples/">Examples</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Commands</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../commands/project/">Project</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../commands/align/">Align</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../commands/overlay/">Overlay</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../commands/split/">Split</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">File Formats</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../file_formats/matrix/">Matrix Files</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../file_formats/style/">Style Files</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../file_formats/annotations/">Annotation Files</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Tools</span></p>
+              <ul class="current">
+                  <li class="toctree-l1 current"><a class="reference internal current" href="#">Custom Database</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#overview">Overview</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#data-format-requirements">Data Format Requirements</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#input-structure-files">Input Structure Files</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#directory-structure">Directory Structure</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#structure-requirements">Structure Requirements</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#database-creation-script">Database Creation Script</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#basic-usage">Basic Usage</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#recommended-workflow-manual-structure-rotation">Recommended Workflow: Manual Structure Rotation</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#step-1-transform-structures-in-pymolchimerax">Step 1: Transform Structures in PyMOL/ChimeraX</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#step-2-create-database-no-additional-rotation">Step 2: Create Database (No Additional Rotation)</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#alternative-rotation-methods">Alternative Rotation Methods</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#no-rotation-default-recommended">No Rotation (Default - Recommended)</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#random-rotation">Random Rotation</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#naming-patterns">Naming Patterns</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#filename-based-default">Filename-based (Default)</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#parent-folder-filename">Parent Folder + Filename</a>
+    </li>
+        </ul>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#complete-example">Complete Example</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#manual-rotation-workflow">Manual Rotation Workflow</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#pymol-batch-transformation-script">PyMOL Batch Transformation Script</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#alternative-interactive-transformation">Alternative: Interactive Transformation</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#using-custom-databases">Using Custom Databases</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#database-structure">Database Structure</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#using-with-flatprot-commands">Using with FlatProt Commands</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#verify-database">Verify Database</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#validate-database">Validate Database</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#database-format-details">Database Format Details</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#complete-database-structure">Complete Database Structure</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#1-hdf5-alignment-database-alignmentsh5">1. HDF5 Alignment Database (alignments.h5)</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#2-foldseek-database-foldseekdb">2. Foldseek Database (foldseek/db*)</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#3-database-info-database_infojson">3. Database Info (database_info.json)</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#transformation-matrices">Transformation Matrices</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#metadata-storage">Metadata Storage</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#advanced-configuration">Advanced Configuration</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#manual-rotation-benefits">Manual Rotation Benefits</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#pymol-transformation-examples">PyMOL Transformation Examples</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#chimerax-alternative">ChimeraX Alternative</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#batch-processing">Batch Processing</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#troubleshooting">Troubleshooting</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#common-issues">Common Issues</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#performance-tips">Performance Tips</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#integration-with-flatprot">Integration with FlatProt</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#requirements">Requirements</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#troubleshooting_1">Troubleshooting</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#foldseek-not-found">Foldseek Not Found</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#database-validation-failed">Database Validation Failed</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#memory-issues">Memory Issues</a>
+    </li>
+        </ul>
+    </li>
+    </ul>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../database_builder/">Rebuild Default Database</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../matrix_extraction/">PyMOL Matrix Extraction</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">API Reference</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../api/io/">IO</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../api/core/">Core</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../api/transformation/">Transformation & Projection</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../api/scene/">Scene</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../api/rendering/">Rendering</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../api/alignment/">DatabaseAlignment</a>
+                  </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../..">FlatProt</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../.." class="icon icon-home" aria-label="Docs"></a></li>
+          <li class="breadcrumb-item">Tools</li>
+      <li class="breadcrumb-item active">Custom Database</li>
+    <li class="wy-breadcrumbs-aside">
+          <a href="https://github.com/t03i/FlatProt/edit/master/docs/tools/custom_database.md" class="icon icon-github"> Edit on GitHub</a>
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="creating-custom-databases">Creating Custom Databases</h1>
+<p>FlatProt allows you to create custom alignment databases from your own collection of protein structures. This is useful when you want to work with specific protein families, custom datasets, or structures not included in the default database.</p>
+<blockquote>
+<p><strong>⚠️ Important Updates</strong></p>
+<p>The custom database script now creates a <strong>complete database directory</strong> containing:
+- HDF5 alignment database (<code>alignments.h5</code>)
+- Foldseek database (<code>foldseek/db*</code>) - <strong>NEW!</strong>
+- Database info file (<code>database_info.json</code>) - <strong>NEW!</strong></p>
+<p><strong>Updated Usage:</strong>
+- Output is now a <strong>directory</strong> (not a single <code>.h5</code> file)
+- Requires <strong>Foldseek</strong> to be installed
+- Use <code>--database ./my_database_dir</code> (not <code>./my_database.h5</code>)</p>
+</blockquote>
+<h2 id="overview">Overview</h2>
+<p>A custom database contains:</p>
+<ul>
+<li><strong>Transformation matrices</strong>: Inertia-based transformations for each structure</li>
+<li><strong>Structure metadata</strong>: Names, source files, and optional metadata</li>
+<li><strong>HDF5 alignment database</strong>: Compatible with FlatProt's alignment system</li>
+<li><strong>Foldseek database</strong>: For fast structural searching and alignment</li>
+<li><strong>Database validation</strong>: Info file for FlatProt compatibility checks</li>
+</ul>
+<h2 id="data-format-requirements">Data Format Requirements</h2>
+<h3 id="input-structure-files">Input Structure Files</h3>
+<p>FlatProt supports the following structure file formats:</p>
+<ul>
+<li><strong>PDB format</strong> (<code>.pdb</code>, <code>.ent</code>)</li>
+<li><strong>CIF format</strong> (<code>.cif</code>) - <strong>Recommended</strong></li>
+<li><strong>Compressed files</strong> (<code>.pdb.gz</code>, <code>.cif.gz</code>)</li>
+</ul>
+<h3 id="directory-structure">Directory Structure</h3>
+<p>Organize your structure files in a directory:</p>
+<pre><code>my_structures/
+├── protein1.cif
+├── protein2.cif
+├── family_a/
+│   ├── member1.cif
+│   └── member2.cif
+└── family_b/
+    ├── member3.pdb
+    └── member4.pdb.gz
+</code></pre>
+<h3 id="structure-requirements">Structure Requirements</h3>
+<p>Each structure file must contain:</p>
+<ul>
+<li><strong>C-alpha atoms</strong>: Required for transformation calculations</li>
+<li><strong>Standard residues</strong>: Non-standard residues are handled gracefully</li>
+<li><strong>Single or multiple chains</strong>: All chains are processed</li>
+<li><strong>Complete structures</strong>: Missing C-alpha atoms are skipped with warnings</li>
+</ul>
+<h2 id="database-creation-script">Database Creation Script</h2>
+<p>Use the provided script to create custom databases:</p>
+<pre><code class="language-bash">python scripts/create_custom_database.py &lt;input_folder&gt; &lt;output_database_dir&gt; [options]
+</code></pre>
+<h3 id="basic-usage">Basic Usage</h3>
+<pre><code class="language-bash"># Create basic database
+python scripts/create_custom_database.py ./my_structures ./my_custom_db
+
+# With verbose output
+python scripts/create_custom_database.py ./my_structures ./my_custom_db --verbose
+
+# Save creation info
+python scripts/create_custom_database.py ./my_structures ./my_custom_db --info-file db_info.json
+
+# Specify Foldseek executable if not in PATH
+python scripts/create_custom_database.py ./my_structures ./my_custom_db --foldseek-executable /path/to/foldseek
+</code></pre>
+<h3 id="recommended-workflow-manual-structure-rotation">Recommended Workflow: Manual Structure Rotation</h3>
+<p>The preferred approach is to <strong>manually rotate structures</strong> before database creation:</p>
+<h3 id="step-1-transform-structures-in-pymolchimerax">Step 1: Transform Structures in PyMOL/ChimeraX</h3>
+<p><strong>Important</strong>: Use <code>transform_selection</code> or <code>transform_object</code> to actually modify coordinates, not just the view:</p>
+<pre><code class="language-python"># PyMOL example - Transform coordinates, not just view
+load protein1.pdb
+load protein2.pdb
+
+# Align structures (this DOES change coordinates)
+align protein1, protein2
+
+# Transform coordinates (NOT just rotate view)
+# Create transformation matrix for 45° rotation around X-axis
+transform_selection protein1, [1,0,0,0, 0,0.707,-0.707,0, 0,0.707,0.707,0, 0,0,0,1]
+
+# Or use transform_object for the entire object
+transform_object protein1, [1,0,0,0, 0,0.707,-0.707,0, 0,0.707,0.707,0, 0,0,0,1]
+
+# Save with modified coordinates
+save protein1_rotated.pdb, protein1
+save protein2_rotated.pdb, protein2
+</code></pre>
+<p><strong>Alternative: Use matrix_copy after visual alignment</strong>:</p>
+<pre><code class="language-python"># Visual alignment approach
+load protein1.pdb
+load protein2.pdb
+
+# Visually align/rotate protein1 as desired using mouse/rotate commands
+rotate x, 45, protein1  # This only changes view
+rotate y, -30, protein1 # This only changes view
+
+# Apply the view transformation to coordinates
+matrix_copy protein1, protein1  # Copies view matrix to object matrix
+save protein1_rotated.pdb, protein1
+</code></pre>
+<h3 id="step-2-create-database-no-additional-rotation">Step 2: Create Database (No Additional Rotation)</h3>
+<pre><code class="language-bash"># Use structures as-is (recommended)
+python scripts/create_custom_database.py ./rotated_structures ./my_database
+</code></pre>
+<p>This approach ensures:</p>
+<ul>
+<li><strong>Foldseek alignment accuracy</strong>: Structures are oriented exactly as intended</li>
+<li><strong>Consistent alignment</strong>: Manual control over structure orientation</li>
+<li><strong>Optimal visualization</strong>: Structures positioned for best comparative viewing</li>
+</ul>
+<h2 id="alternative-rotation-methods">Alternative Rotation Methods</h2>
+<p>For special cases, programmatic rotation is available:</p>
+<h4 id="no-rotation-default-recommended">No Rotation (Default - Recommended)</h4>
+<pre><code class="language-bash">python scripts/create_custom_database.py ./structures ./my_database --rotate-method none
+</code></pre>
+<p>Uses structures in their saved orientation. <strong>Recommended for manually rotated structures</strong>.</p>
+<h4 id="random-rotation">Random Rotation</h4>
+<pre><code class="language-bash">python scripts/create_custom_database.py ./structures ./my_database --rotate-method random
+</code></pre>
+<p>Applies random rotations before transformation. Mainly useful for testing robustness.</p>
+<h3 id="naming-patterns">Naming Patterns</h3>
+<p>Control how structure names are generated:</p>
+<h4 id="filename-based-default">Filename-based (Default)</h4>
+<pre><code class="language-bash">python scripts/create_custom_database.py ./structures ./my_database --name-pattern filename
+</code></pre>
+<p>Uses the filename without extension as the structure name.</p>
+<h4 id="parent-folder-filename">Parent Folder + Filename</h4>
+<pre><code class="language-bash">python scripts/create_custom_database.py ./structures ./my_database --name-pattern parent_folder
+</code></pre>
+<p>Combines parent folder name with filename, useful for organizing families.</p>
+<h2 id="complete-example">Complete Example</h2>
+<h3 id="manual-rotation-workflow">Manual Rotation Workflow</h3>
+<pre><code class="language-bash"># Step 1: Manually rotate structures in PyMOL
+pymol -c rotate_structures.py  # Your rotation script
+
+# Step 2: Create database from pre-rotated structures
+python scripts/create_custom_database.py \
+    ./manually_rotated_structures \
+    ./databases/my_custom_db \
+    --name-pattern parent_folder \
+    --info-file my_db_info.json \
+    --log-file creation.log \
+    --verbose
+</code></pre>
+<p>This workflow:</p>
+<ul>
+<li>Uses manually rotated structures (optimal for Foldseek alignment)</li>
+<li>Names entries using folder + filename pattern</li>
+<li>Saves detailed creation info and logs</li>
+<li>Provides verbose progress output</li>
+<li>Creates both HDF5 alignment database and Foldseek database</li>
+<li>Generates required database validation files</li>
+</ul>
+<h3 id="pymol-batch-transformation-script">PyMOL Batch Transformation Script</h3>
+<pre><code class="language-python"># transform_structures.py - Example batch coordinate transformation script
+import pymol
+from pymol import cmd
+import os
+import math
+
+def create_rotation_matrix(axis, angle_deg):
+    &quot;&quot;&quot;Create rotation matrix for given axis and angle.&quot;&quot;&quot;
+    angle = math.radians(angle_deg)
+    cos_a, sin_a = math.cos(angle), math.sin(angle)
+
+    if axis == 'x':
+        return [1,0,0,0, 0,cos_a,-sin_a,0, 0,sin_a,cos_a,0, 0,0,0,1]
+    elif axis == 'y':
+        return [cos_a,0,sin_a,0, 0,1,0,0, -sin_a,0,cos_a,0, 0,0,0,1]
+    elif axis == 'z':
+        return [cos_a,-sin_a,0,0, sin_a,cos_a,0,0, 0,0,1,0, 0,0,0,1]
+
+# Load structures
+structure_dir = &quot;./original_structures&quot;
+output_dir = &quot;./transformed_structures&quot;
+
+for filename in os.listdir(structure_dir):
+    if filename.endswith(('.pdb', '.cif')):
+        name = filename.split('.')[0]
+
+        # Load structure
+        cmd.load(f&quot;{structure_dir}/{filename}&quot;, name)
+
+        # Apply coordinate transformations (customize as needed)
+        x_rotation_matrix = create_rotation_matrix('x', 45)
+        y_rotation_matrix = create_rotation_matrix('y', -30)
+
+        cmd.transform_object(name, x_rotation_matrix)
+        cmd.transform_object(name, y_rotation_matrix)
+
+        # Save transformed structure
+        cmd.save(f&quot;{output_dir}/{filename}&quot;, name)
+        cmd.delete(name)
+
+cmd.quit()
+</code></pre>
+<h3 id="alternative-interactive-transformation">Alternative: Interactive Transformation</h3>
+<pre><code class="language-python"># interactive_transform.py - Transform after visual positioning
+import pymol
+from pymol import cmd
+
+# Load structure
+cmd.load(&quot;protein.pdb&quot;, &quot;prot&quot;)
+
+# Rotate visually to desired orientation using PyMOL GUI
+# Then run this to apply the transformation to coordinates:
+cmd.matrix_copy(&quot;prot&quot;, &quot;prot&quot;)
+cmd.save(&quot;protein_transformed.pdb&quot;, &quot;prot&quot;)
+</code></pre>
+<h2 id="using-custom-databases">Using Custom Databases</h2>
+<p>Once created, use your custom database with FlatProt commands. The custom database creates a directory containing both the HDF5 alignment database and the Foldseek database.</p>
+<h3 id="database-structure">Database Structure</h3>
+<p>The script creates this directory structure:</p>
+<pre><code>my_custom_db/
+├── alignments.h5          # HDF5 alignment database
+├── database_info.json     # Database metadata and validation
+└── foldseek/
+    ├── db                 # Foldseek database files
+    ├── db.index           # (created by Foldseek)
+    ├── db.dbtype          # (created by Foldseek)
+    └── ...                # (other Foldseek files)
+</code></pre>
+<h3 id="using-with-flatprot-commands">Using with FlatProt Commands</h3>
+<p><strong>Option 1: Command line argument (Recommended)</strong></p>
+<pre><code class="language-bash"># Specify the database directory path
+flatprot align structure.cif --database ./databases/my_custom_db
+
+# For other commands
+flatprot project structure.cif output.svg --database ./databases/my_custom_db
+flatprot overlay struct1.cif struct2.cif --database ./databases/my_custom_db
+</code></pre>
+<p><strong>Option 2: Environment variable</strong></p>
+<pre><code class="language-bash"># Set environment variable to database directory (not the .h5 file)
+export FLATPROT_ALIGNMENT_DB_PATH=&quot;./databases/my_custom_db&quot;
+flatprot align structure.cif
+
+# Or use it with other commands
+flatprot project structure.cif output.svg
+</code></pre>
+<h3 id="verify-database">Verify Database</h3>
+<p>Check your database contents:</p>
+<pre><code class="language-python">from flatprot.alignment.db import AlignmentDatabase
+
+# Path to the HDF5 file within the database directory
+with AlignmentDatabase(&quot;./databases/my_custom_db/alignments.h5&quot;) as db:
+    entries = db.list_entries()
+    print(f&quot;Database contains {len(entries)} entries:&quot;)
+    for entry_id in entries[:5]:  # Show first 5
+        entry = db.get_entry(entry_id)
+        print(f&quot;  {entry_id}: {entry.structure_name}&quot;)
+</code></pre>
+<h3 id="validate-database">Validate Database</h3>
+<p>Check if your database is valid and has all required files:</p>
+<pre><code class="language-python">from flatprot.utils.database import validate_database
+from pathlib import Path
+
+db_path = Path(&quot;./databases/my_custom_db&quot;)
+if validate_database(db_path):
+    print(&quot;✓ Database is valid and ready to use&quot;)
+else:
+    print(&quot;✗ Database validation failed - check required files&quot;)
+</code></pre>
+<h2 id="database-format-details">Database Format Details</h2>
+<h3 id="complete-database-structure">Complete Database Structure</h3>
+<p>The custom database consists of three components:</p>
+<h4 id="1-hdf5-alignment-database-alignmentsh5">1. HDF5 Alignment Database (<code>alignments.h5</code>)</h4>
+<pre><code>alignments.h5
+├── /entries/           # Group containing all entries
+│   ├── entry_id_1/     # Group for each structure
+│   │   ├── rotation_matrix    # 4x4 transformation matrix
+│   │   └── metadata          # Optional metadata attributes
+│   └── entry_id_2/
+│       ├── rotation_matrix
+│       └── metadata
+└── /index/             # Group for fast lookups
+    └── structure_names # Mapping structure names to entry IDs
+</code></pre>
+<h4 id="2-foldseek-database-foldseekdb">2. Foldseek Database (<code>foldseek/db*</code>)</h4>
+<p>Created by <code>foldseek createdb</code>, includes:
+- <code>db</code> - Main database file
+- <code>db.index</code> - Index for fast searching
+- <code>db.dbtype</code> - Database type information
+- Additional Foldseek-specific files</p>
+<h4 id="3-database-info-database_infojson">3. Database Info (<code>database_info.json</code>)</h4>
+<p>Contains metadata and validation information:</p>
+<pre><code class="language-json">{
+  &quot;database_type&quot;: &quot;custom_alignment&quot;,
+  &quot;version&quot;: &quot;1.0.0&quot;,
+  &quot;creation_date&quot;: &quot;2025-01-XX...&quot;,
+  &quot;description&quot;: &quot;Custom FlatProt alignment database&quot;,
+  &quot;statistics&quot;: { ... },
+  &quot;files&quot;: {
+    &quot;alignment_database&quot;: &quot;alignments.h5&quot;,
+    &quot;foldseek_database&quot;: &quot;foldseek/db&quot;
+  }
+}
+</code></pre>
+<h3 id="transformation-matrices">Transformation Matrices</h3>
+<p>Each entry contains a 4x4 transformation matrix that:</p>
+<ul>
+<li>Centers the structure at the origin</li>
+<li>Aligns it to principal inertia axes</li>
+<li>Can be applied to transform coordinates</li>
+</ul>
+<h3 id="metadata-storage">Metadata Storage</h3>
+<p>The script stores metadata for each entry:</p>
+<ul>
+<li><strong>source_file</strong>: Original structure file path</li>
+<li><strong>rotation_method</strong>: Rotation method used</li>
+<li><strong>file_size</strong>: Original file size in bytes</li>
+</ul>
+<h2 id="advanced-configuration">Advanced Configuration</h2>
+<h3 id="manual-rotation-benefits">Manual Rotation Benefits</h3>
+<p><strong>Why manual rotation is preferred:</strong></p>
+<ol>
+<li><strong>Foldseek Accuracy</strong>: Structures are oriented exactly as intended for alignment</li>
+<li><strong>Visual Control</strong>: You can see exactly how structures will be positioned</li>
+<li><strong>Domain-Specific</strong>: Rotate to highlight specific structural features</li>
+<li><strong>Consistent Orientation</strong>: Ensure all family members have the same orientation</li>
+<li><strong>Quality Control</strong>: Inspect each structure during the rotation process</li>
+</ol>
+<h3 id="pymol-transformation-examples">PyMOL Transformation Examples</h3>
+<pre><code class="language-python"># Example 1: Align all structures to a reference (coordinates changed)
+cmd.load(&quot;reference.pdb&quot;, &quot;ref&quot;)
+for structure in [&quot;protein1.pdb&quot;, &quot;protein2.pdb&quot;]:
+    name = structure.split('.')[0]
+    cmd.load(structure, name)
+    cmd.align(name, &quot;ref&quot;)  # This DOES change coordinates
+    cmd.save(f&quot;aligned_{structure}&quot;, name)
+
+# Example 2: Transform to show active site face-on
+cmd.load(&quot;enzyme.pdb&quot;, &quot;enz&quot;)
+# Create 90° Y-rotation matrix
+y_90_matrix = [0,0,1,0, 0,1,0,0, -1,0,0,0, 0,0,0,1]
+cmd.transform_object(&quot;enz&quot;, y_90_matrix)
+cmd.save(&quot;enzyme_transformed.pdb&quot;, &quot;enz&quot;)
+
+# Example 3: Interactive approach - visual then coordinate transformation
+cmd.load(&quot;membrane_protein.pdb&quot;, &quot;mem&quot;)
+# Manually rotate in GUI to desired orientation, then:
+cmd.matrix_copy(&quot;mem&quot;, &quot;mem&quot;)  # Apply view to coordinates
+cmd.save(&quot;membrane_protein_oriented.pdb&quot;, &quot;mem&quot;)
+</code></pre>
+<h3 id="chimerax-alternative">ChimeraX Alternative</h3>
+<p>ChimeraX also provides coordinate transformation commands:</p>
+<pre><code class="language-bash"># ChimeraX command line
+open protein.pdb
+turn x 45  # Rotate coordinates, not just view
+save protein_rotated.pdb
+</code></pre>
+<h3 id="batch-processing">Batch Processing</h3>
+<p>For large datasets, consider:</p>
+<ul>
+<li>Processing in chunks if memory is limited</li>
+<li>Using the log file to monitor progress</li>
+<li>Running with <code>--verbose</code> to track issues</li>
+</ul>
+<h2 id="troubleshooting">Troubleshooting</h2>
+<h3 id="common-issues">Common Issues</h3>
+<p><strong>No structures found</strong></p>
+<ul>
+<li>Check file extensions are supported</li>
+<li>Verify directory path is correct</li>
+<li>Files may be corrupted or empty</li>
+</ul>
+<p><strong>Transformation calculation fails</strong></p>
+<ul>
+<li>Structure may lack C-alpha atoms</li>
+<li>File format may be invalid</li>
+<li>Try with <code>--verbose</code> for detailed error messages</li>
+</ul>
+<p><strong>Memory issues</strong></p>
+<ul>
+<li>Process smaller batches</li>
+<li>Check available system memory</li>
+<li>Large structures require more memory</li>
+</ul>
+<h3 id="performance-tips">Performance Tips</h3>
+<ul>
+<li><strong>CIF format</strong> is generally faster than PDB</li>
+<li><strong>Uncompressed files</strong> process faster than compressed</li>
+<li><strong>SSD storage</strong> improves I/O performance</li>
+<li><strong>Multiple small files</strong> are faster than few large files</li>
+</ul>
+<h2 id="integration-with-flatprot">Integration with FlatProt</h2>
+<p>Custom databases work seamlessly with all FlatProt commands:</p>
+<pre><code class="language-bash"># Project structures using custom database
+flatprot project my_structure.cif output.svg --database ./my_database_dir
+
+# Align structures
+flatprot align structure.cif --database ./my_database_dir
+
+# Create overlays
+flatprot overlay structure1.cif structure2.cif --database ./my_database_dir --output overlay.svg
+
+# Using environment variable
+export FLATPROT_ALIGNMENT_DB_PATH=&quot;./my_database_dir&quot;
+flatprot project my_structure.cif output.svg
+</code></pre>
+<p>The custom database provides the same functionality as the default database, optimized for your specific protein collection.</p>
+<h2 id="requirements">Requirements</h2>
+<p>Before creating custom databases, ensure you have:</p>
+<ul>
+<li><strong>Foldseek</strong> installed and accessible (either in PATH or specify with <code>--foldseek-executable</code>)</li>
+<li><strong>Python dependencies</strong>: <code>gemmi</code>, <code>numpy</code>, <code>flatprot</code></li>
+<li><strong>Structure files</strong> in supported formats (PDB, CIF)</li>
+<li><strong>Sufficient disk space</strong> for both input structures and database files</li>
+</ul>
+<h2 id="troubleshooting_1">Troubleshooting</h2>
+<h3 id="foldseek-not-found">Foldseek Not Found</h3>
+<pre><code class="language-bash"># If Foldseek is not in PATH, specify the executable
+python scripts/create_custom_database.py ./structures ./my_db \
+    --foldseek-executable /path/to/foldseek
+</code></pre>
+<h3 id="database-validation-failed">Database Validation Failed</h3>
+<p>Use the validation function to check what's missing:</p>
+<pre><code class="language-python">from flatprot.utils.database import validate_database, REQUIRED_DB_FILES
+
+db_path = Path(&quot;./my_database&quot;)
+if not validate_database(db_path):
+    print(&quot;Missing files:&quot;)
+    for file in REQUIRED_DB_FILES:
+        file_path = db_path / file
+        if not file_path.exists():
+            print(f&quot;  - {file}&quot;)
+</code></pre>
+<h3 id="memory-issues">Memory Issues</h3>
+<p>For large collections:
+- Process structures in smaller batches
+- Use <code>--verbose</code> to monitor progress
+- Ensure sufficient disk space for temporary files</p>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="../../file_formats/annotations/" class="btn btn-neutral float-left" title="Annotation Files"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../database_builder/" class="btn btn-neutral float-right" title="Rebuild Default Database">Next <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+        <span>
+          <a href="https://github.com/t03i/FlatProt" class="fa fa-github" style="color: #fcfcfc"> GitHub</a>
+        </span>
+    
+    
+      <span><a href="../../file_formats/annotations/" style="color: #fcfcfc">&laquo; Previous</a></span>
+    
+    
+      <span><a href="../database_builder/" style="color: #fcfcfc">Next &raquo;</a></span>
+    
+  </span>
+</div>
+    <script src="../../js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = "../..";</script>
+    <script src="../../js/theme_extra.js"></script>
+    <script src="../../js/theme.js"></script>
+      <script src="../../search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>

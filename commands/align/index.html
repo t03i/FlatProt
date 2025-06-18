@@ -66,15 +66,53 @@
     <ul class="current">
     <li class="toctree-l2"><a class="reference internal" href="#usage">Usage</a>
     </li>
-    <li class="toctree-l2"><a class="reference internal" href="#arguments">Arguments</a>
+    <li class="toctree-l2"><a class="reference internal" href="#parameters">Parameters</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#required">Required</a>
     </li>
-    <li class="toctree-l2"><a class="reference internal" href="#options">Options</a>
+    <li class="toctree-l3"><a class="reference internal" href="#output-options">Output Options</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#database-options">Database Options</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#alignment-options">Alignment Options</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#general-options">General Options</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#alignment-modes">Alignment Modes</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#family-identity-default">Family-Identity (Default)</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#family-inertia">Family-Inertia</a>
+    </li>
+        </ul>
     </li>
     <li class="toctree-l2"><a class="reference internal" href="#examples">Examples</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#basic-usage">Basic Usage</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#alignment-modes_1">Alignment Modes</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#custom-database-and-thresholds">Custom Database and Thresholds</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#database-management">Database Management</a>
+    </li>
+        </ul>
     </li>
     <li class="toctree-l2"><a class="reference internal" href="#output-files">Output Files</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#transformation-matrix">Transformation Matrix</a>
     </li>
-    <li class="toctree-l2"><a class="reference internal" href="#error-handling">Error Handling</a>
+    <li class="toctree-l3"><a class="reference internal" href="#alignment-information-json">Alignment Information (JSON)</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#troubleshooting">Troubleshooting</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#common-issues">Common Issues</a>
+    </li>
+        </ul>
     </li>
     </ul>
                   </li>
@@ -94,6 +132,10 @@
               </ul>
               <p class="caption"><span class="caption-text">Tools</span></p>
               <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../tools/custom_database/">Custom Database</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../tools/database_builder/">Rebuild Default Database</a>
+                  </li>
                   <li class="toctree-l1"><a class="reference internal" href="../../tools/matrix_extraction/">PyMOL Matrix Extraction</a>
                   </li>
               </ul>
@@ -138,185 +180,116 @@
             <div class="section" itemprop="articleBody">
               
                 <h1 id="align-command">Align Command</h1>
-<p>The <code>align</code> command finds the best matching protein superfamily for a given structure using Foldseek and retrieves the corresponding pre-calculated transformation matrix for standardized visualization.</p>
+<p>Find the best matching protein superfamily for a structure using FoldSeek and retrieve the corresponding transformation matrix for standardized visualization.</p>
 <h2 id="usage">Usage</h2>
 <pre><code class="language-bash">flatprot align STRUCTURE_FILE [OPTIONS]
 </code></pre>
-<h2 id="arguments">Arguments</h2>
+<h2 id="parameters">Parameters</h2>
+<h3 id="required">Required</h3>
 <ul>
-<li><code>STRUCTURE_FILE</code>: Path to the input protein structure file (PDB or mmCIF format). The file must exist and be readable.</li>
+<li><code>STRUCTURE_FILE</code> - Path to the input protein structure file (PDB or mmCIF format)</li>
 </ul>
-<h2 id="options">Options</h2>
-<table>
-<thead>
-<tr>
-<th>Option</th>
-<th>Short</th>
-<th>Type</th>
-<th>Default</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>--matrix</code></td>
-<td><code>-m</code></td>
-<td>Path</td>
-<td><code>alignment_matrix.npy</code></td>
-<td>Path to save the output transformation matrix (NumPy format).</td>
-</tr>
-<tr>
-<td><code>--info</code></td>
-<td><code>-i</code></td>
-<td>Path</td>
-<td><em>None</em></td>
-<td>Optional path to save detailed alignment information as JSON. If omitted, info is printed to stdout.</td>
-</tr>
-<tr>
-<td><code>--foldseek</code></td>
-<td><code>-f</code></td>
-<td>String</td>
-<td><code>"foldseek"</code></td>
-<td>Path to the FoldSeek executable. Assumes it's in PATH if not specified.</td>
-</tr>
-<tr>
-<td><code>--foldseek-db</code></td>
-<td><code>-b</code></td>
-<td>Path</td>
-<td><em>Default</em></td>
-<td>Path to a custom Foldseek database. Defaults to the database bundled with FlatProt or previously downloaded.</td>
-</tr>
-<tr>
-<td><code>--database</code></td>
-<td><code>-d</code></td>
-<td>Path</td>
-<td><em>Default</em></td>
-<td>Path to the directory containing the custom FlatProt alignment database (HDF5 file and supporting files).</td>
-</tr>
-<tr>
-<td><code>--database-file-name</code></td>
-<td><code>-n</code></td>
-<td>String</td>
-<td><code>"alignments.h5"</code></td>
-<td>Name of the alignment database file within the <code>--database</code> directory.</td>
-</tr>
-<tr>
-<td><code>--min-probability</code></td>
-<td><code>-p</code></td>
-<td>Float</td>
-<td><code>0.5</code></td>
-<td>Minimum Foldseek alignment probability threshold (0.0 to 1.0).</td>
-</tr>
-<tr>
-<td><code>--target-db-id</code></td>
-<td></td>
-<td>String</td>
-<td><em>None</em></td>
-<td>Force alignment against a specific target ID from the Foldseek database, bypassing probability checks.</td>
-</tr>
-<tr>
-<td><code>--alignment-mode</code></td>
-<td><code>-a</code></td>
-<td><code>family-identity</code>, <code>family-inertia</code></td>
-<td><code>family-identity</code></td>
-<td>Alignment mode: <code>family-identity</code> uses the direct alignment matrix, <code>family-inertia</code> uses the database reference matrix.</td>
-</tr>
-<tr>
-<td><code>--download-db</code></td>
-<td></td>
-<td>Boolean</td>
-<td><code>false</code></td>
-<td>Force download/update of the default database even if it exists locally.</td>
-</tr>
-<tr>
-<td><code>--quiet</code></td>
-<td></td>
-<td>Boolean</td>
-<td><code>false</code></td>
-<td>Suppress all informational output except errors.</td>
-</tr>
-<tr>
-<td><code>--verbose</code></td>
-<td></td>
-<td>Boolean</td>
-<td><code>false</code></td>
-<td>Print additional debug information during execution.</td>
-</tr>
-</tbody>
-</table>
+<h3 id="output-options">Output Options</h3>
+<ul>
+<li><code>--matrix</code> / <code>-m</code> - Path to save the output transformation matrix (NumPy format) [default: alignment_matrix.npy]</li>
+<li><code>--info</code> / <code>-i</code> - Path to save detailed alignment information as JSON. If omitted, info is printed to stdout</li>
+</ul>
+<h3 id="database-options">Database Options</h3>
+<ul>
+<li><code>--foldseek</code> / <code>-f</code> - Path to the FoldSeek executable [default: foldseek]</li>
+<li><code>--foldseek-db</code> / <code>-b</code> - Path to a custom FoldSeek database</li>
+<li><code>--database</code> / <code>-d</code> - Path to the directory containing the custom FlatProt alignment database (HDF5 file)</li>
+<li><code>--database-file-name</code> / <code>-n</code> - Name of the alignment database file [default: alignments.h5]</li>
+<li><code>--download-db</code> - Force download/update of the default database</li>
+</ul>
+<h3 id="alignment-options">Alignment Options</h3>
+<ul>
+<li><code>--min-probability</code> / <code>-p</code> - Minimum FoldSeek alignment probability threshold (0.0-1.0) [default: 0.5]</li>
+<li><code>--target-db-id</code> - Force alignment against a specific target ID, bypassing probability checks</li>
+<li><code>--alignment-mode</code> / <code>-a</code> - Alignment mode [default: family-identity]</li>
+<li><code>family-identity</code>: Uses direct alignment matrix</li>
+<li><code>family-inertia</code>: Uses database reference matrix combined with alignment</li>
+</ul>
+<h3 id="general-options">General Options</h3>
+<ul>
+<li><code>--quiet</code> - Suppress all informational output except errors</li>
+<li><code>--verbose</code> - Print additional debug information during execution</li>
+</ul>
+<h2 id="alignment-modes">Alignment Modes</h2>
+<h3 id="family-identity-default">Family-Identity (Default)</h3>
+<p>Uses the direct alignment matrix resulting from FoldSeek alignment between input and best-matching database entry.</p>
+<h3 id="family-inertia">Family-Inertia</h3>
+<p>Uses the pre-calculated reference matrix for the matched superfamily, combined with the FoldSeek alignment matrix. This spreads out structure elements while keeping basic family rotation but sacrifices consistent structure element placement.</p>
 <h2 id="examples">Examples</h2>
-<p><strong>Basic Alignment (Family Identity):</strong> (Saves direct alignment matrix to <code>alignment_matrix.npy</code>)</p>
-<pre><code class="language-bash">flatprot align protein.pdb
+<h3 id="basic-usage">Basic Usage</h3>
+<pre><code class="language-bash"># Basic alignment (saves to alignment_matrix.npy)
+flatprot align protein.pdb
+
+# Specify output paths
+flatprot align protein.cif -m rotation.npy -i alignment_info.json
 </code></pre>
-<p><strong>Alignment Using Family Inertia:</strong></p>
-<p>In addition to applying the family rotation, it applies the inertia transformation that was calulated for the family.</p>
-<p><strong>Note</strong>: This will spread out structure elements while keeping the basic family rotation but sacrifices consistent structure element placement.</p>
-<pre><code class="language-bash">flatprot align protein.pdb --alignment-mode family-inertia
+<h3 id="alignment-modes_1">Alignment Modes</h3>
+<pre><code class="language-bash"># Family identity alignment (default)
+flatprot align protein.pdb --alignment-mode family-identity
+
+# Family inertia alignment
+flatprot align protein.pdb --alignment-mode family-inertia
 </code></pre>
-<p><strong>Specify Output Paths:</strong></p>
-<pre><code class="language-bash">flatprot align protein.cif -m rotation.npy -i alignment_info.json
+<h3 id="custom-database-and-thresholds">Custom Database and Thresholds</h3>
+<pre><code class="language-bash"># Use custom FoldSeek executable and database
+flatprot align protein.pdb -f /path/to/foldseek -b /path/to/foldseek_db
+
+# Adjust probability threshold
+flatprot align protein.pdb --min-probability 0.7
+
+# Force alignment to specific target
+flatprot align protein.pdb --target-db-id &quot;3000114&quot;
 </code></pre>
-<p><strong>Use Custom Foldseek Executable and Database:</strong></p>
-<pre><code class="language-bash">flatprot align protein.pdb -f /path/to/foldseek -b /path/to/foldseek_db
-</code></pre>
-<p><strong>Adjust Probability Threshold:</strong></p>
-<pre><code class="language-bash">flatprot align protein.pdb --min-probability 0.7
-</code></pre>
-<p><strong>Force Alignment to a Specific Target:</strong></p>
-<pre><code class="language-bash">flatprot align protein.pdb --target-db-id &quot;3000114&quot;
+<h3 id="database-management">Database Management</h3>
+<pre><code class="language-bash"># Force database download/update
+flatprot align protein.pdb --download-db
 </code></pre>
 <h2 id="output-files">Output Files</h2>
-<ol>
-<li>
-<p><strong>Transformation Matrix (<code>--matrix</code>):</strong></p>
-<ul>
-<li>A 4x4 NumPy array (<code>.npy</code> file) representing the rotation matrix that aligns the input structure.</li>
-<li>If <code>--alignment-mode</code> is <code>family-identity</code> (default), this is the matrix directly resulting from the Foldseek alignment between the input and the best-matching database entry.</li>
-<li>If <code>--alignment-mode</code> is <code>family-inertia</code>, this is the pre-calculated reference matrix for the matched superfamily, combined with the Foldseek alignment matrix.</li>
-<li>This matrix is intended for use with the <code>flatprot project</code> command.</li>
-</ul>
-</li>
-<li>
-<p><strong>Alignment Information (<code>--info</code>, Optional JSON):</strong></p>
-<ul>
-<li>
-<p>If a path is provided via <code>--info</code>, a JSON file containing detailed alignment results is saved. The exact content may vary, but typically includes:</p>
-<p><code>json
-{
-    "structure_file": "path/to/protein.pdb",
-    "foldseek_db_path": "/path/to/foldseek_db",
-    "min_probability": 0.5,
-    "target_db_id": null,
-    "alignment_mode": "family-identity", // Reflects the chosen mode
-    "best_hit": {
-        "query_id": "protein",
-        "target_id": "T1084-D1",
-        "probability": 0.995,
-        "e_value": 8.74e-15,
-        "tm_score": 0.789
+<h3 id="transformation-matrix">Transformation Matrix</h3>
+<p>A 4x4 NumPy array (<code>.npy</code> file) representing the rotation matrix that aligns the input structure. The specific matrix depends on the alignment mode:
+- <strong>Family-identity:</strong> Direct FoldSeek alignment matrix
+- <strong>Family-inertia:</strong> Pre-calculated reference matrix combined with alignment</p>
+<p>This matrix is intended for use with the <code>flatprot project</code> command.</p>
+<h3 id="alignment-information-json">Alignment Information (JSON)</h3>
+<p>Contains detailed alignment results including:</p>
+<pre><code class="language-json">{
+    &quot;structure_file&quot;: &quot;path/to/protein.pdb&quot;,
+    &quot;foldseek_db_path&quot;: &quot;/path/to/foldseek_db&quot;,
+    &quot;min_probability&quot;: 0.5,
+    &quot;target_db_id&quot;: null,
+    &quot;alignment_mode&quot;: &quot;family-identity&quot;,
+    &quot;best_hit&quot;: {
+        &quot;query_id&quot;: &quot;protein&quot;,
+        &quot;target_id&quot;: &quot;T1084-D1&quot;,
+        &quot;probability&quot;: 0.995,
+        &quot;e_value&quot;: 8.74e-15,
+        &quot;tm_score&quot;: 0.789
     },
-    "db_entry": { // Only present if mode is family-inertia
-        "entry_id": "T1084-D1",
-        "structure_name": "Example Superfamily",
-        "rotation_matrix": { ... } // Details of the database matrix
-    },
-    "matrix_file": "rotation.npy"
-}</code></p>
-</li>
-</ul>
-</li>
-</ol>
-<h2 id="error-handling">Error Handling</h2>
-<p>The command includes robust error handling:</p>
-<ul>
-<li><strong>Input Errors:</strong> Checks for invalid or non-existent structure files (<code>InvalidStructureError</code>, <code>FileNotFoundError</code>).</li>
-<li><strong>FoldSeek Errors:</strong> Verifies the FoldSeek executable path. Catches errors during FoldSeek execution (<code>RuntimeError</code>, <code>subprocess.SubprocessError</code>).</li>
-<li><strong>Database Errors:</strong> Handles issues finding or accessing the alignment database (<code>DatabaseEntryNotFoundError</code>). Suggests using <code>--download-db</code> if corruption is suspected. This error is more likely in <code>family-inertia</code> mode.</li>
-<li><strong>Alignment Quality:</strong> If no alignment meets the <code>--min-probability</code> threshold, it reports <code>NoSignificantAlignmentError</code> and suggests lowering the threshold.</li>
-<li><strong>Output Errors:</strong> Catches errors writing the matrix or info files (<code>OutputFileError</code>).</li>
-<li><strong>General Errors:</strong> Catches other <code>FlatProtError</code> types and unexpected exceptions.</li>
-</ul>
-<p>Exit codes are <code>0</code> for success and <code>1</code> for any error.</p>
+    &quot;matrix_file&quot;: &quot;rotation.npy&quot;
+}
+</code></pre>
+<h2 id="troubleshooting">Troubleshooting</h2>
+<h3 id="common-issues">Common Issues</h3>
+<p><strong>Invalid or non-existent structure files:</strong>
+- Verify the structure file path is correct
+- Ensure file is in valid PDB or mmCIF format</p>
+<p><strong>FoldSeek executable not found:</strong>
+- Check FoldSeek installation: <code>which foldseek</code>
+- Specify custom path with <code>--foldseek /path/to/foldseek</code></p>
+<p><strong>No significant alignment found:</strong>
+- Lower the probability threshold: <code>--min-probability 0.3</code>
+- Check if the protein family is represented in the database</p>
+<p><strong>Database corruption or access issues:</strong>
+- Try re-downloading: <code>--download-db</code>
+- Verify database file permissions and accessibility</p>
+<p><strong>Network connectivity issues:</strong>
+- Check internet connection for database download
+- Consider using a local database with <code>--foldseek-db</code></p>
               
             </div>
           </div><footer>

@@ -57,17 +57,39 @@
               <ul class="current">
                 <li class="toctree-l1 current"><a class="reference internal current" href="#">Examples</a>
     <ul class="current">
-    <li class="toctree-l2"><a class="reference internal" href="#uniprot_projectionpy">uniprot_projection.py</a>
+    <li class="toctree-l2"><a class="reference internal" href="#getting-started">🚀 Getting Started</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#quick-start">Quick Start</a>
     </li>
-    <li class="toctree-l2"><a class="reference internal" href="#annotationspy">annotations.py</a>
+    <li class="toctree-l3"><a class="reference internal" href="#running-examples">Running Examples</a>
     </li>
-    <li class="toctree-l2"><a class="reference internal" href="#3ftx_alignmentpy">3ftx_alignment.py</a>
+        </ul>
     </li>
-    <li class="toctree-l2"><a class="reference internal" href="#chainsawpy">chainsaw.py</a>
+    <li class="toctree-l2"><a class="reference internal" href="#core-examples">📖 Core Examples</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#basic-protein-projection">Basic Protein Projection</a>
     </li>
-    <li class="toctree-l2"><a class="reference internal" href="#dysulfidepy">dysulfide.py</a>
+    <li class="toctree-l3"><a class="reference internal" href="#protein-family-overlay">Protein Family Overlay</a>
     </li>
-    <li class="toctree-l2"><a class="reference internal" href="#klk_overlaypy">klk_overlay.py</a>
+    <li class="toctree-l3"><a class="reference internal" href="#protein-alignment-and-projection">Protein Alignment and Projection</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#protein-domain-splitting">Protein Domain Splitting</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#advanced-examples">🔬 Advanced Examples</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#uniprot-to-alphafold-visualization">UniProt to AlphaFold Visualization</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#custom-styling-and-annotations">Custom Styling and Annotations</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#disulfide-bond-detection">Disulfide Bond Detection</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#learning-path">💡 Learning Path</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#technical-notes">🔧 Technical Notes</a>
     </li>
     </ul>
                 </li>
@@ -94,6 +116,10 @@
               </ul>
               <p class="caption"><span class="caption-text">Tools</span></p>
               <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../tools/custom_database/">Custom Database</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../tools/database_builder/">Rebuild Default Database</a>
+                  </li>
                   <li class="toctree-l1"><a class="reference internal" href="../tools/matrix_extraction/">PyMOL Matrix Extraction</a>
                   </li>
               </ul>
@@ -137,25 +163,70 @@
             <div class="section" itemprop="articleBody">
               
                 <h1 id="examples">Examples</h1>
-<p>This page provides brief descriptions and links to run the example notebooks found in the <code>examples/</code> directory.</p>
-<h2 id="uniprot_projectionpy"><code>uniprot_projection.py</code></h2>
-<p><a href="https://colab.research.google.com/github/t03i/FlatProt/blob/notebooks/examples/uniprot_projection.ipynb"><img alt="Open In Colab" src="https://colab.research.google.com/assets/colab-badge.svg" /></a></p>
-<p>This notebook demonstrates how to fetch a protein structure from the AlphaFold Database (AFDB) using a UniProt ID, run DSSP to determine secondary structure, and then generate a 2D projection using FlatProt.</p>
-<h2 id="annotationspy"><code>annotations.py</code></h2>
-<p><a href="https://colab.research.google.com/github/t03i/FlatProt/blob/notebooks/examples/annotations.ipynb"><img alt="Open In Colab" src="https://colab.research.google.com/assets/colab-badge.svg" /></a></p>
-<p>This notebook demonstrates how to apply custom styles and various annotations (point, line, area) to a FlatProt projection.</p>
-<h2 id="3ftx_alignmentpy"><code>3ftx_alignment.py</code></h2>
-<p><a href="https://colab.research.google.com/github/t03i/FlatProt/blob/notebooks/examples/3ftx_alignment.ipynb"><img alt="Open In Colab" src="https://colab.research.google.com/assets/colab-badge.svg" /></a></p>
-<p>This notebook demonstrates aligning three related three-finger toxin structures (Cobra, Krait, Snake) using a Foldseek database and then projecting them into 2D SVG visualizations using FlatProt.</p>
-<h2 id="chainsawpy"><code>chainsaw.py</code></h2>
-<p><a href="https://colab.research.google.com/github/t03i/FlatProt/blob/notebooks/examples/chainsaw.ipynb"><img alt="Open In Colab" src="https://colab.research.google.com/assets/colab-badge.svg" /></a></p>
-<p>Generate and compare different 2D SVG visualizations of a protein structure based on its domains: Normal Projection, Domain-Aligned Projection, Domain-Separated Projection.</p>
-<h2 id="dysulfidepy"><code>dysulfide.py</code></h2>
-<p><a href="https://colab.research.google.com/github/t03i/FlatProt/blob/notebooks/examples/dysulfide.ipynb"><img alt="Open In Colab" src="https://colab.research.google.com/assets/colab-badge.svg" /></a></p>
-<p>This notebook demonstrates how to: Compute cystine (disulfide) bridges from a protein structure file (<code>.cif</code>); Create a FlatProt annotation file (<code>.toml</code>) highlighting these bridges; Generate a 2D SVG projection of the protein using <code>flatprot project</code>, applying the annotations.</p>
-<h2 id="klk_overlaypy"><code>klk_overlay.py</code></h2>
-<p><a href="https://colab.research.google.com/github/t03i/FlatProt/blob/notebooks/examples/klk_overlay.ipynb"><img alt="Open In Colab" src="https://colab.research.google.com/assets/colab-badge.svg" /></a></p>
-<p>This example script demonstrates how to align KLK (Kallikrein) structures and overlay their FlatProt projections.</p>
+<p>Interactive Jupyter notebooks demonstrating FlatProt's capabilities, from basic protein projections to advanced overlay visualizations.</p>
+<h2 id="getting-started">🚀 Getting Started</h2>
+<h3 id="quick-start">Quick Start</h3>
+<ul>
+<li><strong>New to FlatProt?</strong> Start with the Basic Projection example</li>
+<li><strong>Want to compare proteins?</strong> Try the Protein Alignment example</li>
+<li><strong>Need publication graphics?</strong> Use the Protein Overlay example</li>
+</ul>
+<h3 id="running-examples">Running Examples</h3>
+<ul>
+<li><strong>Google Colab:</strong> Click any badge below - setup is automatic!</li>
+<li><strong>Local Jupyter:</strong> Clone the repo and run notebooks directly</li>
+<li><strong>Command Line:</strong> Extract the core commands marked with 🎯</li>
+</ul>
+<h2 id="core-examples">📖 Core Examples</h2>
+<h3 id="basic-protein-projection">Basic Protein Projection</h3>
+<p><a href="https://colab.research.google.com/github/t03i/FlatProt/blob/notebooks/examples/project.ipynb"><img alt="Open In Colab" src="https://colab.research.google.com/assets/colab-badge.svg" /></a></p>
+<p><strong>Perfect for beginners!</strong> Ultra-clean example using native Jupyter shell commands (<code>!flatprot project</code>). Creates beautiful 2D visualizations with minimal complexity.</p>
+<h3 id="protein-family-overlay">Protein Family Overlay</h3>
+<p><a href="https://colab.research.google.com/github/t03i/FlatProt/blob/notebooks/examples/overlay.ipynb"><img alt="Open In Colab" src="https://colab.research.google.com/assets/colab-badge.svg" /></a></p>
+<p><strong>One command, multiple proteins!</strong> Ultra-simplified demonstration using shell commands. Shows automatic clustering, alignment, and family visualization.</p>
+<h3 id="protein-alignment-and-projection">Protein Alignment and Projection</h3>
+<p><a href="https://colab.research.google.com/github/t03i/FlatProt/blob/notebooks/examples/project_align.ipynb"><img alt="Open In Colab" src="https://colab.research.google.com/assets/colab-badge.svg" /></a></p>
+<p><strong>Compare related protein structures with consistent alignment!</strong> Shows how to align three similar toxins to a reference database and create side-by-side projections with consistent orientation.</p>
+<h3 id="protein-domain-splitting">Protein Domain Splitting</h3>
+<p><a href="https://colab.research.google.com/github/t03i/FlatProt/blob/notebooks/examples/split.ipynb"><img alt="Open In Colab" src="https://colab.research.google.com/assets/colab-badge.svg" /></a></p>
+<p><strong>Extract and visualize protein domains separately!</strong> Demonstrates how to use <code>flatprot split</code> to extract structural domains and create individual visualizations for comparative analysis.</p>
+<h2 id="advanced-examples">🔬 Advanced Examples</h2>
+<h3 id="uniprot-to-alphafold-visualization">UniProt to AlphaFold Visualization</h3>
+<p><a href="https://colab.research.google.com/github/t03i/FlatProt/blob/notebooks/examples/uniprot_alphafold.ipynb"><img alt="Open In Colab" src="https://colab.research.google.com/assets/colab-badge.svg" /></a></p>
+<p><strong>From UniProt ID to beautiful visualization in minutes!</strong> Automatically downloads AlphaFold structures, extracts functional annotations from UniProt, aligns to protein families, and creates publication-ready visualizations. Features automatic binding site detection and multiple visualization variants.</p>
+<h3 id="custom-styling-and-annotations">Custom Styling and Annotations</h3>
+<p><a href="https://colab.research.google.com/github/t03i/FlatProt/blob/notebooks/examples/custom_styling.ipynb"><img alt="Open In Colab" src="https://colab.research.google.com/assets/colab-badge.svg" /></a></p>
+<p><strong>Create beautiful protein visualizations with custom colors and annotations!</strong> Demonstrates modern color schemes, point/line/area annotations, and style variations. Includes a side-by-side comparison gallery showing different aesthetic approaches.</p>
+<h3 id="disulfide-bond-detection">Disulfide Bond Detection</h3>
+<p><a href="https://colab.research.google.com/github/t03i/FlatProt/blob/notebooks/examples/disulfide.ipynb"><img alt="Open In Colab" src="https://colab.research.google.com/assets/colab-badge.svg" /></a></p>
+<p><strong>Automated disulfide bond analysis!</strong> Shows how to detect disulfide bonds, generate annotation files programmatically, and create annotated visualizations. Perfect example of structural bioinformatics automation.</p>
+<h2 id="learning-path">💡 Learning Path</h2>
+<p><strong>🚀 Recommended (Clean &amp; Simple):</strong>
+1. <strong>Start:</strong> <a href="https://colab.research.google.com/github/t03i/FlatProt/blob/notebooks/examples/project.ipynb">Basic Projection</a> - Pure shell commands, minimal complexity
+2. <strong>Align:</strong> <a href="https://colab.research.google.com/github/t03i/FlatProt/blob/notebooks/examples/project_align.ipynb">Protein Alignment and Projection</a> - Structure comparison with consistent alignment
+3. <strong>Domains:</strong> <a href="https://colab.research.google.com/github/t03i/FlatProt/blob/notebooks/examples/split.ipynb">Protein Domain Splitting</a> - Extract and visualize domains separately
+4. <strong>Features:</strong> <a href="https://colab.research.google.com/github/t03i/FlatProt/blob/notebooks/examples/disulfide.ipynb">Disulfide Bond Detection</a> - Automated bond analysis + annotations
+5. <strong>Scale up:</strong> <a href="https://colab.research.google.com/github/t03i/FlatProt/blob/notebooks/examples/overlay.ipynb">Protein Family Overlay</a> - Multi-protein visualization</p>
+<p><strong>🔬 Advanced (Full-Featured):</strong>
+6. <strong>Customize:</strong> <a href="https://colab.research.google.com/github/t03i/FlatProt/blob/notebooks/examples/custom_styling.ipynb">Custom Styling</a> - Beautiful color schemes and annotations
+7. <strong>Research:</strong> <a href="https://colab.research.google.com/github/t03i/FlatProt/blob/notebooks/examples/uniprot_alphafold.ipynb">UniProt to AlphaFold</a> - Complete research workflow</p>
+<h2 id="technical-notes">🔧 Technical Notes</h2>
+<p><strong>About Notebook Complexity:</strong> Much of the code in these notebooks handles automatic Google Colab setup (dependency installation, data download, environment configuration). The actual FlatProt usage is typically just 1-3 commands per example!</p>
+<p><strong>Essential Commands (in Jupyter):</strong></p>
+<pre><code class="language-bash"># Basic projection (SVG output)
+!flatprot project structure.cif -o output.svg
+
+# Multi-protein overlay (PNG/PDF available)
+!flatprot overlay &quot;structures/*.cif&quot; -o overlay.png --family 3000114 --clustering
+
+# Structure alignment
+!flatprot align structure.cif matrix.npy info.json
+</code></pre>
+<p><strong>Output Formats:</strong>
+- <code>flatprot project</code> → <strong>SVG only</strong> (vector graphics, perfect for notebooks)
+- <code>flatprot overlay</code> → <strong>SVG, PNG, PDF</strong> (PNG great for Colab compatibility)
+- <code>flatprot split</code> → <strong>SVG only</strong></p>
+<p><strong>Automation:</strong> Notebooks are automatically generated from Python source files using <code>scripts/create-notebooks.sh</code> and jupytext.</p>
               
             </div>
           </div><footer>

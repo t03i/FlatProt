@@ -104,6 +104,10 @@
               </ul>
               <p class="caption"><span class="caption-text">Tools</span></p>
               <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../tools/custom_database/">Custom Database</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../tools/database_builder/">Rebuild Default Database</a>
+                  </li>
                   <li class="toctree-l1"><a class="reference internal" href="../../tools/matrix_extraction/">PyMOL Matrix Extraction</a>
                   </li>
               </ul>
@@ -171,7 +175,6 @@ id = &quot;point-his41&quot;,      # Optional: unique identifier
 
 # Optional inline 'style' table for overrides:
 [annotations.style]
-    marker_shape = &quot;star&quot;,
     marker_radius = 8.0,
     color = &quot;#FF0000&quot;,
     label_offset = [5.0, -5.0] # TOML array for tuple
@@ -352,12 +355,6 @@ range = &quot;A:100-150&quot;,       # Required: target residue range (ChainID:S
 </thead>
 <tbody>
 <tr>
-<td><code>marker_shape</code></td>
-<td>String (<code>"circle"</code>, <code>"square"</code>, <code>"triangle"</code>, <code>"diamond"</code>)</td>
-<td><code>"circle"</code></td>
-<td>Shape of the marker.</td>
-</tr>
-<tr>
 <td><code>marker_radius</code></td>
 <td>Float</td>
 <td><code>5.0</code></td>
@@ -365,6 +362,7 @@ range = &quot;A:100-150&quot;,       # Required: target residue range (ChainID:S
 </tr>
 </tbody>
 </table>
+<p>Note: Point markers are always rendered as circles.</p>
 <h3 id="line-annotation-style-style-table-when-type-line">Line Annotation Style (<code>style</code> table when <code>type = "line"</code>)</h3>
 <table>
 <thead>
@@ -499,7 +497,7 @@ range = &quot;A:100-150&quot;,       # Required: target residue range (ChainID:S
           </div><footer>
     <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
         <a href="../style/" class="btn btn-neutral float-left" title="Style Files"><span class="icon icon-circle-arrow-left"></span> Previous</a>
-        <a href="../../tools/matrix_extraction/" class="btn btn-neutral float-right" title="PyMOL Matrix Extraction">Next <span class="icon icon-circle-arrow-right"></span></a>
+        <a href="../../tools/custom_database/" class="btn btn-neutral float-right" title="Custom Database">Next <span class="icon icon-circle-arrow-right"></span></a>
     </div>
 
   <hr/>
@@ -529,7 +527,7 @@ range = &quot;A:100-150&quot;,       # Required: target residue range (ChainID:S
       <span><a href="../style/" style="color: #fcfcfc">&laquo; Previous</a></span>
     
     
-      <span><a href="../../tools/matrix_extraction/" style="color: #fcfcfc">Next &raquo;</a></span>
+      <span><a href="../../tools/custom_database/" style="color: #fcfcfc">Next &raquo;</a></span>
     
   </span>
 </div>
