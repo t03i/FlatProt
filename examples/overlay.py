@@ -6,7 +6,7 @@
 # One command handles everything: clustering, alignment, and visualization.
 
 # %% [markdown]
-# ## 🔧 Setup (Colab only)
+# ## 🔧 Setup
 
 # %%
 # Colab setup with robust path handling
