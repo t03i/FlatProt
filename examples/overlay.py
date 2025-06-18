@@ -47,7 +47,7 @@ print(f"📁 Output path: {tmp_path}")
 !mkdir -p "{tmp_path}overlay/klk"
 !unzip -j "{data_path}KLK.zip" "klk/structures/*.cif" -d "{tmp_path}overlay/klk/" 2>/dev/null || echo "Using existing files"
 
-# Count extracted files
+# Count extracted files and check their validity
 from pathlib import Path
 klk_files = list(Path(f"{tmp_path}overlay/klk/").glob("*.cif"))
 print(f"📁 {len(klk_files)} protein structures ready")

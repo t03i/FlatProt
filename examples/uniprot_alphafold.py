@@ -367,7 +367,7 @@ if use_matrix:
     project_cmd += f' --matrix "{matrix_file}"'
 
 project_cmd += ' --show-positions major'
-project_cmd += ' --canvas-width 1000 --canvas-height 800'
+project_cmd += ' --canvas-width 800 --canvas-height 600'
 project_cmd += ' --quiet'
 
 print(f"   Running: flatprot project...")
@@ -411,16 +411,18 @@ except ImportError:
 # %% [markdown]
 # ## 🔬 Create Additional Visualizations
 #
-# Generate alternative views and comparisons.
+# Generate different annotation levels for comparison - all using the same orientation.
 
 # %%
-# Create a version without alignment for comparison
+# Create a version without annotations for comparison
 basic_svg = f"{tmp_path}uniprot/{UNIPROT_ID}/{UNIPROT_ID}_basic.svg"
 
-print(f"🔬 Creating comparison visualization (no alignment)...")
+print(f"🔬 Creating comparison visualization (same alignment, no annotations)...")
 
 basic_cmd = f'uv run flatprot project "{structure_file}" "{basic_svg}"'
 basic_cmd += f' --style "{style_file}"'
+if use_matrix:
+    basic_cmd += f' --matrix "{matrix_file}"'
 basic_cmd += ' --show-positions minimal --canvas-width 800 --canvas-height 600 --quiet'
 
 !{basic_cmd}
@@ -434,16 +436,16 @@ minimal_cmd = f'uv run flatprot project "{structure_file}" "{minimal_svg}"'
 minimal_cmd += f' --style "{style_file}"'
 if use_matrix:
     minimal_cmd += f' --matrix "{matrix_file}"'
-minimal_cmd += ' --show-positions none --canvas-width 600 --canvas-height 400 --quiet'
+minimal_cmd += ' --show-positions none --canvas-width 800 --canvas-height 600 --quiet'
 
 !{minimal_cmd}
 
 print(f"✅ Created comparison visualizations")
 
 # %% [markdown]
-# ## 🖼️ Comparison Gallery
+# ## 🖼️ Annotation Level Comparison
 #
-# Display all three versions side by side.
+# Display different annotation levels using the same protein orientation.
 
 # %%
 # Display comparison of different visualization approaches
@@ -454,9 +456,9 @@ try:
     alignment_desc = "family-aligned" if use_matrix else "default orientation"
 
     visualizations = [
-        ("🎨 Full Featured", output_svg, f"With {alignment_desc}, annotations, and position labels"),
-        ("🔄 Basic Structure", basic_svg, f"Structure with {alignment_desc} but no annotations"),
-        ("⚪ Minimal Clean", minimal_svg, f"Clean view with {alignment_desc}")
+        ("🎨 Full Featured", output_svg, f"Complete view: {alignment_desc} + UniProt annotations + position labels"),
+        ("🔄 Structure Only", basic_svg, f"Structure view: {alignment_desc} + minimal position labels (no annotations)"),
+        ("⚪ Clean Minimal", minimal_svg, f"Minimal view: {alignment_desc} only (no annotations or position labels)")
     ]
 
     existing_viz = [(name, path, desc) for name, path, desc in visualizations if os.path.exists(path)]
@@ -474,13 +476,9 @@ try:
             with open(svg_path, 'r') as f:
                 svg_content = f.read()
 
-            # Make SVGs smaller for comparison
-            svg_content = svg_content.replace('width="1000"', 'width="300"')
+            # Make SVGs smaller for comparison (all are now 800x600)
             svg_content = svg_content.replace('width="800"', 'width="300"')
-            svg_content = svg_content.replace('width="600"', 'width="300"')
-            svg_content = svg_content.replace('height="800"', 'height="240"')
             svg_content = svg_content.replace('height="600"', 'height="240"')
-            svg_content = svg_content.replace('height="400"', 'height="240"')
 
             html_content += f"""
             <div style="text-align: center; margin: 10px; max-width: 320px;">
