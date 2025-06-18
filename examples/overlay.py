@@ -80,6 +80,7 @@ print(f"📝 Style file created at {tmp_path}overlay/style.toml")
 # 2. Aligns to Trypsin family (3000114)
 # 3. Creates overlay with smart opacity
 # 4. Applies custom styling
+# *Note: The first time you run this, it will take a while to download the database.*
 
 # %%
 # Create the overlay!

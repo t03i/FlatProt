@@ -42,6 +42,7 @@ print(f"📁 Output path: {tmp_path}")
 # ## 🎯 **Step 1: Align structures to reference database**
 #
 # This finds the best structural alignment for each toxin:
+# *Note: The first time you run this, it will take a while to download the database.*
 
 # %%
 # Align each structure to reference database

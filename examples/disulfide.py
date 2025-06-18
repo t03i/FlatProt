@@ -140,7 +140,7 @@ for structure in structures:
 # ## 🎯 Align Structures for Consistent Orientation
 #
 # First align all structures to ensure comparable visualizations:
-
+# *Note: The first time you run this, it will take a while to download the database.*
 # %%
 # Align all structures to reference database
 print("🔄 Aligning structures for consistent orientation...")

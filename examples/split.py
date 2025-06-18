@@ -89,6 +89,7 @@ print(f"🎯 FlatProt format: {regions_with_chain}")
 # ## ✂️ **The Magic of Split**
 #
 # One command extracts all domains and creates aligned visualization:
+# *Note: The first time you run this, it will take a while to download the database.*
 
 # %%
 # Create split domain visualization

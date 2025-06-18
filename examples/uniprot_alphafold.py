@@ -298,6 +298,7 @@ print(f"✅ Created style file: {style_file}")
 # ## 🔄 Align to Protein Family
 #
 # Use FlatProt's alignment feature to find the optimal rotation matrix.
+# *Note: The first time you run this, it will take a while to download the database.*
 
 # %%
 # Generate alignment matrix for consistent orientation
