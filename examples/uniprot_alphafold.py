@@ -483,11 +483,11 @@ try:
 
             html_content += f"""
             <div style="text-align: center; margin: 10px; max-width: 320px;">
-                <h4 style="margin-bottom: 10px; color: #2C3E50;">{name}</h4>
+                <h4 style="margin-bottom: 10px; color: #777;">{name}</h4>
                 <div style="border: 2px solid #ECF0F1; border-radius: 8px; padding: 15px; background: white; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
                     {svg_content}
                 </div>
-                <p style="font-size: 12px; color: #7F8C8D; margin-top: 8px; line-height: 1.3;">{description}</p>
+                <p style="font-size: 12px; color: #777; margin-top: 8px; line-height: 1.3;">{description}</p>
             </div>
             """
 

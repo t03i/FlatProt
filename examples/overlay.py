@@ -44,12 +44,47 @@ print(f"📁 Output path: {tmp_path}")
 
 # %%
 # Extract KLK proteins from archive
-!mkdir -p "{tmp_path}overlay/klk"
-!unzip -j "{data_path}KLK.zip" "KLK/structures/*.cif" -d "{tmp_path}overlay/klk/" 2>/dev/null || echo "Using existing files"
+import subprocess
+import time
+from pathlib import Path
+
+# Create output directory
+output_dir = Path(f"{tmp_path}overlay/klk/")
+output_dir.mkdir(parents=True, exist_ok=True)
+
+# Check if files already exist
+existing_files = list(output_dir.glob("*.cif"))
+if existing_files:
+    print(f"📁 Found {len(existing_files)} existing CIF files, skipping extraction")
+else:
+    print(f"📦 Extracting protein structures from {data_path}KLK.zip...")
+    print("⏳ This may take a few minutes (436 files to extract)...")
+
+    try:
+        # Use subprocess with timeout and progress indication
+        start_time = time.time()
+        result = subprocess.run([
+            "unzip", "-j", f"{data_path}KLK.zip",
+            "KLK/structures/*.cif", "-d", str(output_dir), "-q"
+        ], timeout=300, capture_output=True, text=True)
+
+        elapsed = time.time() - start_time
+        if result.returncode == 0:
+            print(f"✅ Extraction completed in {elapsed:.1f} seconds")
+        else:
+            print(f"⚠️ Extraction finished with warnings (return code: {result.returncode})")
+            if result.stderr:
+                print(f"Errors: {result.stderr}")
+
+    except subprocess.TimeoutExpired:
+        print("❌ Extraction timed out after 5 minutes")
+        print("💡 Try running the command manually or check if the ZIP file is corrupted")
+    except Exception as e:
+        print(f"❌ Extraction failed: {e}")
+        print("💡 Trying to use existing files or manual extraction needed")
 
 # Count extracted files and check their validity
-from pathlib import Path
-klk_files = list(Path(f"{tmp_path}overlay/klk/").glob("*.cif"))
+klk_files = list(output_dir.glob("*.cif"))
 print(f"📁 {len(klk_files)} protein structures ready")
 
 # %% [markdown]

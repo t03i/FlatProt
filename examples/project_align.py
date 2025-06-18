@@ -60,7 +60,7 @@ print("✅ All structures aligned!")
 
 # %%
 # Create projections using alignment matrices
-!uv run flatprot project "{data_path}3Ftx/cobra.cif" -o "{tmp_path}3ftx_align/cobra.svg" --matrix "{tmp_path}3ftx_align/cobra_matrix.npy" --canvas-width 400 --canvas-height 300 --show-positions major--quiet
+!uv run flatprot project "{data_path}3Ftx/cobra.cif" -o "{tmp_path}3ftx_align/cobra.svg" --matrix "{tmp_path}3ftx_align/cobra_matrix.npy" --canvas-width 400 --canvas-height 300 --show-positions major --quiet
 !uv run flatprot project "{data_path}3Ftx/krait.cif" -o "{tmp_path}3ftx_align/krait.svg" --matrix "{tmp_path}3ftx_align/krait_matrix.npy" --canvas-width 400 --canvas-height 300 --show-positions major --quiet
 !uv run flatprot project "{data_path}3Ftx/snake.cif" -o "{tmp_path}3ftx_align/snake.svg" --matrix "{tmp_path}3ftx_align/snake_matrix.npy" --canvas-width 400 --canvas-height 300 --show-positions major --quiet
 
