@@ -45,7 +45,7 @@ print(f"📁 Output path: {tmp_path}")
 # %%
 # Extract KLK proteins from archive
 !mkdir -p "{tmp_path}overlay/klk"
-!unzip -j "{data_path}KLK.zip" "klk/structures/*.cif" -d "{tmp_path}overlay/klk/" 2>/dev/null || echo "Using existing files"
+!unzip -j "{data_path}KLK.zip" "KLK/structures/*.cif" -d "{tmp_path}overlay/klk/" 2>/dev/null || echo "Using existing files"
 
 # Count extracted files and check their validity
 from pathlib import Path
@@ -83,7 +83,7 @@ print(f"📝 Style file created at {tmp_path}overlay/style.toml")
 
 # %%
 # Create the overlay!
-!uv run flatprot overlay "{tmp_path}overlay/klk/*.cif" -o "{tmp_path}overlay/overlay.png" --family 3000114 --style "{tmp_path}overlay/style.toml" --canvas-width 800 --canvas-height 600 --clustering --dpi 150
+!uv run flatprot overlay "{tmp_path}overlay/klk/*.cif" -o "{tmp_path}overlay/overlay.png" --family 3000114 --style "{tmp_path}overlay/style.toml" --canvas-width 800 --canvas-height 600 --clustering --dpi 150 --quiet
 
 # %% [markdown]
 # ## 🎉 View your overlay
