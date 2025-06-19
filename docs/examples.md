@@ -21,7 +21,7 @@ Interactive Jupyter notebooks demonstrating FlatProt's capabilities, from basic 
 ### Basic Protein Projection
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/t03i/FlatProt/blob/notebooks/examples/project.ipynb)
 
-**Perfect for beginners!** Ultra-clean example using native Jupyter shell commands (`!flatprot project`). Creates beautiful 2D visualizations with minimal complexity.
+**Perfect for beginners!** Ultra-clean example using native Jupyter shell commands (`!flatprot project`). Creates 2D visualizations with minimal complexity.
 
 ### Protein Family Overlay
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/t03i/FlatProt/blob/notebooks/examples/overlay.ipynb)
@@ -44,13 +44,13 @@ Interactive Jupyter notebooks demonstrating FlatProt's capabilities, from basic 
 
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/t03i/FlatProt/blob/notebooks/examples/uniprot_alphafold.ipynb)
 
-**From UniProt ID to beautiful visualization in minutes!** Automatically downloads AlphaFold structures, extracts functional annotations from UniProt, aligns to protein families, and creates publication-ready visualizations. Features automatic binding site detection and multiple visualization variants.
+**From UniProt ID to visualization in minutes!** Automatically downloads AlphaFold structures, extracts functional annotations from UniProt, aligns to protein families, and creates publication-ready visualizations. Features automatic binding site detection and multiple visualization variants.
 
 ### Custom Styling and Annotations
 
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/t03i/FlatProt/blob/notebooks/examples/custom_styling.ipynb)
 
-**Create beautiful protein visualizations with custom colors and annotations!** Demonstrates modern color schemes, point/line/area annotations, and style variations. Includes a side-by-side comparison gallery showing different aesthetic approaches.
+**Create protein visualizations with custom colors and annotations!** Demonstrates modern color schemes, point/line/area annotations, and style variations. Includes a side-by-side comparison gallery showing different aesthetic approaches.
 
 ### Disulfide Bond Detection
 
@@ -68,7 +68,7 @@ Interactive Jupyter notebooks demonstrating FlatProt's capabilities, from basic 
 5. **Scale up:** [Protein Family Overlay](https://colab.research.google.com/github/t03i/FlatProt/blob/notebooks/examples/overlay.ipynb) - Multi-protein visualization
 
 **🔬 Advanced (Full-Featured):**
-6. **Customize:** [Custom Styling](https://colab.research.google.com/github/t03i/FlatProt/blob/notebooks/examples/custom_styling.ipynb) - Beautiful color schemes and annotations
+6. **Customize:** [Custom Styling](https://colab.research.google.com/github/t03i/FlatProt/blob/notebooks/examples/custom_styling.ipynb) - Color schemes and annotations
 7. **Research:** [UniProt to AlphaFold](https://colab.research.google.com/github/t03i/FlatProt/blob/notebooks/examples/uniprot_alphafold.ipynb) - Complete research workflow
 
 ## 🔧 Technical Notes

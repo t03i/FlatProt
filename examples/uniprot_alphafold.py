@@ -1,7 +1,7 @@
 # %% [markdown]
 # # FlatProt: UniProt to AlphaFold Visualization
 #
-# **From UniProt ID to beautiful 2D protein visualization in minutes!**
+# **From UniProt ID to 2D protein visualization in minutes!**
 #
 # This example shows how to automatically download AlphaFold structures,
 # align them to protein families, and create publication-ready visualizations

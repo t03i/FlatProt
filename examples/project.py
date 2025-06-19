@@ -1,7 +1,7 @@
 # %% [markdown]
 # # FlatProt: Simple Protein Projection
 #
-# **Create beautiful 2D protein visualizations with a single command!**
+# **Create 2D protein visualizations with a single command!**
 #
 # This notebook shows the essence of FlatProt - everything else is just setup for Colab compatibility.
 
@@ -42,7 +42,7 @@ print(f"📁 Output path: {tmp_path}")
 # %% [markdown]
 # ## 🎯 **This is FlatProt!**
 #
-# The core command is beautifully simple:
+# The core command is simple:
 # (Note: `flatprot project` creates SVG files - perfect for Jupyter!)
 
 # %%
