@@ -85,8 +85,6 @@
     </li>
     <li class="toctree-l2"><a class="reference internal" href="#style-sections">Style Sections</a>
         <ul>
-    <li class="toctree-l3"><a class="reference internal" href="#canvas-settings">Canvas Settings</a>
-    </li>
     <li class="toctree-l3"><a class="reference internal" href="#secondary-structure-styles">Secondary Structure Styles</a>
         <ul>
     <li class="toctree-l4"><a class="reference internal" href="#helix-style-helix">Helix Style ([helix])</a>
@@ -176,19 +174,11 @@
 <ul>
 <li>Secondary structure elements (helices, sheets, coils)</li>
 <li>Annotations (points, lines, areas)</li>
-<li>Canvas properties</li>
 </ul>
 <h2 id="file-format">File Format</h2>
 <p>Style files use the <a href="https://toml.io/">TOML</a> format, with each section defining styles for a specific element type.</p>
 <h3 id="example-style-file">Example Style File</h3>
-<pre><code class="language-toml"># Canvas settings
-[canvas]
-width = 800
-height = 600
-background_color = &quot;#FFFFFF&quot;
-margin = 20
-
-# Secondary structure styles
+<pre><code class="language-toml"># Secondary structure styles
 [helix]
 fill_color = &quot;#FF5733&quot;
 stroke_color = &quot;#000000&quot;
@@ -225,39 +215,6 @@ smoothing_window = 3
 interpolation_points = 10
 </code></pre>
 <h2 id="style-sections">Style Sections</h2>
-<h3 id="canvas-settings">Canvas Settings</h3>
-<p>The <code>[canvas]</code> section defines the overall properties of the visualization.</p>
-<table>
-<thead>
-<tr>
-<th>Property</th>
-<th>Type</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>width</code></td>
-<td>Integer</td>
-<td>Width of the canvas in pixels</td>
-</tr>
-<tr>
-<td><code>height</code></td>
-<td>Integer</td>
-<td>Height of the canvas in pixels</td>
-</tr>
-<tr>
-<td><code>background_color</code></td>
-<td>Color</td>
-<td>Background color of the canvas</td>
-</tr>
-<tr>
-<td><code>margin</code></td>
-<td>Integer</td>
-<td>Margin around the visualization in pixels</td>
-</tr>
-</tbody>
-</table>
 <h3 id="secondary-structure-styles">Secondary Structure Styles</h3>
 <p>These sections define the appearance of secondary structure elements rendered in the visualization. Common properties like <code>color</code>, <code>stroke_color</code>, <code>stroke_width</code>, and <code>opacity</code> are inherited but can be overridden.</p>
 <h4 id="helix-style-helix">Helix Style (<code>[helix]</code>)</h4>

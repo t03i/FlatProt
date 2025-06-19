@@ -194,7 +194,7 @@
 <p><strong>Coordinate System &amp; Canvas:</strong></p>
 <ul>
 <li>The input <code>Scene</code> contains elements with coordinates already projected onto the 2D canvas (X, Y) plus depth (Z). The origin (0,0) is typically the top-left corner, consistent with SVG standards.</li>
-<li>The <code>width</code> and <code>height</code> provided to the renderer define the dimensions of the SVG canvas and its <code>viewBox</code>.</li>
+<li>The <code>width</code> and <code>height</code> provided to the renderer define the dimensions of the SVG canvas and its <code>viewBox</code>. These dimensions are controlled via CLI parameters (default: 1000x1000) and passed through the rendering pipeline.</li>
 <li>The <code>project_structure_orthographically</code> utility function handles the scaling and centering of the protein coordinates within this canvas space before they reach the scene/renderer.</li>
 </ul>
 </li>
