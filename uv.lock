@@ -548,7 +548,7 @@ wheels = [
 
 [[package]]
 name = "flatprot"
-version = "2.4.4"
+version = "2.4.5"
 source = { editable = "." }
 dependencies = [
     { name = "cairosvg" },
