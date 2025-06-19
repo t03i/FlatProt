@@ -378,7 +378,9 @@
 <span class="normal">131</span>
 <span class="normal">132</span>
 <span class="normal">133</span>
-<span class="normal">134</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span> <span class="nc">GemmiStructureParser</span><span class="p">(</span><span class="n">StructureParser</span><span class="p">):</span>
+<span class="normal">134</span>
+<span class="normal">135</span>
+<span class="normal">136</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span> <span class="nc">GemmiStructureParser</span><span class="p">(</span><span class="n">StructureParser</span><span class="p">):</span>
     <span class="k">def</span> <span class="nf">parse_structure</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">structure_file</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">secondary_structure_file</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Path</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Structure</span><span class="p">:</span>
@@ -398,7 +400,9 @@
 
             <span class="n">chain_obj</span> <span class="o">=</span> <span class="n">Chain</span><span class="p">(</span><span class="n">chain</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="o">**</span><span class="n">chain_data</span><span class="p">)</span>
             <span class="k">for</span> <span class="n">region</span> <span class="ow">in</span> <span class="n">ss_regions</span><span class="p">:</span>
-                <span class="n">chain_obj</span><span class="o">.</span><span class="n">add_secondary_structure</span><span class="p">(</span><span class="n">region</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">region</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">region</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
+                <span class="n">chain_obj</span><span class="o">.</span><span class="n">add_secondary_structure</span><span class="p">(</span>
+                    <span class="n">region</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">region</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">region</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">allow_missing_residues</span><span class="o">=</span><span class="kc">True</span>
+                <span class="p">)</span>
             <span class="n">chains</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">chain_obj</span><span class="p">)</span>
 
         <span class="c1"># Assign structure ID from filename stem</span>
@@ -552,7 +556,9 @@
 <span class="normal">38</span>
 <span class="normal">39</span>
 <span class="normal">40</span>
-<span class="normal">41</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">parse_structure</span><span class="p">(</span>
+<span class="normal">41</span>
+<span class="normal">42</span>
+<span class="normal">43</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">parse_structure</span><span class="p">(</span>
     <span class="bp">self</span><span class="p">,</span> <span class="n">structure_file</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">secondary_structure_file</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Path</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Structure</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Main entry point for structure parsing&quot;&quot;&quot;</span>
@@ -571,7 +577,9 @@
 
         <span class="n">chain_obj</span> <span class="o">=</span> <span class="n">Chain</span><span class="p">(</span><span class="n">chain</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="o">**</span><span class="n">chain_data</span><span class="p">)</span>
         <span class="k">for</span> <span class="n">region</span> <span class="ow">in</span> <span class="n">ss_regions</span><span class="p">:</span>
-            <span class="n">chain_obj</span><span class="o">.</span><span class="n">add_secondary_structure</span><span class="p">(</span><span class="n">region</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">region</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">region</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
+            <span class="n">chain_obj</span><span class="o">.</span><span class="n">add_secondary_structure</span><span class="p">(</span>
+                <span class="n">region</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">region</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">region</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">allow_missing_residues</span><span class="o">=</span><span class="kc">True</span>
+            <span class="p">)</span>
         <span class="n">chains</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">chain_obj</span><span class="p">)</span>
 
     <span class="c1"># Assign structure ID from filename stem</span>
@@ -599,9 +607,7 @@
 
             <details class="quote">
               <summary>Source code in <code>src/flatprot/io/structure_gemmi_adapter.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">106</span>
-<span class="normal">107</span>
-<span class="normal">108</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">108</span>
 <span class="normal">109</span>
 <span class="normal">110</span>
 <span class="normal">111</span>
@@ -627,7 +633,9 @@
 <span class="normal">131</span>
 <span class="normal">132</span>
 <span class="normal">133</span>
-<span class="normal">134</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">save_structure</span><span class="p">(</span>
+<span class="normal">134</span>
+<span class="normal">135</span>
+<span class="normal">136</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">save_structure</span><span class="p">(</span>
     <span class="bp">self</span><span class="p">,</span> <span class="n">structure</span><span class="p">:</span> <span class="n">Structure</span><span class="p">,</span> <span class="n">output_file</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">separate_chains</span><span class="o">=</span><span class="kc">False</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Save structure using gemmi&quot;&quot;&quot;</span>
