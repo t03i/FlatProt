@@ -33,7 +33,9 @@ class GemmiStructureParser(StructureParser):
 
             chain_obj = Chain(chain.name, **chain_data)
             for region in ss_regions:
-                chain_obj.add_secondary_structure(region[0], region[1], region[2])
+                chain_obj.add_secondary_structure(
+                    region[0], region[1], region[2], allow_missing_residues=True
+                )
             chains.append(chain_obj)
 
         # Assign structure ID from filename stem

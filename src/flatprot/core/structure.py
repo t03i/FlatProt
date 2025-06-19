@@ -86,14 +86,48 @@ class Chain:
         type: SecondaryStructureType,
         residue_start: int,
         residue_end: int,
+        allow_missing_residues: bool = False,
     ) -> None:
         start_coord = self.__chain_coordinates.get(residue_start, None)
         end_coord = self.__chain_coordinates.get(residue_end, None)
 
         if start_coord is None or end_coord is None:
-            raise ValueError(
-                f"Residue {residue_start} or {residue_end} not found in chain {self.id}"
-            )
+            if allow_missing_residues:
+                # Handle cases where secondary structure definitions reference non-protein residues
+                # (e.g., heme groups, ligands). Truncate to the last valid protein residue.
+                valid_indices = sorted(self.__chain_coordinates.keys())
+                if not valid_indices:
+                    return  # Skip if no valid residues
+
+                # Adjust start if missing
+                if start_coord is None:
+                    # Find first valid residue >= residue_start
+                    adjusted_start = None
+                    for idx in valid_indices:
+                        if idx >= residue_start:
+                            adjusted_start = idx
+                            break
+                    if adjusted_start is None:
+                        return  # No valid start found
+                    residue_start = adjusted_start
+                    start_coord = self.__chain_coordinates[residue_start]
+
+                # Adjust end if missing
+                if end_coord is None:
+                    # Find last valid residue <= residue_end
+                    adjusted_end = None
+                    for idx in reversed(valid_indices):
+                        if idx <= residue_end:
+                            adjusted_end = idx
+                            break
+                    if adjusted_end is None or adjusted_end < residue_start:
+                        return  # No valid end found or invalid range
+                    residue_end = adjusted_end
+                    end_coord = self.__chain_coordinates[residue_end]
+            else:
+                raise ValueError(
+                    f"Residue {residue_start} or {residue_end} not found in chain {self.id}"
+                )
 
         if not self._check_range_contiguous(start_coord, end_coord):
             raise ValueError(
