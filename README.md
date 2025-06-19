@@ -77,11 +77,17 @@ Please ensure your contributions adhere to the project's coding style and includ
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for more detailed guidelines.
 
-## Data
+## 📖 Citation & Data
 
-This project uses datasets that can be found on Zenodo.
+If you use FlatProt in your research, please cite our preprint:
 
-[Zenodo Data](https://doi.org/10.5281/zenodo.15264810)
+> **FlatProt: 2D visualization eases protein structure comparison**
+> Tobias Olenyi, Constantin Carl, Tobias Senoner, Ivan Koludarov, Burkhard Rost
+> *bioRxiv* 2025.04.22.650077; doi: [https://doi.org/10.1101/2025.04.22.650077](https://doi.org/10.1101/2025.04.22.650077)
+
+**Datasets and supplementary data** are available on Zenodo:
+
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.15697296.svg)](https://doi.org/10.5281/zenodo.15697296)
 
 ## 🔧 CLI Commands
 
@@ -152,13 +158,6 @@ for file in *.cif; do
 done
 ```
 
-## Reference
-
-If you use FlatProt in your research, please cite:
-
-> FlatProt: 2D visualization eases protein structure comparison
-> Tobias Olenyi, Constantin Carl, Tobias Senoner, Ivan Koludarov, Burkhard Rost
-> bioRxiv 2025.04.22.650077; doi: https://doi.org/10.1101/2025.04.22.650077
 
 ## License
 

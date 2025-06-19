@@ -8,7 +8,6 @@ Style files allow you to customize the appearance of various elements in the Fla
 
 -   Secondary structure elements (helices, sheets, coils)
 -   Annotations (points, lines, areas)
--   Canvas properties
 
 ## File Format
 
@@ -17,13 +16,6 @@ Style files use the [TOML](https://toml.io/) format, with each section defining 
 ### Example Style File
 
 ```toml
-# Canvas settings
-[canvas]
-width = 800
-height = 600
-background_color = "#FFFFFF"
-margin = 20
-
 # Secondary structure styles
 [helix]
 fill_color = "#FF5733"
@@ -62,17 +54,6 @@ interpolation_points = 10
 ```
 
 ## Style Sections
-
-### Canvas Settings
-
-The `[canvas]` section defines the overall properties of the visualization.
-
-| Property           | Type    | Description                               |
-| ------------------ | ------- | ----------------------------------------- |
-| `width`            | Integer | Width of the canvas in pixels             |
-| `height`           | Integer | Height of the canvas in pixels            |
-| `background_color` | Color   | Background color of the canvas            |
-| `margin`           | Integer | Margin around the visualization in pixels |
 
 ### Secondary Structure Styles
 

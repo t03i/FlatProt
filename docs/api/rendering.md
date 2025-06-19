@@ -42,7 +42,7 @@ Several aspects define how the FlatProt rendering system, particularly the `SVGR
 4.  **Coordinate System & Canvas:**
 
     -   The input `Scene` contains elements with coordinates already projected onto the 2D canvas (X, Y) plus depth (Z). The origin (0,0) is typically the top-left corner, consistent with SVG standards.
-    -   The `width` and `height` provided to the renderer define the dimensions of the SVG canvas and its `viewBox`.
+    -   The `width` and `height` provided to the renderer define the dimensions of the SVG canvas and its `viewBox`. These dimensions are controlled via CLI parameters (default: 1000x1000) and passed through the rendering pipeline.
     -   The `project_structure_orthographically` utility function handles the scaling and centering of the protein coordinates within this canvas space before they reach the scene/renderer.
 
 5.  **Focus on Static Output:**

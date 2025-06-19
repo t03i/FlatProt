@@ -18,6 +18,8 @@ flatprot project STRUCTURE_FILE [OPTIONS]
 - `--canvas-width` - Width of the output SVG canvas in pixels [default: 1000]
 - `--canvas-height` - Height of the output SVG canvas in pixels [default: 1000]
 
+**Note:** Canvas dimensions are controlled via CLI parameters only. Style files do not currently support canvas settings.
+
 ### Transformation Options
 - `--matrix` - Path to a custom transformation matrix (NumPy `.npy` format). If omitted, inertia-based transformation is applied
 

@@ -137,8 +137,14 @@ FlatProt offers multiple visualization types to suit different analysis needs:
 -   **Residue Annotations**: Optional display of amino acid annotations and chain positions
 -   **Custom Highlighting**: Support for manual residue and bond highlighting through JSON configuration
 
-## Citation
+## Citation & Data
 
-> FlatProt: 2D visualization eases protein structure comparison
+If you use FlatProt in your research, please cite our preprint:
+
+> **FlatProt: 2D visualization eases protein structure comparison**
 > Tobias Olenyi, Constantin Carl, Tobias Senoner, Ivan Koludarov, Burkhard Rost
-> bioRxiv 2025.04.22.650077; doi: [https://doi.org/10.1101/2025.04.22.650077](https://doi.org/10.1101/2025.04.22.650077)
+> *bioRxiv* 2025.04.22.650077; doi: [https://doi.org/10.1101/2025.04.22.650077](https://doi.org/10.1101/2025.04.22.650077)
+
+**Datasets and supplementary data** are available on Zenodo:
+
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.15697296.svg)](https://doi.org/10.5281/zenodo.15697296)
