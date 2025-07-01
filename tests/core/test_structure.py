@@ -148,7 +148,7 @@ def test_chain_to_ranges_empty() -> None:
 
 
 def test_chain_secondary_structure_default_coil(sample_chain_a: Chain) -> None:
-    """Test that secondary_structure defaults to COIL for all residues if none are added."""
+    """Test that secondary_structure provides COIL coverage when no secondary structure is defined."""
     ss = sample_chain_a.secondary_structure
     assert len(ss) == 1
     expected_range = ResidueRange("A", 10, 14, 0, SecondaryStructureType.COIL)
@@ -160,11 +160,9 @@ def test_chain_add_secondary_structure_success(sample_chain_a: Chain) -> None:
     sample_chain_a.add_secondary_structure(SecondaryStructureType.HELIX, 11, 13)
 
     ss = sample_chain_a.secondary_structure
-    # Expected: Coil(10-10), Helix(11-13), Coil(14-14)
+    # Expected: Only the explicitly defined Helix(11-13), no gap filling
     expected_ss = [
-        ResidueRange("A", 10, 10, 0, SecondaryStructureType.COIL),
         ResidueRange("A", 11, 13, 1, SecondaryStructureType.HELIX),
-        ResidueRange("A", 14, 14, 4, SecondaryStructureType.COIL),
     ]
     assert ss == expected_ss
 
@@ -184,8 +182,8 @@ def test_chain_add_secondary_structure_invalid_index(sample_chain_a: Chain) -> N
 def test_chain_secondary_structure_add_overlapping(sample_chain_a: Chain) -> None:
     """Test behavior when adding overlapping secondary structures.
 
-    The expectation is that the definitions from the structure added *later* alphabetically
-    (based on range sorting within the property) will take precedence in the overlapping region.
+    The new behavior preserves the original ranges without merging,
+    returning both overlapping ranges as-is.
     """
     # Add Helix first (start=10), then Sheet (start=11)
     sample_chain_a.add_secondary_structure(SecondaryStructureType.HELIX, 10, 12)
@@ -193,14 +191,10 @@ def test_chain_secondary_structure_add_overlapping(sample_chain_a: Chain) -> Non
 
     ss = sample_chain_a.secondary_structure
 
-    # Based on internal sorting (Helix 10-12 comes before Sheet 11-13):
-    # The map becomes {10: H, 11: H, 12: H}, then {11: S, 12: S, 13: S}
-    # Resulting map: {10: H, 11: S, 12: S, 13: S}
-    # Expected segments: H(10-10), S(11-13), Coil(14-14)
+    # Expected: Both original ranges preserved as-is, no merging or gap filling
     expected_ss = [
-        ResidueRange("A", 10, 10, 0, SecondaryStructureType.HELIX),
+        ResidueRange("A", 10, 12, 0, SecondaryStructureType.HELIX),
         ResidueRange("A", 11, 13, 1, SecondaryStructureType.SHEET),
-        ResidueRange("A", 14, 14, 4, SecondaryStructureType.COIL),
     ]
     assert ss == expected_ss
 
@@ -222,7 +216,7 @@ def test_chain_secondary_structure_discontinuous_chain(
 ) -> None:
     """Test secondary structure generation on a discontinuous chain.
 
-    Add structure before the gap and verify the output segments correctly.
+    Add structure before the gap and verify only explicitly defined structures are returned.
     """
     # Chain B has indices 5, 6, 9. Add Helix to 5-6.
     sample_chain_b_discontinuous.add_secondary_structure(
@@ -231,10 +225,10 @@ def test_chain_secondary_structure_discontinuous_chain(
 
     ss = sample_chain_b_discontinuous.secondary_structure
 
-    # Expected: Helix segment for 5-6, separate Coil segment for 9.
+    # Expected: Only the explicitly defined Helix segment for 5-6, no automatic gap filling.
+    # The implementation preserves segmentation boundaries when secondary structure is defined.
     expected_ss = [
         ResidueRange("B", 5, 6, 0, SecondaryStructureType.HELIX),
-        ResidueRange("B", 9, 9, 2, SecondaryStructureType.COIL),
     ]
     assert ss == expected_ss
 

@@ -149,20 +149,37 @@ class Chain:
         """Get all secondary structure elements, preserving original segmentation.
 
         Returns the originally defined secondary structure ranges without merging
-        adjacent segments of the same type. Gaps between defined ranges are filled
-        with coil elements only when explicitly needed.
+        adjacent segments of the same type. This preserves the segmentation from
+        DSSP/CIF parsing to prevent visual artifacts in helix rendering.
+
+        If no secondary structure is defined, provides COIL coverage for the entire
+        chain to ensure annotations and other systems can function properly.
 
         Returns:
-            list[ResidueRange]: A complete list of secondary structure elements
+            list[ResidueRange]: A list of secondary structure elements
                 preserving the original segmentation boundaries.
         """
+        # If no secondary structure is defined, provide COIL coverage using chain ranges
+        if not self.__secondary_structure:
+            if not self.__chain_coordinates:
+                return []
+
+            # Use to_ranges() to properly handle discontinuous chains
+            coil_ranges = []
+            for range_obj in self.to_ranges():
+                coil_ranges.append(
+                    ResidueRange(
+                        range_obj.chain_id,
+                        range_obj.start,
+                        range_obj.end,
+                        range_obj.coordinates_start_index,
+                        SecondaryStructureType.COIL,
+                    )
+                )
+            return coil_ranges
+
         # Return the originally defined secondary structure ranges without merging
         # This preserves the segmentation from the DSSP/CIF parsing
-        if not self.__secondary_structure:
-            return []
-
-        # Convert the stored secondary structure elements to ResidueRange objects
-        # while preserving their original boundaries
         complete_ss: List[ResidueRange] = []
 
         # Sort by start position to ensure consistent ordering
