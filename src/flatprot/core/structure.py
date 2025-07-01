@@ -146,79 +146,66 @@ class Chain:
 
     @property
     def secondary_structure(self) -> list[ResidueRange]:
-        """Get all secondary structure elements, filling gaps with coils.
+        """Get all secondary structure elements, preserving original segmentation.
 
-        Handles discontinuities in residue indexing by creating separate ranges
-        for contiguous segments.
+        Returns the originally defined secondary structure ranges without merging
+        adjacent segments of the same type. Gaps between defined ranges are filled
+        with coil elements only when explicitly needed.
 
         Returns:
             list[ResidueRange]: A complete list of secondary structure elements
-                covering all residues in the chain.
+                preserving the original segmentation boundaries.
         """
-        # Get all residue indices present in the chain, sorted
-        residue_indices = sorted(self.__chain_coordinates.keys())
-
-        if not residue_indices:
+        # Return the originally defined secondary structure ranges without merging
+        # This preserves the segmentation from the DSSP/CIF parsing
+        if not self.__secondary_structure:
             return []
 
-        # Create a map of residue index to defined secondary structure type
-        # Sorting __secondary_structure ensures predictable behavior in case of overlaps (though overlaps shouldn't occur)
-        defined_ss_map: Dict[int, SecondaryStructureType] = {}
-        for ss_element in sorted(self.__secondary_structure):
-            # Only consider residues actually present in the chain for this element
+        # Convert the stored secondary structure elements to ResidueRange objects
+        # while preserving their original boundaries
+        complete_ss: List[ResidueRange] = []
+
+        # Sort by start position to ensure consistent ordering
+        sorted_ss = sorted(self.__secondary_structure, key=lambda x: x.start)
+
+        # Deduplicate ranges to avoid duplicate scene elements
+        seen_ranges = set()
+
+        # Add each originally defined range as-is, avoiding duplicates
+        for ss_element in sorted_ss:
+            # Ensure the range has valid coordinates in this chain
+            valid_start = None
+            valid_end = None
+
+            # Find the first valid residue in the range
             for idx in range(ss_element.start, ss_element.end + 1):
                 if idx in self.__chain_coordinates:
-                    defined_ss_map[idx] = ss_element.secondary_structure_type
+                    if valid_start is None:
+                        valid_start = idx
+                    valid_end = idx
 
-        complete_ss: List[ResidueRange] = []
-        segment_start_idx = residue_indices[0]
-        segment_type = defined_ss_map.get(
-            segment_start_idx, SecondaryStructureType.COIL
-        )
-        segment_contig_start = self.__chain_coordinates[
-            segment_start_idx
-        ].coordinate_index
-
-        # Iterate through residues to identify segments of continuous type and index
-        for i in range(1, len(residue_indices)):
-            current_idx = residue_indices[i]
-            prev_idx = residue_indices[i - 1]
-            current_res_type = defined_ss_map.get(
-                current_idx, SecondaryStructureType.COIL
-            )
-
-            # Check for discontinuity in residue index or change in SS type
-            if current_idx != prev_idx + 1 or current_res_type != segment_type:
-                # End the previous segment
-                segment_end_idx = prev_idx
-                complete_ss.append(
-                    ResidueRange(
-                        self.id,
-                        segment_start_idx,
-                        segment_end_idx,
-                        segment_contig_start,
-                        segment_type,
-                    )
+            # Only add ranges that have at least one valid residue and aren't duplicates
+            if valid_start is not None and valid_end is not None:
+                # Create a unique key for this range
+                range_key = (
+                    ss_element.secondary_structure_type,
+                    valid_start,
+                    valid_end,
                 )
 
-                # Start a new segment
-                segment_start_idx = current_idx
-                segment_type = current_res_type
-                segment_contig_start = self.__chain_coordinates[
-                    segment_start_idx
-                ].coordinate_index
+                if range_key not in seen_ranges:
+                    seen_ranges.add(range_key)
+                    start_coord = self.__chain_coordinates[valid_start]
+                    complete_ss.append(
+                        ResidueRange(
+                            self.id,
+                            valid_start,
+                            valid_end,
+                            start_coord.coordinate_index,
+                            ss_element.secondary_structure_type,
+                        )
+                    )
 
-        # Add the final segment
-        segment_end_idx = residue_indices[-1]
-        complete_ss.append(
-            ResidueRange(
-                self.id,
-                segment_start_idx,
-                segment_end_idx,
-                segment_contig_start,
-                segment_type,
-            )
-        )
         return complete_ss
 
     def __str__(self) -> str:
