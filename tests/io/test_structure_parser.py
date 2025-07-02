@@ -15,19 +15,33 @@ from flatprot.core.coordinates import ResidueRange
 # --- Expected Secondary Structure Definitions ---
 # Based on manual inspection of tests/data/test.cif and DSSP logic
 # Note: Residue indices are 1-based as in PDB/CIF/DSSP
+# Includes coil gap filling between structured elements
 EXPECTED_SS = [
+    # Coil before first structured element
+    ResidueRange("A", 1, 1, 0, SecondaryStructureType.COIL),
     # Preserved segmentation: explicitly defined ranges without merging
-    # This preserves the original boundaries from DSSP/CIF files
     ResidueRange("A", 2, 5, 1, SecondaryStructureType.SHEET),
     ResidueRange(
         "A", 6, 6, 5, SecondaryStructureType.SHEET
     ),  # Separate sheet segment preserved
+    # Coil gap between sheets
+    ResidueRange("A", 7, 13, 6, SecondaryStructureType.COIL),
     ResidueRange("A", 14, 17, 13, SecondaryStructureType.SHEET),
     ResidueRange("A", 18, 19, 17, SecondaryStructureType.HELIX),  # 3-10 Helix in CIF
+    # Coil gap between helix and sheet
+    ResidueRange("A", 20, 23, 19, SecondaryStructureType.COIL),
     ResidueRange("A", 24, 30, 23, SecondaryStructureType.SHEET),
+    # Coil gap between sheets
+    ResidueRange("A", 31, 37, 30, SecondaryStructureType.COIL),
     ResidueRange("A", 38, 44, 37, SecondaryStructureType.SHEET),
+    # Coil gap between sheet and helix
+    ResidueRange("A", 45, 45, 44, SecondaryStructureType.COIL),
     ResidueRange("A", 46, 54, 45, SecondaryStructureType.HELIX),  # Alpha Helix
+    # Coil gap between helix and sheet
+    ResidueRange("A", 55, 59, 54, SecondaryStructureType.COIL),
     ResidueRange("A", 60, 65, 59, SecondaryStructureType.SHEET),
+    # Coil after last structured element
+    ResidueRange("A", 66, 72, 65, SecondaryStructureType.COIL),
 ]
 
 

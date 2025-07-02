@@ -146,17 +146,20 @@ class Chain:
 
     @property
     def secondary_structure(self) -> list[ResidueRange]:
-        """Get all secondary structure elements, preserving original segmentation.
+        """Get all secondary structure elements with coil gap filling and preserved segmentation.
 
         Returns the originally defined secondary structure ranges without merging
-        adjacent segments of the same type. This preserves the segmentation from
-        DSSP/CIF parsing to prevent visual artifacts in helix rendering.
+        adjacent segments of the same type, while filling gaps between structured
+        elements with coil regions. This preserves the segmentation from DSSP/CIF
+        parsing to prevent visual artifacts in helix rendering, while ensuring
+        complete coil coverage for proper visualization.
 
         If no secondary structure is defined, provides COIL coverage for the entire
         chain to ensure annotations and other systems can function properly.
 
         Returns:
-            list[ResidueRange]: A list of secondary structure elements
+            list[ResidueRange]: A complete list of secondary structure elements
+                including both originally defined structures and coil gap regions,
                 preserving the original segmentation boundaries.
         """
         # If no secondary structure is defined, provide COIL coverage using chain ranges
