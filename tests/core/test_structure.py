@@ -160,9 +160,11 @@ def test_chain_add_secondary_structure_success(sample_chain_a: Chain) -> None:
     sample_chain_a.add_secondary_structure(SecondaryStructureType.HELIX, 11, 13)
 
     ss = sample_chain_a.secondary_structure
-    # Expected: Only the explicitly defined Helix(11-13), no gap filling
+    # Expected: Coil(10-10), Helix(11-13), Coil(14-14) with gap filling restored
     expected_ss = [
+        ResidueRange("A", 10, 10, 0, SecondaryStructureType.COIL),
         ResidueRange("A", 11, 13, 1, SecondaryStructureType.HELIX),
+        ResidueRange("A", 14, 14, 4, SecondaryStructureType.COIL),
     ]
     assert ss == expected_ss
 
@@ -191,10 +193,11 @@ def test_chain_secondary_structure_add_overlapping(sample_chain_a: Chain) -> Non
 
     ss = sample_chain_a.secondary_structure
 
-    # Expected: Both original ranges preserved as-is, no merging or gap filling
+    # Expected: Both original ranges preserved as-is, with coil gap filling at end
     expected_ss = [
         ResidueRange("A", 10, 12, 0, SecondaryStructureType.HELIX),
         ResidueRange("A", 11, 13, 1, SecondaryStructureType.SHEET),
+        ResidueRange("A", 14, 14, 4, SecondaryStructureType.COIL),
     ]
     assert ss == expected_ss
 
@@ -225,10 +228,10 @@ def test_chain_secondary_structure_discontinuous_chain(
 
     ss = sample_chain_b_discontinuous.secondary_structure
 
-    # Expected: Only the explicitly defined Helix segment for 5-6, no automatic gap filling.
-    # The implementation preserves segmentation boundaries when secondary structure is defined.
+    # Expected: Helix segment for 5-6, separate Coil segment for 9 (with gap filling restored).
     expected_ss = [
         ResidueRange("B", 5, 6, 0, SecondaryStructureType.HELIX),
+        ResidueRange("B", 9, 9, 2, SecondaryStructureType.COIL),
     ]
     assert ss == expected_ss
 

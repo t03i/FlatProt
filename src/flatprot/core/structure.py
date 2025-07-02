@@ -178,17 +178,26 @@ class Chain:
                 )
             return coil_ranges
 
-        # Return the originally defined secondary structure ranges without merging
-        # This preserves the segmentation from the DSSP/CIF parsing
+        # Get all residue indices present in the chain, sorted
+        residue_indices = sorted(self.__chain_coordinates.keys())
+
+        if not residue_indices:
+            return []
+
+        # Create a map of residue index to defined secondary structure type
+        # This preserves original segmentation by not merging adjacent elements
+        defined_ss_map: Dict[int, SecondaryStructureType] = {}
+        for ss_element in sorted(self.__secondary_structure, key=lambda x: x.start):
+            # Only consider residues actually present in the chain for this element
+            for idx in range(ss_element.start, ss_element.end + 1):
+                if idx in self.__chain_coordinates:
+                    defined_ss_map[idx] = ss_element.secondary_structure_type
+
+        # First, add all originally defined secondary structure ranges to preserve segmentation
         complete_ss: List[ResidueRange] = []
-
-        # Sort by start position to ensure consistent ordering
         sorted_ss = sorted(self.__secondary_structure, key=lambda x: x.start)
-
-        # Deduplicate ranges to avoid duplicate scene elements
         seen_ranges = set()
 
-        # Add each originally defined range as-is, avoiding duplicates
         for ss_element in sorted_ss:
             # Ensure the range has valid coordinates in this chain
             valid_start = None
@@ -223,7 +232,82 @@ class Chain:
                         )
                     )
 
-        return complete_ss
+        # Now fill gaps with coil segments to restore coil rendering
+        # Sort by start position for gap detection
+        complete_ss.sort(key=lambda x: x.start)
+
+        filled_ss: List[ResidueRange] = []
+
+        # Add coil at the beginning if needed
+        if complete_ss and residue_indices[0] < complete_ss[0].start:
+            self._add_coil_segments(
+                filled_ss, residue_indices[0], complete_ss[0].start - 1
+            )
+
+        # Process each element and add coil gaps between them
+        for i, ss_element in enumerate(complete_ss):
+            filled_ss.append(ss_element)
+
+            # Check if there's a gap after this element
+            if i < len(complete_ss) - 1:
+                next_element = complete_ss[i + 1]
+                if next_element.start > ss_element.end + 1:
+                    self._add_coil_segments(
+                        filled_ss, ss_element.end + 1, next_element.start - 1
+                    )
+
+        # Add coil at the end if needed
+        if complete_ss and residue_indices[-1] > complete_ss[-1].end:
+            self._add_coil_segments(
+                filled_ss, complete_ss[-1].end + 1, residue_indices[-1]
+            )
+
+        # If no secondary structure was defined, complete_ss will be empty
+        # In that case, filled_ss will also be empty, so the original fallback applies
+        if not filled_ss:
+            return complete_ss
+
+        # Sort the final result by start position
+        filled_ss.sort(key=lambda x: x.start)
+        return filled_ss
+
+    def _add_coil_segments(
+        self, result_list: List[ResidueRange], start: int, end: int
+    ) -> None:
+        """Helper method to add coil segments for a given range, handling discontinuities."""
+        coil_start = None
+        for idx in range(start, end + 1):
+            if idx in self.__chain_coordinates:
+                if coil_start is None:
+                    coil_start = idx
+                coil_end = idx
+            else:
+                # Discontinuity: end current coil segment if any
+                if coil_start is not None:
+                    start_coord = self.__chain_coordinates[coil_start]
+                    result_list.append(
+                        ResidueRange(
+                            self.id,
+                            coil_start,
+                            coil_end,
+                            start_coord.coordinate_index,
+                            SecondaryStructureType.COIL,
+                        )
+                    )
+                    coil_start = None
+
+        # Add final coil segment if any
+        if coil_start is not None:
+            start_coord = self.__chain_coordinates[coil_start]
+            result_list.append(
+                ResidueRange(
+                    self.id,
+                    coil_start,
+                    coil_end,
+                    start_coord.coordinate_index,
+                    SecondaryStructureType.COIL,
+                )
+            )
 
     def __str__(self) -> str:
         return f"Chain {self.id}"
