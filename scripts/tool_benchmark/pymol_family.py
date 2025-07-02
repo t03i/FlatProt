@@ -19,6 +19,7 @@ from pymol import cmd
 def main(
     output_file: Path,
     structure_files: List[Path],
+    opacity: float = 1.0,
 ) -> None:
     """Load multiple structures, align them, and save a PNG image using PyMOL.
 
@@ -31,6 +32,8 @@ def main(
         Path to save the output PNG image.
     structure_files
         Paths to the input structure files. At least one must be provided.
+    opacity
+        Opacity level for the visualization (0.0-1.0). Default is 1.0 (fully opaque).
     """
     if not structure_files:
         print("Error: No structure files provided.", file=sys.stderr)
@@ -49,6 +52,13 @@ def main(
 
     # Style the scene
     cmd.do("as cartoon")
+    cmd.do("color gray")  # Color everything gray first
+    cmd.do("color red, ss h")  # Then color helices red
+    cmd.do("color blue, ss s")  # Then color sheets blue
+    if opacity < 1.0:
+        # Apply transparency to all objects
+        cmd.set("cartoon_transparency", 1.0 - opacity, "all")
+        cmd.set("transparency", 1.0 - opacity, "all")
     cmd.bg_color("white")
 
     # Ensure output directory exists
@@ -73,13 +83,19 @@ if __name__ == "__main__":
         nargs="+",
         help="One or more paths to input structure files (e.g., CIF, PDB).",
     )
+    parser.add_argument(
+        "--opacity",
+        type=float,
+        default=1.0,
+        help="Opacity level for the visualization (0.0-1.0). Default is 1.0 (fully opaque).",
+    )
     try:
         args = parser.parse_args()
         for f in args.structure_files:
             if not f.exists():
                 print(f"Error: structure file not found: {f}", file=sys.stderr)
                 cmd.quit(1)
-        main(args.output_file, args.structure_files)
+        main(args.output_file, args.structure_files, args.opacity)
     except Exception as e:
         print(f"An error occurred: {e}", file=sys.stderr)
         cmd.quit(1)

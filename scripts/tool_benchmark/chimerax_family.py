@@ -29,6 +29,12 @@ def parse_args() -> argparse.Namespace:
         nargs="+",
         help="Paths to the input structure files (e.g., .cif)",
     )
+    parser.add_argument(
+        "--opacity",
+        type=float,
+        default=1.0,
+        help="Opacity level for the visualization (0.0-1.0). Default is 1.0 (fully opaque).",
+    )
     return parser.parse_args()
 
 
@@ -65,6 +71,16 @@ def main() -> None:
     # Apply visual style
     run(session, "hide ribbons")
     run(session, "show cartoon")
+    run(session, "color gray")  # Color everything gray first
+    run(session, "color helix red")  # Then color helices red
+    run(session, "color strand blue")  # Then color strands blue
+    if args.opacity < 1.0:
+        transparency_percent = (1.0 - args.opacity) * 100
+        # Apply transparency to all models
+        run(
+            session,
+            f"transparency #{','.join([str(m.id[0]) for m in model_ids])} {transparency_percent:.0f}",
+        )
     run(session, "view orient")
     run(session, "set bgColor white")
 
