@@ -1,5 +1,5 @@
 version = 1
-revision = 2
+revision = 3
 requires-python = ">=3.11, <3.14"
 
 [[package]]
@@ -548,7 +548,7 @@ wheels = [
 
 [[package]]
 name = "flatprot"
-version = "2.4.8"
+version = "2.4.9"
 source = { editable = "." }
 dependencies = [
     { name = "cairosvg" },
