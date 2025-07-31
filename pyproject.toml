@@ -25,6 +25,7 @@ dependencies = [
     "platformdirs>=4.3.6",
     "numpy>=1.26.4",
     "cairosvg>=2.8.2",
+    "httpx>=0.28.0",
 ]
 
 [project.scripts]
