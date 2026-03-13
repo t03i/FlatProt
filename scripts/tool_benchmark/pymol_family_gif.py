@@ -92,12 +92,12 @@ def _render_frame(path: str, width: int, height: int, dpi: int) -> None:
 def main(
     output_gif: Path,
     structure_files: List[Path],
-    hold_first: int = 3,
-    hold_last: int = 5,
-    duration: int = 600,
+    hold_first: int = 0,
+    hold_last: int = 10,
+    duration: int = 300,
     width: int = 800,
     height: int = 600,
-    dpi: int = 150,
+    dpi: int = 300,
     loop: int = 0,
     align: bool = True,
     color_by_ss: bool = False,
@@ -252,21 +252,21 @@ parser.add_argument(
 parser.add_argument(
     "--hold-first",
     type=int,
-    default=3,
+    default=1,
     metavar="INT",
     help="Extra frames to hold the opening single-structure shot (default: 3).",
 )
 parser.add_argument(
     "--hold-last",
     type=int,
-    default=5,
+    default=10,
     metavar="INT",
     help="Extra frames to hold the final full-overlay shot (default: 5).",
 )
 parser.add_argument(
     "--duration",
     type=int,
-    default=600,
+    default=450,
     metavar="MS",
     help="Duration of each frame in milliseconds (default: 600).",
 )
@@ -287,7 +287,7 @@ parser.add_argument(
 parser.add_argument(
     "--dpi",
     type=int,
-    default=150,
+    default=300,
     metavar="INT",
     help="DPI for PyMOL rendering (default: 150).",
 )
