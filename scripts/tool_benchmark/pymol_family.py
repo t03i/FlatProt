@@ -68,34 +68,35 @@ def main(
     cmd.png(str(output_file), dpi=300, quiet=1)
 
 
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(
-        description="Load multiple structures, align them, and save a PNG image using PyMOL."
-    )
-    parser.add_argument(
-        "output_file",
-        type=Path,
-        help="Path to save the output PNG image.",
-    )
-    parser.add_argument(
-        "structure_files",
-        type=Path,
-        nargs="+",
-        help="One or more paths to input structure files (e.g., CIF, PDB).",
-    )
-    parser.add_argument(
-        "--opacity",
-        type=float,
-        default=1.0,
-        help="Opacity level for the visualization (0.0-1.0). Default is 1.0 (fully opaque).",
-    )
-    try:
-        args = parser.parse_args()
-        for f in args.structure_files:
-            if not f.exists():
-                print(f"Error: structure file not found: {f}", file=sys.stderr)
-                cmd.quit(1)
-        main(args.output_file, args.structure_files, args.opacity)
-    except Exception as e:
-        print(f"An error occurred: {e}", file=sys.stderr)
-        cmd.quit(1)
+# PyMOL exec()s scripts rather than running them as __main__, so we cannot
+# guard with `if __name__ == "__main__"`.  Run unconditionally at import time.
+parser = argparse.ArgumentParser(
+    description="Load multiple structures, align them, and save a PNG image using PyMOL."
+)
+parser.add_argument(
+    "output_file",
+    type=Path,
+    help="Path to save the output PNG image.",
+)
+parser.add_argument(
+    "structure_files",
+    type=Path,
+    nargs="+",
+    help="One or more paths to input structure files (e.g., CIF, PDB).",
+)
+parser.add_argument(
+    "--opacity",
+    type=float,
+    default=1.0,
+    help="Opacity level for the visualization (0.0-1.0). Default is 1.0 (fully opaque).",
+)
+try:
+    args = parser.parse_args(sys.argv[1:])
+    for f in args.structure_files:
+        if not f.exists():
+            print(f"Error: structure file not found: {f}", file=sys.stderr)
+            cmd.quit(1)
+    main(args.output_file, args.structure_files, args.opacity)
+except Exception as e:
+    print(f"An error occurred: {e}", file=sys.stderr)
+    cmd.quit(1)
